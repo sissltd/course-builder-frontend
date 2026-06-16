@@ -153,7 +153,7 @@ export const AppSelect = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="p-[8px] bg-white border border-[#F0F0F0] rounded-[16px] shadow-md min-w-[176px] w-max max-w-[320px]"
+          className="p-[8px] bg-white border border-[#F0F0F0] rounded-[16px]  min-w-[176px] w-max max-w-[320px]"
           align="start"
         >
           <Command className="bg-white">

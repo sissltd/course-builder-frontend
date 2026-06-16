@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Eye, EyeSlash } from "iconsax-react";
+import { AppButton } from "@/components/shared/AppButton";
+import { ChangeEmailFlow } from "./ChangeEmailFlow";
 
 const PasswordInput = ({ label }: { label: string }) => {
   const [show, setShow] = useState(false);
@@ -31,44 +33,58 @@ const PasswordInput = ({ label }: { label: string }) => {
 };
 
 export const LoginSecurityTab = () => {
+  const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
+
   return (
-    <div className="flex flex-col gap-[28px]">
-      <div>
-        <h2 className="text-[20px] font-semibold text-[#202020] tracking-[-0.4px] leading-[28px]">Log in &amp; Security</h2>
-        <p className="text-[14px] text-[#636363] mt-[4px]">Manage your email address and password</p>
+    <div className="flex flex-col gap-[32px]">
+      <div className="flex flex-col gap-[8px]">
+        <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Log in &amp; Security</h2>
+        <p className="text-[16px] text-[#636363] leading-[24px]">Manage your email address and password</p>
       </div>
 
-      {/* Email */}
-      <div className="flex flex-col gap-[8px]">
-        <label className="text-[14px] text-[#202020] tracking-[-0.28px] font-semibold">Email address</label>
-        <div className="flex items-center gap-[12px]">
+      {/* Email Section */}
+      <div className="flex flex-col gap-[16px]">
+        <label className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">Email address</label>
+        <div className="flex flex-col gap-[16px]">
           <input
             readOnly
             defaultValue="emmanuelosaite@gmail.com"
-            className="flex-1 h-[44px] px-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#636363] bg-white outline-none cursor-default"
+            className="w-full h-[44px] px-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#636363] bg-sd-grey-1 outline-none cursor-default"
           />
-        </div>
-        <div className="flex justify-end">
-          <button className="h-[36px] px-[18px] border border-[#0063EF] rounded-[8px] text-[14px] text-[#0063EF] hover:bg-[#EBF3FF] transition-colors font-medium">
-            Change email
-          </button>
+          <div className="flex justify-end">
+            <AppButton 
+              variant="app-primary" 
+              className="h-[44px] px-[24px] text-[14px]"
+              onClick={() => setIsChangeEmailOpen(true)}
+            >
+              Change email
+            </AppButton>
+          </div>
         </div>
       </div>
 
       <div className="h-px bg-[#F0F0F0]" />
 
-      {/* Password */}
-      <div className="flex flex-col gap-[16px]">
+      {/* Password Section */}
+      <div className="flex flex-col gap-[24px]">
         <p className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px]">Password</p>
-        <PasswordInput label="Current password" />
-        <PasswordInput label="New password" />
-        <PasswordInput label="Re-enter new password" />
+        <div className="flex flex-col gap-[20px]">
+          <PasswordInput label="Current password" />
+          <PasswordInput label="New password" />
+          <PasswordInput label="Re-enter new password" />
+        </div>
         <div className="flex justify-end">
-          <button className="h-[36px] px-[20px] border border-[#0063EF] rounded-[8px] text-[14px] text-[#0063EF] hover:bg-[#EBF3FF] transition-colors font-medium">
+          <AppButton variant="app-primary" className="h-[44px] px-[24px] text-[14px]">
             Save changes
-          </button>
+          </AppButton>
         </div>
       </div>
+
+      <ChangeEmailFlow 
+        isOpen={isChangeEmailOpen} 
+        onOpenChange={setIsChangeEmailOpen} 
+        onSuccess={() => console.log("Email changed")}
+      />
     </div>
   );
 };

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { TickCircle, TickSquare } from "iconsax-react";
+import { NotificationsEmptyState } from "./NotificationsEmptyState";
 
 export type NotificationItem = {
   id: string;
@@ -10,6 +11,7 @@ export type NotificationItem = {
   body: string;
   time: string;
   isRead: boolean;
+  type: "account" | "course";
 };
 
 export type NotificationGroup = {
@@ -24,35 +26,42 @@ interface NotificationRowProps {
 }
 
 const NotificationRow = ({ item, onMarkRead }: NotificationRowProps) => (
-  <div className="flex items-start justify-between gap-[16px] py-[18px] border-b border-[#F0F0F0] last:border-b-0">
-    <div className="flex items-start gap-[12px]">
-      {/* Check circle icon */}
-      <div className="relative mt-[2px] shrink-0">
-        <TickCircle
-          size={24}
-          variant="Outline"
-          color="#B6B6B6"
-          className="shrink-0"
-        />
+  <div className="flex items-start justify-between gap-[16px] py-[16px] border-b border-[#F0F0F0] last:border-b-0 group">
+    <div className="flex items-start gap-[16px]">
+      {/* Icon with frame and unread dot */}
+      <div className="relative shrink-0 flex">
+        <div className="size-[46px] rounded-[322px] border border-[#D9D9D9] flex items-center justify-center bg-white overflow-hidden shrink-0 relative">
+          {item.type === "account" ? (
+             <Image src="/assets/notifications/check_regular.svg" alt="Account" width={24} height={24} />
+          ) : (
+             <Image src="/assets/notifications/book.svg" alt="Course" width={24} height={24} />
+          )}
+        </div>
         {!item.isRead && (
-          <span className="absolute -top-[2px] -right-[2px] size-[8px] rounded-full bg-[#0063EF] border-[1.5px] border-white" />
+          <div className="absolute top-[8px] right-0 size-[10px] bg-[#0A60E1] rounded-full translate-x-1/2 -translate-y-1/2" />
         )}
       </div>
 
-      {/* Text */}
-      <div className="flex flex-col gap-[4px]">
-        <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px]">
+      {/* Text content */}
+      <div className="flex flex-col gap-[8px]">
+        <p className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px] leading-[24px]">
           {item.title}
         </p>
-        <p className="text-[14px] text-[#636363] leading-[20px] max-w-[480px]">{item.body}</p>
-        <p className="text-[13px] text-[#B6B6B6] leading-[18px]">{item.time}</p>
+        <div className="flex flex-col gap-[8px]">
+          <p className="text-[14px] text-[#606060] font-normal tracking-[-0.28px] leading-[20px] max-w-[480px]">
+            {item.body}
+          </p>
+          <p className="text-[14px] text-[#606060] font-normal tracking-[-0.28px] leading-[20px]">
+            {item.time}
+          </p>
+        </div>
       </div>
     </div>
 
     {!item.isRead && (
       <button
         onClick={() => onMarkRead(item.id)}
-        className="text-[14px] text-[#606060] hover:text-[#0063EF] tracking-[-0.28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+        className="h-[44px] px-[16px] rounded-[8px] border border-[#F0F0F0] flex items-center justify-center text-[16px] font-normal text-[#606060] hover:bg-sd-grey-2 transition-colors cursor-pointer shrink-0"
       >
         Mark as read
       </button>
@@ -68,12 +77,16 @@ interface NotificationGroupSectionProps {
 
 const NotificationGroupSection = ({ group, onMarkRead }: NotificationGroupSectionProps) => (
   <div className="flex flex-col">
-    <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px] mb-[4px]">
-      {group.date}
-    </p>
-    {group.items.map((item) => (
-      <NotificationRow key={item.id} item={item} onMarkRead={onMarkRead} />
-    ))}
+    <div className="h-[40px] flex items-center pt-[10px]">
+       <p className="text-[16px] font-normal text-[#202020] leading-[24px]">
+        {group.date}
+      </p>
+    </div>
+    <div className="flex flex-col">
+      {group.items.map((item) => (
+        <NotificationRow key={item.id} item={item} onMarkRead={onMarkRead} />
+      ))}
+    </div>
   </div>
 );
 
@@ -86,15 +99,17 @@ const INITIAL_GROUPS: NotificationGroup[] = [
         id: "1",
         title: "Account approved",
         body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
+        time: "Today - 12 minuites ago",
         isRead: false,
+        type: "course",
       },
       {
         id: "2",
         title: "Account approved",
         body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
+        time: "Today - 12 minuites ago",
         isRead: false,
+        type: "account",
       },
     ],
   },
@@ -105,22 +120,25 @@ const INITIAL_GROUPS: NotificationGroup[] = [
         id: "3",
         title: "Account approved",
         body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
+        time: "Today - 12 minuites ago",
         isRead: false,
+        type: "course",
       },
       {
         id: "4",
         title: "Account approved",
         body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
+        time: "Today - 12 minuites ago",
         isRead: false,
+        type: "account",
       },
       {
         id: "5",
-        title: "Account approved",
+        title: "Congratulations! your course has been approved",
         body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
+        time: "Today - 12 minuites ago",
         isRead: false,
+        type: "account",
       },
     ],
   },
@@ -160,66 +178,63 @@ export const NotificationsList = () => {
       : groups;
 
   return (
-    <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] px-[24px] py-[20px] flex flex-col gap-[20px]">
-      {/* Tabs + Mark all */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-[4px]">
-          {/* All tab */}
+    <div className="w-full flex flex-col gap-[16px]">
+      <div className="bg-white border border-[#F0F0F0] rounded-[20px] p-[20px] flex flex-col gap-[16px]">
+        {/* Tabs + Sorting */}
+        <div className="flex items-center justify-between h-[44px]">
+          <div className="flex items-center gap-[16px] h-full">
+            {/* Tabs */}
+            <div className="flex items-center h-full">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={cn(
+                  "h-full px-[16px] rounded-[8px] text-[16px] font-normal leading-[24px] transition-colors",
+                  activeTab === "all"
+                    ? "bg-[#FCFDFF] text-[#202020] border border-[#F0F0F0]"
+                    : "text-[#B6B6B6] hover:text-[#606060] border border-transparent"
+                )}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActiveTab("unread")}
+                className={cn(
+                  "h-full px-[16px] rounded-[8px] text-[16px] font-normal leading-[24px] transition-colors ml-[8px]",
+                  activeTab === "unread"
+                    ? "bg-[#FCFDFF] text-[#202020] border border-[#F0F0F0]"
+                    : "text-[#B6B6B6] hover:text-[#606060] border border-transparent"
+                )}
+              >
+                Unread ({unreadCount})
+              </button>
+            </div>
+          </div>
+
           <button
-            onClick={() => setActiveTab("all")}
-            className={cn(
-              "h-[36px] px-[16px] rounded-[8px] text-[14px] font-medium tracking-[-0.28px] transition-colors",
-              activeTab === "all"
-                ? "text-[#606060]"
-                : "text-[#B6B6B6] hover:text-[#606060]"
-            )}
+            onClick={handleMarkAllRead}
+            className="flex items-center gap-[12px] h-full px-[16px] rounded-[8px] border border-[#F0F0F0] text-[14px] font-medium text-[#202020] hover:bg-sd-grey-2 transition-colors cursor-pointer"
           >
-            All
-          </button>
-          {/* Unread tab */}
-          <button
-            onClick={() => setActiveTab("unread")}
-            className={cn(
-              "h-[36px] px-[16px] rounded-[8px] text-[14px] font-medium tracking-[-0.28px] transition-colors border",
-              activeTab === "unread"
-                ? "bg-white border-[#E8E8E8] text-[#202020]"
-                : "border-transparent text-[#B6B6B6] hover:text-[#606060]"
-            )}
-          >
-            Unread {unreadCount > 0 && `(${unreadCount})`}
+            <Image src="/assets/notifications/check_regular.svg" alt="Mark all" width={24} height={24} className="text-[#202020]" />
+            <span>Mark all as read</span>
           </button>
         </div>
 
-        {/* Mark all as read */}
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="flex items-center gap-[6px] text-[14px] text-[#606060] hover:text-[#0063EF] tracking-[-0.28px] transition-colors cursor-pointer"
-          >
-            <TickSquare size={18} variant="Linear" color="currentColor" />
-            <span>Mark all as read</span>
-          </button>
-        )}
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-[#F0F0F0] -mx-[24px]" />
-
-      {/* Grouped notifications */}
-      <div className="flex flex-col gap-[24px]">
-        {displayedGroups.length > 0 ? (
-          displayedGroups.map((group) => (
-            <NotificationGroupSection
-              key={group.date}
-              group={group}
-              onMarkRead={handleMarkRead}
-            />
-          ))
-        ) : (
-          <p className="text-[14px] text-[#B6B6B6] text-center py-[40px]">
-            No notifications
-          </p>
-        )}
+        {/* Grouped notifications */}
+        <div className="flex flex-col max-w-[1020px] w-full">
+          {displayedGroups.length > 0 ? (
+            displayedGroups.map((group, idx) => (
+              <React.Fragment key={group.date}>
+                {idx > 0 && <div className="h-[1px] bg-[#F0F0F0] w-full mt-[16px]" />}
+                <NotificationGroupSection
+                  group={group}
+                  onMarkRead={handleMarkRead}
+                />
+              </React.Fragment>
+            ))
+          ) : (
+            <NotificationsEmptyState />
+          )}
+        </div>
       </div>
     </div>
   );

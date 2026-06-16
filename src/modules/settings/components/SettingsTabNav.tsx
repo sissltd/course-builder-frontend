@@ -31,7 +31,7 @@ interface SettingsTabNavProps {
 }
 
 export const SettingsTabNav = ({ active, onChange }: SettingsTabNavProps) => (
-  <nav className="flex flex-col gap-[4px] w-full">
+  <nav className="flex flex-col gap-[8px] w-full">
     {tabs.map(({ id, label, Icon }) => {
       const isActive = active === id;
       return (
@@ -39,18 +39,18 @@ export const SettingsTabNav = ({ active, onChange }: SettingsTabNavProps) => (
           key={id}
           onClick={() => onChange(id)}
           className={cn(
-            "flex items-center gap-[10px] px-[14px] py-[10px] rounded-[10px] text-left w-full transition-colors",
+            "flex items-center gap-[10px] px-[12px] py-[10px] rounded-[8px] text-left w-full transition-all h-[44px]",
             isActive
               ? "bg-[#EBF3FF] text-[#0063EF]"
-              : "text-[#636363] hover:bg-[#F5F5F5]"
+              : "text-[#606060] hover:bg-sd-grey-1"
           )}
         >
           <Icon
-            size={20}
+            size={24}
             variant={isActive ? "Bold" : "Linear"}
-            color={isActive ? "#0063EF" : "#636363"}
+            color={isActive ? "#0063EF" : "#606060"}
           />
-          <span className="text-[14px] tracking-[-0.28px] leading-[20px] font-medium">
+          <span className="text-[16px] tracking-[-0.32px] leading-[24px] font-normal whitespace-nowrap">
             {label}
           </span>
         </button>

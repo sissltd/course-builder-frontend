@@ -1,12 +1,16 @@
-import React from "react";
-import { Money, Wallet, Moneys } from "iconsax-react";
+"use client";
+
+import React, { useState } from "react";
+import { Money, Wallet, Moneys, ArrowUp } from "iconsax-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { AppButton } from "@/components/shared/AppButton";
-import { ArrowUp } from "iconsax-react";
+import { WithdrawalFlow } from "./WithdrawalFlow";
 
 export const WalletOverview = () => {
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+
   return (
-    <div className="w-full bg-sd-grey-1 border border-sd-grey-3 rounded-[20px] px-[20px] pt-[20px] pb-[20px] flex flex-col gap-[16px] shadow-sm">
+    <div className="w-full bg-sd-grey-1 border border-sd-grey-3 rounded-[20px] px-[20px] pt-[20px] pb-[20px] flex flex-col gap-[16px] ">
       <h2 className="text-[20px] font-semibold text-sd-grey-12 leading-[28px]">Creator&apos;s overview</h2>
 
       <div className="flex items-center gap-[16px] w-full flex-wrap">
@@ -35,10 +39,16 @@ export const WalletOverview = () => {
           variant="app-outline"
           leftIcon={<ArrowUp size={18} variant="Linear" color="#0063EF" />}
           className="h-[40px] px-[20px] text-[14px] font-normal"
+          onClick={() => setIsWithdrawModalOpen(true)}
         >
           Withdraw earnings
         </AppButton>
       </div>
+
+      <WithdrawalFlow 
+        isOpen={isWithdrawModalOpen}
+        onOpenChange={setIsWithdrawModalOpen}
+      />
     </div>
   );
 };

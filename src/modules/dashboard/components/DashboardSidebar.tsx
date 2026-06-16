@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { 
   Home2, 
   Book, 
-  Note, 
+  Notepad, 
   Profile2User, 
   Wallet, 
   Edit, 
@@ -22,7 +22,7 @@ import { DoubleArrowIcon } from "./icons/DoubleArrowIcon";
 const sidebarLinks = [
   { name: "Dashboard", href: "/dashboard", icon: Home2 },
   { name: "My Courses", href: "/courses", icon: Book },
-  { name: "Draft", href: "/drafts", icon: Note },
+  { name: "Draft", href: "/drafts", icon: Notepad },
   { name: "Collaborators", href: "/collaborators", icon: Profile2User },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Reservation", href: "/reservation", icon: Edit },
@@ -39,7 +39,7 @@ export const DashboardSidebar = () => {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[205px] h-screen bg-[#FDFDFD] border-r border-[#F0F0F0] flex flex-col fixed left-0 top-0 z-40">
+    <aside className="w-[225px] h-screen bg-[#FDFDFD] border-r border-[#F0F0F0] flex flex-col fixed left-0 top-0 z-40">
       {/* Logo Section */}
       <div className="h-[60px] flex items-center px-[11px] py-[12px] border-b border-r border-[#F0F0F0]">
         <div className="relative w-[136px] h-[36px] overflow-hidden">
@@ -74,13 +74,7 @@ export const DashboardSidebar = () => {
       </div>
 
       {/* Scrollable Content (Main Navigation, KYC Card) */}
-      <div className="flex-1 overflow-y-auto px-[11px] pb-[8px] pt-[16px] flex flex-col justify-between min-h-0
-        [&::-webkit-scrollbar]:w-[4px]
-        [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:bg-[#E8E8E8]
-        [&::-webkit-scrollbar-thumb]:rounded-full
-        hover:[&::-webkit-scrollbar-thumb]:bg-[#C6C6C6]
-      ">
+      <div className="flex-1 overflow-y-auto px-[11px] pb-[8px] pt-[16px] flex flex-col justify-between min-h-0 [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E8E8E8] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#C6C6C6]">
         <div className="flex flex-col gap-[16px] pb-[32px]">
           {/* Main Navigation */}
           <nav className="flex flex-col gap-[8px]">
@@ -116,17 +110,37 @@ export const DashboardSidebar = () => {
         </div>
 
         {/* KYC Card */}
-        <div className="bg-gradient-to-br from-[#E2ECF6] to-[#F6EAF7] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-[174px] h-[167px] shrink-0 flex flex-col justify-center items-center mt-[24px]">
+        <div className="bg-gradient-to-br from-[#FAF6FC] via-white to-[#F0F6FE] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-full  shrink-0 flex flex-col justify-center items-center mt-[24px]">
+          {/* Illustrations */}
+          <div className="absolute top-[-50px] left-[-30px] w-[140px] h-[140px] pointer-events-none opacity-80">
+            <Image 
+              src="/assets/dashboard/kyc-ellipse-top.png" 
+              alt="" 
+              fill 
+              className="object-contain" 
+            />
+          </div>
+          <div className="absolute top-[-40px] right-[-40px] w-[150px] h-[150px] pointer-events-none opacity-85">
+            <Image 
+              src="/assets/dashboard/kyc-ellipse-right.png" 
+              alt="" 
+              fill 
+              className="object-contain" 
+            />
+          </div>
+
           <div className="relative z-10 flex flex-col gap-[15px] w-full">
             <div className="flex flex-col gap-[8px]">
               <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px]">KYC Completion</p>
               <p className="text-[12px] text-[#606060] leading-[16px]">
-                Unlock full features when you complete your verificaication
+                Unlock full features when you complete your verification
               </p>
             </div>
-            <button className="w-full h-[32px] border border-[#0063EF] text-[#0063EF] rounded-[8px] text-[12px] font-medium hover:bg-[#0063EF]/5 transition-colors">
-              Continue
-            </button>
+            <Link href="/kyc" className="w-full block">
+              <button className="w-full h-[32px] border border-[#0063EF] text-[#0063EF] rounded-[8px] text-[12px] font-medium hover:bg-[#0063EF]/5 transition-colors">
+                Continue
+              </button>
+            </Link>
           </div>
         </div>
       </div>

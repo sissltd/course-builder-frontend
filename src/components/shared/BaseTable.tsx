@@ -11,6 +11,7 @@ import {
   getFilteredRowModel,
   SortingState,
   ColumnFiltersState,
+  TableOptions,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -48,6 +49,7 @@ interface BaseTableProps<TData, TValue> {
   emptyIcon?: React.ReactNode;
   emptyText?: string;
   onRowClick?: (row: TData) => void;
+  tableOptions?: Partial<TableOptions<TData>>;
 }
 
 export function BaseTable<TData, TValue>({
@@ -65,6 +67,7 @@ export function BaseTable<TData, TValue>({
   emptyIcon,
   emptyText,
   onRowClick,
+  tableOptions,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -92,10 +95,12 @@ export function BaseTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
+    ...tableOptions,
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      ...tableOptions?.state,
     },
   });
 
@@ -160,7 +165,7 @@ export function BaseTable<TData, TValue>({
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white border border-[#F0F0F0] rounded-[12px] shadow-lg" align="end">
+                <PopoverContent className="w-auto p-0 bg-white border border-[#F0F0F0] rounded-[12px] " align="end">
                   <Calendar
                     mode="single"
                     selected={activeDate}

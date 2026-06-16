@@ -26,17 +26,18 @@ export default function LoginPage() {
   const { handleSubmit, trigger, watch } = methods;
   const email = watch("email");
 
-  const handleContinue = async (data: LoginFormData) => {
-    if (step === "email") {
-      const isEmailValid = await trigger("email");
-      if (isEmailValid) {
-        setStep("password");
-      }
-    } else {
-      // Handle login logic
-      console.log("Logging in with", data);
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isEmailValid = await trigger("email");
+    if (isEmailValid) {
+      setStep("password");
     }
   };
+
+  const handleLoginSubmit = handleSubmit(async (data) => {
+    // Handle login logic
+    console.log("Logging in with", data);
+  });
 
   return (
     <AuthLayout showNav={step === "password"} showLogo={step !== "password"}>
@@ -63,7 +64,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(handleContinue)} className="flex flex-col gap-[40px] w-full">
+              <form onSubmit={handleEmailSubmit} className="flex flex-col gap-[40px] w-full">
                 <AuthInput
                   name="email"
                   label="Enter email address"
@@ -97,7 +98,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(handleContinue)} className="flex flex-col gap-[40px] w-full">
+              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-[40px] w-full">
                 <div className="flex flex-col gap-[12px] w-full">
                   <AuthInput
                     name="password"

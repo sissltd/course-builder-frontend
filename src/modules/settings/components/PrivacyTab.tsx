@@ -2,10 +2,12 @@ import React from "react";
 
 export const PrivacyTab = () => {
   return (
-    <div className="flex flex-col gap-[20px]">
-      <h2 className="text-[20px] font-semibold text-[#202020] tracking-[-0.4px] leading-[28px]">Privacy Policy</h2>
+    <div className="flex flex-col gap-[32px]">
+      <div className="flex flex-col gap-[8px]">
+        <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Privacy Policy</h2>
+      </div>
 
-      <div className="flex flex-col gap-[16px] text-[14px] text-[#636363] leading-[22px]">
+      <div className="flex flex-col gap-[16px] text-[16px] text-[#636363] leading-[24px]">
         <p>
           Welcome to SoluDesks. We value your privacy and are committed to protecting your
           personal information. This Privacy Policy explains how we collect, use, disclose,

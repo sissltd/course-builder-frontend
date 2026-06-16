@@ -2,9 +2,15 @@
 
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Copy, More } from "iconsax-react";
+import { Copy, More, Eye, Edit, Danger, Trash, Mirror } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type MyCourse = {
   title: string;
@@ -44,7 +50,10 @@ const CourseIdCell = ({ id }: { id: string }) => {
     <div className="flex items-center gap-[8px]">
       <span className="text-[14px] text-[#606060] tracking-[-0.28px]">{id}</span>
       <button 
-        onClick={handleCopy} 
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCopy();
+        }}
         className="text-[#606060] hover:text-[#0063EF] transition-colors cursor-pointer flex items-center justify-center"
         title="Copy Course ID"
       >
@@ -136,10 +145,60 @@ export const myCoursesColumns: ColumnDef<MyCourse>[] = [
   {
     id: "actions",
     header: "ACTION",
-    cell: () => (
-      <button className="text-[#606060] hover:text-[#202020] transition-colors cursor-pointer p-[4px] hover:bg-sd-grey-2 rounded-[4px] flex items-center justify-center">
-        <More size={24} variant="Linear" color="currentColor" />
-      </button>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
+      const course = row.original;
+
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-[#606060] hover:text-[#202020] transition-colors cursor-pointer p-[4px] hover:bg-sd-grey-2 rounded-[4px] flex items-center justify-center outline-none">
+                <More size={24} variant="Linear" color="currentColor" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px] bg-white border border-[#F0F0F0] rounded-[12px] p-[8px] ">
+              <DropdownMenuItem 
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                onClick={() => meta?.onViewDetails(course)}
+              >
+                <Eye size={18} variant="Linear" color="currentColor" />
+                <span>View details</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                onClick={() => meta?.onEdit(course)}
+              >
+                <Edit size={18} variant="Linear" color="currentColor" />
+                <span>Edit course</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                onClick={() => meta?.onMoveToDraft(course)}
+              >
+                <Mirror size={18} variant="Linear" color="currentColor" />
+                <span>Move to draft</span>
+              </DropdownMenuItem>
+              {course.status === "Rejected" && (
+                <DropdownMenuItem 
+                  className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                  onClick={() => meta?.onAppeal(course)}
+                >
+                  <Danger size={18} variant="Linear" color="currentColor" />
+                  <span>Appeal</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem 
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#FF5025] cursor-pointer hover:bg-[#FFF0ED] focus:bg-[#FFF0ED] outline-none"
+                onClick={() => meta?.onDelete(course)}
+              >
+                <Trash size={18} variant="Linear" color="currentColor" />
+                <span>Delete course</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

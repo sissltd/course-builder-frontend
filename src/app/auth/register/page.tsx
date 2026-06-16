@@ -37,21 +37,22 @@ export default function RegisterPage() {
 
   const { handleSubmit, trigger } = methods;
 
-  const handleContinue = async (data: RegisterFormData) => {
-    if (step === "email") {
-      const isEmailValid = await trigger("email");
-      if (isEmailValid) setStep("details");
-    } else if (step === "details") {
-      const isDetailsValid = await trigger(["firstName", "lastName", "phone", "country", "agreeToTerms"]);
-      if (isDetailsValid) setStep("password");
-    } else if (step === "password") {
-      const isPasswordValid = await trigger(["password", "confirmPassword"]);
-      if (isPasswordValid) {
-        console.log("Registering with", data);
-        router.push("/auth/onboarding");
-      }
-    }
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isEmailValid = await trigger("email");
+    if (isEmailValid) setStep("details");
   };
+
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isDetailsValid = await trigger(["firstName", "lastName", "phone", "country", "agreeToTerms"]);
+    if (isDetailsValid) setStep("password");
+  };
+
+  const handleRegisterSubmit = handleSubmit(async (data) => {
+    console.log("Registering with", data);
+    router.push("/auth/onboarding");
+  });
 
   const isPasswordStep = step === "password";
   const isEmailStep = step === "email";
@@ -91,7 +92,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(handleContinue)} className="flex flex-col gap-[40px]">
+              <form onSubmit={handleEmailSubmit} className="flex flex-col gap-[40px]">
                 <AuthInput
                   name="email"
                   label="Enter email address"
@@ -113,7 +114,7 @@ export default function RegisterPage() {
           )}
 
           {step === "details" && (
-            <form onSubmit={handleSubmit(handleContinue)} className="flex flex-col gap-[40px]">
+            <form onSubmit={handleDetailsSubmit} className="flex flex-col gap-[40px]">
               <div className="flex flex-col gap-[16px]">
                 <AuthInput
                   name="firstName"
@@ -165,7 +166,7 @@ export default function RegisterPage() {
           )}
 
           {step === "password" && (
-            <form onSubmit={handleSubmit(handleContinue)} className="flex flex-col gap-[40px] w-full max-w-[400px] mx-auto">
+            <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-[40px] w-full max-w-[400px] mx-auto">
               <div className="flex flex-col gap-[16px]">
                 <AuthInput
                   name="password"

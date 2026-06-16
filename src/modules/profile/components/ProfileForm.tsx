@@ -120,13 +120,16 @@ export const ProfileForm = () => {
       </ProfileFormRow>
 
       {/* Save Button */}
-      <div className="pt-[24px]">
-        <AppButton
-          variant="app-primary"
-          className="h-[44px] px-[32px] text-[14px]"
-        >
-          Save changes
-        </AppButton>
+      <div className="flex items-start gap-[40px] pt-[24px]">
+        <div className="w-[160px] shrink-0" />
+        <div className="flex-1">
+          <AppButton
+            variant="app-primary"
+            className="h-[44px] px-[32px] text-[14px]"
+          >
+            Save changes
+          </AppButton>
+        </div>
       </div>
     </div>
   );
