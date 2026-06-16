@@ -103,7 +103,7 @@ export default function CreateCourseView() {
   useEffect(() => {
     if (step === 6) {
       const timer = setTimeout(() => {
-        router.push("/courses");
+        router.push("/courses/builder");
       }, 3000);
       return () => clearTimeout(timer);
     }
