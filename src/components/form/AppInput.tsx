@@ -73,12 +73,13 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
               props.onBlur?.(e);
             }}
             className={cn(
-              "h-[44px] bg-sd-grey-1 border-sd-grey-6 px-[16px] py-[12px] text-body-sm placeholder:text-sd-grey-9 tracking-[-0.28px] focus-visible:ring-0 focus-visible:border-sd-grey-7 transition-all",
-              (isFocused || hasValue) && "border-[1.5px] border-sd-grey-7",
+              "h-[44px] bg-sd-grey-1 border-sd-grey-6 px-[16px] py-[12px] text-body-sm placeholder:text-sd-grey-9 tracking-[-0.28px] focus-visible:ring-0 focus-visible:outline-none transition-all",
+              hasValue && !isFocused && "border-[1.5px] border-sd-grey-7",
+              isFocused && "border-[1.5px] border-sd-blue ring-1 ring-sd-blue/20",
               leftElement && "rounded-l-none",
               (rightElement || isPassword) && "pr-[60px]",
-              error && "border-[1.5px] border-[#FF5025] focus-visible:border-[#FF5025]",
-              isSuccess && "border-[1.5px] border-[#008500] focus-visible:border-[#008500]",
+              error && "border-[1.5px] border-[#FF5025] focus-visible:border-[#FF5025] ring-0",
+              isSuccess && "border-[1.5px] border-[#008500] focus-visible:border-[#008500] ring-0",
               className
             )}
             {...props}

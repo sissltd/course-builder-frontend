@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 export function proxy(request: NextRequest) {
   const isProtectedRoute = (pathname: string) => {
     // Protect specific paths
-    if (['/profile'].includes(pathname)) {
+    if (['/profilessss'].includes(pathname)) {
       return true;
     }
     // Protect all paths under /dashboard and /api

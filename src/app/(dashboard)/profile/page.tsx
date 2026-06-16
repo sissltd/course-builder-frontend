@@ -1,10 +1,11 @@
 import React from "react";
+import { ProfileView } from "@/modules/profile/ProfileView";
 
 export default function ProfilePage() {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-display-xs font-semibold text-sd-grey-12">Profile</h1>
-      <p className="text-body-lg text-sd-grey-11">Manage your personal information.</p>
+    <div className="flex flex-col gap-[24px]">
+      <h1 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Profile</h1>
+      <ProfileView />
     </div>
   );
 }

@@ -30,9 +30,9 @@ const sidebarLinks = [
 ];
 
 const bottomLinks = [
-  { name: "Profile", href: "/dashboard/profile", icon: User },
-  { name: "Settings", href: "/dashboard/settings", icon: Setting2 },
-  { name: "Help", href: "/dashboard/help", icon: I24Support },
+  { name: "Profile", href: "/profile", icon: User },
+  { name: "Settings", href: "/settings", icon: Setting2 },
+  { name: "Help", href: "/help", icon: I24Support },
 ];
 
 export const DashboardSidebar = () => {
