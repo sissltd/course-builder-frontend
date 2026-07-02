@@ -1,18 +1,18 @@
 import React from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox as ShadcnCheckbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-interface AppCheckboxProps extends React.ComponentProps<typeof Checkbox> {
+interface CheckboxProps extends React.ComponentProps<typeof ShadcnCheckbox> {
   label?: string;
   error?: string;
 }
 
-export const AppCheckbox = React.forwardRef<HTMLButtonElement, AppCheckboxProps>(
+export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
   ({ className, label, id, error, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-start gap-[12px]">
-          <Checkbox
+          <ShadcnCheckbox
             ref={ref}
             id={id}
             className={cn(
@@ -36,4 +36,4 @@ export const AppCheckbox = React.forwardRef<HTMLButtonElement, AppCheckboxProps>
   }
 );
 
-AppCheckbox.displayName = "AppCheckbox";
+Checkbox.displayName = "Checkbox";

@@ -3,6 +3,7 @@
 import React from "react";
 import { ArrowRight2, Add } from "iconsax-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/shared/Button";
 
 export type BuilderStep = 
   | "information"
@@ -51,6 +52,7 @@ export const BuilderSidebar = ({
         return (
           <div key={step.id} className="flex flex-col w-full">
             <button
+              type="button"
               onClick={() => onChangeStep(step.id)}
               className={cn(
                 "w-full h-[44px] flex items-center justify-between px-[10px] rounded-[12px] transition-colors text-left",
@@ -85,6 +87,7 @@ export const BuilderSidebar = ({
                   const isSelected = activeModuleIndex === idx;
                   return (
                     <button
+                      type="button"
                       key={m.id}
                       onClick={() => onChangeActiveModuleIndex?.(idx)}
                       className="flex items-center gap-[12px] h-[32px] text-left hover:text-[#0A60E1] transition-colors group w-full"
@@ -102,13 +105,15 @@ export const BuilderSidebar = ({
                     </button>
                   );
                 })}
-                <button
+                <Button
+                  variant="app-outline"
+                  isGhost
                   onClick={onAddModule}
-                  className="flex items-center gap-[6px] h-[32px] text-[14px] text-[#606060] hover:text-[#0A60E1] transition-colors pl-[2px] w-full text-left"
+                  className="h-[32px] text-[14px] text-[#606060] pl-[2px] justify-start"
+                  leftIcon={<Add size={16} variant="Linear" color="#606060" />}
                 >
-                  <Add size={16} variant="Linear" color="#606060" />
-                  <span>Add</span>
-                </button>
+                  Add
+                </Button>
               </div>
             )}
           </div>

@@ -7,29 +7,32 @@ import {
   ArrowLeft2, 
   ArrowRight2,
   ArrowDown2,
-
 } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import { AppInput } from "@/components/form/AppInput";
-import { AppTextarea } from "@/components/form/AppTextarea";
-
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  objectives: string[];
-  lessons: any[];
-  quizQuestions: any[];
-}
+import { FormInput } from "@/components/form/FormInput";
+import { FormTextarea } from "@/components/form/FormTextarea";
+import { Button } from "@/components/shared/Button";
+import { useAppDispatch, useAppSelector } from "@/redux";
+import { 
+  addModule, 
+  removeModule, 
+  updateModuleField, 
+  addObjectiveToModule, 
+  editObjectiveInModule, 
+  removeObjectiveFromModule,
+  Module
+} from "@/redux/slices/courseBuilderSlice";
+import { courseOutlineSchema } from "../utils/schemas";
 
 interface CourseOutlineProps {
-  modules: Module[];
-  setModules: React.Dispatch<React.SetStateAction<Module[]>>;
   onNext?: () => void;
   onBack?: () => void;
 }
 
-export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOutlineProps) => {
+export const CourseOutline = ({ onNext, onBack }: CourseOutlineProps) => {
+  const dispatch = useAppDispatch();
+  const modules = useAppSelector((state) => state.courseBuilder.modules);
+
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
 
   // Objectives form helper states
@@ -38,46 +41,36 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
   const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<{ moduleId: string; index: number } | null>(null);
   const [editingObjectiveValue, setEditingObjectiveValue] = useState("");
 
+  // Validation States
+  const [validationErrors, setValidationErrors] = useState<string | null>(null);
+  const [moduleErrors, setModuleErrors] = useState<Record<string, { title?: string; description?: string; objectives?: string }> | null>(null);
+
   const toggleModule = (id: string) => {
     setExpandedModuleId(expandedModuleId === id ? null : id);
   };
 
   const handleAddModule = () => {
+    dispatch(addModule());
     const newId = (modules.length + 1).toString();
-    const newModule: Module = {
-      id: newId,
-      title: "",
-      description: "",
-      objectives: [],
-      lessons: [],
-      quizQuestions: []
-    };
-    setModules([...modules, newModule]);
     setExpandedModuleId(newId);
   };
 
   const handleRemoveModule = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = modules.filter(m => m.id !== id);
-    setModules(updated);
+    dispatch(removeModule(id));
     if (expandedModuleId === id) {
       setExpandedModuleId(null);
     }
   };
 
   const handleUpdateModuleField = (id: string, field: "title" | "description", value: string) => {
-    setModules(modules.map(m => m.id === id ? { ...m, [field]: value } : m));
+    dispatch(updateModuleField({ id, field, value }));
   };
 
   // Objective Operations
   const handleAddObjective = (moduleId: string) => {
     if (newObjectiveValue.trim()) {
-      setModules(modules.map(m => {
-        if (m.id === moduleId) {
-          return { ...m, objectives: [...m.objectives, newObjectiveValue.trim()] };
-        }
-        return m;
-      }));
+      dispatch(addObjectiveToModule({ moduleId, objective: newObjectiveValue.trim() }));
       setNewObjectiveValue("");
       setIsAddingObjectiveForId(null);
     }
@@ -85,26 +78,51 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
 
   const handleSaveEditObjective = (moduleId: string, index: number) => {
     if (editingObjectiveValue.trim()) {
-      setModules(modules.map(m => {
-        if (m.id === moduleId) {
-          const updated = [...m.objectives];
-          updated[index] = editingObjectiveValue.trim();
-          return { ...m, objectives: updated };
-        }
-        return m;
-      }));
+      dispatch(editObjectiveInModule({ moduleId, index, objective: editingObjectiveValue.trim() }));
       setEditingObjectiveIndex(null);
       setEditingObjectiveValue("");
     }
   };
 
   const handleRemoveObjective = (moduleId: string, index: number) => {
-    setModules(modules.map(m => {
-      if (m.id === moduleId) {
-        return { ...m, objectives: m.objectives.filter((_, i) => i !== index) };
+    dispatch(removeObjectiveFromModule({ moduleId, index }));
+  };
+
+  const handleSaveAndContinue = () => {
+    const result = courseOutlineSchema.safeParse({ modules });
+    if (!result.success) {
+      const errors: Record<string, { title?: string; description?: string; objectives?: string }> = {};
+      let globalError = null;
+
+      result.error.issues.forEach((err) => {
+        if (err.path[0] === "modules" && typeof err.path[1] === "number") {
+          const index = err.path[1];
+          const field = err.path[2];
+          const mod = modules[index];
+          if (mod) {
+            if (!errors[mod.id]) errors[mod.id] = {};
+            if (field === "title") errors[mod.id].title = err.message;
+            if (field === "description") errors[mod.id].description = err.message;
+            if (field === "objectives") errors[mod.id].objectives = err.message;
+          }
+        } else {
+          globalError = err.message;
+        }
+      });
+      
+      setModuleErrors(errors);
+      setValidationErrors(globalError);
+      
+      const firstErrorModuleId = Object.keys(errors)[0];
+      if (firstErrorModuleId) {
+        setExpandedModuleId(firstErrorModuleId);
       }
-      return m;
-    }));
+      return;
+    }
+
+    setValidationErrors(null);
+    setModuleErrors(null);
+    onNext?.();
   };
 
   return (
@@ -159,12 +177,13 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
 
                   {/* Actions (Delete and Drag) */}
                   <div className="flex items-center gap-[20px]" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      onClick={(e) => handleRemoveModule(mod.id, e)}
-                      className="text-[#606060] hover:text-[#FF6B00] transition-colors"
+                    <Button 
+                      variant="app-outline"
+                      isGhost
+                      onClick={(e: React.MouseEvent) => handleRemoveModule(mod.id, e)}
                     >
                       <Trash size={20} variant="Linear" color="#FF6B00" />
-                    </button>
+                    </Button>
                     {/* Drag Handle */}
                     <div className="flex flex-col gap-[2px] opacity-35 cursor-grab">
                       <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
@@ -177,19 +196,23 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
                 {/* Accordion Content (Visible when Expanded) */}
                 {isExpanded && (
                   <div className="flex flex-col gap-[20px] w-full" onClick={(e) => e.stopPropagation()}>
-                    <AppInput 
+                    <FormInput
+                      name={`module_title_${mod.id}`}
                       label="Title"
                       placeholder="Enter a title for this module"
                       value={mod.title}
                       onChange={(e) => handleUpdateModuleField(mod.id, "title", e.target.value)}
+                      error={moduleErrors?.[mod.id]?.title}
                     />
 
-                    <AppTextarea 
+                    <FormTextarea
+                      name={`module_desc_${mod.id}`}
                       label="Description"
                       placeholder="Describe this module"
                       value={mod.description}
                       onChange={(e) => handleUpdateModuleField(mod.id, "description", e.target.value)}
                       rows={3}
+                      error={moduleErrors?.[mod.id]?.description}
                     />
 
                     {/* Learning Objectives Subsection */}
@@ -197,6 +220,9 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
                       <span className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">
                         Learning objectives
                       </span>
+                      {moduleErrors?.[mod.id]?.objectives && (
+                        <p className="text-caption-xs text-[#FF5025]">{moduleErrors[mod.id].objectives}</p>
+                      )}
 
                       <div className="flex flex-col gap-[12px]">
                         {mod.objectives.map((obj, objIdx) => {
@@ -205,29 +231,31 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
                             <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex items-center justify-between transition-all">
                               {isEditing ? (
                                 <div className="flex items-center gap-[12px] w-full">
-                                  <input 
+                                  <FormInput
+                                    name="editingObjectiveValue"
                                     value={editingObjectiveValue}
                                     onChange={(e) => setEditingObjectiveValue(e.target.value)}
-                                    className="flex-1 border-none focus:ring-0 focus:outline-none h-[40px] text-[14px] text-[#202020]"
-                                    autoFocus
-                                    onKeyDown={(e) => {
+                                    containerClassName="flex-1"
+                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                                       if (e.key === "Enter") handleSaveEditObjective(mod.id, objIdx);
                                       else if (e.key === "Escape") setEditingObjectiveIndex(null);
                                     }}
                                   />
                                   <div className="flex items-center gap-[12px] shrink-0">
-                                    <button 
+                                    <Button 
+                                      variant="app-outline"
+                                      isGhost
                                       onClick={() => handleSaveEditObjective(mod.id, objIdx)}
-                                      className="text-[14px] text-[#0A60E1] font-semibold hover:underline"
                                     >
                                       Save
-                                    </button>
-                                    <button 
+                                    </Button>
+                                    <Button 
+                                      variant="app-outline"
+                                      isGhost
                                       onClick={() => setEditingObjectiveIndex(null)}
-                                      className="text-[14px] text-[#606060] hover:underline"
                                     >
                                       Cancel
-                                    </button>
+                                    </Button>
                                   </div>
                                 </div>
                               ) : (
@@ -241,21 +269,23 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-[20px] shrink-0">
-                                    <button 
+                                    <Button 
+                                      variant="app-outline"
+                                      isGhost
                                       onClick={() => {
                                         setEditingObjectiveIndex({ moduleId: mod.id, index: objIdx });
                                         setEditingObjectiveValue(obj);
                                       }}
-                                      className="text-[14px] text-[#606060] tracking-[-0.28px] underline underline-offset-2 hover:text-[#202020]"
                                     >
                                       Edit
-                                    </button>
-                                    <button 
+                                    </Button>
+                                    <Button 
+                                      variant="app-outline"
+                                      isGhost
                                       onClick={() => handleRemoveObjective(mod.id, objIdx)}
-                                      className="text-[#606060] hover:text-[#FF6B00] transition-colors"
                                     >
                                       <Trash size={20} variant="Linear" color="#FF6B00" />
-                                    </button>
+                                    </Button>
                                     {/* Drag Handle */}
                                     <div className="flex flex-col gap-[2px] opacity-35 cursor-grab">
                                       <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
@@ -272,33 +302,34 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
                         {/* Inline Add Objective Input Field */}
                         {isAddingObjectiveForId === mod.id && (
                           <div className="flex items-center gap-[12px] h-[56px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
-                            <input 
+                            <FormInput
+                              name="newObjectiveValue"
                               value={newObjectiveValue}
                               onChange={(e) => setNewObjectiveValue(e.target.value)}
-                              placeholder="Enter learning objective"
-                              className="flex-1 border-none focus:ring-0 focus:outline-none h-[40px] text-[14px] text-[#202020]"
-                              autoFocus
-                              onKeyDown={(e) => {
+                              containerClassName="flex-1"
+                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                                 if (e.key === "Enter") handleAddObjective(mod.id);
                                 else if (e.key === "Escape") setIsAddingObjectiveForId(null);
                               }}
                             />
                             <div className="flex items-center gap-[12px] shrink-0">
-                              <button 
+                              <Button 
+                                variant="app-outline"
+                                isGhost
                                 onClick={() => handleAddObjective(mod.id)}
-                                className="text-[14px] text-[#0A60E1] font-semibold hover:underline"
                               >
                                 Save
-                              </button>
-                              <button 
+                              </Button>
+                              <Button 
+                                variant="app-outline"
+                                isGhost
                                 onClick={() => {
                                   setIsAddingObjectiveForId(null);
                                   setNewObjectiveValue("");
                                 }}
-                                className="text-[14px] text-[#606060] hover:underline"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -306,13 +337,15 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
 
                       {/* Add Objective Trigger Button */}
                       {isAddingObjectiveForId !== mod.id && (
-                        <button 
+                        <Button 
+                          variant="app-outline"
+                          isGhost
                           onClick={() => setIsAddingObjectiveForId(mod.id)}
-                          className="flex items-center gap-[6px] text-[#0A60E1] hover:text-[#0A50C5] transition-colors mt-[4px] self-start"
+                          leftIcon={<Add size={20} variant="Linear" color="#0A60E1" />}
+                          className="self-start mt-[4px]"
                         >
-                          <Add size={20} variant="Linear" color="#0A60E1" />
-                          <span className="text-[14px] font-semibold tracking-[-0.28px]">Add objective</span>
-                        </button>
+                          Add objective
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -323,31 +356,37 @@ export const CourseOutline = ({ modules, setModules, onNext, onBack }: CourseOut
         </div>
 
         {/* Add Module Button */}
-        <button 
+        <Button 
+          variant="app-outline"
+          isGhost
           onClick={handleAddModule}
-          className="flex items-center gap-[6px] text-[#0A60E1] hover:text-[#0A50C5] transition-colors self-start"
+          leftIcon={<Add size={20} variant="Linear" color="#0A60E1" />}
+          className="self-start"
         >
-          <Add size={20} variant="Linear" color="#0A60E1" />
-          <span className="text-[16px] font-semibold tracking-[-0.32px]">Add Module</span>
-        </button>
+          Add Module
+        </Button>
       </div>
+
+      {validationErrors && (
+        <p className="text-caption-xs text-[#FF5025] text-center">{validationErrors}</p>
+      )}
 
       {/* Footer Navigation */}
       <div className="flex items-center justify-between w-full pt-[24px]">
-        <button 
+        <Button 
+          variant="app-outline"
           onClick={onBack}
-          className="h-[44px] px-[24px] border border-[#0A60E1] text-[#0A60E1] rounded-[8px] flex items-center gap-[8px] hover:bg-[#0A60E1]/5 transition-colors"
+          leftIcon={<ArrowLeft2 size={24} variant="Linear" color="#0A60E1" />}
         >
-          <ArrowLeft2 size={24} variant="Linear" color="#0A60E1" />
-          <span className="text-[14px] font-medium tracking-[-0.28px]">Go back</span>
-        </button>
-        <button 
-          onClick={onNext}
-          className="h-[44px] px-[24px] bg-[#0A60E1] text-white rounded-[8px] flex items-center gap-[8px] hover:bg-[#0A50C5] transition-colors"
+          Go back
+        </Button>
+        <Button 
+          variant="app-primary"
+          onClick={handleSaveAndContinue}
+          rightIcon={<ArrowRight2 size={24} variant="Linear" color="#FFFFFF" />}
         >
-          <span className="text-[14px] font-medium tracking-[-0.28px]">Save & continue</span>
-          <ArrowRight2 size={24} variant="Linear" color="#FFFFFF" />
-        </button>
+          Save & continue
+        </Button>
       </div>
 
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { Bank } from "iconsax-react";
 import { SetupAccountModal } from "./SetupAccountModal";
 
@@ -25,13 +25,13 @@ export const BankAccountBanner = () => {
             </p>
           </div>
         </div>
-        <AppButton 
+        <Button 
           variant="app-primary" 
           className="h-[40px] px-[24px] text-[14px] shrink-0"
           onClick={() => setIsOpen(true)}
         >
           Setup
-        </AppButton>
+        </Button>
       </div>
 
       <SetupAccountModal isOpen={isOpen} onOpenChange={setIsOpen} />

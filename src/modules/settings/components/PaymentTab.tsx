@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Bank, Mobile } from "iconsax-react";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { AddPayoutAccount } from "./AddPayoutAccount";
 
 export const PaymentTab = () => {
@@ -56,13 +56,13 @@ export const PaymentTab = () => {
       </div>
 
       <div>
-        <AppButton 
+        <Button 
           variant="app-outline" 
           className="text-[#0063EF] border-[#0063EF] font-medium h-[40px] px-[16px] hover:bg-[#F4F9FF]"
           onClick={() => setIsAddAccountOpen(true)}
         >
           + Add account
-        </AppButton>
+        </Button>
       </div>
 
       <AddPayoutAccount 

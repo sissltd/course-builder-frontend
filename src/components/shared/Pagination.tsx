@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface AppPaginationProps {
-  pageIndex: number; // 0-indexed
+interface PaginationProps {
+  pageIndex: number;
   pageSize: number;
   pageCount: number;
   canPreviousPage: boolean;
@@ -25,7 +25,7 @@ interface AppPaginationProps {
   className?: string;
 }
 
-export function AppPagination({
+export function Pagination({
   pageIndex,
   pageSize,
   pageCount,
@@ -37,11 +37,10 @@ export function AppPagination({
   setPageSize,
   pageSizeOptions = [10, 20, 30, 40, 50],
   className,
-}: AppPaginationProps) {
-  // Helper to generate page ranges
+}: PaginationProps) {
   const getVisiblePages = () => {
     const total = pageCount;
-    const current = pageIndex + 1; // 1-indexed for logic
+    const current = pageIndex + 1;
     if (total <= 5) {
       return Array.from({ length: total }, (_, i) => i + 1);
     }
@@ -58,7 +57,6 @@ export function AppPagination({
 
   return (
     <div className={cn("flex items-center justify-between w-full mt-4 flex-wrap gap-4", className)}>
-      {/* Left: Page Size Select */}
       <div className="flex items-center">
         <Select
           value={String(pageSize)}
@@ -81,9 +79,7 @@ export function AppPagination({
         </Select>
       </div>
 
-      {/* Right: Page Navigation Buttons */}
       <div className="flex items-center gap-[8px]">
-        {/* Previous */}
         <button
           onClick={previousPage}
           disabled={!canPreviousPage}
@@ -97,7 +93,6 @@ export function AppPagination({
           Previous
         </button>
 
-        {/* Page numbers */}
         {visiblePages.map((page) => {
           const isActive = pageIndex === page - 1;
           return (
@@ -116,7 +111,6 @@ export function AppPagination({
           );
         })}
 
-        {/* Next */}
         <button
           onClick={nextPage}
           disabled={!canNextPage}

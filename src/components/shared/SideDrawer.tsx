@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-interface AppSideDrawerProps {
+interface SideDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title?: React.ReactNode;
@@ -23,7 +23,7 @@ interface AppSideDrawerProps {
   showCloseButton?: boolean;
 }
 
-export const AppSideDrawer = ({
+export const SideDrawer = ({
   isOpen,
   onOpenChange,
   title,
@@ -33,7 +33,7 @@ export const AppSideDrawer = ({
   className,
   side = "right",
   showCloseButton = true,
-}: AppSideDrawerProps) => {
+}: SideDrawerProps) => {
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent

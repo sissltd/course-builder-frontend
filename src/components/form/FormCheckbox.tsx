@@ -1,34 +1,28 @@
 import React from "react";
-import { useFormContext, Controller } from "react-hook-form";
-import { AppCheckbox } from "@/components/shared/AppCheckbox";
+import { useFormContext, useController } from "react-hook-form";
+import { Checkbox } from "@/components/shared/Checkbox";
 
-interface FormCheckboxProps extends React.ComponentProps<typeof AppCheckbox> {
+interface FormCheckboxProps extends React.ComponentProps<typeof Checkbox> {
   name: string;
 }
 
 export const FormCheckbox = ({ name, label, className, ...props }: FormCheckboxProps) => {
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext();
-
-  const error = errors[name]?.message as string;
+  const { control, formState: { errors } } = useFormContext();
+  const { field } = useController({ name, control });
+  const error = errors[name]?.message as string | undefined;
 
   return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field }) => (
-        <AppCheckbox
-          {...props}
-          id={name}
-          checked={field.value}
-          onCheckedChange={field.onChange}
-          className={className}
-          label={label}
-          error={error || props.error}
-        />
-      )}
+    <Checkbox
+      id={name}
+      label={label}
+      className={className}
+      error={error}
+      {...props}
+      checked={field.value ?? false}
+      onCheckedChange={(checked: boolean) => {
+        field.onChange(checked);
+        props.onCheckedChange?.(checked);
+      }}
     />
   );
 };

@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 
 export interface Draft {
   id: string;

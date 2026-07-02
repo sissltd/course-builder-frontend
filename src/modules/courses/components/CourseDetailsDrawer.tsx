@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { AppSideDrawer } from "@/components/shared/AppSideDrawer";
+import { SideDrawer } from "@/components/shared/SideDrawer";
 import { MyCourse } from "@/modules/dashboard/columns/my-courses";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "iconsax-react";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 
 interface CourseDetailsDrawerProps {
   course: MyCourse | null;
@@ -87,19 +87,19 @@ export const CourseDetailsDrawer = ({
   const showReviewerNote = course.status === "Rejected" || course.status === "Needs revision";
 
   return (
-    <AppSideDrawer
+    <SideDrawer
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Course details"
       footer={showReviewerNote ? (
-        <AppButton 
+        <Button 
           variant="app-primary" 
           className="w-full h-[44px]"
           onClick={() => onResolveIssues?.(course)}
           rightIcon={<ArrowRight size={20} variant="Linear" color="#FFF" />}
         >
           {course.status === "Rejected" ? "Review changes" : "Resolve issues"}
-        </AppButton>
+        </Button>
       ) : null}
     >
       <div className="flex flex-col gap-[32px]">
@@ -151,6 +151,6 @@ export const CourseDetailsDrawer = ({
           <span className="text-[16px] text-[#202020] tracking-[-0.32px] leading-[24px]">{course.lastEdited}</span>
         </div>
       </div>
-    </AppSideDrawer>
+    </SideDrawer>
   );
 };

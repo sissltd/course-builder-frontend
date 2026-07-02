@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Eye, EyeSlash } from "iconsax-react";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { ChangeEmailFlow } from "./ChangeEmailFlow";
 
 const PasswordInput = ({ label }: { label: string }) => {
@@ -52,13 +52,13 @@ export const LoginSecurityTab = () => {
             className="w-full h-[44px] px-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#636363] bg-sd-grey-1 outline-none cursor-default"
           />
           <div className="flex justify-end">
-            <AppButton 
+            <Button 
               variant="app-primary" 
               className="h-[44px] px-[24px] text-[14px]"
               onClick={() => setIsChangeEmailOpen(true)}
             >
               Change email
-            </AppButton>
+            </Button>
           </div>
         </div>
       </div>
@@ -74,9 +74,9 @@ export const LoginSecurityTab = () => {
           <PasswordInput label="Re-enter new password" />
         </div>
         <div className="flex justify-end">
-          <AppButton variant="app-primary" className="h-[44px] px-[24px] text-[14px]">
+          <Button variant="app-primary" className="h-[44px] px-[24px] text-[14px]">
             Save changes
-          </AppButton>
+          </Button>
         </div>
       </div>
 

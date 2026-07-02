@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { AppSideDrawer } from "@/components/shared/AppSideDrawer";
+import { SideDrawer } from "@/components/shared/SideDrawer";
 import { Transaction } from "@/modules/dashboard/columns/transactions";
 import { Copy, ArrowDown } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 
 interface TransactionDetailsDrawerProps {
   transaction: Transaction | null;
@@ -74,18 +74,18 @@ export const TransactionDetailsDrawer = ({
   if (!transaction) return null;
 
   return (
-    <AppSideDrawer
+    <SideDrawer
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Transaction details"
       footer={
-        <AppButton 
+        <Button 
           variant="app-primary" 
           className="w-full h-[44px] text-[14px]"
           rightIcon={<ArrowDown size={20} variant="Linear" color="#FFF" />}
         >
           Download receipt
-        </AppButton>
+        </Button>
       }
     >
       <div className="flex flex-col gap-[24px]">
@@ -135,6 +135,6 @@ export const TransactionDetailsDrawer = ({
           />
         </div>
       </div>
-    </AppSideDrawer>
+    </SideDrawer>
   );
 };

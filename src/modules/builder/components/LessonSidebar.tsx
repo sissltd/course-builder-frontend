@@ -3,6 +3,7 @@
 import React from "react";
 import { Add } from "iconsax-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/shared/Button";
 import { Lesson } from "./ModulesStep";
 
 interface LessonSidebarProps {
@@ -29,6 +30,7 @@ export const LessonSidebar = ({
           const isActive = lesson.id === activeLessonId;
           return (
             <button
+              type="button"
               key={lesson.id}
               onClick={() => onSelectLesson(lesson.id)}
               className={cn(
@@ -57,13 +59,15 @@ export const LessonSidebar = ({
 
       {/* Add Lesson Action */}
       <div className="flex flex-col gap-[10px] border-t border-[#F0F0F0] pt-[16px] mt-auto">
-        <button
+        <Button
+          variant="app-outline"
+          isGhost
           onClick={() => onAddLesson("video")}
-          className="flex items-center gap-[6px] text-[14px] text-[#606060] hover:text-[#0A60E1] transition-colors h-[32px]"
+          className="h-[32px] text-[14px] text-[#606060] justify-start"
+          leftIcon={<Add size={18} variant="Linear" color="#606060" />}
         >
-          <Add size={18} variant="Linear" color="#606060" />
-          <span>Add lesson</span>
-        </button>
+          Add lesson
+        </Button>
       </div>
 
     </div>

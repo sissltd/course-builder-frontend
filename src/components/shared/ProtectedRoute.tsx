@@ -35,7 +35,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         setIsAuthenticated(true); // Assuming valid for now
       } else {
         setIsAuthenticated(false);
-        router.push('/login'); // Redirect to login page if not authenticated
+        router.push('/auth/login');
       }
     };
 

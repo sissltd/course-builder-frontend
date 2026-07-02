@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
-import { AppTextarea } from "@/components/form/AppTextarea";
+import { FormTextarea } from "@/components/form/FormTextarea";
 import { Edit, Trash, TickCircle, InfoCircle } from "iconsax-react";
 import { MyCourse } from "@/modules/dashboard/columns/my-courses";
 
@@ -18,7 +18,7 @@ interface ActionModalProps {
 export const MoveToDraftModal = ({ course, isOpen, onOpenChange, onConfirm }: ActionModalProps) => {
   if (!course) return null;
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -33,22 +33,22 @@ export const MoveToDraftModal = ({ course, isOpen, onOpenChange, onConfirm }: Ac
           </p>
         </div>
         <div className="flex gap-[12px] w-full">
-          <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
+          <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
             Cancel
-          </AppButton>
-          <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={onConfirm}>
+          </Button>
+          <Button variant="app-primary" className="flex-1 h-[44px]" onClick={onConfirm}>
             Move to draft
-          </AppButton>
+          </Button>
         </div>
       </div>
-    </AppModal>
+    </Modal>
   );
 };
 
 export const DeleteCourseModal = ({ course, isOpen, onOpenChange, onConfirm }: ActionModalProps) => {
   if (!course) return null;
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
@@ -63,15 +63,15 @@ export const DeleteCourseModal = ({ course, isOpen, onOpenChange, onConfirm }: A
           </p>
         </div>
         <div className="flex gap-[12px] w-full">
-          <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
+          <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
             Cancel
-          </AppButton>
-          <AppButton variant="app-primary" className="flex-1 h-[44px] bg-[#FF5025] border-[#FF5025] hover:bg-[#D4401D]" onClick={onConfirm}>
+          </Button>
+          <Button variant="app-primary" className="flex-1 h-[44px] bg-[#FF5025] border-[#FF5025] hover:bg-[#D4401D]" onClick={onConfirm}>
             Delete course
-          </AppButton>
+          </Button>
         </div>
       </div>
-    </AppModal>
+    </Modal>
   );
 };
 
@@ -79,14 +79,15 @@ export const AppealModal = ({ course, isOpen, onOpenChange, onConfirm }: ActionM
   const [reason, setReason] = useState("");
   if (!course) return null;
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Request for an appeal"
       description="Kindly provide your reason for an appeal request"
     >
       <div className="flex flex-col gap-[24px] mt-[8px]">
-        <AppTextarea 
+        <FormTextarea
+          name="appealReason"
           label="Reason for appeal"
           placeholder="Enter your reason here..."
           value={reason}
@@ -95,26 +96,26 @@ export const AppealModal = ({ course, isOpen, onOpenChange, onConfirm }: ActionM
           rows={5}
         />
         <div className="flex gap-[12px] w-full">
-          <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
+          <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
             Cancel
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
             variant="app-primary" 
             className="flex-1 h-[44px]" 
             disabled={!reason}
             onClick={onConfirm}
           >
             Send request
-          </AppButton>
+          </Button>
         </div>
       </div>
-    </AppModal>
+    </Modal>
   );
 };
 
 export const AppealSuccessModal = ({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) => {
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       showCloseButton={false}
@@ -129,10 +130,10 @@ export const AppealSuccessModal = ({ isOpen, onOpenChange }: { isOpen: boolean; 
             Your appeal request has been successfully sent. You will be notified via email on the outcome of your request.
           </p>
         </div>
-        <AppButton variant="app-primary" className="w-full h-[44px]" onClick={() => onOpenChange(false)}>
+        <Button variant="app-primary" className="w-full h-[44px]" onClick={() => onOpenChange(false)}>
           Done
-        </AppButton>
+        </Button>
       </div>
-    </AppModal>
+    </Modal>
   );
 };

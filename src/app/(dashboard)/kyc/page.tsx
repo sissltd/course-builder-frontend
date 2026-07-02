@@ -1,6 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import KYCView from "@/modules/kyc/KYCView";
 
 export default function KYCPage() {
-  return <KYCView />;
+  return (
+    <Suspense>
+      <KYCView />
+    </Suspense>
+  );
 }

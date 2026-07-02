@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 
 interface SocialLoginProps {
   label?: string;
@@ -10,7 +10,7 @@ interface SocialLoginProps {
 
 export const SocialLogin = ({ label = "Continue with Google", onClick, type = "google" }: SocialLoginProps) => {
   return (
-    <AppButton
+    <Button
       variant={type === "google" ? "google" : "apple"}
       className="w-full h-[44px] gap-[8px]"
       onClick={onClick}
@@ -25,6 +25,6 @@ export const SocialLogin = ({ label = "Continue with Google", onClick, type = "g
       }
     >
       {label}
-    </AppButton>
+    </Button>
   );
 };

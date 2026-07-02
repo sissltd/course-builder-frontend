@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState } from "react";
 import Image from "next/image";
-import { AppModal } from "@/components/shared/AppModal";
+import { Modal } from "@/components/shared/Modal";
 import { Play, Pause, CloseCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +50,7 @@ export const VideoPlayerModal = ({
   };
 
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       showCloseButton={false}
@@ -120,6 +120,6 @@ export const VideoPlayerModal = ({
           </div>
         </div>
       </div>
-    </AppModal>
+    </Modal>
   );
 };

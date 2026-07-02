@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, ResetPasswordFormData } from "@/modules/auth/utils/schemas";
+import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 
 export default function ResetPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false);
@@ -22,7 +23,9 @@ export default function ResetPasswordPage() {
     },
   });
 
-  const { handleSubmit } = methods;
+  const { handleSubmit, watch } = methods;
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
 
   const onSubmit = (data: ResetPasswordFormData) => {
     console.log("Resetting password with", data);
@@ -82,6 +85,7 @@ export default function ResetPasswordPage() {
               required
               type="password"
             />
+            <PasswordStrength password={password} confirmPassword={confirmPassword} />
           </div>
           
           <div className="flex flex-col gap-[16px]">

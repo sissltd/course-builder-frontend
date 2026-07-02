@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
-import { AppInput } from "@/components/form/AppInput";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
+import { FormInput } from "@/components/form/FormInput";
 import { Bank, InfoCircle, TickCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 
@@ -38,33 +38,34 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
   return (
     <>
       {step === "amount" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           title="Withdraw Earnings"
           className="sm:max-w-[500px]"
         >
           <div className="flex flex-col gap-[20px]">
-            <AppInput
+            <FormInput
               label="Enter amount"
               placeholder="$0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              name="withdrawalAmount"
             />
             <div className="flex gap-[12px]">
-              <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
+              <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
                 Cancel
-              </AppButton>
-              <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+              </Button>
+              <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
                 Continue
-              </AppButton>
+              </Button>
             </div>
           </div>
-        </AppModal>
+        </Modal>
       )}
 
       {step === "no-account" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           title="Withdraw Earnings"
@@ -75,34 +76,35 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
              </div>
              <div className="flex flex-col gap-[8px]">
                 <p className="text-[16px] font-medium text-[#202020]">Ooops!, please add an account to continue</p>
-                <AppButton variant="app-outline" className="w-fit mx-auto h-[40px] px-[20px] text-[#0063EF] border-[#0063EF]">
+                <Button variant="app-outline" className="w-fit mx-auto h-[40px] px-[20px] text-[#0063EF] border-[#0063EF]">
                    Add bank account
-                </AppButton>
+                </Button>
              </div>
              <div className="flex gap-[12px] w-full">
-              <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("amount")}>
+              <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("amount")}>
                 Cancel
-              </AppButton>
-              <AppButton variant="app-primary" className="flex-1 h-[44px]" disabled>
+              </Button>
+              <Button variant="app-primary" className="flex-1 h-[44px]" disabled>
                 Withdraw
-              </AppButton>
+              </Button>
             </div>
           </div>
-        </AppModal>
+        </Modal>
       )}
 
       {step === "select-account" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           title="Withdraw Earnings"
         >
           <div className="flex flex-col gap-[20px]">
-             <AppInput
+             <FormInput
               label="Enter amount"
               placeholder="$0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              name="withdrawalAmount"
             />
             <div className="flex flex-col gap-[12px]">
                 <p className="text-[14px] font-medium text-[#202020]">Select available account</p>
@@ -122,19 +124,19 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
                 </div>
             </div>
             <div className="flex gap-[12px]">
-              <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("amount")}>
+              <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("amount")}>
                 Cancel
-              </AppButton>
-              <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+              </Button>
+              <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
                 Withdraw
-              </AppButton>
+              </Button>
             </div>
           </div>
-        </AppModal>
+        </Modal>
       )}
 
       {step === "confirm" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           title="Confirm withdrawal"
@@ -143,24 +145,25 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
              <p className="text-[14px] text-[#606060] leading-[20px]">
                 A one time confirmation code has been sent to your email <span className="text-[#202020] font-medium">emmanuelosaite@gmail.com</span>. Kindly provide this code to complete the process.
              </p>
-             <AppInput
+             <FormInput
               label="OTP"
               placeholder="Enter code"
+              name="otp"
             />
             <div className="flex gap-[12px]">
-              <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("select-account")}>
+              <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("select-account")}>
                 Cancel
-              </AppButton>
-              <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+              </Button>
+              <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
                 Confirm
-              </AppButton>
+              </Button>
             </div>
           </div>
-        </AppModal>
+        </Modal>
       )}
 
       {step === "success" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           showCloseButton={false}
@@ -175,11 +178,11 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
                     Your withdrawal request is being processed. You&apos;ll receive a notification once the funds are available in your account.
                 </p>
              </div>
-             <AppButton variant="app-primary" className="w-full h-[44px]" onClick={reset}>
+             <Button variant="app-primary" className="w-full h-[44px]" onClick={reset}>
                 Close
-             </AppButton>
+             </Button>
           </div>
-        </AppModal>
+        </Modal>
       )}
     </>
   );

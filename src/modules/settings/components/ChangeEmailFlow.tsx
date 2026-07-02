@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { TickCircle } from "iconsax-react";
-import { AppInput } from "@/components/form/AppInput";
 
 interface ChangeEmailFlowProps {
   isOpen: boolean;
@@ -34,64 +33,64 @@ export const ChangeEmailFlow = ({ isOpen, onOpenChange, onSuccess }: ChangeEmail
 
   return (
     <>
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "password"}
         onOpenChange={onOpenChange}
         title="Change email address"
         description="Provide your password to change your email address"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <AppInput label="Password" placeholder="Enter your password" type="password" />
+          <FormInput name="password" label="Password" placeholder="Enter your password" type="password" />
           <div className="flex gap-[12px]">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => onOpenChange(false)}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
               Continue
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "new-email"}
         onOpenChange={() => setStep("password")}
         title="Enter a new email"
         description="Enter your new email address"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <AppInput label="Email address" placeholder="Enter new email address" />
+          <FormInput name="emailAddress" label="Email address" placeholder="Enter new email address" />
           <div className="flex gap-[12px]">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("password")}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("password")}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
               Continue
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "verify"}
         onOpenChange={() => setStep("new-email")}
         title="Verify email"
         description="Kindly enter the code sent to your email to verify this change"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <AppInput label="Verification code" placeholder="Enter code" />
+          <FormInput name="verificationCode" label="Verification code" placeholder="Enter code" />
           <div className="flex gap-[12px]">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("new-email")}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("new-email")}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleNext}>
               Verify
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "success"}
         onOpenChange={handleClose}
         showCloseButton={false}
@@ -106,11 +105,11 @@ export const ChangeEmailFlow = ({ isOpen, onOpenChange, onSuccess }: ChangeEmail
               Congratulations Emmanuel, your email has been successfully updated.
             </p>
           </div>
-          <AppButton variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
+          <Button variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
             Close
-          </AppButton>
+          </Button>
         </div>
-      </AppModal>
+      </Modal>
     </>
   );
 };

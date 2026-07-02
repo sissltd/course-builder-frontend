@@ -3,10 +3,9 @@
 import React, { useRef, useState } from "react";
 import { Trash, Logout, InfoCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
-import { AppInput } from "@/components/form/AppInput";
 import { useRouter } from "next/navigation";
 
 export const AccountSettingsTab = () => {
@@ -78,13 +77,13 @@ export const AccountSettingsTab = () => {
           <p className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px] leading-[24px]">Log out</p>
           <p className="text-[14px] text-[#636363] leading-[20px]">Temporary log out of your account.</p>
         </div>
-        <AppButton 
+        <Button 
           variant="app-outline" 
           className="text-[#F05A25] border-[#F05A25] font-medium h-[44px] px-[24px] hover:bg-[#FFF0ED]"
           onClick={() => setIsLogoutOpen(true)}
         >
           Log out
-        </AppButton>
+        </Button>
       </div>
 
       <div className="h-px bg-[#F0F0F0]" />
@@ -97,20 +96,20 @@ export const AccountSettingsTab = () => {
             <p className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px] leading-[24px]">Delete account</p>
             <p className="text-[14px] text-[#636363] leading-[20px]">This process is not reversable and cannot be undone</p>
           </div>
-          <AppButton 
+          <Button 
             variant="app-outline" 
             className="text-[#F05A25] border-[#F05A25] font-medium h-[44px] px-[24px] hover:bg-[#FFF0ED]"
             onClick={() => setIsDeleteOpen(true)}
           >
             Delete account
-          </AppButton>
+          </Button>
         </div>
       </div>
 
 
 
       {/* Logout Modal */}
-      <AppModal
+      <Modal
         isOpen={isLogoutOpen}
         onOpenChange={setIsLogoutOpen}
       >
@@ -125,18 +124,18 @@ export const AccountSettingsTab = () => {
             </p>
           </div>
           <div className="flex gap-[12px] w-full">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setIsLogoutOpen(false)}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setIsLogoutOpen(false)}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]">
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]">
               Log out
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
       {/* Delete Account Modal */}
-      <AppModal
+      <Modal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
       >
@@ -150,17 +149,17 @@ export const AccountSettingsTab = () => {
               Are you sure you want to delete your account? Once this process is initiated you won’t be able to undo it.
             </p>
           </div>
-          <AppInput label="Password" placeholder="Enter your password" type="password" className="w-full" />
+          <FormInput name="deletePassword" label="Password" placeholder="Enter your password" type="password" className="w-full" />
           <div className="flex gap-[12px] w-full">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setIsDeleteOpen(false)}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setIsDeleteOpen(false)}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px] bg-[#F05A25] border-[#F05A25] hover:bg-[#D4481D]">
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px] bg-[#F05A25] border-[#F05A25] hover:bg-[#D4481D]">
               Delete account
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
     </div>
   );
 };

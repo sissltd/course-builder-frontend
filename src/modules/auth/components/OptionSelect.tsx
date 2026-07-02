@@ -5,6 +5,7 @@ interface OptionSelectProps {
   label: string;
   selected: boolean;
   onSelect: () => void;
+  error?: string;
 }
 
 export const OptionSelect = ({ label, selected, onSelect }: OptionSelectProps) => {

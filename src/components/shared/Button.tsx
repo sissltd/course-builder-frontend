@@ -1,8 +1,8 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button as ShadcnButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface AppButtonProps extends React.ComponentProps<typeof Button> {
+interface ButtonProps extends React.ComponentProps<typeof ShadcnButton> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   isLoading?: boolean;
@@ -10,7 +10,7 @@ interface AppButtonProps extends React.ComponentProps<typeof Button> {
   isGhost?: boolean;
 }
 
-export const AppButton = ({
+export const Button = ({
   children,
   className,
   leftIcon,
@@ -22,9 +22,9 @@ export const AppButton = ({
   variant = "app-primary",
   size = "app",
   ...props
-}: AppButtonProps) => {
+}: ButtonProps) => {
   return (
-    <Button
+    <ShadcnButton
       variant={variant}
       size={size}
       isSelected={isSelected}
@@ -58,6 +58,6 @@ export const AppButton = ({
       {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
       {children}
       {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
-    </Button>
+    </ShadcnButton>
   );
 };

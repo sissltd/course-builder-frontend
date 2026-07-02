@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { TickCircle } from "iconsax-react";
 
 interface RequestSuccessModalProps {
@@ -12,7 +12,7 @@ interface RequestSuccessModalProps {
 
 export const RequestSuccessModal = ({ isOpen, onOpenChange }: RequestSuccessModalProps) => {
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       showCloseButton={false}
@@ -32,14 +32,14 @@ export const RequestSuccessModal = ({ isOpen, onOpenChange }: RequestSuccessModa
           </p>
         </div>
         
-        <AppButton
+        <Button
           variant="app-primary"
           className="w-full"
           onClick={() => onOpenChange(false)}
         >
           Go to Reservation
-        </AppButton>
+        </Button>
       </div>
-    </AppModal>
+    </Modal>
   );
 };

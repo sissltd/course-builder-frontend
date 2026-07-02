@@ -1,5 +1,5 @@
 import React from "react";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { Add, Magicpen } from "iconsax-react";
 
 export const JourneyCard = () => {

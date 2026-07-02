@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { AppButton } from "@/components/shared/AppButton";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/shared/Button";
 import { 
   ArrowLeft, 
   SearchNormal1, 
@@ -11,17 +13,18 @@ import {
   Magicpen,
   Timer1,
   Play,
-  ArrowRight,
   InfoCircle,
-  CloseCircle,
 } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import { AppInput } from "@/components/form/AppInput";
-import { AppCheckbox } from "@/components/shared/AppCheckbox";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppTextarea } from "@/components/form/AppTextarea";
+import { FormInput } from "@/components/form/FormInput";
+import { FormCheckbox } from "@/components/form/FormCheckbox";
+import { Modal } from "@/components/shared/Modal";
+import { FormTextarea } from "@/components/form/FormTextarea";
 import { VideoPlayerModal } from "./components/VideoPlayerModal";
 import { RequestTopicModal } from "@/modules/reservation/components/RequestTopicModal";
+import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
+import { useAppDispatch } from "@/redux";
+import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
 
 const CATEGORIES = [
   "Software Development",
@@ -78,15 +81,10 @@ const VIDEOS = [
 
 export default function CreateCourseView() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
-  const [agreed, setAgreed] = useState(false);
-  const [method, setMethod] = useState<string | null>(null);
   const [searchCategory, setSearchCategory] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTopic, setSearchTopic] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
 
@@ -96,6 +94,34 @@ export default function CreateCourseView() {
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isRequestSuccessOpen, setIsRequestSuccessOpen] = useState(false);
+
+  const methods = useForm<CourseCreateFormData>({
+    resolver: zodResolver(courseCreateSchema),
+    mode: "onBlur",
+    defaultValues: {
+      legalAgreement: false,
+      creationMethod: "",
+      category: "",
+      topic: "",
+      courseTitle: "",
+      courseDescription: "",
+    },
+  });
+
+  const {
+    handleSubmit,
+    trigger,
+    watch,
+    setValue,
+    formState: { errors },
+  } = methods;
+
+  const agreed = watch("legalAgreement");
+  const method = watch("creationMethod");
+  const selectedCategory = watch("category");
+  const selectedTopic = watch("topic");
+  const courseTitle = watch("courseTitle");
+  const courseDescription = watch("courseDescription");
 
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => Math.max(0, s - 1));
@@ -126,6 +152,39 @@ export default function CreateCourseView() {
   };
 
   const isAllVideosCompleted = completedVideos.length === VIDEOS.length;
+
+  const handleLegalNext = async () => {
+    const isValid = await trigger(["legalAgreement"]);
+    if (isValid) nextStep();
+  };
+
+  const handleMethodNext = async () => {
+    const isValid = await trigger(["creationMethod"]);
+    if (isValid) nextStep();
+  };
+
+  const handleCategoryNext = async () => {
+    const isValid = await trigger(["category"]);
+    if (isValid) nextStep();
+  };
+
+  const handleTopicNext = async () => {
+    const isValid = await trigger(["topic"]);
+    if (isValid) nextStep();
+  };
+
+  const onSubmit = (data: CourseCreateFormData) => {
+    dispatch(
+      updateCourseInformation({
+        courseTitle: data.courseTitle,
+        description: data.courseDescription,
+        category: data.category,
+        topic: data.topic,
+        creationMethod: data.creationMethod,
+      })
+    );
+    nextStep();
+  };
 
   // Step 0: Video Guide
   const renderStep0 = () => (
@@ -178,27 +237,27 @@ export default function CreateCourseView() {
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={() => router.back()}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="button"
             variant="app-primary" 
             className={cn("flex-1 h-[44px]", !isAllVideosCompleted && "bg-[#CECECE] border-[#CECECE] text-[#636363] hover:bg-[#CECECE] cursor-not-allowed")}
             disabled={!isAllVideosCompleted}
             onClick={nextStep}
           >
             Continue
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
   );
-
-  // ... (renderStep1 to renderStep2 stay mostly same but updated with consistent styles)
   
   const renderStep1 = () => (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-in fade-in slide-in-from-right-4 duration-500">
@@ -213,30 +272,30 @@ export default function CreateCourseView() {
         </div>
 
         <div className="mb-[40px]">
-          <AppCheckbox 
-            checked={agreed} 
-            onCheckedChange={(val) => setAgreed(!!val)}
-            id="agreement"
+          <FormCheckbox 
+            name="legalAgreement"
             label="I have read this legal agreement and agree to the policy right as stated above."
           />
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={prevStep}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="button"
             variant="app-primary" 
             className="flex-1 h-[44px]"
             disabled={!agreed}
-            onClick={nextStep}
+            onClick={handleLegalNext}
           >
             Agree and continue
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -268,7 +327,7 @@ export default function CreateCourseView() {
             ].map((opt) => (
               <div 
                 key={opt.id}
-                onClick={() => setMethod(opt.id)}
+                onClick={() => setValue("creationMethod", opt.id, { shouldValidate: true })}
                 className={cn(
                   "p-[20px] rounded-[16px] border cursor-pointer transition-all flex items-center gap-[16px] bg-white",
                   method === opt.id ? "border-sd-blue " : "border-[#F0F0F0] hover:border-sd-blue/50"
@@ -293,25 +352,30 @@ export default function CreateCourseView() {
                 </div>
               </div>
             ))}
+            {errors.creationMethod && (
+              <p className="text-caption-xs text-[#FF5025] mt-[4px]">{errors.creationMethod.message}</p>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={prevStep}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="button"
             variant="app-primary" 
             className="flex-1 h-[44px]"
             disabled={!method}
-            onClick={nextStep}
+            onClick={handleMethodNext}
           >
             Continue
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -345,6 +409,10 @@ export default function CreateCourseView() {
               <RightArrowIcon />
             </button>
 
+            {errors.category && (
+              <p className="text-caption-xs text-[#FF5025] mt-[4px]">{errors.category.message}</p>
+            )}
+
             {isCategoryDropdownOpen && (
               <div className="absolute top-[86px] left-0 w-full bg-white border border-sd-grey-3 rounded-[16px]  z-20 p-[12px] flex flex-col gap-[12px] animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="relative">
@@ -365,7 +433,7 @@ export default function CreateCourseView() {
                         key={c}
                         type="button"
                         onClick={() => {
-                          setSelectedCategory(c);
+                          setValue("category", c, { shouldValidate: true });
                           setIsCategoryDropdownOpen(false);
                           setSearchCategory("");
                         }}
@@ -400,21 +468,23 @@ export default function CreateCourseView() {
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={prevStep}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="button"
             variant="app-primary" 
             className="flex-1 h-[44px]"
             disabled={!selectedCategory}
-            onClick={nextStep}
+            onClick={handleCategoryNext}
           >
             Continue
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -448,6 +518,10 @@ export default function CreateCourseView() {
               <RightArrowIcon />
             </button>
 
+            {errors.topic && (
+              <p className="text-caption-xs text-[#FF5025] mt-[4px]">{errors.topic.message}</p>
+            )}
+
             {isTopicDropdownOpen && (
               <div className="absolute top-[86px] left-0 w-full bg-white border border-sd-grey-3 rounded-[16px]  z-20 p-[12px] flex flex-col gap-[12px] animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="relative">
@@ -475,7 +549,7 @@ export default function CreateCourseView() {
                         key={t}
                         type="button"
                         onClick={() => {
-                          setSelectedTopic(t);
+                          setValue("topic", t, { shouldValidate: true });
                           setIsTopicDropdownOpen(false);
                           setSearchTopic("");
                         }}
@@ -502,21 +576,23 @@ export default function CreateCourseView() {
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={prevStep}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="button"
             variant="app-primary" 
             className="flex-1 h-[44px]"
             disabled={!selectedTopic}
-            onClick={nextStep}
+            onClick={handleTopicNext}
           >
             Continue
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -531,38 +607,37 @@ export default function CreateCourseView() {
 
       <div className="w-full max-w-[500px] flex flex-col gap-[32px]">
         <div className="flex flex-col gap-[20px]">
-          <AppInput 
+          <FormInput
+            name="courseTitle"
             label="Course title"
             placeholder="Enter course title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
             required
           />
-          <AppTextarea 
+          <FormTextarea
+            name="courseDescription"
             label="Description"
             placeholder="Enter description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
             required
           />
         </div>
 
         <div className="flex items-center gap-[16px]">
-          <AppButton 
+          <Button 
+            type="button"
             variant="app-outline" 
             className="flex-1 h-[44px] text-sd-blue border-sd-blue"
             onClick={prevStep}
           >
             Back
-          </AppButton>
-          <AppButton 
+          </Button>
+          <Button 
+            type="submit" 
             variant="app-primary" 
             className="flex-1 h-[44px]"
-            disabled={!title || !description}
-            onClick={nextStep}
+            disabled={!courseTitle || !courseDescription}
           >
             Create course
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -583,51 +658,53 @@ export default function CreateCourseView() {
   );
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-[20px] py-[40px]">
-      {step === 0 && renderStep0()}
-      {step === 1 && renderStep1()}
-      {step === 2 && renderStep2()}
-      {step === 3 && renderStep3()}
-      {step === 4 && renderStep4()}
-      {step === 5 && renderStep5()}
-      {step === 6 && renderStep6()}
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[1200px] mx-auto px-[20px] py-[40px]">
+        {step === 0 && renderStep0()}
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
+        {step === 3 && renderStep3()}
+        {step === 4 && renderStep4()}
+        {step === 5 && renderStep5()}
+        {step === 6 && renderStep6()}
 
-      {activeVideo && (
-        <VideoPlayerModal 
-          isOpen={isPlayerOpen}
-          onOpenChange={setIsPlayerOpen}
-          title={activeVideo.title}
-          thumbnail={activeVideo.thumb}
+        {activeVideo && (
+          <VideoPlayerModal 
+            isOpen={isPlayerOpen}
+            onOpenChange={setIsPlayerOpen}
+            title={activeVideo.title}
+            thumbnail={activeVideo.thumb}
+          />
+        )}
+
+        <RequestTopicModal 
+          isOpen={isRequestModalOpen}
+          onOpenChange={setIsRequestModalOpen}
+          onSuccess={() => {
+            setIsRequestModalOpen(false);
+            setIsRequestSuccessOpen(true);
+          }}
         />
-      )}
 
-      <RequestTopicModal 
-        isOpen={isRequestModalOpen}
-        onOpenChange={setIsRequestModalOpen}
-        onSuccess={() => {
-          setIsRequestModalOpen(false);
-          setIsRequestSuccessOpen(true);
-        }}
-      />
-
-      <AppModal
-        isOpen={isRequestSuccessOpen}
-        onOpenChange={setIsRequestSuccessOpen}
-        showCloseButton={false}
-      >
-        <div className="flex flex-col items-center py-[20px] text-center">
-            <div className="size-[48px] rounded-full bg-[#E6F9EF] flex items-center justify-center mb-[16px]">
-              <TickCircle size={24} variant="Bold" color="#008500" />
+        <Modal
+          isOpen={isRequestSuccessOpen}
+          onOpenChange={setIsRequestSuccessOpen}
+          showCloseButton={false}
+        >
+          <div className="flex flex-col items-center py-[20px] text-center">
+              <div className="size-[48px] rounded-full bg-[#E6F9EF] flex items-center justify-center mb-[16px]">
+                <TickCircle size={24} variant="Bold" color="#008500" />
+              </div>
+              <h2 className="text-[24px] font-semibold text-[#202020] mb-[8px]">Request sent!</h2>
+              <p className="text-[14px] text-sd-grey-11 leading-[20px] mb-[24px]">
+                Your request has been successfully sent. You will be notified via email shortly on approval
+              </p>
+              <Button variant="app-primary" type="button" className="w-full h-[44px]" onClick={() => setIsRequestSuccessOpen(false)}>
+                Done
+              </Button>
             </div>
-            <h2 className="text-[24px] font-semibold text-[#202020] mb-[8px]">Request sent!</h2>
-            <p className="text-[14px] text-sd-grey-11 leading-[20px] mb-[24px]">
-              Your request has been successfully sent. You will be notified via email shortly on approval
-            </p>
-            <AppButton variant="app-primary" className="w-full h-[44px]" onClick={() => setIsRequestSuccessOpen(false)}>
-              Done
-            </AppButton>
-          </div>
-      </AppModal>
-    </div>
+        </Modal>
+      </form>
+    </FormProvider>
   );
 }

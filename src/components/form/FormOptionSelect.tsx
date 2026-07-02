@@ -8,7 +8,12 @@ interface FormOptionSelectProps {
 }
 
 export const FormOptionSelect = ({ name, label }: FormOptionSelectProps) => {
-  const { control } = useFormContext();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext();
+
+  const error = errors[name]?.message as string | undefined;
 
   return (
     <Controller
@@ -19,6 +24,7 @@ export const FormOptionSelect = ({ name, label }: FormOptionSelectProps) => {
           label={label}
           selected={field.value === label}
           onSelect={() => field.onChange(label)}
+          error={error}
         />
       )}
     />

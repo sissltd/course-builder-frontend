@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
-import { AppInput } from "@/components/form/AppInput";
-import { AppSelect } from "@/components/form/AppSelect";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
+import { FormInput } from "@/components/form/FormInput";
+import { FormSelect } from "@/components/form/FormSelect";
 import { TickCircle } from "iconsax-react";
 
 interface SetupAccountModalProps {
@@ -38,14 +38,15 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
   return (
     <>
       {step === "form" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           title="Add mobile account"
           description="Add your mobile account information"
         >
           <form onSubmit={handleSave} className="flex flex-col gap-[20px] pt-[10px]">
-            <AppSelect
+            <FormSelect
+              name="provider"
               label="Select provider"
               placeholder="Select provider"
               value={provider}
@@ -60,50 +61,52 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
             />
 
             <div className="flex flex-col gap-[4px]">
-              <AppInput
+              <FormInput
                 label="Account number"
                 placeholder="1234567890"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 required
+                name="accountNumber"
               />
               <span className="text-[12px] text-sd-grey-11 font-medium leading-[16px]">
                 This process is automatic
               </span>
             </div>
 
-            <AppInput
+            <FormInput
               label="Account name"
               placeholder="Account name"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
               required
+              name="accountName"
             />
 
             <div className="flex gap-[12px] mt-[12px]">
-              <AppButton
+              <Button
                 type="button"
                 variant="app-outline"
                 className="flex-1 h-[44px]"
                 onClick={handleClose}
               >
                 Cancel
-              </AppButton>
-              <AppButton
+              </Button>
+              <Button
                 type="submit"
                 variant="app-primary"
                 className="flex-1 h-[44px]"
                 disabled={!provider || !accountNumber || !accountName}
               >
                 Save account
-              </AppButton>
+              </Button>
             </div>
           </form>
-        </AppModal>
+        </Modal>
       )}
 
       {step === "success" && (
-        <AppModal
+        <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           showCloseButton={false}
@@ -121,15 +124,15 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
               </p>
             </div>
 
-            <AppButton
+            <Button
               variant="app-primary"
               className="w-full h-[44px]"
               onClick={handleClose}
             >
               Go home
-            </AppButton>
+            </Button>
           </div>
-        </AppModal>
+        </Modal>
       )}
     </>
   );

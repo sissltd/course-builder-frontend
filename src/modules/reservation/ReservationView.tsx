@@ -7,7 +7,7 @@ import { ReservationDrawer } from "./components/ReservationDrawer";
 import { RequestTopicModal } from "./components/RequestTopicModal";
 import { RequestSuccessModal } from "./components/RequestSuccessModal";
 import { Reservation } from "./columns/reservation";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { Add } from "iconsax-react";
 
 export const ReservationView = () => {
@@ -44,13 +44,13 @@ export const ReservationView = () => {
           </p>
         </div>
         
-        <AppButton 
+        <Button 
           variant="app-primary" 
           leftIcon={<Add size={20} variant="Linear" color="currentColor" />}
           onClick={() => setIsRequestModalOpen(true)}
         >
           Request topic
-        </AppButton>
+        </Button>
       </div>
 
       {/* Stats Cards */}

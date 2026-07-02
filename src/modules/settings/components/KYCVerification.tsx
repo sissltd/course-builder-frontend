@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { TickCircle, Logout, Trash, InfoCircle } from "iconsax-react";
 import { FormInput } from "@/components/form/FormInput";
-import { AppInput } from "@/components/form/AppInput";
 
 interface KYCVerificationProps {
   isOpen: boolean;
@@ -41,7 +40,7 @@ export const KYCVerification = ({ isOpen, onOpenChange, onSuccess }: KYCVerifica
 
   return (
     <>
-      <AppModal
+      <Modal
         isOpen={isOpen && step !== "success"}
         onOpenChange={onOpenChange}
         title={step === "selection" ? "Document type" : docType}
@@ -54,7 +53,7 @@ export const KYCVerification = ({ isOpen, onOpenChange, onSuccess }: KYCVerifica
         <div className="flex flex-col gap-[24px] mt-[8px]">
           {step === "selection" ? (
             <div className="flex flex-col gap-[12px]">
-              <AppInput label="Country" placeholder="Nigeria" readOnly />
+              <FormInput name="country" label="Country" placeholder="Nigeria" readOnly />
               <div className="flex flex-col gap-[12px]">
                 {docTypes.map((type) => (
                   <label
@@ -74,22 +73,22 @@ export const KYCVerification = ({ isOpen, onOpenChange, onSuccess }: KYCVerifica
               </div>
             </div>
           ) : (
-            <AppInput label={docType} placeholder={`Enter your ${docType} number`} />
+            <FormInput name="docTypeNumber" label={docType} placeholder={`Enter your ${docType} number`} />
           )}
 
           <div className="flex flex-col gap-[12px]">
              <p className="text-[12px] text-[#606060] text-center leading-[18px]">
                 By clicking continue, you agree to Soludesk Verification Policy and Terms of Service
              </p>
-             <AppButton variant="app-primary" className="w-full h-[44px]" onClick={handleNext}>
+             <Button variant="app-primary" className="w-full h-[44px]" onClick={handleNext}>
                 Continue
-             </AppButton>
+             </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
       {/* Success Modal */}
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "success"}
         onOpenChange={handleClose}
         showCloseButton={false}
@@ -104,11 +103,11 @@ export const KYCVerification = ({ isOpen, onOpenChange, onSuccess }: KYCVerifica
               Thanks for taking this time to complete your KYC verification. You will be notified once your account is verified
             </p>
           </div>
-          <AppButton variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
+          <Button variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
             Close
-          </AppButton>
+          </Button>
         </div>
-      </AppModal>
+      </Modal>
     </>
   );
 };

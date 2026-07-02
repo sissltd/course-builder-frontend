@@ -21,13 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AppSelect } from "@/components/form/AppSelect";
+import { FormSelect } from "@/components/form/FormSelect";
 import { SearchNormal1, ArrowLeft, Calendar2, FolderOpen } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { AppPagination } from "@/components/shared/AppPagination";
+import { Pagination } from "@/components/shared/Pagination";
 
 interface BaseTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -144,12 +144,13 @@ export function BaseTable<TData, TValue>({
               
               {filters?.map((filter, index) => (
                 <div key={index} className="min-w-[120px]">
-                  <AppSelect
+                  <FormSelect
                     placeholder={filter.label}
                     options={filter.options}
                     onValueChange={filter.onValueChange}
                     triggerClassName="h-[40px] px-[16px] border-[#D9D9D9] bg-white text-[14px] text-[#606060] tracking-[-0.28px]"
                     icon={filter.icon}
+                    name="tableFilter"
                   />
                 </div>
               ))}
@@ -238,7 +239,7 @@ export function BaseTable<TData, TValue>({
 
       {/* Pagination */}
       {showPagination && (
-        <AppPagination
+        <Pagination
           pageIndex={table.getState().pagination.pageIndex}
           pageSize={table.getState().pagination.pageSize}
           pageCount={table.getPageCount()}

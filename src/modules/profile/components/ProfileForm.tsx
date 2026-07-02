@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { AppButton } from "@/components/shared/AppButton";
-import { AppSelect } from "@/components/form/AppSelect";
+import { Button } from "@/components/shared/Button";
+import { FormSelect } from "@/components/form/FormSelect";
 import { ArrowDown2 } from "iconsax-react";
 
 interface ProfileFormRowProps {
@@ -78,7 +78,8 @@ export const ProfileForm = () => {
 
       {/* Address */}
       <ProfileFormRow label="Address">
-        <AppSelect
+        <FormSelect
+          name="country"
           label="Country"
           placeholder="Select country"
           options={[
@@ -89,7 +90,8 @@ export const ProfileForm = () => {
           onValueChange={(val) => console.log("Country:", val)}
           triggerClassName="h-[44px]"
         />
-        <AppSelect
+        <FormSelect
+          name="state"
           label="State"
           placeholder="Select country"
           options={[
@@ -105,7 +107,8 @@ export const ProfileForm = () => {
 
       {/* Area of Expertise */}
       <ProfileFormRow label="Area of Expertise">
-        <AppSelect
+        <FormSelect
+          name="expertiseCategory"
           label="Category"
           placeholder="Select area of expertise"
           options={[
@@ -123,12 +126,12 @@ export const ProfileForm = () => {
       <div className="flex items-start gap-[40px] pt-[24px]">
         <div className="w-[160px] shrink-0" />
         <div className="flex-1">
-          <AppButton
+          <Button
             variant="app-primary"
             className="h-[44px] px-[32px] text-[14px]"
           >
             Save changes
-          </AppButton>
+          </Button>
         </div>
       </div>
     </div>

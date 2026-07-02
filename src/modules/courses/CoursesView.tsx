@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { BaseTable } from "@/components/shared/BaseTable";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { StatCard } from "@/components/shared/StatCard";
 import { myCoursesColumns, MyCourse } from "@/modules/dashboard/columns/my-courses";
 import {
@@ -156,13 +156,13 @@ export const CoursesView = () => {
       <div className="flex items-center justify-between w-full">
         <h1 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">My courses</h1>
         <Link href="/courses/create">
-          <AppButton 
+          <Button 
             variant="app-primary" 
             leftIcon={<Add size={20} variant="Linear" color="#FFF" />}
             className="h-[40px] px-[16px] text-[14px] font-medium"
           >
             Create a course
-          </AppButton>
+          </Button>
         </Link>
       </div>
 

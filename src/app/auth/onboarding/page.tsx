@@ -27,7 +27,7 @@ export default function OnboardingPage() {
     },
   });
 
-  const { handleSubmit, trigger, watch } = methods;
+  const { handleSubmit, trigger, watch, formState: { errors } } = methods;
   const expertise = watch("expertise");
 
   const steps: OnboardingStepType[] = ["expertise", "proficiency", "courses", "legal"];
@@ -100,6 +100,9 @@ export default function OnboardingPage() {
                   )}
                 </div>
               ))}
+              {errors.expertise?.message && (
+                <p className="text-caption-xs text-[#FF5025]">{errors.expertise.message}</p>
+              )}
             </div>
           </OnboardingStep>
         )}
@@ -121,6 +124,9 @@ export default function OnboardingPage() {
               ].map((option) => (
                 <FormOptionSelect key={option} name="proficiency" label={option} />
               ))}
+              {errors.proficiency?.message && (
+                <p className="text-caption-xs text-[#FF5025]">{errors.proficiency.message}</p>
+              )}
             </div>
           </OnboardingStep>
         )}
@@ -142,6 +148,9 @@ export default function OnboardingPage() {
               ].map((option) => (
                 <FormOptionSelect key={option} name="coursesPerMonth" label={option} />
               ))}
+              {errors.coursesPerMonth?.message && (
+                <p className="text-caption-xs text-[#FF5025]">{errors.coursesPerMonth.message}</p>
+              )}
             </div>
           </OnboardingStep>
         )}

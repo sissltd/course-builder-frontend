@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormData } from "@/modules/auth/utils/schemas";
+import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 
 type Step = "email" | "details" | "password";
 
@@ -35,7 +36,9 @@ export default function RegisterPage() {
     },
   });
 
-  const { handleSubmit, trigger } = methods;
+  const { handleSubmit, trigger, watch } = methods;
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,20 +186,7 @@ export default function RegisterPage() {
                     required
                     type="password"
                   />
-                  <div className="flex items-start">
-                    <div className="flex flex-1 flex-col gap-[2px]">
-                      <ul className="list-disc ms-[18px] text-caption-xs text-sd-grey-11">
-                        <li><span className="leading-[16px]">minimum 8 characters</span></li>
-                        <li><span className="leading-[16px]">one number</span></li>
-                      </ul>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-[2px]">
-                      <ul className="list-disc ms-[18px] text-caption-xs text-sd-grey-11">
-                        <li><span className="leading-[16px]">one uppercase character</span></li>
-                        <li><span className="leading-[16px]">one lowercase character</span></li>
-                      </ul>
-                    </div>
-                  </div>
+                  <PasswordStrength password={password} confirmPassword={confirmPassword} />
                 </div>
               </div>
               

@@ -3,10 +3,10 @@
 import React from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AppModal } from "@/components/shared/AppModal";
+import { Modal } from "@/components/shared/Modal";
 import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { requestTopicSchema, RequestTopicFormData } from "../utils/schemas";
 
 interface RequestTopicModalProps {
@@ -41,7 +41,7 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
   };
 
   return (
-    <AppModal
+    <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Request topic"
@@ -64,25 +64,25 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
           />
           
           <div className="flex gap-[12px] mt-[8px]">
-            <AppButton
+            <Button
               type="button"
               variant="app-outline"
               className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               Cancel
-            </AppButton>
-            <AppButton
+            </Button>
+            <Button
               type="submit"
               variant="app-primary"
               className="flex-1"
               isLoading={methods.formState.isSubmitting}
             >
               Request
-            </AppButton>
+            </Button>
           </div>
         </form>
       </FormProvider>
-    </AppModal>
+    </Modal>
   );
 };

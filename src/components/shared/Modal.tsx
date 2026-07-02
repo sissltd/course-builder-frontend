@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-interface AppModalProps {
+interface ModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title?: React.ReactNode;
@@ -20,7 +20,7 @@ interface AppModalProps {
   showCloseButton?: boolean;
 }
 
-export const AppModal = ({
+export const Modal = ({
   isOpen,
   onOpenChange,
   title,
@@ -29,7 +29,7 @@ export const AppModal = ({
   footer,
   className,
   showCloseButton = true,
-}: AppModalProps) => {
+}: ModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 

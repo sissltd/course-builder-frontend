@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppModal } from "@/components/shared/AppModal";
-import { AppButton } from "@/components/shared/AppButton";
+import { Modal } from "@/components/shared/Modal";
+import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { Bank, Mobile, ArrowRight, TickCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import { AppInput } from "@/components/form/AppInput";
 
 interface AddPayoutAccountProps {
   isOpen: boolean;
@@ -33,7 +32,7 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
 
   return (
     <>
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "type"}
         onOpenChange={onOpenChange}
         title="Select account type"
@@ -71,51 +70,51 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
             <ArrowRight size={20} variant="Linear" color="#B6B6B6" />
           </button>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "local"}
         onOpenChange={() => setStep("type")}
         title="Add local account"
         description="Add your local account information"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <AppInput label="Bank" placeholder="Select bank" />
-          <AppInput label="Account number" placeholder="1234567890" hint="This process is automatic" />
-          <AppInput label="Account name" placeholder="Account name" readOnly />
+          <FormInput name="bank" label="Bank" placeholder="Select bank" />
+          <FormInput name="accountNumber" label="Account number" placeholder="1234567890" hint="This process is automatic" />
+          <FormInput name="accountName" label="Account name" placeholder="Account name" readOnly />
           <div className="flex gap-[12px]">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
               Save account
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "mobile"}
         onOpenChange={() => setStep("type")}
         title="Add mobile account"
         description="Add your mobile account information"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <AppInput label="Select provider" placeholder="Select provider" />
-          <AppInput label="Account number" placeholder="1234567890" hint="This process is automatic" />
-          <AppInput label="Account name" placeholder="Account name" readOnly />
+          <FormInput name="mobileProvider" label="Select provider" placeholder="Select provider" />
+          <FormInput name="mobileAccountNumber" label="Account number" placeholder="1234567890" hint="This process is automatic" />
+          <FormInput name="mobileAccountName" label="Account name" placeholder="Account name" readOnly />
           <div className="flex gap-[12px]">
-            <AppButton variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
+            <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
               Cancel
-            </AppButton>
-            <AppButton variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
+            </Button>
+            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
               Save account
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </AppModal>
+      </Modal>
 
-      <AppModal
+      <Modal
         isOpen={isOpen && step === "success"}
         onOpenChange={handleClose}
         showCloseButton={false}
@@ -130,11 +129,11 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
               Your account has been successfully added. You can now use it for your payouts.
             </p>
           </div>
-          <AppButton variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
+          <Button variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>
             Close
-          </AppButton>
+          </Button>
         </div>
-      </AppModal>
+      </Modal>
     </>
   );
 };

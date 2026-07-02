@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { AppSideDrawer } from "@/components/shared/AppSideDrawer";
+import { SideDrawer } from "@/components/shared/SideDrawer";
 import { Reservation } from "../columns/reservation";
 import { cn } from "@/lib/utils";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 
 interface ReservationDrawerProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ export const ReservationDrawer = ({ isOpen, onOpenChange, reservation }: Reserva
   if (!reservation) return null;
 
   return (
-    <AppSideDrawer
+    <SideDrawer
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Topic details"
@@ -89,15 +89,15 @@ export const ReservationDrawer = ({ isOpen, onOpenChange, reservation }: Reserva
 
         {/* Action Button */}
         <div className="mt-[20px]">
-          <AppButton 
+          <Button 
             variant="app-outline" 
             className="w-full border-[#FF5025] text-[#FF5025] hover:bg-[#FEF3F2] hover:text-[#B42318] hover:border-[#B42318]"
             onClick={() => onOpenChange(false)}
           >
             Withdraw Request
-          </AppButton>
+          </Button>
         </div>
       </div>
-    </AppSideDrawer>
+    </SideDrawer>
   );
 };

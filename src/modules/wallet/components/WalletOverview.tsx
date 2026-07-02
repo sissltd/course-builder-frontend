@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Money, Wallet, Moneys, ArrowUp } from "iconsax-react";
 import { StatCard } from "@/components/shared/StatCard";
-import { AppButton } from "@/components/shared/AppButton";
+import { Button } from "@/components/shared/Button";
 import { WithdrawalFlow } from "./WithdrawalFlow";
 
 export const WalletOverview = () => {
@@ -35,14 +35,14 @@ export const WalletOverview = () => {
       </div>
 
       <div>
-        <AppButton
+        <Button
           variant="app-outline"
           leftIcon={<ArrowUp size={18} variant="Linear" color="#0063EF" />}
           className="h-[40px] px-[20px] text-[14px] font-normal"
           onClick={() => setIsWithdrawModalOpen(true)}
         >
           Withdraw earnings
-        </AppButton>
+        </Button>
       </div>
 
       <WithdrawalFlow 

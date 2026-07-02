@@ -10,6 +10,7 @@ import {
   Global, 
   Eye,
 } from "iconsax-react";
+import { Button } from "@/components/shared/Button";
 
 interface BuilderHeaderProps {
   moduleName?: string;
@@ -25,13 +26,15 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
       {/* Left Section */}
       <div className="flex items-center gap-[12px]">
         {/* Back Button */}
-        <button 
+        <Button 
+          variant="app-outline"
+          isGhost
           onClick={onBackToModules || (() => router.back())}
-          className="flex items-center gap-[6px] h-[40px] px-[10px] text-[#202020] hover:text-[#0A60E1] transition-colors"
+          className="h-[40px] px-[10px] text-[#202020]"
+          leftIcon={<ArrowLeft size={18} variant="Linear" color="#202020" />}
         >
-          <ArrowLeft size={18} variant="Linear" color="#202020" />
           <span className="text-[14px] font-medium leading-[20px] tracking-[-0.28px]">Back</span>
-        </button>
+        </Button>
 
         <div className="h-[20px] w-px bg-[#F0F0F0]" />
 
@@ -73,26 +76,40 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
 
         {/* Action Buttons */}
         <div className="flex items-center gap-[16px]">
-          <button className="flex items-center gap-[6px] text-[#606060] hover:text-[#202020] transition-colors h-[36px]">
-            <Add size={18} variant="Linear" color="#606060" />
+          <Button 
+            variant="app-outline"
+            isGhost
+            className="h-[36px] text-[#606060]"
+            leftIcon={<Add size={18} variant="Linear" color="#606060" />}
+          >
             <span className="text-[14px] font-medium tracking-[-0.28px]">Invite collaborators</span>
-          </button>
+          </Button>
           
-          <button className="flex items-center gap-[6px] text-[#606060] hover:text-[#202020] transition-colors h-[36px]">
-            <Global size={18} variant="Linear" color="#606060" />
+          <Button 
+            variant="app-outline"
+            isGhost
+            className="h-[36px] text-[#606060]"
+            leftIcon={<Global size={18} variant="Linear" color="#606060" />}
+          >
             <span className="text-[14px] font-medium tracking-[-0.28px]">Publish course</span>
-          </button>
+          </Button>
 
           <div className="h-[20px] w-px bg-[#F0F0F0]" />
 
-          <button className="flex items-center gap-[6px] h-[36px] px-[12px] rounded-[8px] border border-[#0A60E1] text-[#0A60E1] hover:bg-[#0A60E1]/5 transition-colors font-medium">
-            <Eye size={18} variant="Linear" color="#0A60E1" />
+          <Button 
+            variant="app-outline"
+            className="h-[36px] px-[12px] rounded-[8px] text-[#0A60E1]"
+            leftIcon={<Eye size={18} variant="Linear" color="#0A60E1" />}
+          >
             <span className="text-[14px] tracking-[-0.28px]">Preview</span>
-          </button>
+          </Button>
           
-          <button className="h-[36px] px-[16px] rounded-[8px] bg-[#0A60E1] text-white text-[14px] font-medium tracking-[-0.28px] hover:bg-[#0A50C5] transition-colors">
+          <Button 
+            variant="app-primary"
+            className="h-[36px] px-[16px] rounded-[8px] text-white text-[14px] font-medium"
+          >
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>
