@@ -1,0 +1,32 @@
+export const AdminRoutes = {
+  OVERVIEW: "/admin/dashboard",
+  ANALYTICS: "/admin/analytics",
+  MIE_RECOMMENDATION: "/admin/mie-recommendation",
+  SYSTEM_HEALTH: "/admin/system-health",
+  APE_PIPELINE: "/admin/ape-pipeline",
+  TEAMS: "/admin/teams",
+  COURSES: "/admin/courses",
+  PRODUCTION: "/admin/production",
+  PUBLISHED: "/admin/published",
+  RESERVATION: "/admin/reservation",
+  CATEGORIES: "/admin/categories",
+  NOTIFICATIONS: "/admin/notifications",
+  ACTIVITY_LOG: "/admin/activity-log",
+  SETTINGS: "/admin/settings",
+} as const;
+
+export const CreatorRoutes = {
+  DASHBOARD: "/creator/dashboard",
+  COURSES: "/creator/courses",
+  COURSES_CREATE: "/creator/courses/create",
+  COURSES_BUILDER: "/creator/courses/builder",
+  DRAFTS: "/creator/drafts",
+  COLLABORATORS: "/creator/collaborators",
+  WALLET: "/creator/wallet",
+  RESERVATION: "/creator/reservation",
+  NOTIFICATIONS: "/creator/notifications",
+  PROFILE: "/creator/profile",
+  SETTINGS: "/creator/settings",
+  HELP: "/creator/help",
+  KYC: "/creator/kyc",
+} as const;

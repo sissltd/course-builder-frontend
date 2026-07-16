@@ -40,15 +40,20 @@ interface BaseTableProps<TData, TValue> {
     icon?: React.ReactNode;
     options: { label: string; value: string }[];
     onValueChange: (value: string) => void;
+    searchable?: boolean;
+    searchPlaceholder?: string;
   }[];
   showDateFilter?: boolean;
+  dateFilterInline?: boolean;
   selectedDate?: Date;
   onDateChange?: (date: Date | undefined) => void;
+  toolbarAction?: React.ReactNode | ((selectedCount: number) => React.ReactNode);
   showPagination?: boolean;
   showHeader?: boolean;
   emptyIcon?: React.ReactNode;
   emptyText?: string;
   onRowClick?: (row: TData) => void;
+  ignoreRowClickColumns?: string[];
   tableOptions?: Partial<TableOptions<TData>>;
 }
 
@@ -60,18 +65,23 @@ export function BaseTable<TData, TValue>({
   onSearchChange,
   filters,
   showDateFilter = false,
+  dateFilterInline = false,
   selectedDate,
   onDateChange,
+  toolbarAction,
   showPagination = false,
   showHeader = true,
   emptyIcon,
   emptyText,
   onRowClick,
+  ignoreRowClickColumns,
   tableOptions,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
+  const selectedCount = Object.keys(rowSelection).filter((k) => rowSelection[k]).length;
   const [localDate, setLocalDate] = React.useState<Date | undefined>(undefined);
 
   const activeDate = selectedDate !== undefined ? selectedDate : localDate;
@@ -95,11 +105,14 @@ export function BaseTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     ...tableOptions,
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      rowSelection,
       ...tableOptions?.state,
     },
   });
@@ -120,10 +133,10 @@ export function BaseTable<TData, TValue>({
       )}
 
       {/* Toolbar */}
-      {(searchPlaceholder || filters?.length || showDateFilter) && (
+      {(searchPlaceholder || filters?.length || showDateFilter || toolbarAction) && (
         <div className="flex flex-col gap-[16px]">
           <div className="flex items-center justify-between gap-[16px] w-full">
-            <div className="flex items-center gap-[12px] flex-1">
+            <div className="flex items-center gap-[12px] flex-1 flex-wrap">
               {searchPlaceholder && (
                 <div className="relative w-full max-w-[308px]">
                   <SearchNormal1 
@@ -151,12 +164,34 @@ export function BaseTable<TData, TValue>({
                     triggerClassName="h-[40px] px-[16px] border-[#D9D9D9] bg-white text-[14px] text-[#606060] tracking-[-0.28px]"
                     icon={filter.icon}
                     name="tableFilter"
+                    searchable={filter.searchable}
+                    searchPlaceholder={filter.searchPlaceholder}
                   />
                 </div>
               ))}
+
+              {showDateFilter && dateFilterInline && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-[#D9D9D9] rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
+                      <Calendar2 size={20} variant="Linear" color="#606060" />
+                      <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] whitespace-nowrap">
+                        {activeDate ? format(activeDate, "dd MMM yyyy") : "Date"}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-white border border-[#F0F0F0] rounded-[12px] " align="start">
+                    <Calendar
+                      mode="single"
+                      selected={activeDate}
+                      onSelect={handleDateSelect}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
-            {showDateFilter && (
+            {!dateFilterInline && showDateFilter && (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-[#D9D9D9] rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
@@ -174,6 +209,11 @@ export function BaseTable<TData, TValue>({
                   />
                 </PopoverContent>
               </Popover>
+            )}
+            {toolbarAction && (
+              <div className="shrink-0">
+                {typeof toolbarAction === "function" ? toolbarAction(selectedCount) : toolbarAction}
+              </div>
             )}
           </div>
         </div>
@@ -207,13 +247,19 @@ export function BaseTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
-                    "h-[56px] border-b border-[#F0F0F0] hover:bg-sd-grey-1/30",
+                    "h-[56px] border-b border-[#F0F0F0] hover:bg-sd-grey-1/30 data-[state=selected]:bg-[#eaf3ff]",
                     onRowClick && "cursor-pointer"
                   )}
-                  onClick={() => onRowClick?.(row.original)}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.tagName === "INPUT" || target.closest("input")) return;
+                    const cellEl = target.closest("[data-column-id]") as HTMLElement | null;
+                    if (cellEl && ignoreRowClickColumns?.includes(cellEl.dataset.columnId ?? "")) return;
+                    onRowClick?.(row.original);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-[14px] text-[#606060] px-[16px] tracking-[-0.28px]">
+                    <TableCell key={cell.id} data-column-id={cell.column.id} className="text-[14px] text-[#606060] px-[16px] tracking-[-0.28px]">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

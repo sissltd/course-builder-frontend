@@ -101,7 +101,7 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
           <SelectValue placeholder={placeholder} />
         </div>
       </SelectTrigger>
-      <SelectContent className="bg-white border border-[#F0F0F0] rounded-[16px] min-w-[176px] w-max max-w-[320px] p-[8px]">
+      <SelectContent position="popper" className="bg-white border border-[#F0F0F0] rounded-[16px] w-[var(--radix-select-trigger-width)] min-w-[176px] p-[8px] pl-[16px]">
         {clearable && (
           <SelectItem value="none" className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
             {clearLabel}
