@@ -90,7 +90,7 @@ const columns: ColumnDef<SystemService>[] = [
 export const SystemHealthView = () => {
   return (
     <div className="flex flex-col gap-[24px]">
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <AdminStatCard
           icon={<Timer1 variant="Bold" size={20} color="#202020" />}
           label="Overall Uptime"

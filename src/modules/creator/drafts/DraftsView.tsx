@@ -131,7 +131,7 @@ export const DraftsView = () => {
           </div>
           <div className="flex flex-col items-center gap-[8px] text-center">
             <h3 className="text-[20px] font-medium text-[#202020] tracking-[0]">Drafts</h3>
-            <p className="text-[12px] text-[#606060] tracking-[0] w-[366px]">
+            <p className="text-[12px] text-[#606060] tracking-[0] w-full max-w-[366px]">
               Your unpublished courses will appear here
             </p>
           </div>

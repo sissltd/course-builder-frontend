@@ -13,7 +13,7 @@ export const AnalyticsView = () => {
     <div className="flex flex-col gap-[24px]">
       <TimeChipFilter />
 
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <AnalyticsStatCard
           icon={<Book variant="Linear" size={20} color="#202020" />}
           label="Total Catalog"
@@ -40,7 +40,7 @@ export const AnalyticsView = () => {
         />
       </div>
 
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <div className="border border-[#E8E8E8] bg-[#FDFDFD] flex flex-col flex-1 h-[150px] items-start justify-between p-[16px] relative rounded-[12px] shadow-[inset_0px_-4px_8px_0px_rgba(255,255,255,0.2),inset_0px_4px_8px_0px_rgba(255,255,255,0.16)]">
           <div className="flex gap-[8px] items-start">
             <Money variant="Bold" size={20} color="#202020" />
@@ -65,7 +65,7 @@ export const AnalyticsView = () => {
               Distribution
             </span>
           </div>
-          <div className="flex gap-[14px]">
+          <div className="flex gap-[14px] flex-wrap">
             <DistributionCard
               icon={
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -19,7 +19,7 @@ export const AdminDashboardView = () => {
       <WelcomeHeader onInviteClick={() => setIsInviteOpen(true)} />
       <AddStaffModal isOpen={isInviteOpen} onOpenChange={setIsInviteOpen} />
 
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <AdminStatCard
           icon={<Book variant="Linear" size={20} color="#202020" />}
           label="Courses Created Today"
@@ -52,12 +52,12 @@ export const AdminDashboardView = () => {
         />
       </div>
 
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <ProductionTrendChart />
         <AverageProductionCost />
       </div>
 
-      <div className="flex gap-[16px]">
+      <div className="flex gap-[16px] flex-wrap">
         <ApePipeline />
         <ApePipelineOverview />
       </div>

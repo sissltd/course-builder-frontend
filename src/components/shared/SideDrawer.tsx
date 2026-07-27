@@ -38,7 +38,7 @@ export const SideDrawer = ({
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent
         side={side}
-        className={cn("w-full sm:!w-[30%] sm:!max-w-[30%] p-0 flex flex-col bg-white border-none", className)}
+        className={cn("!w-full md:!w-[45%] md:!max-w-[45%] p-0 flex flex-col bg-white border-none", className)}
         showCloseButton={showCloseButton}
       >
         {(title || description) && (

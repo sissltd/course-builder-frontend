@@ -11,7 +11,7 @@ interface WelcomeHeaderProps {
 
 export const WelcomeHeader = ({ onInviteClick }: WelcomeHeaderProps) => {
   return (
-    <div className="flex items-start justify-between w-full">
+    <div className="flex flex-col md:flex-row items-start justify-between w-full gap-[16px]">
       <div className="flex flex-col gap-[4px]">
         <div className="flex gap-[8px] items-center">
           <h1 className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">
@@ -28,8 +28,8 @@ export const WelcomeHeader = ({ onInviteClick }: WelcomeHeaderProps) => {
         </p>
       </div>
 
-      <div className="flex gap-[12px] items-center">
-        <div className="flex gap-[4px] items-center">
+      <div className="flex gap-[12px] items-center flex-wrap w-full md:w-auto">
+        <div className="flex gap-[4px] items-center flex-wrap">
           {timeChips.map((chip, i) => (
             <div
               key={chip}

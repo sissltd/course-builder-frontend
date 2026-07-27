@@ -22,7 +22,7 @@ export const SettingsView = () => {
   return (
     <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] flex overflow-hidden min-h-[600px]">
       {/* Left nav */}
-      <div className="w-[300px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[24px]">
+      <div className="w-full md:w-[300px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[24px]">
         <SettingsTabNav active={activeTab} onChange={setActiveTab} />
       </div>
 

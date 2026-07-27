@@ -23,7 +23,7 @@ export const AdminSettingsView = () => {
 
   return (
     <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] flex overflow-hidden min-h-[700px]">
-      <div className="w-[326px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[20px]">
+      <div className="w-full md:w-[326px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[20px]">
         <AdminSettingsTabNav active={activeTab} onChange={setActiveTab} />
       </div>
       <div className="flex-1 px-[40px] py-[32px] overflow-auto">

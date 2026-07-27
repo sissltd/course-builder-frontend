@@ -49,12 +49,12 @@ export const KpiScoreCard = () => {
         </span>
       </div>
       <div className="flex flex-col gap-[16px]">
-        <div className="flex gap-[16px]">
+        <div className="flex gap-[16px] flex-wrap">
           {kpiRow1.map((kpi) => (
             <KpiCard key={kpi.label} {...kpi} />
           ))}
         </div>
-        <div className="flex gap-[16px]">
+        <div className="flex gap-[16px] flex-wrap">
           {kpiRow2.map((kpi) => (
             <KpiCard key={kpi.label} {...kpi} />
           ))}

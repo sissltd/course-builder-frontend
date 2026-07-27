@@ -4,7 +4,7 @@ const chips = ["24 hrs", "7 days", "31 days", "6 months"];
 
 export const TimeChipFilter = () => {
   return (
-    <div className="flex gap-[4px] items-center">
+    <div className="flex gap-[4px] items-center flex-wrap">
       {chips.map((chip, i) => (
         <div
           key={chip}

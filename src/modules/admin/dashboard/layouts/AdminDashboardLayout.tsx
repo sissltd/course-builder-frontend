@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AdminSidebar } from "../components/AdminSidebar";
@@ -28,14 +28,19 @@ interface AdminDashboardLayoutProps {
 }
 
 export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const title = pageTitles[pathname] || "";
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
-      <AdminSidebar />
-      <AdminHeader title={title} />
-      <main className={cn("ml-[237px] pt-[59px] p-[20px] min-h-screen")}>
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AdminHeader title={title} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+      <main className={cn("ml-0 md:ml-[237px] pt-[59px] p-[20px] min-h-screen")}>
         {children}
       </main>
     </div>

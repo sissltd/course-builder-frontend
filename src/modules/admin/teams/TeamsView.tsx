@@ -5,6 +5,7 @@ import { User, UserTick, Designtools, UserOctagon, More, Copy, Filter, Sort } fr
 import { BaseTable } from "@/components/shared/BaseTable";
 import { AddStaffModal } from "@/modules/admin/dashboard/components/AddStaffModal";
 import { TeamActionMenu } from "./components/TeamActionMenu";
+import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 
 interface TeamMember {
@@ -34,6 +35,8 @@ const userColors = ["#0A60E1", "#FF8A00", "#00C48C", "#FF3D57", "#7C3AED", "#14B
 export const TeamsView = () => {
   const [isInviteOpen, setIsInviteOpen] = React.useState(false);
   const [openMenuRow, setOpenMenuRow] = React.useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
 
   const columns: ColumnDef<TeamMember>[] = [
     {
@@ -142,6 +145,11 @@ export const TeamsView = () => {
   return (
     <>
       <AddStaffModal isOpen={isInviteOpen} onOpenChange={setIsInviteOpen} />
+      <TeamMemberDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        member={selectedMember}
+      />
       <div className="flex flex-col gap-[24px]">
         <div className="flex items-start justify-between">
           <div>
@@ -156,7 +164,7 @@ export const TeamsView = () => {
           </button>
         </div>
 
-        <div className="flex gap-[16px]">
+        <div className="flex gap-[16px] flex-wrap">
           {statCards.map((card) => (
             <div
               key={card.label}
@@ -210,6 +218,10 @@ export const TeamsView = () => {
           showHeader={false}
           showPagination
           ignoreRowClickColumns={["actions"]}
+          onRowClick={(member) => {
+            setSelectedMember(member);
+            setIsDrawerOpen(true);
+          }}
         />
       </div>
     </>

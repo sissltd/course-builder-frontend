@@ -6,7 +6,7 @@ export const CreatorOverview = () => {
   return (
     <div className="flex flex-col gap-[10px] w-full bg-sd-grey-1 border-[1.5px] border-sd-grey-3 rounded-[20px] pb-[16px] pt-[20px] px-[16px] ">
       <h2 className="text-[20px] font-semibold text-sd-grey-12 leading-[28px]">Creator&apos;s overview</h2>
-      <div className="flex items-center gap-[11px] w-full">
+      <div className="flex items-center gap-[11px] w-full flex-wrap">
         <StatCard
           label="Total amount earned"
           value="$456,000.03"

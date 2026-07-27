@@ -4,7 +4,7 @@ import { Add, Magicpen } from "iconsax-react";
 
 export const JourneyCard = () => {
   return (
-    <div className="w-full bg-[#FDFDFD] border border-[#C3DEF3] rounded-[16px] p-[20px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1)] flex items-center justify-between">
+    <div className="w-full bg-[#FDFDFD] border border-[#C3DEF3] rounded-[16px] p-[20px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1)] flex items-center justify-between flex-wrap">
       <div className="flex flex-col gap-[6px] max-w-[627px]">
         <h2 className="text-[20px] font-semibold text-[#202020] leading-[28px]">
           Start your journey to building digital courses
@@ -14,7 +14,7 @@ export const JourneyCard = () => {
         </p>
       </div>
 
-      <div className="flex items-center gap-[12px]">
+      <div className="flex items-center gap-[12px] flex-wrap">
         <a 
           className="border border-[#0063EF] border-solid flex gap-[8px] items-center justify-center px-[24px] py-[12px] relative rounded-[8px] cursor-pointer"
         >
