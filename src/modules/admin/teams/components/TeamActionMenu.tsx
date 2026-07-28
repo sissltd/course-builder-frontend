@@ -3,18 +3,30 @@
 import React from "react";
 import { Briefcase, Copy, UserMinus, Trash, ArrowRight2 } from "iconsax-react";
 
-interface TeamActionMenuProps {
-  onClose: () => void;
+export type ActionType = "change-role" | "copy-id" | "suspend" | "delete";
+
+interface ActionItem {
+  icon: React.ReactNode;
+  label: string;
+  action: ActionType;
+  hasArrow: boolean;
+  color: string;
+  hoverBg: string;
 }
 
-export const TeamActionMenu = ({ onClose }: TeamActionMenuProps) => {
-  const items = [
-    { icon: <Briefcase variant="Linear" size={16} color="#606060" />, label: "Change role", hasArrow: true },
-    { icon: <Copy variant="Linear" size={16} color="#606060" />, label: "Copy user ID", hasArrow: false },
-    { icon: <UserMinus variant="Linear" size={16} color="#606060" />, label: "Suspend account", hasArrow: false },
-    { icon: <Trash variant="Linear" size={16} color="#606060" />, label: "Delete account", hasArrow: false },
-  ];
+const items: ActionItem[] = [
+  { icon: <Briefcase variant="Linear" size={16} color="#606060" />, label: "Change role", action: "change-role", hasArrow: true, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
+  { icon: <Copy variant="Linear" size={16} color="#606060" />, label: "Copy user ID", action: "copy-id", hasArrow: false, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
+  { icon: <UserMinus variant="Linear" size={16} color="#F2994A" />, label: "Suspend account", action: "suspend", hasArrow: false, color: "#F2994A", hoverBg: "hover:bg-[#FFF5ED]" },
+  { icon: <Trash variant="Linear" size={16} color="#D54800" />, label: "Delete account", action: "delete", hasArrow: false, color: "#D54800", hoverBg: "hover:bg-[#FFF0ED]" },
+];
 
+interface TeamActionMenuProps {
+  onClose: () => void;
+  onAction: (action: ActionType) => void;
+}
+
+export const TeamActionMenu = ({ onClose, onAction }: TeamActionMenuProps) => {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
@@ -23,12 +35,17 @@ export const TeamActionMenu = ({ onClose }: TeamActionMenuProps) => {
           {items.map((item) => (
             <button
               key={item.label}
-              className="flex items-center justify-between h-[32px] px-[8px] py-[8px] rounded-[8px] hover:bg-sd-grey-1 transition-colors cursor-pointer w-full"
-              onClick={onClose}
+              className={`flex items-center justify-between h-[32px] px-[8px] py-[8px] rounded-[8px] transition-colors cursor-pointer w-full ${item.hoverBg}`}
+              onClick={() => {
+                onAction(item.action);
+                onClose();
+              }}
             >
               <div className="flex items-center gap-[8px]">
                 {item.icon}
-                <span className="text-[12px] font-normal text-[#606060] leading-[16px]">{item.label}</span>
+                <span className="text-[12px] font-normal leading-[16px]" style={{ color: item.color }}>
+                  {item.label}
+                </span>
               </div>
               {item.hasArrow && <ArrowRight2 variant="Linear" size={16} color="#606060" />}
             </button>

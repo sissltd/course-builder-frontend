@@ -1,10 +1,12 @@
 "use client";
 
 import React from "react";
-import { User, UserTick, Designtools, UserOctagon, More, Copy, Filter, Sort } from "iconsax-react";
+import { User, UserTick, Designtools, UserOctagon, More, Copy, Filter, Sort, TickCircle } from "iconsax-react";
 import { BaseTable } from "@/components/shared/BaseTable";
+import { Modal } from "@/components/shared/Modal";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { AddStaffModal } from "@/modules/admin/dashboard/components/AddStaffModal";
-import { TeamActionMenu } from "./components/TeamActionMenu";
+import { TeamActionMenu, ActionType } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -32,11 +34,51 @@ const data: TeamMember[] = [
 
 const userColors = ["#0A60E1", "#FF8A00", "#00C48C", "#FF3D57", "#7C3AED", "#14B8A6", "#8B5CF6", "#F59E0B"];
 
+const roleOptions = [
+  { label: "Super Admin", value: "Super Admin" },
+  { label: "Admin", value: "Admin" },
+  { label: "Creator", value: "Creator" },
+  { label: "Reviewer (Writer)", value: "Reviewer (Writer)" },
+  { label: "Reviewer (Verifier)", value: "Reviewer (Verifier)" },
+  { label: "Reviewer (Approver)", value: "Reviewer (Approver)" },
+  { label: "Contributor", value: "Contributor" },
+];
+
+const successLabels: Record<string, { title: string; description: string }> = {
+  suspend: { title: "Account suspended!", description: "The account has been suspended. They will not be able to access the platform." },
+  delete: { title: "Account deleted!", description: "The account has been permanently deleted." },
+  "change-role": { title: "Role changed!", description: "The user's role has been updated successfully." },
+};
+
 export const TeamsView = () => {
   const [isInviteOpen, setIsInviteOpen] = React.useState(false);
   const [openMenuRow, setOpenMenuRow] = React.useState<string | null>(null);
   const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [actionMember, setActionMember] = React.useState<TeamMember | null>(null);
+  const [confirmAction, setConfirmAction] = React.useState<ActionType | null>(null);
+  const [successAction, setSuccessAction] = React.useState<string | null>(null);
+
+  const handleAction = (member: TeamMember, action: ActionType) => {
+    setActionMember(member);
+    if (action === "copy-id") {
+      navigator.clipboard.writeText(member.userId);
+      return;
+    }
+    if (action === "change-role") {
+      // For now treat like a confirmation + success flow
+    }
+    setConfirmAction(action);
+  };
+
+  const handleConfirm = () => {
+    if (confirmAction) {
+      setConfirmAction(null);
+      setTimeout(() => setSuccessAction(confirmAction), 300);
+    }
+  };
+
+  const currentSuccess = successAction ? successLabels[successAction] : null;
 
   const columns: ColumnDef<TeamMember>[] = [
     {
@@ -126,7 +168,10 @@ export const TeamsView = () => {
             <More variant="Linear" size={24} color="#606060" />
           </button>
           {openMenuRow === row.original.userId && (
-            <TeamActionMenu onClose={() => setOpenMenuRow(null)} />
+            <TeamActionMenu
+              onClose={() => setOpenMenuRow(null)}
+              onAction={(action) => handleAction(row.original, action)}
+            />
           )}
         </div>
       ),
@@ -190,16 +235,7 @@ export const TeamsView = () => {
               icon: <Filter size={20} variant="Linear" color="#606060" />,
               searchable: true,
               searchPlaceholder: "Search role",
-              options: [
-                { label: "All", value: "all" },
-                { label: "Super Admin", value: "super-admin" },
-                { label: "Admin", value: "admin" },
-                { label: "Creator", value: "creator" },
-                { label: "Reviewer (Writer)", value: "reviewer-writer" },
-                { label: "Reviewer (Verifier)", value: "reviewer-verifier" },
-                { label: "Reviewer (Approver)", value: "reviewer-approver" },
-                { label: "Contributor", value: "contributor" },
-              ],
+              options: roleOptions.map((r) => ({ label: r.label, value: r.value })),
               onValueChange: (val) => {},
             },
             {
@@ -224,6 +260,59 @@ export const TeamsView = () => {
           }}
         />
       </div>
+
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={confirmAction === "suspend"}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title="Suspend account?"
+        description={`Are you sure you want to suspend ${actionMember?.name || "this user"}? They will lose access to the platform.`}
+        confirmLabel="Yes, suspend"
+        variant="danger"
+        onConfirm={handleConfirm}
+      />
+      <ConfirmModal
+        isOpen={confirmAction === "delete"}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title="Delete account?"
+        description={`This action is permanent and cannot be undone. ${actionMember?.name || "This user"} will lose all access.`}
+        confirmLabel="Yes, delete"
+        variant="danger"
+        onConfirm={handleConfirm}
+      />
+      <ConfirmModal
+        isOpen={confirmAction === "change-role"}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title="Change role?"
+        description={`Are you sure you want to change the role for ${actionMember?.name || "this user"}?`}
+        confirmLabel="Yes, change"
+        variant="primary"
+        onConfirm={handleConfirm}
+      />
+
+      {/* Success Modals */}
+      {currentSuccess && (
+        <Modal
+          isOpen={!!successAction}
+          onOpenChange={(open) => { if (!open) setSuccessAction(null); }}
+        >
+          <div className="flex flex-col items-center gap-[16px] text-center">
+            <div className="size-[80px] rounded-full bg-[#EBF7EE] flex items-center justify-center">
+              <TickCircle variant="Bold" size={48} color="#008500" />
+            </div>
+            <div className="flex flex-col gap-[4px]">
+              <span className="text-[28px] font-semibold text-[#202020] leading-tight">{currentSuccess.title}</span>
+              <p className="text-[14px] text-[#606060] leading-normal max-w-[320px]">{currentSuccess.description}</p>
+            </div>
+            <button
+              onClick={() => setSuccessAction(null)}
+              className="w-full h-[44px] bg-[#0063EF] text-white text-[14px] font-medium rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer mt-[8px]"
+            >
+              Done
+            </button>
+          </div>
+        </Modal>
+      )}
     </>
   );
 };

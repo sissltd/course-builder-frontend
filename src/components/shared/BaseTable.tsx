@@ -48,6 +48,8 @@ interface BaseTableProps<TData, TValue> {
   selectedDate?: Date;
   onDateChange?: (date: Date | undefined) => void;
   toolbarAction?: React.ReactNode | ((selectedCount: number) => React.ReactNode);
+  selectable?: boolean;
+  selectionAction?: React.ReactNode | ((selectedCount: number) => React.ReactNode);
   showPagination?: boolean;
   showHeader?: boolean;
   emptyIcon?: React.ReactNode;
@@ -69,6 +71,8 @@ export function BaseTable<TData, TValue>({
   selectedDate,
   onDateChange,
   toolbarAction,
+  selectable = true,
+  selectionAction,
   showPagination = false,
   showHeader = true,
   emptyIcon,
@@ -106,7 +110,7 @@ export function BaseTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
-    enableRowSelection: true,
+    enableRowSelection: selectable,
     ...tableOptions,
     state: {
       sorting,
@@ -296,6 +300,16 @@ export function BaseTable<TData, TValue>({
           setPageIndex={table.setPageIndex}
           setPageSize={table.setPageSize}
         />
+      )}
+
+      {/* Selection Action Bar */}
+      {selectedCount > 0 && selectionAction && (
+        <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-[#F0F0F0] bg-[#F9FAFB] rounded-b-[20px]">
+          <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{selectedCount} selected</span>
+          <div className="flex items-center gap-[8px]">
+            {typeof selectionAction === "function" ? selectionAction(selectedCount) : selectionAction}
+          </div>
+        </div>
       )}
     </div>
   );
