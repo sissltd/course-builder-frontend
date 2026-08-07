@@ -13,9 +13,22 @@ interface TabBarProps {
   activeKey: string;
   onChange: (key: string) => void;
   className?: string;
+  tabClassName?: string;
+  activeTabClassName?: string;
+  inactiveTabClassName?: string;
+  indicatorClassName?: string;
 }
 
-export const TabBar = ({ tabs, activeKey, onChange, className }: TabBarProps) => {
+export const TabBar = ({
+  tabs,
+  activeKey,
+  onChange,
+  className,
+  tabClassName,
+  activeTabClassName,
+  inactiveTabClassName,
+  indicatorClassName,
+}: TabBarProps) => {
   return (
     <div className={cn("flex border-b border-[#F0F0F0] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:h-0", className)}>
       {tabs.map((tab) => {
@@ -26,14 +39,15 @@ export const TabBar = ({ tabs, activeKey, onChange, className }: TabBarProps) =>
             onClick={() => onChange(tab.key)}
             className={cn(
               "h-[40px] px-[12px] text-[14px] font-normal leading-[20px] transition-colors relative cursor-pointer shrink-0",
+              tabClassName,
               isActive
-                ? "text-[#0063EF]"
-                : "text-[#606060]"
+                ? cn("text-[#0063EF]", activeTabClassName)
+                : cn("text-[#606060]", inactiveTabClassName)
             )}
           >
             {tab.label}
             {isActive && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0063EF]" />
+              <div className={cn("absolute bottom-0 left-0 right-0 h-0.5 bg-[#0063EF]", indicatorClassName)} />
             )}
           </button>
         );
