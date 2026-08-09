@@ -1,24 +1,17 @@
-import { FillerPageHeader, FillerPlaceholderBlocks } from "@/modules/website/components/Filler";
-
-const BLOCKS = [
-  {
-    heading: "Our story",
-    body: "SoluDesk started with a simple observation: experts have valuable knowledge, but building and selling a course is hard. We built the Course Creator Studio to remove the friction — for creators and for learners.",
-  },
-  {
-    heading: "The team",
-    body: "A small team of builders, educators, and reviewers who care about the craft of teaching online.",
-  },
-];
+import { AboutHero } from "@/modules/website/sections/AboutHero";
+import { AboutStory } from "@/modules/website/sections/AboutStory";
+import { AboutValues } from "@/modules/website/sections/AboutValues";
+import { CtaSection } from "@/modules/website/sections/CtaSection";
+import { FaqSection } from "@/modules/website/sections/FaqSection";
 
 export function AboutView() {
   return (
     <main>
-      <FillerPageHeader
-        title="About us"
-        subtitle="We exist to help experts turn what they know into courses the world can take."
-      />
-      <FillerPlaceholderBlocks blocks={BLOCKS} />
+      <AboutHero />
+      <AboutValues />
+      <AboutStory />
+      <FaqSection />
+      <CtaSection />
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { InfoCircle, SearchNormal, TickCircle } from "iconsax-react";
+import { InfoCircle, SearchNormal } from "iconsax-react";
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";

@@ -1,5 +1,10 @@
 import React from "react";
 import { DraftsView } from "@/modules/creator/drafts/DraftsView";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Drafts",
+};
 
 export default function DraftsPage() {
   return (

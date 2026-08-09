@@ -177,6 +177,98 @@ export const FAQS: Faq[] = [
   },
 ];
 
+export interface CreatorFeature {
+  icon: string;
+  title: string;
+  description: string;
+  background: string;
+}
+
+export const CREATOR_FEATURES: CreatorFeature[] = [
+  {
+    icon: "/images/products/creators/wallet-icon.svg",
+    title: "Instant Payment",
+    description: "Automatically get paid once your course is created and approved.",
+    background:
+      "linear-gradient(76.93deg, rgba(0, 99, 239, 0.06) 7.05%, rgba(250, 133, 0, 0.06) 98.16%)",
+  },
+  {
+    icon: "/images/products/creators/cash-icon.svg",
+    title: "Transparent Review",
+    description: "Clear standards, real feedback, and a decision you can understand.",
+    background: "linear-gradient(176.04deg, #C3DEF3 2.7%, #F5F3F4 71.9%)",
+  },
+];
+
+export interface CreatorTopic {
+  label: string;
+  left: number;
+  top: number;
+  dot: string;
+  gap: number;
+}
+
+export const CREATOR_TOPICS: CreatorTopic[] = [
+  { label: "Software development", left: 0, top: 0, dot: "/images/products/creators/dot-1.svg", gap: 8 },
+  { label: "Counseling", left: 73, top: 46, dot: "/images/products/creators/dot-2.svg", gap: 8 },
+  { label: "Database management", left: 0, top: 92, dot: "/images/products/creators/dot-3.svg", gap: 8 },
+  { label: "Cloud computing", left: 6, top: 138, dot: "/images/products/creators/dot-4.svg", gap: 8 },
+  { label: "Cybersecurity", left: 16, top: 184, dot: "/images/products/creators/dot-5.svg", gap: 8 },
+  { label: "Machine learning", left: 0, top: 230, dot: "/images/products/creators/dot-6.svg", gap: 8 },
+  { label: "Urban planning", left: 195, top: 23, dot: "/images/products/creators/dot-6.svg", gap: 10 },
+  { label: "Environmental science", left: 195, top: 69, dot: "/images/products/creators/dot-3.svg", gap: 10 },
+  { label: "Culinary arts", left: 195, top: 115, dot: "/images/products/creators/dot-2.svg", gap: 10 },
+  { label: "Psychology", left: 160, top: 161, dot: "/images/products/creators/dot-1.svg", gap: 10 },
+  { label: "Mechanical engineering", left: 160, top: 207, dot: "/images/products/creators/dot-4.svg", gap: 10 },
+  { label: "Event management", left: 152, top: 253, dot: "/images/products/creators/dot-1.svg", gap: 10 },
+];
+
+export type CreatorTransactionStatus = "Pending" | "Successful" | "Failed";
+
+export interface CreatorTransaction {
+  title: string;
+  date: string;
+  amount: string;
+  status: CreatorTransactionStatus;
+}
+
+export const CREATOR_TRANSACTIONS: CreatorTransaction[] = [
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+$500.00", status: "Pending" },
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "-$234.00", status: "Successful" },
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+$1,200.00", status: "Failed" },
+];
+
+export interface WalletStat {
+  label: string;
+  value: string;
+}
+
+export const WALLET_STATS: WalletStat[] = [
+  { label: "Total amount earned", value: "$456,000.03" },
+  { label: "Wallet Balance", value: "$456,000" },
+  { label: "Pending payments", value: "$34,000" },
+];
+
+export interface CreatorCollaborator {
+  initials: string;
+  name: string;
+  email: string;
+  dateAdded: string;
+  role: string;
+  color: string;
+}
+
+export const CREATOR_COLLABORATORS: CreatorCollaborator[] = [
+  { initials: "D", name: "Dog Whales", email: "dogwhales@support.com", dateAdded: "25 March 2025, 07:40 PM", role: "Author", color: "#0A60E1" },
+  { initials: "A", name: "Adams Nelson", email: "adams_nelson2@hotmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#D54800" },
+  { initials: "A", name: "Jeremy Nathan", email: "jnathan63@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+  { initials: "A", name: "Benjamin Ben", email: "benajmin2sq@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+  { initials: "A", name: "Benjamin Ben", email: "benajmin2sq@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+  { initials: "A", name: "Osaite Emmanuel", email: "emmanuelosaite@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+  { initials: "A", name: "Osaite Emmanuel", email: "emmanuelosaite@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+  { initials: "A", name: "Osaite Emmanuel", email: "emmanuelosaite@gmail.com", dateAdded: "25 March 2025, 07:40 PM", role: "Collaborator", color: "#0A60E1" },
+];
+
 export interface FooterColumn {
   title: string;
   links: NavLink[];
@@ -196,7 +288,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Company",
     links: [
       { label: "About Us", href: "/about" },
-      { label: "Cookies Policy", href: "/privacy" },
+      { label: "Cookies Policy", href: "/cookies" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Use", href: "/terms" },
     ],

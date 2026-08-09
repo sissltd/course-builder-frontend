@@ -1,5 +1,10 @@
 import React from "react";
 import { ProfileView } from "@/modules/creator/profile/ProfileView";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Profile",
+};
 
 export default function ProfilePage() {
   return (

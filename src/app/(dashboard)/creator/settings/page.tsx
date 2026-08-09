@@ -1,5 +1,10 @@
 import React from "react";
 import { SettingsView } from "@/modules/creator/settings/SettingsView";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 export default function SettingsPage() {
   return (
