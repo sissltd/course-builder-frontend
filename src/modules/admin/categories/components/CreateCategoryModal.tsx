@@ -40,7 +40,7 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
   const handleCreateCategory = () => {
     toast.success("Category Created successfully", {
       icon: (
-        <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-soft)]">
+        <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-bg)]">
           <TickCircle variant="Bold" size={20} color="var(--sd-success)" />
         </div>
       ),
@@ -106,7 +106,7 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
 
         <div className="flex flex-col gap-[12px]">
           <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
-            Payout price level <span className="text-[#FF5025]">*</span>
+            Payout price level <span className="text-sd-danger">*</span>
           </span>
           <div className="grid grid-cols-3 gap-[14px]">
             <FormInput

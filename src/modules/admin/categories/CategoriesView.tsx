@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FolderClosed, SquareTerminal } from "lucide-react";
-import { Archive, Element3, More, TickCircle } from "iconsax-react";
+import { Element3, More, TickCircle } from "iconsax-react";
 import { format } from "date-fns";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { TabBar, TabBarItem } from "@/components/shared/TabBar";
@@ -59,9 +59,9 @@ const archivedCategories = "3";
 
 const TrackChip = ({ track }: { track: CategoryRow["track"] }) => {
   const chipStyles: Record<CategoryRow["track"], string> = {
-    open: "bg-[var(--sd-blue-soft)] text-sd-blue",
-    "creator-preferred": "bg-[var(--sd-success-soft)] text-[var(--sd-success-strong)]",
-    "ai-preferred": "bg-[var(--sd-purple-soft)] text-[var(--sd-purple)]",
+    open: "bg-[var(--sd-blue-light)] text-sd-blue",
+    "creator-preferred": "bg-[var(--sd-success-bg)] text-[var(--sd-success-text)]",
+    "ai-preferred": "bg-[var(--sd-purple-bg)] text-[var(--sd-purple-text)]",
     archive: "bg-sd-grey-3 text-sd-grey-11",
   };
 
@@ -233,6 +233,7 @@ export const CategoriesView = () => {
     <>
       <CreateCategoryModal isOpen={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
       <EditCategoryModal
+        key={editingCategory?.id ?? "edit-category"}
         isOpen={isEditModalOpen}
         onOpenChange={(open) => {
           setIsEditModalOpen(open);
@@ -295,7 +296,7 @@ export const CategoriesView = () => {
       <div className="flex flex-col gap-[38px]">
         <div className="grid gap-[14px] xl:grid-cols-3">
           <AdminStatCard
-            icon={<Element3 size={20} variant="Bold" color="var(--sd-blue-strong)" />}
+            icon={<Element3 size={20} variant="Bold" color="var(--sd-blue-dark)" />}
             label="Total Category"
             value={totalCategories}
             className="h-[104px] rounded-[14px] border-[var(--sd-card-border)] px-[18px] py-[14px] shadow-none"

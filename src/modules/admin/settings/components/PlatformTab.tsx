@@ -1,64 +1,134 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/components/shared/Button";
+import { Button as AppButton } from "@/components/shared/Button";
+import { FormInput } from "@/components/form/FormInput";
 
-const Toggle = ({ defaultChecked }: { defaultChecked?: boolean }) => (
-  <label className="relative inline-flex h-[24px] w-[46px] shrink-0 cursor-pointer items-center">
-    <input type="checkbox" defaultChecked={defaultChecked} className="peer sr-only" />
-    <span className="absolute inset-0 rounded-full bg-[#D9D9D9] transition-colors peer-checked:bg-[#0063EF]" />
-    <span className="absolute left-[2px] top-[2px] size-[20px] rounded-full bg-white shadow transition-transform peer-checked:translate-x-[22px]" />
-  </label>
-);
+type PlatformField = {
+  id: string;
+  title: string;
+  description: string;
+  value: string;
+};
+
+type PlatformSection = {
+  title: string;
+  fields: PlatformField[];
+};
+
+const initialSections: PlatformSection[] = [
+  {
+    title: "TIMING & THRESHOLDS",
+    fields: [
+      {
+        id: "draft-minimum-hold-time",
+        title: "Draft minimum hold time",
+        description: "Set the number of hours required for a course to stay in draft",
+        value: "48hr",
+      },
+      {
+        id: "topic-reservation-expiration",
+        title: "Topic reservation expiration",
+        description: "Set how long you want topic to return to the available pool after days of inactivity",
+        value: "48hr",
+      },
+      {
+        id: "topic-reservation-expiration-two",
+        title: "Topic reservation expiration",
+        description: "Set how long you want topic to return to the available pool after days of inactivity",
+        value: "48hr",
+      },
+    ],
+  },
+  {
+    title: "REVIEW",
+    fields: [
+      {
+        id: "review-sla-admin-alert",
+        title: "Review SLA - admin alert",
+        description: "Admin is alerted when a course has been in review without a decision",
+        value: "48hr",
+      },
+      {
+        id: "flagging-hour",
+        title: "Flagging hour",
+        description: "Course is auto-flagged if no decision is made within this period",
+        value: "48hr",
+      },
+    ],
+  },
+];
 
 export const PlatformTab = () => {
+  const [sections, setSections] = React.useState(initialSections);
+
+  const handleFieldChange = (fieldId: string, nextValue: string) => {
+    setSections((current) =>
+      current.map((section) => ({
+        ...section,
+        fields: section.fields.map((field) =>
+          field.id === fieldId ? { ...field, value: nextValue } : field
+        ),
+      }))
+    );
+  };
+
   return (
-    <div className="flex flex-col gap-[24px] w-full">
-      <div>
-        <h3 className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">Platform settings</h3>
-        <p className="text-[16px] font-normal text-[#606060] leading-[24px]">Configure operational rules that governs creator and course behavior</p>
+    <div className="flex w-full flex-col gap-[34px]">
+      <div className="flex flex-col gap-[6px]">
+        <h3 className="text-[22px] font-medium text-sd-grey-12 tracking-[-0.44px] leading-[32px]">
+          Platform settings
+        </h3>
+        <p className="max-w-[510px] text-[14px] font-normal text-sd-grey-11 leading-[24px]">
+          Configure operational rules that governs creator and course behavior
+        </p>
       </div>
 
-      <div className="border border-[#F0F0F0] p-[16px] rounded-[12px]">
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px] block mb-[20px]">TIMING &amp; THRESHOLDS</span>
-        <div className="flex flex-col gap-[20px]">
-          {[
-            { title: "Draft minimum hold time", desc: "Minimum time a creator must wait before publishing a draft after creation" },
-            { title: "Review stage time limit", desc: "Maximum time a course can stay in review before auto-escalation" },
-            { title: "Production slot limit per creator", desc: "Maximum number of concurrent production slots a single creator can have" },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center justify-between">
-              <div className="max-w-[436px]">
-                <p className="text-[16px] font-normal text-[#202020] tracking-[-0.32px] leading-[24px]">{item.title}</p>
-                <p className="text-[14px] font-normal text-[#606060] tracking-[-0.28px] leading-[20px]">{item.desc}</p>
-              </div>
-              <Toggle defaultChecked />
-            </div>
-          ))}
-        </div>
-      </div>
+      <div className="flex flex-col gap-[40px]">
+        {sections.map((section) => (
+          <div key={section.title} className="rounded-[16px] border border-sd-grey-3 bg-white px-[16px] py-[20px]">
+            <div className="flex flex-col gap-[20px]">
+              <span className="text-[14px] font-normal text-sd-grey-11 tracking-[-0.28px] leading-[20px]">
+                {section.title}
+              </span>
 
-      <div className="border border-[#F0F0F0] p-[16px] rounded-[12px]">
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px] block mb-[20px]">ACCESS CONTROL</span>
-        <div className="flex flex-col gap-[20px]">
-          {[
-            { title: "Allow creator self-registration", desc: "Allow new creators to sign up without admin approval" },
-            { title: "Require email verification", desc: "New accounts must verify their email before accessing the platform" },
-            { title: "Auto-approve trusted domains", desc: "Automatically approve accounts from trusted email domains" },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center justify-between">
-              <div className="max-w-[436px]">
-                <p className="text-[16px] font-normal text-[#202020] tracking-[-0.32px] leading-[24px]">{item.title}</p>
-                <p className="text-[14px] font-normal text-[#606060] tracking-[-0.28px] leading-[20px]">{item.desc}</p>
+              <div className="flex flex-col gap-[18px]">
+                {section.fields.map((field) => (
+                  <div key={field.id} className="flex items-start justify-between gap-[24px]">
+                    <div className="flex max-w-[430px] flex-col gap-[4px]">
+                      <h4 className="text-[16px] font-normal text-sd-grey-12 tracking-[-0.32px] leading-[24px]">
+                        {field.title}
+                      </h4>
+                      <p className="text-[14px] font-normal text-sd-grey-11 tracking-[-0.28px] leading-[20px]">
+                        {field.description}
+                      </p>
+                    </div>
+
+                    <div className="w-[146px] shrink-0">
+                      <FormInput
+                        name={field.id}
+                        value={field.value}
+                        onChange={(event) => handleFieldChange(field.id, event.target.value)}
+                        className="h-[44px] rounded-[10px] border-[1.5px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-10"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Toggle defaultChecked />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       <div className="flex justify-end">
-        <Button className="h-[44px] px-[32px] text-[14px]">Save Changes</Button>
+        <AppButton
+          type="button"
+          variant="app-primary"
+          size="app"
+          className="h-[44px] min-w-[151px] rounded-[10px] px-[24px] text-[14px] font-normal tracking-[-0.28px]"
+        >
+          Save changes
+        </AppButton>
       </div>
     </div>
   );

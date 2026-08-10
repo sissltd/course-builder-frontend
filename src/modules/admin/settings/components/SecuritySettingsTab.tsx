@@ -1,61 +1,93 @@
 "use client";
 
 import React from "react";
-import { FormSelect } from "@/components/form/FormSelect";
-import { Button } from "@/components/shared/Button";
-
-const Toggle = ({ defaultChecked }: { defaultChecked?: boolean }) => (
-  <label className="relative inline-flex h-[24px] w-[46px] shrink-0 cursor-pointer items-center">
-    <input type="checkbox" defaultChecked={defaultChecked} className="peer sr-only" />
-    <span className="absolute inset-0 rounded-full bg-[#D9D9D9] transition-colors peer-checked:bg-[#0063EF]" />
-    <span className="absolute left-[2px] top-[2px] size-[20px] rounded-full bg-white shadow transition-transform peer-checked:translate-x-[22px]" />
-  </label>
-);
-
-const sessionOptions = [
-  { label: "30 minutes", value: "30" },
-  { label: "1 hour", value: "60" },
-  { label: "2 hours", value: "120" },
-  { label: "4 hours", value: "240" },
-  { label: "8 hours", value: "480" },
-];
+import { Button as AppButton } from "@/components/shared/Button";
+import { FormInput } from "@/components/form/FormInput";
 
 export const SecuritySettingsTab = () => {
+  const [email, setEmail] = React.useState("emmanuelosaite@gmail.com");
+  const [currentPassword, setCurrentPassword] = React.useState("*************");
+  const [newPassword, setNewPassword] = React.useState("*************");
+  const [confirmPassword, setConfirmPassword] = React.useState("*************");
+
   return (
-    <div className="flex flex-col gap-[24px] w-full">
-      <div>
-        <h3 className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">Security Settings</h3>
-        <p className="text-[16px] font-normal text-[#606060] leading-[24px]">Manage security policies, authentication, and access controls</p>
+    <div className="flex w-full flex-col gap-[34px]">
+      <div className="flex flex-col gap-[6px]">
+        <h3 className="text-[22px] font-medium text-sd-grey-12 tracking-[-0.44px] leading-[32px]">
+          Security
+        </h3>
+        <p className="text-[14px] font-normal text-sd-grey-11 leading-[24px]">
+          Manage your email address
+        </p>
       </div>
 
-      <div className="border border-[#F0F0F0] p-[16px] rounded-[12px]">
+      <div className="flex flex-col gap-[26px]">
+        <div className="flex flex-col gap-[14px]">
+          <FormInput
+            name="security-email-address"
+            label="Email address"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-[44px] rounded-[10px] border-[1.5px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-12"
+          />
+
+          <div className="flex justify-end">
+            <AppButton
+              type="button"
+              variant="outline"
+              size="app"
+              className="h-[44px] min-w-[134px] rounded-[10px] border-sd-blue bg-white px-[24px] text-[14px] font-normal text-sd-blue hover:bg-sd-blue-light"
+            >
+              Change email
+            </AppButton>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-[16px]">
-          <FormSelect name="session" label="Session timeout" placeholder="Select timeout duration" options={sessionOptions} />
-        </div>
-      </div>
+          <h4 className="text-[16px] font-medium text-sd-grey-12 tracking-[-0.32px] leading-[24px]">
+            Password
+          </h4>
 
-      <div className="border border-[#F0F0F0] p-[16px] rounded-[12px]">
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px] block mb-[20px]">AUTHENTICATION</span>
-        <div className="flex flex-col gap-[20px]">
-          {[
-            { title: "Two-factor authentication (2FA)", desc: "Require 2FA for all admin accounts" },
-            { title: "Single sign-on (SSO)", desc: "Allow login via SAML/OIDC identity providers" },
-            { title: "IP whitelisting", desc: "Restrict admin access to specific IP addresses" },
-            { title: "Password expiry", desc: "Force password change every 90 days" },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center justify-between">
-              <div className="max-w-[436px]">
-                <p className="text-[16px] font-normal text-[#202020] tracking-[-0.32px] leading-[24px]">{item.title}</p>
-                <p className="text-[14px] font-normal text-[#606060] tracking-[-0.28px] leading-[20px]">{item.desc}</p>
-              </div>
-              <Toggle />
-            </div>
-          ))}
-        </div>
-      </div>
+          <div className="flex flex-col gap-[14px]">
+            <FormInput
+              name="security-current-password"
+              label="Current password"
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              className="h-[44px] rounded-[10px] border-[1.5px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-12"
+            />
 
-      <div className="flex justify-end">
-        <Button className="h-[44px] px-[32px] text-[14px]">Save Changes</Button>
+            <FormInput
+              name="security-new-password"
+              label="New password"
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              className="h-[44px] rounded-[10px] border-[1.5px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-12"
+            />
+
+            <FormInput
+              name="security-confirm-password"
+              label="Re-enter new password"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              className="h-[44px] rounded-[10px] border-[1.5px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-12"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <AppButton
+              type="button"
+              variant="outline"
+              size="app"
+              className="h-[44px] min-w-[138px] rounded-[10px] border-sd-blue bg-white px-[24px] text-[14px] font-normal text-sd-blue hover:bg-sd-blue-light"
+            >
+              Save changes
+            </AppButton>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export const TabBar = ({
   indicatorClassName,
 }: TabBarProps) => {
   return (
-    <div className={cn("flex border-b border-[#F0F0F0] overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:h-0", className)}>
+    <div className={cn("flex border-b border-sd-grey-3 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:h-0", className)}>
       {tabs.map((tab) => {
         const isActive = activeKey === tab.key;
         return (
@@ -41,13 +41,13 @@ export const TabBar = ({
               "h-[40px] px-[12px] text-[14px] font-normal leading-[20px] transition-colors relative cursor-pointer shrink-0",
               tabClassName,
               isActive
-                ? cn("text-[#0063EF]", activeTabClassName)
-                : cn("text-[#606060]", inactiveTabClassName)
+                ? cn("text-sd-blue", activeTabClassName)
+                : cn("text-sd-grey-11", inactiveTabClassName)
             )}
           >
             {tab.label}
             {isActive && (
-              <div className={cn("absolute bottom-0 left-0 right-0 h-0.5 bg-[#0063EF]", indicatorClassName)} />
+              <div className={cn("absolute bottom-0 left-0 right-0 h-0.5 bg-sd-blue", indicatorClassName)} />
             )}
           </button>
         );

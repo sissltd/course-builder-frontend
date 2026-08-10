@@ -138,16 +138,16 @@ export function BaseTable<TData, TValue>({
   });
 
   return (
-    <div className={cn("w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] p-[16px] flex flex-col gap-[20px]", className)}>
+    <div className={cn("w-full bg-sd-grey-1 border border-sd-grey-3 rounded-[20px] p-[16px] flex flex-col gap-[20px]", className)}>
       {/* Header */}
       {showHeader && (
         <div className="flex items-start justify-between w-full">
-          <div className="bg-[#FCFDFF] p-[10px] rounded-[12px]">
-             <span className="text-[16px] font-semibold text-[#606060] tracking-[-0.32px] leading-[24px] whitespace-nowrap">{title}</span>
+          <div className="bg-sd-header-bg p-[10px] rounded-[12px]">
+             <span className="text-[16px] font-semibold text-sd-grey-11 tracking-[-0.32px] leading-[24px] whitespace-nowrap">{title}</span>
           </div>
-          <div className="bg-[#FCFDFF] p-[10px] rounded-[12px] flex items-center gap-[8px] cursor-pointer group">
-            <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">See all</span>
-            <ArrowLeft size={20} variant="Linear" color="#606060" className="rotate-180" />
+          <div className="bg-sd-header-bg p-[10px] rounded-[12px] flex items-center gap-[8px] cursor-pointer group">
+            <span className="text-[14px] text-sd-grey-11 tracking-[-0.28px] leading-[20px]">See all</span>
+            <ArrowLeft size={20} variant="Linear" color="var(--sd-grey-11)" className="rotate-180" />
           </div>
         </div>
       )}
@@ -162,7 +162,7 @@ export function BaseTable<TData, TValue>({
                   <SearchNormal1 
                     size={20} 
                     variant="Linear" 
-                    color="#B6B6B6" 
+                    color="var(--sd-muted-text)" 
                     className="absolute left-[16px] top-1/2 -translate-y-1/2 pointer-events-none"
                   />
                   <input
@@ -173,7 +173,7 @@ export function BaseTable<TData, TValue>({
                       setGlobalFilter(e.target.value);
                       onSearchChange?.(e.target.value);
                     }}
-                    className="w-full h-[40px] pl-[44px] pr-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#202020] placeholder:text-[#B6B6B6] bg-white outline-none focus:border-[#0063EF] transition-colors"
+                    className="w-full h-[40px] pl-[44px] pr-[16px] border border-sd-grey-6 rounded-[8px] text-[14px] text-sd-grey-12 placeholder:text-sd-muted-text bg-white outline-none focus:border-sd-blue transition-colors"
                   />
                 </div>
               )}
@@ -184,7 +184,7 @@ export function BaseTable<TData, TValue>({
                     placeholder={filter.label}
                     options={filter.options}
                     onValueChange={filter.onValueChange}
-                    triggerClassName="h-[40px] px-[16px] border-[#D9D9D9] bg-white text-[14px] text-[#606060] tracking-[-0.28px]"
+                    triggerClassName="h-[40px] px-[16px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-11 tracking-[-0.28px]"
                     icon={filter.icon}
                     name="tableFilter"
                     searchable={filter.searchable}
@@ -196,14 +196,14 @@ export function BaseTable<TData, TValue>({
               {showDateFilter && dateFilterInline && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-[#D9D9D9] rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
-                      <Calendar2 size={20} variant="Linear" color="#606060" />
-                      <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] whitespace-nowrap">
+                    <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-sd-grey-6 rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
+                      <Calendar2 size={20} variant="Linear" color="var(--sd-grey-11)" />
+                      <span className="text-[14px] text-sd-grey-11 tracking-[-0.28px] leading-[20px] whitespace-nowrap">
                         {activeDate ? format(activeDate, "dd MMM yyyy") : "Date"}
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-white border border-[#F0F0F0] rounded-[12px] " align="start">
+                  <PopoverContent className="w-auto p-0 bg-white border border-sd-grey-3 rounded-[12px] " align="start">
                     <Calendar
                       mode="single"
                       selected={activeDate}
@@ -217,14 +217,14 @@ export function BaseTable<TData, TValue>({
             {!dateFilterInline && showDateFilter && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-[#D9D9D9] rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
-                    <Calendar2 size={20} variant="Linear" color="#606060" />
-                    <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] whitespace-nowrap">
+                  <button className="flex items-center gap-[8px] px-[16px] py-[10px] border border-sd-grey-6 rounded-[8px] bg-white cursor-pointer hover:bg-sd-grey-1 transition-colors h-[40px] outline-none select-none">
+                    <Calendar2 size={20} variant="Linear" color="var(--sd-grey-11)" />
+                    <span className="text-[14px] text-sd-grey-11 tracking-[-0.28px] leading-[20px] whitespace-nowrap">
                       {activeDate ? format(activeDate, "dd MMM yyyy") : "Date"}
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white border border-[#F0F0F0] rounded-[12px] " align="end">
+                <PopoverContent className="w-auto p-0 bg-white border border-sd-grey-3 rounded-[12px] " align="end">
                   <Calendar
                     mode="single"
                     selected={activeDate}
@@ -249,10 +249,10 @@ export function BaseTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className={cn("hover:bg-transparent border-b border-[#F0F0F0]", headerRowClassName)}>
+              <TableRow key={headerGroup.id} className={cn("hover:bg-transparent border-b border-sd-grey-3", headerRowClassName)}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className={cn("text-[14px] font-semibold text-[#B6B6B6] h-[48px] px-[16px] tracking-[-0.28px] whitespace-nowrap bg-[#FDFDFD]", headerCellClassName)}>
+                    <TableHead key={header.id} className={cn("text-[14px] font-semibold text-sd-muted-text h-[48px] px-[16px] tracking-[-0.28px] whitespace-nowrap bg-sd-grey-1", headerCellClassName)}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -272,7 +272,7 @@ export function BaseTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
-                    "h-[56px] border-b border-[#F0F0F0] hover:bg-sd-grey-1/30 data-[state=selected]:bg-[#eaf3ff]",
+                    "h-[56px] border-b border-sd-grey-3 hover:bg-sd-grey-1/30 data-[state=selected]:bg-sd-blue-light",
                     rowClassName,
                     onRowClick && "cursor-pointer"
                   )}
@@ -285,7 +285,7 @@ export function BaseTable<TData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} data-column-id={cell.column.id} className={cn("text-[14px] text-[#606060] px-[16px] tracking-[-0.28px]", cellClassName)}>
+                    <TableCell key={cell.id} data-column-id={cell.column.id} className={cn("text-[14px] text-sd-grey-11 px-[16px] tracking-[-0.28px]", cellClassName)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -326,8 +326,8 @@ export function BaseTable<TData, TValue>({
 
       {/* Selection Action Bar */}
       {selectedCount > 0 && selectionAction && (
-        <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-[#F0F0F0] bg-[#F9FAFB] rounded-b-[20px]">
-          <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{selectedCount} selected</span>
+        <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-sd-grey-3 bg-sd-footer-bg rounded-b-[20px]">
+          <span className="text-[14px] text-sd-grey-11 tracking-[-0.28px] leading-[20px]">{selectedCount} selected</span>
           <div className="flex items-center gap-[8px]">
             {typeof selectionAction === "function" ? selectionAction(selectedCount) : selectionAction}
           </div>
