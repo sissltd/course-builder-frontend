@@ -33,6 +33,13 @@ interface BaseTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   title: string;
+  className?: string;
+  toolbarClassName?: string;
+  contentClassName?: string;
+  headerRowClassName?: string;
+  headerCellClassName?: string;
+  rowClassName?: string;
+  cellClassName?: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
   filters?: {
@@ -54,6 +61,7 @@ interface BaseTableProps<TData, TValue> {
   showHeader?: boolean;
   emptyIcon?: React.ReactNode;
   emptyText?: string;
+  topContent?: React.ReactNode;
   onRowClick?: (row: TData) => void;
   ignoreRowClickColumns?: string[];
   tableOptions?: Partial<TableOptions<TData>>;
@@ -63,6 +71,13 @@ export function BaseTable<TData, TValue>({
   columns,
   data,
   title,
+  className,
+  toolbarClassName,
+  contentClassName,
+  headerRowClassName,
+  headerCellClassName,
+  rowClassName,
+  cellClassName,
   searchPlaceholder = "Search...",
   onSearchChange,
   filters,
@@ -77,6 +92,7 @@ export function BaseTable<TData, TValue>({
   showHeader = true,
   emptyIcon,
   emptyText,
+  topContent,
   onRowClick,
   ignoreRowClickColumns,
   tableOptions,
@@ -122,7 +138,7 @@ export function BaseTable<TData, TValue>({
   });
 
   return (
-    <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] p-[16px] flex flex-col gap-[20px]">
+    <div className={cn("w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] p-[16px] flex flex-col gap-[20px]", className)}>
       {/* Header */}
       {showHeader && (
         <div className="flex items-start justify-between w-full">
@@ -138,7 +154,7 @@ export function BaseTable<TData, TValue>({
 
       {/* Toolbar */}
       {(searchPlaceholder || filters?.length || showDateFilter || toolbarAction) && (
-        <div className="flex flex-col gap-[16px]">
+        <div className={cn("flex flex-col gap-[16px]", toolbarClassName)}>
           <div className="flex items-center justify-between gap-[16px] w-full">
             <div className="flex items-center gap-[12px] flex-1 flex-wrap">
               {searchPlaceholder && (
@@ -153,7 +169,10 @@ export function BaseTable<TData, TValue>({
                     type="text"
                     placeholder={searchPlaceholder}
                     value={globalFilter ?? ""}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    onChange={(e) => {
+                      setGlobalFilter(e.target.value);
+                      onSearchChange?.(e.target.value);
+                    }}
                     className="w-full h-[40px] pl-[44px] pr-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#202020] placeholder:text-[#B6B6B6] bg-white outline-none focus:border-[#0063EF] transition-colors"
                   />
                 </div>
@@ -223,15 +242,17 @@ export function BaseTable<TData, TValue>({
         </div>
       )}
 
+      {topContent}
+
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className={cn("overflow-x-auto", contentClassName)}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-[#F0F0F0]">
+              <TableRow key={headerGroup.id} className={cn("hover:bg-transparent border-b border-[#F0F0F0]", headerRowClassName)}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-[14px] font-semibold text-[#B6B6B6] h-[48px] px-[16px] tracking-[-0.28px] whitespace-nowrap bg-[#FDFDFD]">
+                    <TableHead key={header.id} className={cn("text-[14px] font-semibold text-[#B6B6B6] h-[48px] px-[16px] tracking-[-0.28px] whitespace-nowrap bg-[#FDFDFD]", headerCellClassName)}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -252,6 +273,7 @@ export function BaseTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
                     "h-[56px] border-b border-[#F0F0F0] hover:bg-sd-grey-1/30 data-[state=selected]:bg-[#eaf3ff]",
+                    rowClassName,
                     onRowClick && "cursor-pointer"
                   )}
                   onClick={(e) => {
@@ -263,7 +285,7 @@ export function BaseTable<TData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} data-column-id={cell.column.id} className="text-[14px] text-[#606060] px-[16px] tracking-[-0.28px]">
+                    <TableCell key={cell.id} data-column-id={cell.column.id} className={cn("text-[14px] text-[#606060] px-[16px] tracking-[-0.28px]", cellClassName)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
