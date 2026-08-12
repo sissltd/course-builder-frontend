@@ -58,22 +58,28 @@
   --color-sd-grey-11: var(--sd-grey-11);
   --color-sd-grey-12: var(--sd-grey-12);
 
-  --color-sd-blue: #0063EF; /* Used heavily in auth flow */
-  --color-sd-blue-strong: var(--sd-blue-strong);
+  --color-sd-blue: var(--sd-blue);
+  --color-sd-blue-hover: var(--sd-blue-hover);
+  --color-sd-blue-dark: var(--sd-blue-dark);
+  --color-sd-blue-light: var(--sd-blue-light);
   --color-sd-success: var(--sd-success);
-  --color-sd-success-strong: var(--sd-success-strong);
-  --color-sd-success-soft: var(--sd-success-soft);
+  --color-sd-success-text: var(--sd-success-text);
+  --color-sd-success-bg: var(--sd-success-bg);
+  --color-sd-warning-text: var(--sd-warning-text);
+  --color-sd-warning-bg: var(--sd-warning-bg);
   --color-sd-danger: var(--sd-danger);
   --color-sd-danger-soft: var(--sd-danger-soft);
-  --color-sd-purple: var(--sd-purple);
-  --color-sd-purple-soft: var(--sd-purple-soft);
-  --color-sd-blue-soft: var(--sd-blue-soft);
+  --color-sd-purple-text: var(--sd-purple-text);
+  --color-sd-purple-bg: var(--sd-purple-bg);
   --color-sd-grey-13: var(--sd-grey-13);
   --color-sd-grey-14: var(--sd-grey-14);
   --color-sd-grey-15: var(--sd-grey-15);
   --color-sd-grey-16: var(--sd-grey-16);
   --color-sd-grey-17: var(--sd-grey-17);
   --color-sd-grey-18: var(--sd-grey-18);
+  --color-sd-muted-text: var(--sd-muted-text);
+  --color-sd-header-bg: var(--sd-header-bg);
+  --color-sd-footer-bg: var(--sd-footer-bg);
   --color-sd-card-border: var(--sd-card-border);
 
   --radius-sm: calc(var(--radius) * 0.6);
@@ -149,16 +155,23 @@
   --sd-grey-16: #F6F6F6;
   --sd-grey-17: #F5F5F5;
   --sd-grey-18: #E6E6E6;
+  --sd-muted-text: #B6B6B6;
+  --sd-header-bg: #FCFDFF;
+  --sd-footer-bg: #F9FAFB;
   --sd-card-border: #E9E9E9;
+  --sd-blue: #0063EF;
+  --sd-blue-hover: #0052CC;
+  --sd-blue-light: #EAF3FF;
+  --sd-blue-dark: #0A60E1;
   --sd-success: #008500;
-  --sd-success-strong: #3C7E44;
-  --sd-success-soft: #F1F8F2;
+  --sd-success-text: #3C7E44;
+  --sd-success-bg: #F1F8F2;
+  --sd-warning-text: #B77815;
+  --sd-warning-bg: #FCF5E8;
   --sd-danger: #FF5025;
   --sd-danger-soft: #FFF0ED;
-  --sd-blue-soft: #EAF3FF;
-  --sd-blue-strong: #0A60E1;
-  --sd-purple: #B423FF;
-  --sd-purple-soft: #F7E8FF;
+  --sd-purple-text: #B423FF;
+  --sd-purple-bg: #F7E8FF;
 
   /* SoluDesk Semantic Map */
   --main-text-1: var(--sd-grey-12);

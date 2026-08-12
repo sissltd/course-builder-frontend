@@ -32,15 +32,6 @@ export const EditCategoryModal = ({ isOpen, onOpenChange, category }: EditCatego
   const [intermediatePrice, setIntermediatePrice] = React.useState(category ? toDrawerPrice(category.intermediatePrice) : "$0.00");
   const [advancedPrice, setAdvancedPrice] = React.useState(category ? toDrawerPrice(category.advancedPrice) : "$0.00");
 
-  React.useEffect(() => {
-    if (!category || !isOpen) return;
-    setCategoryName(category.category);
-    setTrackPreference(category.track);
-    setBeginnerPrice(toDrawerPrice(category.beginnerPrice));
-    setIntermediatePrice(toDrawerPrice(category.intermediatePrice));
-    setAdvancedPrice(toDrawerPrice(category.advancedPrice));
-  }, [category, isOpen]);
-
   const handleClose = () => {
     onOpenChange(false);
   };
@@ -48,7 +39,7 @@ export const EditCategoryModal = ({ isOpen, onOpenChange, category }: EditCatego
   const handleSaveChanges = () => {
     toast.success("Category Updated successfully", {
       icon: (
-        <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-soft)]">
+        <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-bg)]">
           <TickCircle variant="Bold" size={20} color="var(--sd-success)" />
         </div>
       ),

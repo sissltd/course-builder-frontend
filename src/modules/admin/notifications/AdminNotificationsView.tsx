@@ -77,7 +77,7 @@ const NotificationIcon = ({ type, isRead }: { type: AdminNotificationItem["type"
   <div className="relative shrink-0">
     <div className="flex size-[46px] items-center justify-center rounded-full border border-sd-grey-6 bg-white">
       {type === "approval" ? (
-        <Check size={22} strokeWidth={2.25} color="#202020" />
+        <Check size={22} strokeWidth={2.25} color="var(--sd-grey-12)" />
       ) : (
         <Image
           src="/assets/notifications/book.svg"
@@ -89,7 +89,7 @@ const NotificationIcon = ({ type, isRead }: { type: AdminNotificationItem["type"
       )}
     </div>
     {!isRead && (
-      <span className="absolute right-0 top-[8px] size-[10px] rounded-full bg-[var(--sd-blue-strong)]" />
+      <span className="absolute right-0 top-[8px] size-[10px] rounded-full bg-[var(--sd-blue-dark)]" />
     )}
   </div>
 );
@@ -193,7 +193,7 @@ export const AdminNotificationsView = () => {
             onClick={handleMarkAllAsRead}
           >
             <div className="mr-[12px] flex items-center">
-              <Check size={22} strokeWidth={2.25} color="#202020" />
+              <Check size={22} strokeWidth={2.25} color="var(--sd-grey-12)" />
             </div>
             Mark all as read
           </AppButton>

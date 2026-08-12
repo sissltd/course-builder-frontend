@@ -7,6 +7,7 @@ import { AdminNotificationsTab } from "./components/AdminNotificationsTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { PlatformTab } from "./components/PlatformTab";
 import { PaymentsTab } from "./components/PaymentsTab";
+import { AchievementAwardsTab } from "./components/AchievementAwardsTab";
 import { SecuritySettingsTab } from "./components/SecuritySettingsTab";
 
 const TAB_CONTENT: Record<AdminSettingsTab, React.ReactNode> = {
@@ -15,6 +16,7 @@ const TAB_CONTENT: Record<AdminSettingsTab, React.ReactNode> = {
   permissions:   <PermissionsTab />,
   platform:      <PlatformTab />,
   payments:      <PaymentsTab />,
+  "achievement-awards": <AchievementAwardsTab />,
   security:      <SecuritySettingsTab />,
 };
 
@@ -22,12 +24,12 @@ export const AdminSettingsView = () => {
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>("account");
 
   return (
-    <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] flex overflow-hidden min-h-[700px]">
-      <div className="w-full md:w-[326px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[20px]">
+    <div className="flex min-h-[calc(100vh-132px)] w-full overflow-hidden">
+      <div className="w-full shrink-0 border-r border-sd-grey-3 px-[16px] py-[20px] md:w-[324px]">
         <AdminSettingsTabNav active={activeTab} onChange={setActiveTab} />
       </div>
-      <div className="flex-1 px-[40px] py-[32px] overflow-auto">
-        <div className="w-full max-w-[800px]">
+      <div className="flex-1 overflow-auto px-[34px] py-[40px]">
+        <div className={activeTab === "permissions" ? "w-full max-w-[820px]" : activeTab === "achievement-awards" ? "w-full max-w-[760px]" : "w-full max-w-[640px]"}>
           {TAB_CONTENT[activeTab]}
         </div>
       </div>

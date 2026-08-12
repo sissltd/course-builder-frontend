@@ -99,7 +99,7 @@ const activityLogGroups: ActivityLogGroup[] = [
 
 const ActivityLogIcon = () => (
   <div className="flex size-[46px] shrink-0 items-center justify-center rounded-full border border-sd-grey-6 bg-white">
-    <Check size={22} strokeWidth={2.25} color="#202020" />
+    <Check size={22} strokeWidth={2.25} color="var(--sd-grey-12)" />
   </div>
 );
 

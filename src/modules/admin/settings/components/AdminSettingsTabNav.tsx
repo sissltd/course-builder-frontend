@@ -3,13 +3,14 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-  User,
-  Notification,
-  Setting2,
+  Award,
+  Bell,
+  CreditCard,
   Eye,
-  Money,
-  Security,
-} from "iconsax-react";
+  Shield,
+  SlidersVertical,
+  UserRound,
+} from "lucide-react";
 
 export type AdminSettingsTab =
   | "account"
@@ -17,15 +18,17 @@ export type AdminSettingsTab =
   | "permissions"
   | "platform"
   | "payments"
+  | "achievement-awards"
   | "security";
 
 const tabs: { id: AdminSettingsTab; label: string; Icon: React.ElementType }[] = [
-  { id: "account",       label: "Account",       Icon: User },
-  { id: "notifications", label: "Notifications",  Icon: Notification },
-  { id: "permissions",   label: "Permissions",    Icon: Setting2 },
-  { id: "platform",      label: "Platform",       Icon: Eye },
-  { id: "payments",      label: "Payments",       Icon: Money },
-  { id: "security",      label: "Security",       Icon: Security },
+  { id: "account", label: "Account", Icon: UserRound },
+  { id: "notifications", label: "Notifications", Icon: Bell },
+  { id: "permissions", label: "Permissions", Icon: SlidersVertical },
+  { id: "platform", label: "Platform", Icon: Eye },
+  { id: "payments", label: "Payments", Icon: CreditCard },
+  { id: "achievement-awards", label: "Achievement badge", Icon: Award },
+  { id: "security", label: "Security", Icon: Shield },
 ];
 
 interface AdminSettingsTabNavProps {
@@ -34,29 +37,24 @@ interface AdminSettingsTabNavProps {
 }
 
 export const AdminSettingsTabNav = ({ active, onChange }: AdminSettingsTabNavProps) => (
-  <nav className="flex flex-col gap-[8px] w-full">
+  <nav className="flex w-full flex-col gap-[6px]">
     {tabs.map(({ id, label, Icon }) => {
       const isActive = active === id;
       return (
         <button
           key={id}
+          type="button"
           onClick={() => onChange(id)}
           className={cn(
-            "flex items-center gap-[10px] h-[44px] px-[12px] py-[12px] rounded-[8px] w-full text-left transition-all",
-            isActive
-              ? "bg-[#EBF3FF]"
-              : "hover:bg-sd-grey-1"
+            "flex h-[44px] w-full items-center gap-[12px] rounded-[10px] px-[14px] text-left transition-colors cursor-pointer",
+            isActive ? "bg-sd-grey-3" : "hover:bg-sd-grey-2"
           )}
         >
-          <Icon
-            size={24}
-            variant={isActive ? "Bold" : "Linear"}
-            color={isActive ? "#0063EF" : "#606060"}
-          />
+          <Icon size={22} strokeWidth={1.8} className="text-sd-grey-11" />
           <span
             className={cn(
-              "text-[16px] tracking-[-0.32px] leading-[24px]",
-              isActive ? "text-[#0063EF]" : "text-[#606060]"
+              "text-[16px] font-normal tracking-[-0.32px] leading-[24px]",
+              isActive ? "text-sd-grey-12" : "text-sd-grey-11"
             )}
           >
             {label}
