@@ -11,7 +11,9 @@ export const registerSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(5, "Invalid phone number"),
+  phone: z
+    .string()
+    .refine((value) => /^\+[1-9]\d{6,14}$/.test(value), "Enter a valid phone number"),
   country: z.string().min(1, "Please select a country"),
   agreeToTerms: z.boolean().refine((val) => val === true, "You must agree to the terms"),
   password: z

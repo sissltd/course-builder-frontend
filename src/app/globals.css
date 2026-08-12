@@ -261,3 +261,25 @@
     @apply font-sans;
   }
 }
+
+.PhoneInput {
+  --PhoneInputCountrySelect-marginRight: 12px;
+  --PhoneInputCountrySelectArrow-marginLeft: 8px;
+  --PhoneInputCountrySelectArrow-color: #606060;
+  --PhoneInputCountrySelectArrow-opacity: 1;
+  --PhoneInputCountrySelectArrow-borderWidth: 1.5px;
+  --PhoneInputCountryFlag-height: 16px;
+  --PhoneInputCountryFlag-borderColor: #d9d9d9;
+  --PhoneInputCountryFlag-borderWidth: 1px;
+  --PhoneInput-color--focus: #0063ef;
+}
+
+.PhoneInputCountry {
+  margin-right: var(--PhoneInputCountrySelect-marginRight);
+}
+
+.PhoneInputCountryIcon {
+  box-shadow: 0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor),
+    inset 0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor);
+  border-radius: 2px;
+}

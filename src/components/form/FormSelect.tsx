@@ -21,13 +21,19 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowDown2 } from "iconsax-react";
 
+interface FormSelectOption {
+  label: React.ReactNode;
+  value: string;
+  searchValue?: string;
+}
+
 interface FormSelectProps {
   name: string;
   label?: string;
   error?: string;
   hint?: string;
   required?: boolean;
-  options: { label: React.ReactNode; value: string; searchValue?: string }[];
+  options: FormSelectOption[];
   placeholder?: string;
   triggerClassName?: string;
   containerClassName?: string;
@@ -40,6 +46,7 @@ interface FormSelectProps {
   icon?: React.ReactNode;
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
+  triggerValue?: (option?: FormSelectOption) => React.ReactNode;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -47,19 +54,22 @@ interface FormSelectProps {
   onValueChange?: (value: string) => void;
 }
 
-export const FormSelect = ({ name, label, error: externalError, hint, required, options = [], placeholder = "Select an option", triggerClassName, containerClassName, disabled, searchable = false, searchPlaceholder = "Search...", emptyText = "No results found.", clearable = false, clearLabel = "None", icon, prefix, suffix, hasMore = false, isLoadingMore = false, onLoadMore, value: externalValue, onValueChange: externalOnValueChange }: FormSelectProps) => {
-  let fieldValue = externalValue ?? "";
+export const FormSelect = ({ name, label, error: externalError, hint, required, options = [], placeholder = "Select an option", triggerClassName, containerClassName, disabled, searchable = false, searchPlaceholder = "Search...", emptyText = "No results found.", clearable = false, clearLabel = "None", icon, prefix, suffix, triggerValue, hasMore = false, isLoadingMore = false, onLoadMore, value: externalValue, onValueChange: externalOnValueChange }: FormSelectProps) => {
+  const isControlled = externalValue !== undefined;
+  let fieldValue = isControlled ? externalValue : "";
   let fieldOnChange = externalOnValueChange || (() => {});
   let fieldError = externalError;
 
   try {
     const { control, formState: { errors } } = useFormContext();
     const { field } = useController({ name, control });
-    fieldValue = field.value ?? "";
-    fieldOnChange = (val: string) => {
-      field.onChange(val);
-      externalOnValueChange?.(val);
-    };
+    fieldValue = isControlled ? externalValue : (field.value ?? "");
+    fieldOnChange = isControlled
+      ? (val: string) => externalOnValueChange?.(val)
+      : (val: string) => {
+          field.onChange(val);
+          externalOnValueChange?.(val);
+        };
     fieldError = fieldError || (errors[name]?.message as string | undefined);
   } catch {}
 
@@ -104,12 +114,12 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
       <SelectContent position="popper" className="bg-white border border-[#F0F0F0] rounded-[16px] w-[var(--radix-select-trigger-width)] min-w-[176px] p-[8px] pl-[16px]">
         {clearable && (
           <SelectItem value="none" className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
-            {clearLabel}
+            <span className="truncate min-w-0 w-full">{clearLabel}</span>
           </SelectItem>
         )}
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value} className="flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] [&_svg]:hidden">
-            {option.label}
+            <span className="truncate min-w-0 w-full">{option.label}</span>
           </SelectItem>
         ))}
       </SelectContent>
@@ -137,13 +147,14 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
           >
             <div className="flex items-center gap-[8px] flex-1 truncate text-left">
               {prefixElement && <div className="shrink-0">{prefixElement}</div>}
-              <span className="truncate text-[#606060]">{selectedOption ? selectedOption.label : placeholder}</span>
+              <span className="truncate text-[#606060]">{triggerValue ? triggerValue(selectedOption) : selectedOption ? selectedOption.label : placeholder}</span>
             </div>
             {suffix || <ArrowDown2 size={16} color="#606060" variant="Linear" className="shrink-0 opacity-70" />}
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="p-[8px] bg-white border border-[#F0F0F0] rounded-[16px] min-w-[176px] w-max max-w-[320px]"
+          className="p-[8px] bg-white border border-[#F0F0F0] rounded-[16px] min-w-[176px]"
+          style={{ width: triggerWidth || undefined }}
           align="start"
         >
           <Command className="bg-white">
@@ -160,7 +171,7 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
                     }}
                     className="text-muted-foreground italic text-[14px] cursor-pointer p-[8px] hover:bg-[#F0F0F0] flex items-center rounded-[8px] gap-[20px]"
                   >
-                    {clearLabel}
+                    <span className="truncate min-w-0 flex-1">{clearLabel}</span>
                   </CommandItem>
                 )}
                 {options.map((option) => {
@@ -175,7 +186,7 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
                       }}
                       className="text-[14px] text-[#606060] cursor-pointer p-[8px] hover:bg-[#F0F0F0] flex items-center rounded-[8px] gap-[20px]"
                     >
-                      <span className="truncate">{option.label}</span>
+                      <span className="truncate min-w-0 flex-1">{option.label}</span>
                     </CommandItem>
                   );
                 })}
