@@ -30,6 +30,10 @@ function AuthSessionSync() {
         const response = await fetch(`/api/auth/session?_=${Date.now()}`, {
           cache: "no-store",
         });
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json") || !response.ok) {
+          return;
+        }
         const data = await response.json();
         if (data?.accessToken && data?.user) {
           dispatch(

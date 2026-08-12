@@ -39,12 +39,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = JSON.parse(credentials.user) as User;
+        const { id, email, ...profile } = user;
 
         return {
-          id: user.id,
-          email: user.email,
+          id,
+          email,
           name: `${user.first_name} ${user.last_name}`,
           image: user.avatar_url,
+          ...profile,
           accessToken: credentials.accessToken,
           refreshToken: credentials.refreshToken,
           accessTokenExpiresAt: getAccessTokenExpiresAt(credentials.accessToken),

@@ -6,6 +6,10 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
+import { signOut, useSession } from "next-auth/react";
+import { useAppDispatch } from "@/redux";
+import { clearAuth } from "@/redux/slices/authSlice";
+import { serverLogout } from "@/modules/auth/actions/logout";
 import { 
   Home2, 
   Book, 
@@ -18,6 +22,7 @@ import {
   Setting2,
   I24Support,
   CloseCircle,
+  Logout,
 } from "iconsax-react";
 import { DoubleArrowIcon } from "./icons/DoubleArrowIcon";
 
@@ -44,6 +49,25 @@ interface DashboardSidebarProps {
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const displayName =
+    user?.first_name || user?.last_name
+      ? `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()
+      : (user?.email ?? "");
+  const avatarSrc =
+    user?.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+      user?.email ?? "user",
+    )}`;
+
+  const handleLogout = async () => {
+    dispatch(clearAuth());
+    await serverLogout();
+    await signOut({ callbackUrl: "/auth/login" });
+  };
 
   return (
     <>
@@ -86,14 +110,14 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
              <div className="flex items-center gap-[8px]">
                 <div className="size-[24px] rounded-full bg-sd-grey-6 overflow-hidden relative">
                    <Image 
-                     src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel" 
+                     src={avatarSrc} 
                      alt="Avatar" 
                      fill 
                      className="object-cover" 
                    />
                 </div>
                 <span className="text-[14px] font-medium text-[#606060] truncate max-w-[100px] tracking-[-0.28px] leading-[20px]">
-                   Osaite Emmanuel
+                   {displayName}
                 </span>
              </div>
              <DoubleArrowIcon size={24} />
@@ -206,6 +230,15 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
               );
             })}
           </nav>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] transition-colors group h-[36px] text-[#FF5025] hover:bg-[#FFEBEB] cursor-pointer w-full"
+          >
+            <Logout variant="Linear" size={20} color="#FF5025" />
+            <span className="text-[14px] tracking-[-0.28px] leading-[20px] font-medium">
+              Log out
+            </span>
+          </button>
         </div>
       </aside>
     </>

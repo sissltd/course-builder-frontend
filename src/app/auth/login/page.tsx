@@ -15,6 +15,8 @@ import { normalizeApiError } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import { useAppDispatch } from "@/redux";
+import { setCredentials } from "@/redux/slices/authSlice";
 import {
   getDashboardRoute,
   getWorkspaceForRole,
@@ -22,6 +24,7 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [step, setStep] = useState<"email" | "password">("email");
   const [login, { isLoading }] = useLoginMutation();
 
@@ -65,6 +68,13 @@ export default function LoginPage() {
         toast.error("Sign in failed. Please try again.");
         return;
       }
+
+      dispatch(
+        setCredentials({
+          user: result.user,
+          accessToken: result.access,
+        }),
+      );
 
       router.push(getDashboardRoute(workspace));
       router.refresh();

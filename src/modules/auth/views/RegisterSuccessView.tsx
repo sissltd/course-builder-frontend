@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { AuthButton } from "@/modules/auth/components/AuthButton";
@@ -9,14 +10,24 @@ import { toast } from "sonner";
 import { useResendVerificationMutation } from "@/modules/auth/api/accountApi";
 import { TokenPurpose } from "@/modules/auth/types/auth";
 import { normalizeApiError } from "@/lib/api/errors";
+import { REGISTER_EMAIL_STORAGE_KEY } from "@/modules/auth/utils/storage";
 
-interface RegisterSuccessViewProps {
-  email: string;
-}
-
-export default function RegisterSuccessView({ email }: RegisterSuccessViewProps) {
+export default function RegisterSuccessView() {
+  const router = useRouter();
+  const [email] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    return sessionStorage.getItem(REGISTER_EMAIL_STORAGE_KEY) ?? "";
+  });
   const [resendVerification, { isLoading }] = useResendVerificationMutation();
   const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    if (!email) {
+      router.replace("/auth/register");
+    }
+  }, [email, router]);
 
   const handleResend = async () => {
     try {
@@ -32,15 +43,15 @@ export default function RegisterSuccessView({ email }: RegisterSuccessViewProps)
     }
   };
 
+  if (!email) {
+    return null;
+  }
+
   return (
     <AuthLayout showNav={false} showLogo showSidebar>
       <AuthHeader
         title="Check your email"
-        description={
-          email
-            ? `We've sent a verification link to ${email}. Click the link in the email to activate your account.`
-            : "We've sent a verification link to your email. Click the link in the email to activate your account."
-        }
+        description={`We've sent a verification link to ${email}. Click the link in the email to activate your account.`}
         linkPrefix="Already verified?"
         linkText="Log In"
         linkHref="/auth/login"

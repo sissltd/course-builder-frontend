@@ -1,4 +1,5 @@
 import React from "react";
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { DashboardLayout } from "@/modules/creator/dashboard/layouts/DashboardLayout";
 
 export default function DashboardRootLayout({
@@ -6,5 +7,9 @@ export default function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <ProtectedRoute>
+      <DashboardLayout>{children}</DashboardLayout>
+    </ProtectedRoute>
+  );
 }

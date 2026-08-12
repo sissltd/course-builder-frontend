@@ -24,9 +24,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreatorRoute } from "@/lib/routes";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
+import { serverLogout } from "@/modules/auth/actions/logout";
 
 interface DashboardHeaderProps {
   onToggleSidebar?: () => void;
@@ -35,9 +36,22 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const dispatch = useAppDispatch();
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const displayName =
+    user?.first_name || user?.last_name
+      ? `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()
+      : (user?.email ?? "");
+  const avatarSrc =
+    user?.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+      user?.email ?? "user",
+    )}`;
 
   const handleLogout = async () => {
     dispatch(clearAuth());
+    await serverLogout();
     await signOut({ callbackUrl: "/auth/login" });
   };
 
@@ -181,7 +195,7 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               <div className="flex items-center gap-[8px] p-[4px] bg-[#F0F0F0] rounded-[322px] cursor-pointer hover:bg-[#E0E0E0] transition-colors h-[32px] outline-none">
                  <div className="size-[24px] rounded-full bg-sd-grey-6 overflow-hidden relative">
                     <Image 
-                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel" 
+                      src={avatarSrc} 
                       alt="Avatar" 
                       fill 
                       className="object-cover" 
@@ -194,14 +208,14 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               <div className="flex items-center gap-[8px] p-[8px]">
                 <div className="size-[32px] rounded-full bg-sd-grey-6 overflow-hidden relative">
                    <Image 
-                     src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel" 
+                     src={avatarSrc} 
                      alt="Avatar" 
                      fill 
                      className="object-cover" 
                    />
                 </div>
                 <span className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">
-                   Osaite Emmanuel
+                   {displayName}
                 </span>
               </div>
               

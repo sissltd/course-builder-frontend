@@ -49,6 +49,7 @@ export interface SignupRequest {
   first_name: string;
   last_name: string;
   country: string;
+  phone: string;
   terms_accepted: boolean;
 }
 

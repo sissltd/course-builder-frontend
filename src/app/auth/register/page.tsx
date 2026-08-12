@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
@@ -9,6 +9,7 @@ import { AuthButton } from "@/modules/auth/components/AuthButton";
 import Link from "next/link";
 import { FormCheckbox } from "@/components/form/FormCheckbox";
 import { FormSelect } from "@/components/form/FormSelect";
+import { FormPhoneInput } from "@/components/form/FormPhoneInput";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,10 @@ import { registerSchema, RegisterFormData } from "@/modules/auth/utils/schemas";
 import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 import { useSignupMutation } from "@/modules/auth/api/accountApi";
 import { normalizeApiError } from "@/lib/api/errors";
+import { REGISTER_EMAIL_STORAGE_KEY } from "@/modules/auth/utils/storage";
 import { toast } from "sonner";
+import { Country, isSupportedCountry } from "react-phone-number-input";
+import { Country as CountryMeta } from "country-state-city";
 
 type Step = "email" | "details" | "password";
 
@@ -26,8 +30,15 @@ const SIGNUP_FIELD_MAP: Record<string, string> = {
   first_name: "firstName",
   last_name: "lastName",
   country: "country",
+  phone: "phone",
   terms_accepted: "agreeToTerms",
 };
+
+const countryOptions = CountryMeta.getAllCountries().map((c) => ({
+  label: c.name,
+  value: c.isoCode,
+  searchValue: `${c.name} ${c.isoCode}`,
+}));
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,6 +63,16 @@ export default function RegisterPage() {
   const { handleSubmit, trigger, watch, setError } = methods;
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
+  const selectedCountry = watch("country");
+  const phoneValue = watch("phone");
+
+  const [phoneDefaultCountry, setPhoneDefaultCountry] = useState<Country>("US");
+
+  useEffect(() => {
+    if (!phoneValue && isSupportedCountry(selectedCountry)) {
+      setPhoneDefaultCountry(selectedCountry as Country);
+    }
+  }, [selectedCountry, phoneValue]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,8 +94,10 @@ export default function RegisterPage() {
         first_name: data.firstName,
         last_name: data.lastName,
         country: data.country,
+        phone: data.phone,
         terms_accepted: data.agreeToTerms,
       }).unwrap();
+      sessionStorage.setItem(REGISTER_EMAIL_STORAGE_KEY, data.email);
       router.push("/auth/register/success");
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(
@@ -167,23 +190,22 @@ export default function RegisterPage() {
                   placeholder="Enter last name"
                   required
                 />
-                <AuthInput
+                <FormPhoneInput
+                  key={phoneDefaultCountry}
                   name="phone"
                   label="Phone number"
                   placeholder="Enter phone number"
                   required
-                  leftElement="US"
+                  defaultCountry={phoneDefaultCountry}
                 />
                 <FormSelect
                   name="country"
                   label="Country/Region"
                   placeholder="Select country"
                   required
-                  options={[
-                    { label: "United States", value: "US" },
-                    { label: "Nigeria", value: "NG" },
-                    { label: "United Kingdom", value: "GB" },
-                  ]}
+                  searchable
+                  searchPlaceholder="Search country"
+                  options={countryOptions}
                 />
 
                 <FormCheckbox

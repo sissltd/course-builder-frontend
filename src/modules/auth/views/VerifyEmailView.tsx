@@ -15,6 +15,8 @@ import {
 } from "@/modules/auth/api/accountApi";
 import { TokenPurpose } from "@/modules/auth/types/auth";
 import { normalizeApiError } from "@/lib/api/errors";
+import { useAppDispatch } from "@/redux";
+import { setCredentials } from "@/redux/slices/authSlice";
 import {
   getDashboardRoute,
   getWorkspaceForRole,
@@ -32,6 +34,7 @@ type VerifyState =
 
 export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [verifyEmail, { isLoading }] = useVerifyEmailMutation();
   const [resendVerification, { isLoading: isResending }] =
     useResendVerificationMutation();
@@ -71,6 +74,13 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
           return;
         }
 
+        dispatch(
+          setCredentials({
+            user: result.user,
+            accessToken: result.access,
+          }),
+        );
+
         const redirectTo = getDashboardRoute(workspace);
         setState({ status: "signed-in", redirectTo });
         router.push(redirectTo);
@@ -92,7 +102,7 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
     return () => {
       active = false;
     };
-  }, [email, token, verifyEmail, router]);
+  }, [email, token, verifyEmail, router, dispatch]);
 
   const handleResend = async () => {
     try {

@@ -5,11 +5,6 @@ export const metadata: Metadata = {
   title: "Check your email | SoluDesk",
 };
 
-export default async function RegisterSuccessPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ email?: string }>;
-}) {
-  const { email } = await searchParams;
-  return <RegisterSuccessView email={email ?? ""} />;
+export default function RegisterSuccessPage() {
+  return <RegisterSuccessView />;
 }

@@ -55,11 +55,16 @@ const dynamicBaseQuery: BaseQueryFn<
   return customBaseQuery(args, api, extraOptions);
 };
 
+type SessionRefreshResult =
+  | { status: "ok"; accessToken: string }
+  | { status: "failed" }
+  | { status: "unavailable" };
+
 let isRefreshing = false;
 let isLoggingOut = false;
-let sessionRefreshPromise: Promise<string | null> | null = null;
+let sessionRefreshPromise: Promise<SessionRefreshResult> | null = null;
 
-const refetchSessionToken = async (): Promise<string | null> => {
+const refetchSessionToken = async (): Promise<SessionRefreshResult> => {
   if (sessionRefreshPromise) {
     return sessionRefreshPromise;
   }
@@ -69,19 +74,26 @@ const refetchSessionToken = async (): Promise<string | null> => {
       const response = await fetch(`/api/auth/session?_=${Date.now()}`, {
         cache: "no-store",
       });
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        return { status: "unavailable" };
+      }
       if (!response.ok) {
-        return null;
+        return { status: "failed" };
       }
       const data = (await response.json()) as {
         accessToken?: string;
         error?: string;
       };
       if (data.error) {
-        return null;
+        return { status: "failed" };
       }
-      return data.accessToken ?? null;
+      if (data.accessToken) {
+        return { status: "ok", accessToken: data.accessToken };
+      }
+      return { status: "failed" };
     } catch {
-      return null;
+      return { status: "unavailable" };
     } finally {
       sessionRefreshPromise = null;
     }
@@ -109,15 +121,25 @@ const attemptTokenRefresh = async (
   isRefreshing = true;
 
   try {
-    const newAccessToken = await refetchSessionToken();
-    if (newAccessToken) {
-      api.dispatch(updateAccessToken(newAccessToken));
+    const refreshResult = await refetchSessionToken();
+
+    if (refreshResult.status === "ok") {
+      api.dispatch(updateAccessToken(refreshResult.accessToken));
       const retryResult = await dynamicBaseQuery(args, api, extraOptions as object);
       if (!retryResult.error) {
         return { success: true, result: retryResult };
       }
       return { success: false };
     }
+
+    if (refreshResult.status === "unavailable") {
+      const retryResult = await dynamicBaseQuery(args, api, extraOptions as object);
+      if (!retryResult.error) {
+        return { success: true, result: retryResult };
+      }
+      return { success: false };
+    }
+
     return { success: false };
   } finally {
     isRefreshing = false;
