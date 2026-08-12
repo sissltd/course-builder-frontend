@@ -14,12 +14,25 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormData } from "@/modules/auth/utils/schemas";
 import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
+import { useSignupMutation } from "@/modules/auth/api/accountApi";
+import { normalizeApiError } from "@/lib/api/errors";
+import { toast } from "sonner";
 
 type Step = "email" | "details" | "password";
+
+const SIGNUP_FIELD_MAP: Record<string, string> = {
+  email: "email",
+  password: "password",
+  first_name: "firstName",
+  last_name: "lastName",
+  country: "country",
+  terms_accepted: "agreeToTerms",
+};
 
 export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("email");
+  const [signup, { isLoading }] = useSignupMutation();
 
   const methods = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -36,7 +49,7 @@ export default function RegisterPage() {
     },
   });
 
-  const { handleSubmit, trigger, watch } = methods;
+  const { handleSubmit, trigger, watch, setError } = methods;
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
 
@@ -53,8 +66,31 @@ export default function RegisterPage() {
   };
 
   const handleRegisterSubmit = handleSubmit(async (data) => {
-    console.log("Registering with", data);
-    router.push("/auth/onboarding");
+    try {
+      await signup({
+        email: data.email,
+        password: data.password,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        country: data.country,
+        terms_accepted: data.agreeToTerms,
+      }).unwrap();
+      router.push("/auth/register/success");
+    } catch (error) {
+      const { fieldErrors, message } = normalizeApiError(
+        error as never,
+        SIGNUP_FIELD_MAP,
+      );
+      for (const [field, fieldMessage] of Object.entries(fieldErrors)) {
+        setError(field as keyof RegisterFormData, {
+          type: "server",
+          message: fieldMessage,
+        });
+      }
+      if (message) {
+        toast.error(message);
+      }
+    }
   });
 
   const isPasswordStep = step === "password";
@@ -146,7 +182,7 @@ export default function RegisterPage() {
                   options={[
                     { label: "United States", value: "US" },
                     { label: "Nigeria", value: "NG" },
-                    { label: "United Kingdom", value: "UK" },
+                    { label: "United Kingdom", value: "GB" },
                   ]}
                 />
 
@@ -191,7 +227,9 @@ export default function RegisterPage() {
               </div>
               
               <div className="flex flex-col gap-[16px]">
-                <AuthButton type="submit">Set password</AuthButton>
+                <AuthButton type="submit" disabled={isLoading}>
+                  {isLoading ? "Creating account..." : "Set password"}
+                </AuthButton>
                 <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                   By clicking on continue, you agree to Soludesk{" "}
                   <Link href="/terms" className="underline">Terms of Use</Link> and{" "}

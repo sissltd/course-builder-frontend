@@ -8,15 +8,21 @@ import {
   QueryReturnValue,
 } from "@reduxjs/toolkit/query/react";
 
-import { updateTokens, clearAuth } from "./slices/authSlice";
+import { updateAccessToken, clearAuth } from "./slices/authSlice";
 import type { RootState } from "./index";
-import { getCookie, clearAllCookies } from "@/utils/cookies";
+import { clearAllCookies } from "@/utils/cookies";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const PUBLIC_ENDPOINTS = [
   "/auth/login",
-  "/auth/refresh",
   "/auth/signup",
+  "/auth/verify-email",
+  "/auth/resend-verification",
   "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/token/refresh",
+  "/auth/reviewer/login",
 ];
 
 const isPublicEndpoint = (url: string): boolean =>
@@ -27,19 +33,16 @@ const dynamicBaseQuery: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const state = api.getState() as RootState;
   const url = typeof args === "string" ? args : args.url;
 
-  const baseUrl = "/api/proxy";
-
   const customBaseQuery = fetchBaseQuery({
-    baseUrl,
+    baseUrl: API_BASE_URL,
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const { auth } = state;
 
       if (!isPublicEndpoint(url)) {
-        const token = auth?.tokens?.access;
+        const token = auth?.accessToken;
         if (token) {
           headers.set("Authorization", `Bearer ${token}`);
         }
@@ -54,62 +57,43 @@ const dynamicBaseQuery: BaseQueryFn<
 
 let isRefreshing = false;
 let isLoggingOut = false;
-let refreshPromise: Promise<{
-  success: boolean;
-  newAccessToken?: string;
-}> | null = null;
+let sessionRefreshPromise: Promise<string | null> | null = null;
 
-const performTokenRefresh = async (
-  api: BaseQueryApi,
-): Promise<{ success: boolean; newAccessToken?: string }> => {
-  const state = api.getState() as RootState;
-  let refreshToken = state.auth.tokens?.refresh;
-
-  if (!refreshToken && typeof window !== "undefined") {
-    refreshToken = getCookie("refreshToken") ?? undefined;
+const refetchSessionToken = async (): Promise<string | null> => {
+  if (sessionRefreshPromise) {
+    return sessionRefreshPromise;
   }
 
-  if (!refreshToken) {
-    console.warn("[Auth] No refresh token available for token refresh");
-    return { success: false };
-  }
-
-  try {
-    const refreshResult = await dynamicBaseQuery(
-      {
-        url: "/auth/refresh",
-        method: "POST",
-        body: { refresh: refreshToken },
-      },
-      api,
-      {}
-    );
-
-    if (refreshResult.data) {
-      const response = refreshResult.data as {
-        success: boolean;
-        data?: { access: string; refresh: string };
-      };
-
-      if (response.data?.access && response.data?.refresh) {
-        const { access, refresh } = response.data;
-        api.dispatch(updateTokens({ access, refresh }));
-        return { success: true, newAccessToken: access };
+  sessionRefreshPromise = (async () => {
+    try {
+      const response = await fetch(`/api/auth/session?_=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        return null;
       }
+      const data = (await response.json()) as {
+        accessToken?: string;
+        error?: string;
+      };
+      if (data.error) {
+        return null;
+      }
+      return data.accessToken ?? null;
+    } catch {
+      return null;
+    } finally {
+      sessionRefreshPromise = null;
     }
+  })();
 
-    console.warn("[Auth] Token refresh failed - invalid response");
-    return { success: false };
-  } catch (error) {
-    console.error("[Auth] Token refresh error:", error);
-    return { success: false };
-  }
+  return sessionRefreshPromise;
 };
 
 const attemptTokenRefresh = async (
   api: BaseQueryApi,
   args: string | FetchArgs,
-  extraOptions: any,
+  extraOptions: unknown,
 ): Promise<{
   success: boolean;
   result?: QueryReturnValue<
@@ -118,28 +102,25 @@ const attemptTokenRefresh = async (
     Record<string, never>
   >;
 }> => {
-  if (isRefreshing && refreshPromise) {
-    const refreshResult = await refreshPromise;
-    if (refreshResult.success) {
-      const retryResult = await dynamicBaseQuery(args, api, extraOptions);
-      return { success: true, result: retryResult };
-    }
+  if (isRefreshing) {
     return { success: false };
   }
 
   isRefreshing = true;
-  refreshPromise = performTokenRefresh(api);
 
   try {
-    const refreshResult = await refreshPromise;
-    if (refreshResult.success) {
-      const retryResult = await dynamicBaseQuery(args, api, extraOptions);
-      return { success: true, result: retryResult };
+    const newAccessToken = await refetchSessionToken();
+    if (newAccessToken) {
+      api.dispatch(updateAccessToken(newAccessToken));
+      const retryResult = await dynamicBaseQuery(args, api, extraOptions as object);
+      if (!retryResult.error) {
+        return { success: true, result: retryResult };
+      }
+      return { success: false };
     }
     return { success: false };
   } finally {
     isRefreshing = false;
-    refreshPromise = null;
   }
 };
 

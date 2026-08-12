@@ -9,9 +9,12 @@ import Link from "next/link";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, ForgotPasswordFormData } from "@/modules/auth/utils/schemas";
+import { useForgotPasswordMutation } from "@/modules/auth/api/passwordApi";
+import { normalizeApiError } from "@/lib/api/errors";
 
 export default function ForgotPasswordPage() {
   const [isSent, setIsSent] = useState(false);
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const methods = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -23,10 +26,16 @@ export default function ForgotPasswordPage() {
 
   const { handleSubmit } = methods;
 
-  const onSubmit = (data: ForgotPasswordFormData) => {
-    console.log("Sending reset link to", data.email);
-    setIsSent(true);
-  };
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      await forgotPassword({ email: data.email }).unwrap();
+      setIsSent(true);
+    } catch (error) {
+      const { message } = normalizeApiError(error as never);
+      console.error("Forgot password error:", message);
+      setIsSent(true);
+    }
+  });
 
   if (isSent) {
     return (
@@ -78,7 +87,7 @@ export default function ForgotPasswordPage() {
       />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[40px] w-full">
+        <form onSubmit={onSubmit} className="flex flex-col gap-[40px] w-full">
           <AuthInput
             name="email"
             label="Enter email address"
@@ -88,7 +97,9 @@ export default function ForgotPasswordPage() {
           />
           
           <div className="flex flex-col gap-[16px]">
-            <AuthButton type="submit">Continue</AuthButton>
+            <AuthButton type="submit" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Continue"}
+            </AuthButton>
             <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
               By clicking on continue, you agree to Soludesk{" "}
               <Link href="/terms" className="underline">Terms of Use</Link> and{" "}

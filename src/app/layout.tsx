@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ReduxProvider } from "@/redux/providers";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,9 +33,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReduxProvider>
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </AuthProvider>
         </ReduxProvider>
         <Toaster />
       </body>

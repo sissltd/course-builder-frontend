@@ -1,28 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  type?: string;
-  profile_picture_url?: string;
-}
-
-export interface AuthTokens {
-  access: string;
-  refresh: string;
-}
+import type { User } from "@/modules/auth/types/auth";
 
 interface AuthState {
   user: User | null;
-  tokens: AuthTokens | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
-  tokens: null,
+  accessToken: null,
   isAuthenticated: false,
 };
 
@@ -32,28 +19,14 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{
-        user: User;
-        tokens: AuthTokens;
-      }>,
+      action: PayloadAction<{ user: User; accessToken?: string }>,
     ) => {
       state.user = action.payload.user;
-      state.tokens = action.payload.tokens;
+      state.accessToken = action.payload.accessToken ?? state.accessToken;
       state.isAuthenticated = true;
     },
     updateAccessToken: (state, action: PayloadAction<string>) => {
-      if (state.tokens) {
-        state.tokens.access = action.payload;
-      }
-    },
-    updateTokens: (
-      state,
-      action: PayloadAction<{ access: string; refresh: string }>,
-    ) => {
-      state.tokens = {
-        access: action.payload.access,
-        refresh: action.payload.refresh,
-      };
+      state.accessToken = action.payload;
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
@@ -62,18 +35,13 @@ const authSlice = createSlice({
     },
     clearAuth: (state) => {
       state.user = null;
-      state.tokens = null;
+      state.accessToken = null;
       state.isAuthenticated = false;
     },
   },
 });
 
-export const {
-  setCredentials,
-  updateAccessToken,
-  updateTokens,
-  updateUser,
-  clearAuth,
-} = authSlice.actions;
+export const { setCredentials, updateAccessToken, updateUser, clearAuth } =
+  authSlice.actions;
 
 export default authSlice.reducer;

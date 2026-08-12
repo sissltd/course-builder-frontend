@@ -24,6 +24,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreatorRoute } from "@/lib/routes";
+import { signOut } from "next-auth/react";
+import { useAppDispatch } from "@/redux";
+import { clearAuth } from "@/redux/slices/authSlice";
 
 interface DashboardHeaderProps {
   onToggleSidebar?: () => void;
@@ -31,6 +34,12 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const handleLogout = async () => {
+    dispatch(clearAuth());
+    await signOut({ callbackUrl: "/auth/login" });
+  };
 
   return (
     <header className="h-[60px] bg-[#FDFDFD] border-b border-[#F0F0F0] flex items-center justify-between px-[12px] md:px-[19px] sticky top-0 z-30 ml-0 md:ml-[225px]">
@@ -103,7 +112,7 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#FF5025] hover:bg-[#FFEBEB] cursor-pointer text-[14px]">
+              <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#FF5025] hover:bg-[#FFEBEB] cursor-pointer text-[14px]">
                 <Logout size={20} color="#FF5025" variant="Linear" />
                 <span className="font-medium">Log out</span>
               </DropdownMenuItem>
@@ -232,7 +241,7 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               
               <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />
               
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#FF5025] hover:bg-[#FFEBEB] cursor-pointer text-[14px]">
+              <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#FF5025] hover:bg-[#FFEBEB] cursor-pointer text-[14px]">
                 <Logout size={20} color="#FF5025" variant="Linear" />
                 <span className="font-medium">Log out</span>
               </DropdownMenuItem>

@@ -1,10 +1,19 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { withAuth } from "next-auth/middleware";
 
-export function proxy(request: NextRequest) {
-  return NextResponse.next()
-}
- 
+export default withAuth(
+  function proxy() {
+    return undefined;
+  },
+  {
+    pages: {
+      signIn: "/auth/login",
+    },
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  },
+);
+
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|public).*)'],
-}
+  matcher: ["/creator/:path*", "/admin/:path*", "/auth/onboarding"],
+};

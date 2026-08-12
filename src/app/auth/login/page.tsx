@@ -10,10 +10,21 @@ import Link from "next/link";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/modules/auth/utils/schemas";
+import { useLoginMutation } from "@/modules/auth/api/sessionApi";
+import { normalizeApiError } from "@/lib/api/errors";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { toast } from "sonner";
+import {
+  getDashboardRoute,
+  getWorkspaceForRole,
+} from "@/modules/auth/utils/workspace";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [step, setStep] = useState<"email" | "password">("email");
-  
+  const [login, { isLoading }] = useLoginMutation();
+
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
@@ -23,8 +34,7 @@ export default function LoginPage() {
     },
   });
 
-  const { handleSubmit, trigger, watch } = methods;
-  const email = watch("email");
+  const { handleSubmit, trigger, setError } = methods;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +45,39 @@ export default function LoginPage() {
   };
 
   const handleLoginSubmit = handleSubmit(async (data) => {
-    // Handle login logic
-    console.log("Logging in with", data);
+    try {
+      const result = await login({
+        email: data.email,
+        password: data.password,
+      }).unwrap();
+
+      const workspace =
+        result.workspace || getWorkspaceForRole(result.role);
+      const signInResult = await signIn("credentials", {
+        accessToken: result.access,
+        refreshToken: result.refresh,
+        user: JSON.stringify(result.user),
+        workspace,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        toast.error("Sign in failed. Please try again.");
+        return;
+      }
+
+      router.push(getDashboardRoute(workspace));
+      router.refresh();
+    } catch (error) {
+      const { fieldErrors, message } = normalizeApiError(error as never);
+      for (const [field, fieldMessage] of Object.entries(fieldErrors)) {
+        setError(field as keyof LoginFormData, {
+          type: "server",
+          message: fieldMessage,
+        });
+      }
+      toast.error(message ?? "Invalid email or password.");
+    }
   });
 
   return (
@@ -116,7 +157,9 @@ export default function LoginPage() {
                 </div>
                 
                 <div className="flex flex-col gap-[16px] w-full">
-                  <AuthButton type="submit">Continue</AuthButton>
+                  <AuthButton type="submit" disabled={isLoading}>
+                    {isLoading ? "Signing in..." : "Continue"}
+                  </AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to Soludesk{" "}
                     <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
