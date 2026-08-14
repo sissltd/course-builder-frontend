@@ -1,0 +1,1425 @@
+
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 0 ---
+import React from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft2,
+  ArrowRight2,
+  Book,
+  Copy,
+  InfoCircle,
+  More,
+  Play,
+  TaskSquare,
+  TickCircle,
+  Timer1,
+  VideoPlay,
+  DocumentText,
+  ArrowDown2,
+  VolumeHigh,
+  Monitor,
+} from "iconsax-react";
+import { toast } from "sonner";
+import { Button } from "@/components/shared/Button";
+import { cn } from "@/lib/utils";
+import { ReviewerRoute } from "@/lib/routes";
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 1 ---
+const statCards = [
+  {
+    icon: Book,
+    value: "95%",
+    label: "Structure",
+    iconBg: "bg-sd-warning-bg",
+    iconColor: "var(--sd-orange)",
+  },
+  {
+    icon: Book,
+    value: "4",
+    label: "Total Modules",
+    iconBg: "bg-sd-blue-light",
+    iconColor: "var(--sd-blue)",
+  },
+  {
+    icon: Play,
+    value: "24",
+    label: "Total Lessons",
+    iconBg: "bg-sd-warning-bg",
+    iconColor: "var(--sd-orange)",
+  },
+  {
+    icon: TaskSquare,
+    value: "24",
+    label: "Total Assessment",
+    iconBg: "bg-sd-warning-bg",
+    iconColor: "var(--sd-orange)",
+  },
+];
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 2 ---
+const modules: ModuleBlock[] = [
+  {
+    title: "Module 1: Introduction to Computer Science",
+    meta: "12 Lessons  •  12 Assessment  •  1hr 40m",
+    open: true,
+    lessons: [
+      {
+        title: "Introductory class",
+        meta: "1 hours 25 minutes  •  4 Assessment",
+        note: "1 flag issue (video requirement not met)",
+        tone: "warning",
+        type: "video",
+      },
+      {
+        title: "Understanding Basic Computing Concept",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Below required script 420/500",
+        tone: "soft",
+        type: "lesson",
+      },
+      {
+        title: "Conclusion",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Pass",
+        tone: "success",
+        type: "lesson",
+      },
+      {
+        title: "Lesson Assessment",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Pass",
+        tone: "success",
+        type: "assessment",
+      },
+    ],
+  },
+  {
+    title: "Module 2: Classification of Computers",
+    meta: "12 Lessons  •  12 Assessment  •  1hr 40m",
+    open: true,
+    lessons: [
+      {
+        title: "Computer classification",
+        meta: "1 hours 25 minutes  •  4 Assessment",
+        note: "Plagiarism 13% similarity, approaching the 15% threshold. Section 2 of this lesson is the flagged passage. Borderline: reviewer judgement required",
+        tone: "warning",
+        type: "video",
+      },
+      {
+        title: "Understanding Basic Computing Concept",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Pass",
+        tone: "success",
+        type: "lesson",
+      },
+      {
+        title: "Conclusion",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Pass",
+        tone: "success",
+        type: "lesson",
+      },
+      {
+        title: "Lesson Assessment",
+        meta: "2 hours 25 minutes  •  4 Assessment",
+        note: "Pass",
+        tone: "success",
+        type: "assessment",
+      },
+    ],
+  },
+  {
+    title: "Module 3: Classification of Computers",
+    meta: "12 Lessons  •  12 Assessment  •  1hr 40m",
+    open: false,
+    lessons: [],
+  },
+  {
+    title: "Module 4: Summary",
+    meta: "12 Lessons  •  12 Assessment  •  1hr 40m",
+    open: false,
+    lessons: [],
+  },
+];
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 3 ---
+const ModuleLesson = ({ lesson }: { lesson: Lesson }) => {
+  const Icon =
+    lesson.type === "video"
+      ? VideoPlay
+      : lesson.type === "assessment"
+        ? TaskSquare
+        : DocumentText;
+
+  return (
+    <div className="flex items-start gap-[12px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+      <Icon size={20} variant="Linear" color="var(--sd-grey-9)" className="mt-[2px] shrink-0" />
+      <div className="flex flex-1 flex-col gap-[8px]">
+        <div className="flex items-start justify-between gap-[16px]">
+          <div className="flex flex-col gap-[4px]">
+            <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">
+              {lesson.title}
+            </span>
+            <div className="flex items-center gap-[12px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+              <span className="flex items-center gap-[4px]">
+                <Timer1 size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[0]}</span>
+              </span>
+              <span className="flex items-center gap-[4px]">
+                <Book size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[1]}</span>
+              </span>
+            </div>
+          </div>
+          {lesson.tone === "success" && (
+            <span className="rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] font-semibold leading-[16px] text-sd-blue shrink-0">
+              Pass
+            </span>
+          )}
+        </div>
+        {lesson.tone !== "success" && (
+          <div className="flex items-start gap-[8px] rounded-[6px] bg-[#FCF5E8] p-[8px] text-[12px] leading-[16px] text-[#B77815]">
+            <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="#B77815" />
+            <span>{lesson.note}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 4 ---
+  const renderOverview = () => (
+    <div className="flex flex-col gap-[20px]">
+      <h1 className="text-[20px] font-bold leading-[28px] text-sd-grey-12">
+        Introduction to Prompt Engineering
+      </h1>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px]">
+        {statCards.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
+      </div>
+
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+        <div className="mb-[12px] text-[14px] font-semibold leading-[20px] text-sd-grey-12">
+          Preview Video
+        </div>
+
+        <div className="relative overflow-hidden rounded-[10px] border border-sd-grey-3 bg-sd-grey-2">
+          <Image
+            src="/assets/creators/creators-hero.png"
+            alt="Course preview"
+            width={1200}
+            height={680}
+            className="h-[290px] w-full object-cover"
+            priority
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <button
+              type="button"
+              className="flex size-[58px] items-center justify-center rounded-full border border-white/25 bg-white/25 text-white backdrop-blur-[8px]"
+              aria-label="Play preview video"
+            >
+              <Play size={24} variant="Bold" color="currentColor" />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-[16px] flex flex-wrap items-center gap-[16px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+          <span className="flex items-center gap-[6px]">
+            <Timer1 size={16} variant="Linear" color="currentColor" />
+            <span>Duration 1:32mins</span>
+          </span>
+          <span className="flex items-center gap-[6px]">
+            <Monitor size={16} variant="Linear" color="currentColor" />
+            <span>Resolution 1080p</span>
+          </span>
+          <span className="flex items-center gap-[6px]">
+            <VolumeHigh size={16} variant="Linear" color="currentColor" />
+            <span>Audio Quality -16 LUFS</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-[12px] rounded-[12px] bg-sd-blue-light px-[16px] py-[14px] text-[14px] leading-[20px] text-sd-grey-12">
+        <InfoCircle size={20} variant="Bulk" color="var(--sd-blue)" className="shrink-0" />
+        <span>Preview video required to be played before approve is enabled.</span>
+      </div>
+
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[18px]">
+        <h2 className="text-[16px] font-semibold leading-[24px] text-sd-grey-12">
+          Course Description
+        </h2>
+        <p className="mt-[10px] text-[14px] leading-[22px] text-sd-reviewer-muted">
+          Dive into the world of technology and innovation with this comprehensive computer
+          science course. You&apos;ll explore the foundations of computing, from algorithms and
+          data structures to software development, artificial intelligence, and cybersecurity.
+          Designed for both beginners and aspiring professionals, this course equips you with
+          analytical and problem-solving skills needed to build intelligent systems and design
+          efficient programs.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-[12px]">
+        <h2 className="text-[16px] font-semibold leading-[24px] text-sd-grey-12">
+          Modules &amp; Lessons
+        </h2>
+
+        <div className="flex flex-col gap-[16px]">
+          {modules.map((module, index) => {
+            const isOpen = Boolean(openModules[index]);
+
+            return (
+              <div key={module.title} className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleModule(index)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-[16px] p-[16px] text-left transition-colors",
+                    isOpen ? "bg-sd-grey-2 border-b border-sd-grey-3" : "bg-sd-grey-2"
+                  )}
+                >
+                  <div className="flex min-w-0 flex-col gap-[6px]">
+                    <span className="text-[15px] font-semibold leading-[22px] text-sd-grey-12 truncate">
+                      {module.title}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-[16px] text-[12px] leading-[18px] text-sd-reviewer-muted">
+                      <span className="flex items-center gap-[4px]">
+                        <Book size={14} variant="Linear" color="currentColor" />
+                        <span>12 Lessons</span>
+                      </span>
+                      <span className="flex items-center gap-[4px]">
+                        <DocumentText size={14} variant="Linear" color="currentColor" />
+                        <span>12 Assessment</span>
+                      </span>
+                      <span className="flex items-center gap-[4px]">
+                        <Timer1 size={14} variant="Linear" color="currentColor" />
+                        <span>1hr 40m</span>
+                      </span>
+                    </div>
+                  </div>
+                  {isOpen ? (
+                    <ArrowDown2 size={20} variant="Linear" color="var(--sd-grey-11)" className="shrink-0" />
+                  ) : (
+                    <ArrowRight2 size={20} variant="Linear" color="var(--sd-grey-11)" className="shrink-0" />
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div className="p-[16px] bg-sd-grey-1 flex flex-col gap-[12px]">
+                    {module.lessons.length > 0 ? (
+                      module.lessons.map((lesson) => (
+                        <ModuleLesson key={lesson.title} lesson={lesson} />
+                      ))
+                    ) : (
+                      <span className="text-[14px] text-sd-reviewer-muted italic">No lessons in this module</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[18px]">
+        <h2 className="text-[16px] font-semibold leading-[24px] text-sd-grey-12">
+          Plagiarism Report{" "}
+          <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted ml-[4px]">
+            (3% Similarity)
+          </span>
+        </h2>
+
+        <div className="mt-[16px] flex flex-wrap items-center gap-[16px]">
+          <div className="flex size-[58px] items-center justify-center rounded-full bg-[conic-gradient(var(--sd-blue)_0_13%,var(--sd-grey-3)_13%_100%)]">
+            <div className="flex size-[42px] items-center justify-center rounded-full bg-sd-grey-1 text-[12px] font-medium leading-[16px] text-sd-grey-12">
+              13%
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-[8px]">
+            <span className="text-[14px] leading-[20px] text-sd-grey-12">
+              Threshold: &lt; 15% external similarity
+            </span>
+            <span className="w-fit rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] leading-[16px] text-sd-blue">
+              No significant matches found
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+--- Update ReviewerCourseOverviewView.tsx with style, layout, icon, and structure changes matching the Figma mockup. Chunk 5 ---
+  return (
+    <div className="min-h-screen bg-sd-grey-1 text-sd-grey-12 flex flex-col">
+      <div className="border-b border-sd-grey-3 bg-sd-grey-1 px-[16px] py-[14px] md:px-[24px]">
+        <div className="flex items-center justify-between gap-[16px]">
+          <div className="flex min-w-0 items-center gap-[12px]">
+            <button
+              type="button"
+              onClick={() => router.push(ReviewerRoute.PENDING)}
+              className="flex items-center gap-[8px] text-sd-grey-12 transition-colors hover:text-sd-blue"
+            >
+              <ArrowLeft2 size={18} variant="Linear" color="currentColor" />
+              <span className="text-[14px] font-normal leading-[20px]">Back</span>
+            </button>
+            <div className="h-[16px] w-px bg-sd-grey-4 hidden md:block" />
+            <span className="truncate text-[16px] font-semibold leading-[24px] text-sd-grey-12 hidden md:inline">
+              Introduction to computer science
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={copyCourseId}
+            className="flex items-center gap-[8px] text-sd-grey-11 transition-colors hover:text-sd-grey-12"
+          >
+            <span className="text-[14px] font-normal leading-[20px]">{courseId}</span>
+            <Copy size={18} variant="Linear" color="currentColor" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid min-h-[calc(100vh-61px)] grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)_296px] flex-1">
+        <aside className="border-b border-sd-grey-3 px-[16px] py-[20px] md:border-b-0 md:border-r bg-sd-grey-1">
+          <div className="flex flex-col gap-[24px]">
+            <section className="flex flex-col gap-[12px]">
+              <h2 className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                Creator Information
+              </h2>
+              <div className="flex flex-col gap-[12px]">
+                {creatorInfo.map((item) => (
+                  <InfoRow key={item.label} label={item.label} value={item.value} />
+                ))}
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-[12px] border-t border-sd-grey-3 pt-[18px]">
+              <h2 className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                Course Information
+              </h2>
+              <div className="flex flex-col gap-[12px]">
+                {courseInfo.map((item) => (
+                  <InfoRow key={item.label} label={item.label} value={item.value} />
+                ))}
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <main className="flex flex-col bg-sd-grey-2 overflow-y-auto">
+          <div className="bg-sd-grey-1 border-b border-sd-grey-3 px-[16px] md:px-[18px] shrink-0 sticky top-0 z-10">
+            <div className="flex items-center gap-[20px] overflow-x-auto">
+              {tabs.map((tab) => {
+                const active = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={cn(
+                      "relative whitespace-nowrap pt-[14px] pb-[12px] text-[14px] font-normal leading-[20px] transition-colors",
+                      active ? "text-sd-grey-12 font-medium" : "text-sd-muted-text",
+                    )}
+                  >
+                    {tab.label}
+                    {active && <span className="absolute inset-x-0 bottom-0 h-[2px] bg-sd-grey-12" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="px-[16px] py-[16px] md:px-[18px] md:py-[18px] flex-1">
+            {renderTabContent()}
+          </div>
+        </main>
+
+        <aside className="border-t border-sd-grey-3 px-[16px] py-[20px] md:border-l md:border-t-0 bg-sd-grey-1">
+          <div className="flex flex-col gap-[16px]">
+            <section className="flex flex-col gap-[10px]">
+              <h2 className="text-[16px] font-semibold leading-[24px] text-sd-grey-12">
+                Review note
+              </h2>
+              <p className="text-[12px] leading-[16px] text-sd-reviewer-muted">
+                Comments you add will appear here
+              </p>
+              <textarea
+                className="min-h-[96px] w-full resize-none rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 px-[12px] py-[10px] text-[14px] leading-[20px] text-sd-grey-12 outline-none placeholder:text-sd-muted-text"
+                placeholder="Add comment on this course"
+              />
+            </section>
+
+            <section className="rounded-[8px] border border-sd-grey-3 bg-sd-grey-2 p-[12px]">
+              <div className="flex items-start justify-between gap-[12px]">
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[12px] font-medium leading-[16px] text-sd-grey-12">
+                    Script Length
+                  </span>
+                  <span className="text-[12px] leading-[16px] text-sd-reviewer-muted">
+                    300/500 words below minimum
+                  </span>
+                  <span className="text-[12px] leading-[16px] text-sd-reviewer-muted">
+                    Today, 3:40pm
+                  </span>
+                </div>
+                <More size={18} variant="Linear" color="var(--sd-grey-11)" />
+              </div>
+            </section>
+
+            <div className="flex flex-col gap-[10px] pt-[4px]">
+              <Button variant="app-primary" className="h-[44px] w-full rounded-[8px]">
+                Approve course
+              </Button>
+              <Button
+                variant="outline"
+                className="h-[44px] w-full rounded-[8px] border-sd-orange text-sd-orange hover:bg-sd-danger-soft"
+              >
+                Reject course
+              </Button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+--- Change the background color of the module headers to #F0F0F0CC ---
+          {modules.map((module, index) => {
+            const isOpen = Boolean(openModules[index]);
+
+            return (
+              <div key={module.title} className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleModule(index)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-[16px] p-[16px] text-left transition-colors",
+                    isOpen ? "bg-[#F0F0F0CC] border-b border-sd-grey-3" : "bg-[#F0F0F0CC]"
+                  )}
+                >
+--- Align the lesson icon to the center of the title/metadata and align warning banner to the text start ---
+const ModuleLesson = ({ lesson }: { lesson: Lesson }) => {
+  const Icon =
+    lesson.type === "video"
+      ? VideoPlay
+      : lesson.type === "assessment"
+        ? TaskSquare
+        : DocumentText;
+
+  return (
+    <div className="flex flex-col gap-[8px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+      <div className="flex items-center gap-[12px]">
+        <Icon size={20} variant="Linear" color="var(--sd-grey-9)" className="shrink-0" />
+        <div className="flex-1 flex items-start justify-between gap-[16px]">
+          <div className="flex flex-col gap-[4px]">
+            <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">
+              {lesson.title}
+            </span>
+            <div className="flex items-center gap-[12px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+              <span className="flex items-center gap-[4px]">
+                <Timer1 size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[0]}</span>
+              </span>
+              <span className="flex items-center gap-[4px]">
+                <Book size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[1]}</span>
+              </span>
+            </div>
+          </div>
+          {lesson.tone === "success" && (
+            <span className="rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] font-semibold leading-[16px] text-sd-blue shrink-0 mt-[2px]">
+              Pass
+            </span>
+          )}
+        </div>
+      </div>
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] flex items-start gap-[8px] rounded-[6px] bg-[#FCF5E8] p-[8px] text-[12px] leading-[16px] text-[#B77815]">
+          <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="#B77815" />
+          <span>{lesson.note}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+--- Align play icon with metadata row, place title above it, and make warning banner w-fit width. ---
+const ModuleLesson = ({ lesson }: { lesson: Lesson }) => {
+  const Icon =
+    lesson.type === "video"
+      ? VideoPlay
+      : lesson.type === "assessment"
+        ? TaskSquare
+        : DocumentText;
+
+  return (
+    <div className="flex flex-col gap-[8px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+      <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12 pl-[32px]">
+        {lesson.title}
+      </span>
+      <div className="flex items-center justify-between gap-[16px]">
+        <div className="flex items-center gap-[12px]">
+          <Icon size={20} variant="Linear" color="var(--sd-grey-9)" className="shrink-0" />
+          <div className="flex items-center gap-[12px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+            <span className="flex items-center gap-[4px]">
+              <Timer1 size={14} variant="Linear" color="currentColor" />
+              <span>{lesson.meta.split("  •  ")[0]}</span>
+            </span>
+            <span className="flex items-center gap-[4px]">
+              <Book size={14} variant="Linear" color="currentColor" />
+              <span>{lesson.meta.split("  •  ")[1]}</span>
+            </span>
+          </div>
+        </div>
+        {lesson.tone === "success" && (
+          <span className="rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] font-semibold leading-[16px] text-sd-blue shrink-0">
+            Pass
+          </span>
+        )}
+      </div>
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] w-fit flex items-start gap-[8px] rounded-[6px] bg-[#FCF5E8] p-[8px] text-[12px] leading-[16px] text-[#B77815]">
+          <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="#B77815" />
+          <span>{lesson.note}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+--- Update title padding to pl-[50px] to align with metadata text start ---
+  return (
+    <div className="flex flex-col gap-[8px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+      <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12 pl-[50px]">
+        {lesson.title}
+      </span>
+      <div className="flex items-center justify-between gap-[16px]">
+        <div className="flex items-center gap-[12px]">
+          <Icon size={20} variant="Linear" color="var(--sd-grey-9)" className="shrink-0" />
+          <div className="flex items-center gap-[12px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+            <span className="flex items-center gap-[4px]">
+              <Timer1 size={14} variant="Linear" color="currentColor" />
+              <span>{lesson.meta.split("  •  ")[0]}</span>
+            </span>
+            <span className="flex items-center gap-[4px]">
+              <Book size={14} variant="Linear" color="currentColor" />
+              <span>{lesson.meta.split("  •  ")[1]}</span>
+            </span>
+          </div>
+        </div>
+        {lesson.tone === "success" && (
+          <span className="rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] font-semibold leading-[16px] text-sd-blue shrink-0">
+            Pass
+          </span>
+        )}
+      </div>
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] w-fit flex items-start gap-[8px] rounded-[6px] bg-[#FCF5E8] p-[8px] text-[12px] leading-[16px] text-[#B77815]">
+          <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="#B77815" />
+          <span>{lesson.note}</span>
+        </div>
+      )}
+    </div>
+  );
+--- Update lesson warning banner colors to bg-[#FFEADC] and text-[#592D18] ---
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] w-fit flex items-start gap-[8px] rounded-[6px] bg-[#FFEADC] p-[8px] text-[12px] leading-[16px] text-[#592D18]">
+          <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="currentColor" />
+          <span>{lesson.note}</span>
+        </div>
+      )}
+--- Vertically center the left icon relative to the title and metadata block ---
+const ModuleLesson = ({ lesson }: { lesson: Lesson }) => {
+  const Icon =
+    lesson.type === "video"
+      ? VideoPlay
+      : lesson.type === "assessment"
+        ? TaskSquare
+        : DocumentText;
+
+  return (
+    <div className="flex flex-col gap-[8px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+      <div className="flex items-center justify-between gap-[16px]">
+        <div className="flex items-center gap-[12px] flex-1 min-w-0">
+          <Icon size={20} variant="Linear" color="var(--sd-grey-9)" className="shrink-0" />
+          <div className="flex flex-col gap-[4px] min-w-0">
+            <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12 truncate">
+              {lesson.title}
+            </span>
+            <div className="flex items-center gap-[12px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+              <span className="flex items-center gap-[4px]">
+                <Timer1 size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[0]}</span>
+              </span>
+              <span className="flex items-center gap-[4px]">
+                <Book size={14} variant="Linear" color="currentColor" />
+                <span>{lesson.meta.split("  •  ")[1]}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        {lesson.tone === "success" && (
+          <span className="rounded-[4px] bg-sd-blue-light px-[8px] py-[3px] text-[12px] font-semibold leading-[16px] text-sd-blue shrink-0">
+            Pass
+          </span>
+        )}
+      </div>
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] w-fit flex items-start gap-[8px] rounded-[6px] bg-[#FFEADC] p-[8px] text-[12px] leading-[16px] text-[#592D18]">
+          <InfoCircle size={14} variant="Bulk" className="mt-[1px] shrink-0" color="currentColor" />
+          <span>{lesson.note}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+--- Remove the InfoCircle icon from the lesson warning banner ---
+      {lesson.tone !== "success" && (
+        <div className="ml-[32px] w-fit rounded-[6px] bg-[#FFEADC] p-[8px] text-[12px] leading-[16px] text-[#592D18]">
+          <span>{lesson.note}</span>
+        </div>
+      )}
+--- Import Lucide React icons, update StatCard component and statCards config ---
+import { BookOpen, LibraryBig, CirclePlay, ClipboardCheck } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/shared/Button";
+import { cn } from "@/lib/utils";
+import { ReviewerRoute } from "@/lib/routes";
+
+interface ReviewerCourseOverviewViewProps {
+  courseId: string;
+}
+
+type TabKey = "overview" | "script" | "quizzes" | "media" | "plagiarism";
+
+type LessonTone = "warning" | "soft" | "success";
+
+interface Lesson {
+  title: string;
+  meta: string;
+  note: string;
+  tone: LessonTone;
+  type: "video" | "lesson" | "assessment";
+}
+
+interface ModuleBlock {
+  title: string;
+  meta: string;
+  open: boolean;
+  lessons: Lesson[];
+}
+
+const tabs: Array<{ key: TabKey; label: string }> = [
+  { key: "overview", label: "Course Overview" },
+  { key: "script", label: "Script" },
+  { key: "quizzes", label: "Quizzes" },
+  { key: "media", label: "Media QA" },
+  { key: "plagiarism", label: "Plagiarism" },
+];
+
+const statCards = [
+  {
+    icon: BookOpen,
+    value: "95%",
+    label: "Structure",
+    iconBg: "bg-white",
+    iconColor: "var(--sd-orange)",
+  },
+  {
+    icon: LibraryBig,
+    value: "4",
+    label: "Total Modules",
+    iconBg: "bg-white",
+    iconColor: "var(--sd-blue)",
+  },
+  {
+    icon: CirclePlay,
+    value: "24",
+    label: "Total Lessons",
+    iconBg: "bg-white",
+    iconColor: "var(--sd-orange)",
+  },
+  {
+    icon: ClipboardCheck,
+    value: "24",
+    label: "Total Assessment",
+    iconBg: "bg-white",
+    iconColor: "var(--sd-orange)",
+  },
+];
+--- Add border to icon wrapper and increase icon size in StatCard ---
+const StatCard = ({
+  icon: Icon,
+  value,
+  label,
+  iconBg,
+  iconColor,
+}: {
+  icon: React.ElementType;
+  value: string;
+  label: string;
+  iconBg: string;
+  iconColor: string;
+}) => (
+  <div className="flex min-h-[58px] items-center gap-[12px] rounded-[10px] border border-sd-grey-3 bg-sd-grey-1 px-[14px] py-[12px] shadow-[0_1px_0_rgba(0,0,0,0.02)]">
+    <div className={cn("flex size-[36px] items-center justify-center rounded-[8px] border border-sd-grey-3", iconBg)}>
+      <Icon size={20} color={iconColor} />
+    </div>
+    <div className="flex min-w-0 flex-col">
+      <span className="text-[18px] font-semibold leading-[24px] text-sd-grey-12">
+        {value}
+      </span>
+      <span className="text-[12px] leading-[16px] text-sd-reviewer-muted">
+        {label}
+      </span>
+    </div>
+  </div>
+);
+--- Change expanded module container background color to #F0F0F0CC ---
+                {isOpen && (
+                  <div className="p-[16px] bg-[#F0F0F0CC] flex flex-col gap-[12px]">
+                    {module.lessons.length > 0 ? (
+                      module.lessons.map((lesson) => (
+                        <ModuleLesson key={lesson.title} lesson={lesson} />
+                      ))
+                    ) : (
+                      <span className="text-[14px] text-sd-reviewer-muted italic">No lessons in this module</span>
+                    )}
+                  </div>
+                )}
+--- Update video lesson icon to PlayCircle ---
+const ModuleLesson = ({ lesson }: { lesson: Lesson }) => {
+  const Icon =
+    lesson.type === "video"
+      ? PlayCircle
+      : lesson.type === "assessment"
+        ? TaskSquare
+        : DocumentText;
+--- Replace `quizQuestions` mock data with the new structure ---
+interface QuizOption {
+  text: string
+  isCorrect: boolean
+  explanation: string
+}
+
+interface QuizQuestion {
+  prompt: string
+  options: QuizOption[]
+  warning?: string
+}
+
+const quizQuestions: QuizQuestion[] = [
+  {
+    prompt: 'What are storage units?',
+    warning: 'This question has 74% similarity to Question 2 in the Module 1 quiz. Review both questions; if they test the same learning point, one must be revised to avoid duplication.',
+    options: [
+      {
+        text: 'They hold part of the computer memory',
+        isCorrect: false,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're that part of the computer designed for storing information",
+        isCorrect: true,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're classified as the floppy disk",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+      {
+        text: "They're classified as the hard disk drive",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+    ],
+  },
+  {
+    prompt: 'What are storage units?',
+    warning: 'This question has 74% similarity to Question 2 in the Module 1 quiz. Review both questions; if they test the same learning point, one must be revised to avoid duplication.',
+    options: [
+      {
+        text: 'They hold part of the computer memory',
+        isCorrect: false,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're that part of the computer designed for storing information",
+        isCorrect: true,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're classified as the floppy disk",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+      {
+        text: "They're classified as the hard disk drive",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+    ],
+  },
+  {
+    prompt: 'What are storage units?',
+    warning: 'This question has 74% similarity to Question 2 in the Module 1 quiz. Review both questions; if they test the same learning point, one must be revised to avoid duplication.',
+    options: [
+      {
+        text: 'They hold part of the computer memory',
+        isCorrect: false,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're that part of the computer designed for storing information",
+        isCorrect: true,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're classified as the floppy disk",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+      {
+        text: "They're classified as the hard disk drive",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+    ],
+  },
+  {
+    prompt: 'What are storage units?',
+    warning: 'This question has 74% similarity to Question 2 in the Module 1 quiz. Review both questions; if they test the same learning point, one must be revised to avoid duplication.',
+    options: [
+      {
+        text: 'They hold part of the computer memory',
+        isCorrect: false,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're that part of the computer designed for storing information",
+        isCorrect: true,
+        explanation: 'There are only three types of computers which can be classified as',
+      },
+      {
+        text: "They're classified as the floppy disk",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+      {
+        text: "They're classified as the hard disk drive",
+        isCorrect: false,
+        explanation: 'There are more than two types of computers',
+      },
+    ],
+  },
+]
+--- Add QuizModuleRail component ---
+  )
+}
+
+const QuizModuleRail = () => {
+  const lessonItems = [
+    { label: 'Lesson 1 Quiz', icon: TaskSquare, active: true },
+    { label: 'Lesson 2 Quiz', icon: TaskSquare, active: false },
+    { label: 'Lesson 3 Quiz', icon: TaskSquare, active: false },
+    { label: 'Lesson 4 Quiz', icon: TaskSquare, active: false },
+  ]
+
+  return (
+    <div className="flex flex-col gap-[16px]">
+      <section className="rounded-[8px] border border-sd-blue bg-sd-grey-1 p-[12px]">
+        <button
+          type="button"
+          className="flex h-[20px] w-full items-center justify-between gap-[12px] text-left"
+        >
+          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-12">
+            Module 1
+          </span>
+          <ArrowDown2 size={20} variant="Linear" color="var(--sd-grey-12)" />
+        </button>
+
+        <div className="mt-[8px] flex flex-col">
+          {lessonItems.map((lesson) => {
+            const Icon = lesson.icon
+
+            return (
+              <button
+                key={lesson.label}
+                type="button"
+                className={cn(
+                  'flex h-[32px] items-center rounded-[6px] px-[12px] text-left',
+                  lesson.active && 'bg-sd-grey-3',
+                )}
+              >
+                <span className="flex w-full items-center gap-[8px]">
+                  <Icon size={16} variant="Linear" color="var(--sd-grey-11)" />
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                    {lesson.label}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {['Module 2', 'Module 3', 'Module 4'].map((module) => (
+        <button
+          key={module}
+          type="button"
+          className="flex h-[36px] items-center justify-between rounded-[8px] border border-sd-grey-4 bg-sd-grey-1 px-[12px] text-left"
+        >
+          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-12">
+            {module}
+          </span>
+          <ArrowRight2 size={20} variant="Linear" color="var(--sd-grey-11)" />
+        </button>
+      ))}
+    </div>
+  )
+}
+--- Update sidebar logic to render QuizModuleRail ---
+        <aside className="border-b border-sd-grey-3 bg-sd-grey-1 px-[18px] py-[16px] md:border-b-0 md:border-r">
+          {activeTab === 'script' ? (
+            <ScriptModuleRail />
+          ) : activeTab === 'quizzes' ? (
+            <QuizModuleRail />
+          ) : (
+            <div className="flex flex-col gap-[24px]">
+              <section className="flex flex-col gap-[12px]">
+                <h2 className="text-[12px] font-semibold uppercase border-b-2 border-sd-grey-3 pb-[18px] leading-[16px] text-sd-grey-12">
+                  Creator Information
+                </h2>
+                <div className="flex flex-col gap-[12px]">
+                  {creatorInfo.map((item) => (
+                    <InfoRow
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section className="flex flex-col gap-[12px] border-t border-sd-grey-3 pt-[18px]">
+                <h2 className="text-[12px] font-semibold uppercase border-b-2 border-sd-grey-3 pb-[18px] leading-[16px] text-sd-grey-12">
+                  Course Information
+                </h2>
+                <div className="flex flex-col gap-[12px]">
+                  {courseInfo.map((item) => (
+                    <InfoRow
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+        </aside>
+--- Replace renderQuizzes with the new Figma design layout ---
+  const renderQuizzes = () => (
+    <div className="mx-auto flex max-w-[833px] flex-col gap-[24px]">
+      <div className="flex flex-col gap-[12px] border-b border-sd-grey-3 pb-[24px]">
+        <div className="flex items-center gap-[12px]">
+          <PlayCircle size={24} variant="Linear" color="var(--sd-grey-12)" />
+          <h2 className="text-[22px] font-semibold leading-[28px] text-sd-grey-12">
+            Lesson 1 Quiz
+          </h2>
+        </div>
+        <div className="ml-[36px] flex items-center gap-[24px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+          <span className="flex items-center gap-[8px]">
+            <Task size={16} variant="Linear" color="currentColor" />
+            <span>4 questions</span>
+          </span>
+          <span className="flex items-center gap-[8px]">
+            <TaskSquare size={16} variant="Linear" color="currentColor" />
+            <span>40marks</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-[32px]">
+        {quizQuestions.map((quiz, index) => (
+          <div
+            key={quiz.prompt + index}
+            className="border-b border-sd-grey-3 pb-[32px] last:border-0 last:pb-0"
+          >
+            <span className="mb-[16px] block text-[14px] font-medium leading-[20px] text-sd-grey-12">
+              Question {index + 1}/{quizQuestions.length}
+            </span>
+            <p className="mb-[20px] text-[14px] font-normal leading-[20px] text-sd-grey-12">
+              {quiz.prompt}
+            </p>
+            <div className="flex flex-col gap-[24px]">
+              {quiz.options.map((option, optIdx) => {
+                const alpha = String.fromCharCode(65 + optIdx)
+                const isSelected = option.isCorrect
+                const badgeBg = option.isCorrect
+                  ? 'bg-[#E6F4EA]'
+                  : 'bg-[#FCE8E6]'
+                const badgeText = option.isCorrect
+                  ? 'text-[#137333]'
+                  : 'text-[#C5221F]'
+                const badgeLabel = option.isCorrect ? 'Correct' : 'In-correct'
+
+                return (
+                  <div key={option.text} className="flex gap-[16px]">
+                    <span className="mt-[2px] text-[14px] font-normal leading-[20px] text-sd-grey-12">
+                      {alpha}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
+                      <div className="flex items-start justify-between gap-[16px]">
+                        <label className="flex cursor-pointer items-start gap-[12px]">
+                          <input
+                            type="radio"
+                            checked={isSelected}
+                            readOnly
+                            className="mt-[3px] h-[16px] w-[16px] shrink-0 cursor-pointer accent-sd-blue"
+                          />
+                          <span
+                            className={cn(
+                              'text-[14px] leading-[20px]',
+                              isSelected
+                                ? 'font-medium text-sd-grey-12'
+                                : 'font-normal text-sd-grey-12',
+                            )}
+                          >
+                            {option.text}
+                          </span>
+                        </label>
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-[4px] px-[8px] py-[2px] text-[12px] font-medium leading-[16px]',
+                            badgeBg,
+                            badgeText,
+                          )}
+                        >
+                          {badgeLabel}
+                        </span>
+                      </div>
+                      <p className="ml-[28px] text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+                        <span className="font-semibold text-sd-grey-12">
+                          Explanation:
+                        </span>{' '}
+                        {option.explanation}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {quiz.warning && (
+              <div className="mt-[24px] flex items-start gap-[12px] rounded-[8px] border-l-2 border-l-[#FA8500] bg-[#FFF8EB] px-[12px] py-[11px] text-[12px] font-normal leading-[16px] text-sd-grey-12">
+                <InfoCircle
+                  size={16}
+                  variant="Bold"
+                  color="#B77815"
+                  className="mt-[1px] shrink-0"
+                />
+                <span>{quiz.warning}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+--- Change Quizzes wrapper to have white background and remove mx-auto centering Chunk 0 ---
+  const renderQuizzes = () => (
+    <div className="flex max-w-[833px] flex-col gap-[24px]">
+--- Change Quizzes wrapper to have white background and remove mx-auto centering Chunk 1 ---
+          <div
+            className={cn(
+              'flex-1',
+              activeTab === 'script' || activeTab === 'quizzes'
+                ? 'px-[23px] pb-[80px] pt-[28px]'
+                : 'bg-sd-grey-2 px-[16px] py-[16px] md:px-[18px] md:py-[18px]',
+            )}
+          >
+--- Add a left margin to the quizzes main container ---
+  const renderQuizzes = () => (
+    <div className="flex max-w-[833px] flex-col gap-[24px] md:ml-[40px]">
+      <div className="flex flex-col gap-[12px] border-b border-sd-grey-3 pb-[24px]">
+--- Update radio button style to a custom hollow ring design Chunk 0 ---
+                        <label className="flex cursor-pointer items-start gap-[12px]">
+                          <div className="relative mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                            <input
+                              type="radio"
+                              checked={isSelected}
+                              readOnly
+                              className="peer sr-only"
+                            />
+                            <div className="h-full w-full rounded-full border-[1.5px] border-sd-grey-5 transition-all peer-checked:border-[5px] peer-checked:border-sd-blue" />
+                          </div>
+--- Update radio button style to a custom hollow ring design Chunk 1 ---
+                      <p className="ml-[30px] text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+--- Remove max-w constraints from Script tab so it spans full width ---
+  const renderScript = () => (
+    <div className="flex flex-col gap-[40px]">
+--- Remove max width from quizzes tab ---
+  const renderQuizzes = () => (
+    <div className="flex flex-col gap-[24px] md:ml-[40px]">
+--- Reduce border thickness on selected custom radio button ---
+                            <div className="h-full w-full rounded-full border-[1.5px] border-sd-grey-5 transition-all peer-checked:border-[3px] peer-checked:border-sd-blue" />
+--- Update sidebar logic to render MediaModuleRail ---
+        <aside className="border-b border-sd-grey-3 bg-sd-grey-1 px-[18px] py-[16px] md:border-b-0 md:border-r">
+          {activeTab === 'script' ? (
+            <ScriptModuleRail />
+          ) : activeTab === 'quizzes' ? (
+            <QuizModuleRail />
+          ) : activeTab === 'media' ? (
+            <MediaModuleRail />
+          ) : (
+            <div className="flex flex-col gap-[24px]">
+              <section className="flex flex-col gap-[12px]">
+                <h2 className="text-[12px] font-semibold uppercase border-b-2 border-sd-grey-3 pb-[18px] leading-[16px] text-sd-grey-12">
+                  Creator Information
+                </h2>
+                <div className="flex flex-col gap-[12px]">
+                  {creatorInfo.map((item) => (
+                    <InfoRow
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section className="flex flex-col gap-[12px] border-t border-sd-grey-3 pt-[18px]">
+                <h2 className="text-[12px] font-semibold uppercase border-b-2 border-sd-grey-3 pb-[18px] leading-[16px] text-sd-grey-12">
+                  Course Information
+                </h2>
+                <div className="flex flex-col gap-[12px]">
+                  {courseInfo.map((item) => (
+                    <InfoRow
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+        </aside>
+--- Add MediaModuleRail component ---
+  )
+}
+
+const MediaModuleRail = () => {
+  const lessonItems = [
+    { label: 'Lesson 1', icon: PlayCircle, active: true },
+    { label: 'Lesson 2', icon: Book, active: false },
+    { label: 'Lesson 3', icon: Book, active: false },
+  ]
+
+  return (
+    <div className="flex flex-col gap-[16px]">
+      <section className="rounded-[8px] border border-sd-blue bg-sd-grey-1 p-[12px]">
+        <button
+          type="button"
+          className="flex h-[20px] w-full items-center justify-between gap-[12px] text-left"
+        >
+          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-12">
+            Module 1
+          </span>
+          <ArrowDown2 size={20} variant="Linear" color="var(--sd-grey-12)" />
+        </button>
+
+        <div className="mt-[8px] flex flex-col">
+          {lessonItems.map((lesson) => {
+            const Icon = lesson.icon
+
+            return (
+              <button
+                key={lesson.label}
+                type="button"
+                className={cn(
+                  'flex h-[32px] items-center rounded-[6px] px-[12px] text-left',
+                  lesson.active && 'bg-sd-grey-3',
+                )}
+              >
+                <span className="flex w-full items-center gap-[8px]">
+                  <Icon size={16} variant="Linear" color="var(--sd-grey-11)" />
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                    {lesson.label}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {['Module 2', 'Module 3', 'Module 4'].map((module) => (
+        <button
+          key={module}
+          type="button"
+          className="flex h-[36px] items-center justify-between rounded-[8px] border border-sd-grey-4 bg-sd-grey-1 px-[12px] text-left"
+        >
+          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-12">
+            {module}
+          </span>
+          <ArrowRight2 size={20} variant="Linear" color="var(--sd-grey-11)" />
+        </button>
+      ))}
+    </div>
+  )
+}
+--- Update renderMedia and container logic Chunk 0 ---
+  const renderMedia = () => (
+    <div className="flex flex-col gap-[24px]">
+      <div className="grid grid-cols-1 gap-[16px] md:grid-cols-3">
+        <div className="flex items-center gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[8px] border border-sd-blue-light text-sd-blue">
+            <VideoPlay size={20} variant="Linear" color="currentColor" />
+          </div>
+          <div className="flex flex-col gap-[2px]">
+            <span className="text-[20px] font-semibold leading-[28px] text-sd-grey-12">
+              12
+            </span>
+            <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+              Total Video
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[8px] border border-sd-blue-light text-sd-blue">
+            <LibraryBig size={20} className="stroke-[1.5]" />
+          </div>
+          <div className="flex flex-col gap-[2px]">
+            <span className="text-[20px] font-semibold leading-[28px] text-sd-grey-12">
+              4hr 24m
+            </span>
+            <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+              Total Duration
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[8px] border border-sd-blue-light text-sd-blue">
+            <PlayCircle size={20} variant="Linear" color="currentColor" />
+          </div>
+          <div className="flex flex-col gap-[2px]">
+            <span className="text-[20px] font-semibold leading-[28px] text-sd-grey-12">
+              300mb
+            </span>
+            <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+              Total File Size
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+        <h2 className="mb-[16px] text-[16px] font-medium leading-[24px] text-sd-grey-12">
+          Preview Video
+        </h2>
+        <div className="relative overflow-hidden rounded-[12px] border border-sd-grey-3 bg-black">
+          <Image
+            src="/assets/creators/creators-hero.png"
+            alt="Preview video frame"
+            width={900}
+            height={520}
+            className="h-[460px] w-full object-cover"
+          />
+          <div className="absolute inset-x-[24px] bottom-[24px] flex items-center justify-between gap-[16px]">
+             <span className="text-[12px] font-medium text-white drop-shadow-md">
+               03:24 / 03:24
+             </span>
+             <div className="flex-1 h-[4px] bg-white/30 rounded-full overflow-hidden">
+                <div className="h-full w-[40%] bg-white" />
+             </div>
+             <span className="text-[12px] font-medium text-white drop-shadow-md">
+               03:24 / 03:24
+             </span>
+          </div>
+        </div>
+        <div className="mt-[16px] flex flex-wrap items-center gap-[24px] text-[12px] font-medium leading-[16px] text-sd-grey-12">
+          <span className="flex items-center gap-[6px]">
+             <Clock size={16} variant="Linear" color="currentColor" />
+             Duration <span className="ml-[2px] text-sd-reviewer-muted">1:32mins</span>
+          </span>
+          <span className="flex items-center gap-[6px]">
+             <PlayCircle size={16} variant="Linear" color="currentColor" />
+             Resolution <span className="ml-[2px] text-sd-reviewer-muted">1080p</span>
+          </span>
+          <span className="flex items-center gap-[6px]">
+             <Sound size={16} variant="Linear" color="currentColor" />
+             Audio Quality <span className="ml-[2px] text-sd-reviewer-muted">-16 LUFS</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px]">
+        <h2 className="mb-[16px] text-[16px] font-medium leading-[24px] text-sd-grey-12">
+          Media properties
+        </h2>
+        <div className="grid grid-cols-1 gap-[12px] md:grid-cols-3">
+           {[
+             { label: 'Resolution', value: '1290x400 (16:9)' },
+             { label: 'Audio Quality', value: '16LUFS' },
+             { label: 'Format', value: 'MP4 (H.264)' },
+             { label: 'Duration', value: '1hr 20m' },
+             { label: 'File Size', value: '20.4mb' },
+             { label: 'SRT', value: '2kb' },
+           ].map((prop) => (
+             <div key={prop.label} className="flex items-center justify-between rounded-[8px] border border-sd-grey-3 p-[12px]">
+               <div className="flex flex-col gap-[4px]">
+                 <span className="text-[12px] font-medium leading-[16px] text-sd-grey-12">{prop.label}</span>
+                 <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">{prop.value}</span>
+               </div>
+               <span className="rounded-[4px] bg-[#EAFBF3] px-[8px] py-[4px] text-[12px] font-medium leading-[16px] text-[#16A34A]">
+                 Pass
+               </span>
+             </div>
+           ))}
+        </div>
+      </div>
+    </div>
+  )
+--- Update renderMedia and container logic Chunk 1 ---
+          <div
+            className={cn(
+              'flex-1',
+              activeTab === 'script' || activeTab === 'quizzes' || activeTab === 'media'
+                ? 'px-[23px] pb-[80px] pt-[28px]'
+                : 'bg-sd-grey-2 px-[16px] py-[16px] md:px-[18px] md:py-[18px]',
+            )}
+          >
+--- Add play button overlay to Preview Video ---
+        <div className="relative overflow-hidden rounded-[12px] border border-sd-grey-3 bg-black">
+          <Image
+            src="/assets/creators/creators-hero.png"
+            alt="Preview video frame"
+            width={900}
+            height={520}
+            className="h-[460px] w-full object-cover"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button className="flex h-[64px] w-[64px] items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform hover:scale-105">
+              <Play variant="Bold" size={32} className="ml-[4px] text-white" />
+            </button>
+          </div>
+          <div className="absolute inset-x-[24px] bottom-[24px] flex items-center justify-between gap-[16px]">
+             <span className="text-[12px] font-medium text-white drop-shadow-md">
+               03:24 / 03:24
+             </span>
+             <div className="flex-1 h-[4px] bg-white/30 rounded-full overflow-hidden">
+                <div className="h-full w-[40%] bg-white" />
+             </div>
+             <span className="text-[12px] font-medium text-white drop-shadow-md">
+               03:24 / 03:24
+             </span>
+          </div>
+        </div>
+--- Update play button in renderMedia to match renderOverview ---
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <button
+              type="button"
+              className="flex size-[58px] items-center justify-center rounded-full border border-white/25 bg-white/25 text-white backdrop-blur-[8px] transition-transform hover:scale-105"
+              aria-label="Play preview video"
+            >
+              <Play size={24} variant="Bold" color="currentColor" />
+            </button>
+          </div>

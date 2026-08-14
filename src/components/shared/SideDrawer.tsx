@@ -19,6 +19,8 @@ interface SideDrawerProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  headerClassName?: string;
+  contentClassName?: string;
   side?: "right" | "left" | "top" | "bottom";
   showCloseButton?: boolean;
 }
@@ -31,6 +33,8 @@ export const SideDrawer = ({
   children,
   footer,
   className,
+  headerClassName,
+  contentClassName,
   side = "right",
   showCloseButton = true,
 }: SideDrawerProps) => {
@@ -42,7 +46,12 @@ export const SideDrawer = ({
         showCloseButton={showCloseButton}
       >
         {(title || description) && (
-          <SheetHeader className="px-[24px] py-[20px] border-b border-[#F0F0F0] gap-[8px]">
+          <SheetHeader
+            className={cn(
+              "px-[24px] py-[20px] border-b border-[#F0F0F0] gap-[8px]",
+              headerClassName,
+            )}
+          >
             {title && (
               <SheetTitle className="text-[20px] font-semibold text-[#202020] leading-[28px]">
                 {title}
@@ -55,7 +64,7 @@ export const SideDrawer = ({
             )}
           </SheetHeader>
         )}
-        <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
+        <div className={cn("flex-1 overflow-y-auto px-[24px] py-[20px]", contentClassName)}>
           {children}
         </div>
         {footer && (

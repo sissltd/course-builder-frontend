@@ -38,3 +38,15 @@ export enum CreatorRoute {
   HELP = "/creator/help",
   KYC = "/creator/kyc",
 }
+
+export enum ReviewerRoute {
+  DASHBOARD = "/reviewer/dashboard",
+  PENDING = "/reviewer/pending",
+  APPROVED_COURSES = "/reviewer/approved-courses",
+  IN_REVIEW = "/reviewer/in-review",
+  PUBLISHED_COURSES = "/reviewer/published-courses",
+  ACTIVITY_LOG = "/reviewer/activity-log",
+  NOTIFICATIONS = "/reviewer/notifications",
+  SETTINGS = "/reviewer/settings",
+  COURSE_OVERVIEW = "/reviewer/course-overview",
+}

@@ -19,6 +19,7 @@ export enum TokenPurpose {
 export enum Workspace {
   CREATOR_STUDIO = "creator_studio",
   ADMIN_STUDIO = "admin_studio",
+  REVIEWER_STUDIO = "reviewer_studio",
 }
 
 export interface User {
