@@ -66,7 +66,7 @@ export function HeroDashboardMockup() {
     <div className="w-full overflow-hidden rounded-bl-[16px] rounded-tl-[16px] rounded-tr-[16px] bg-[#F2F2F2] text-left shadow-[0_24px_60px_-20px_rgba(32,32,32,0.25)] ring-1 ring-sd-grey-3">
       <header className="flex h-[64px] items-center justify-between border-b border-[#F0F0F0] bg-[#FDFDFD] px-5 md:px-6">
         <div className="flex items-center gap-2.5">
-          <img src="/assets/auth/logo.png" alt="SoluDesk" className="h-[28px] w-[104px] object-contain" />
+          <img src="/assets/auth/logo.png" alt="SoluDesks" className="h-[28px] w-[104px] object-contain" />
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden h-10 w-[220px] items-center gap-2 rounded-[8px] border border-[#F0F0F0] bg-white px-3 sm:flex">

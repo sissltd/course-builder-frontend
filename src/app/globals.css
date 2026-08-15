@@ -40,7 +40,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   
-  /* SoluDesk Theme Colors */
+  /* SoluDesks Theme Colors */
   --color-sd-black: var(--sd-black);
   --color-sd-primary: var(--sd-primary);
   --color-sd-secondary: var(--sd-secondary);
@@ -129,14 +129,14 @@
   }
 
 :root {
-  /* SoluDesk Global Colors */
+  /* SoluDesks Global Colors */
   --sd-black: oklch(0.25 0 0); /* #202020 */
   --sd-primary: oklch(0.6 0.16 35); /* #F05A25 approx */
   --sd-secondary: oklch(0.2 0.05 240); /* #061E2D approx */
   --sd-orange: #FA8500;
   --sd-white: oklch(0.96 0 0); /* #F2F2F2 */
 
-  /* SoluDesk Greys */
+  /* SoluDesks Greys */
   --sd-grey-1: oklch(0.99 0 0); /* #FDFDFD */
   --sd-grey-2: oklch(0.98 0 0); /* #F9F9F9 */
   --sd-grey-3: oklch(0.96 0 0); /* #F0F0F0 */
@@ -173,7 +173,7 @@
   --sd-purple-text: #B423FF;
   --sd-purple-bg: #F7E8FF;
 
-  /* SoluDesk Semantic Map */
+  /* SoluDesks Semantic Map */
   --main-text-1: var(--sd-grey-12);
   --main-text-2: var(--sd-grey-11);
   --bg-1: var(--sd-grey-1);

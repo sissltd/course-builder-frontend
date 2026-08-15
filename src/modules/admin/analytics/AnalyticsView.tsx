@@ -73,7 +73,7 @@ export const AnalyticsView = () => {
                   <path d="M7.75 12.5L10.25 15L16.25 9" stroke="#FDFDFD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               }
-              label="Soludesk"
+              label="SoluDesks"
               value="235"
             />
             <DistributionCard

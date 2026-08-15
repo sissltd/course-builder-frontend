@@ -23,7 +23,7 @@ export const TERMS_SECTIONS: PolicySection[] = [
     title: "Course Content and Conduct",
     type: "list",
     body: [
-      "You own the content you create and grant SoluDesk a license to distribute it through partner platforms",
+      "You own the content you create and grant SoluDesks a license to distribute it through partner platforms",
       "Content must be original or you must hold the necessary rights to use it",
       "You must not submit content that is unlawful, infringing, or misleading",
       "We may remove content that violates these terms or our review standards",
@@ -56,13 +56,13 @@ export const TERMS_SECTIONS: PolicySection[] = [
     id: "limitation-of-liability",
     title: "Limitation of Liability",
     type: "paragraph",
-    body: "SoluDesk provides the platform as-is. To the fullest extent permitted by law, we are not liable for indirect or consequential losses arising from your use of the platform, including lost earnings from courses that are rejected or removed.",
+    body: "SoluDesks provides the platform as-is. To the fullest extent permitted by law, we are not liable for indirect or consequential losses arising from your use of the platform, including lost earnings from courses that are rejected or removed.",
   },
   {
     id: "contact-us",
     title: "Contact Us",
     type: "paragraph",
-    body: "Questions about these terms can be sent to privacy@soludesks.com, or through the help centre.",
+    body: "Questions about these terms can be sent to privacy@SoluDeskss.com, or through the help centre.",
   },
 ];
 
@@ -71,7 +71,7 @@ export function TermsOfUseView() {
     <PolicyPage
       title="Terms of Use"
       lastUpdated="17th July, 2026"
-      intro="These terms govern your use of SoluDesk and the Course Creator Studio, including creating and publishing courses, receiving payments, and using partner platform distribution."
+      intro="These terms govern your use of SoluDesks and the Course Creator Studio, including creating and publishing courses, receiving payments, and using partner platform distribution."
       sections={TERMS_SECTIONS}
     />
   );

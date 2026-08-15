@@ -22,10 +22,10 @@ export function Navbar() {
       <PageContainer>
         <nav className="flex h-[80px] w-full items-center justify-between">
         <div className="flex items-center gap-[18px]">
-          <Link href="/" aria-label="SoluDesk home" onClick={closeMenu}>
+          <Link href="/" aria-label="SoluDesks home" onClick={closeMenu}>
             <img
               src="/assets/auth/logo.png"
-              alt="SoluDesk"
+              alt="SoluDesks"
               className=" w-[180px] object-contain"
             />
           </Link>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import VerifyEmailView from "@/modules/auth/views/VerifyEmailView";
 
 export const metadata: Metadata = {
-  title: "Verify your email | SoluDesks",
+  title: "Verify your email | SoluDeskss",
 };
 
 export default async function VerifyEmailPage({

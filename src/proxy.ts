@@ -5,6 +5,7 @@ const PUBLIC_PATHS = [
   "/",
   "/about",
   "/company",
+  "/contact",
   "/cookies",
   "/creators",
   "/privacy",

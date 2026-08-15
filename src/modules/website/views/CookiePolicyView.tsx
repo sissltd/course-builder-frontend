@@ -61,7 +61,7 @@ export const COOKIE_SECTIONS: PolicySection[] = [
     id: "contact-us",
     title: "Contact Us",
     type: "paragraph",
-    body: "Questions about this cookie policy can be sent to privacy@soludesks.com, or through the help centre.",
+    body: "Questions about this cookie policy can be sent to privacy@SoluDeskss.com, or through the help centre.",
   },
 ];
 
@@ -70,7 +70,7 @@ export function CookiePolicyView() {
     <PolicyPage
       title="Cookie policy"
       lastUpdated="17th July, 2026"
-      intro="This policy explains how SoluDesks uses cookies and similar technologies when you use Course Creator Studio, and the choices you have."
+      intro="This policy explains how SoluDeskss uses cookies and similar technologies when you use Course Creator Studio, and the choices you have."
       sections={COOKIE_SECTIONS}
     />
   );

@@ -192,7 +192,7 @@ export default function CreateCourseView() {
       <div className="text-center mb-[40px]">
         <h1 className="text-[32px] font-bold text-[#202020] font-quicksand mb-[12px]">Complete course</h1>
         <p className="text-[16px] text-[#636363] max-w-[440px] mx-auto leading-[24px]">
-          Begin your journey as a course creator by finishing our Soludesk guide on building courses
+          Begin your journey as a course creator by finishing our SoluDesks guide on building courses
         </p>
       </div>
 
@@ -267,7 +267,7 @@ export default function CreateCourseView() {
         <div className="flex flex-col gap-[12px] mb-[40px]">
           <h2 className="text-[18px] font-semibold text-[#202020]">NDA & IP Ownership Agreement</h2>
           <p className="text-[14px] text-[#606060] leading-[24px]">
-            By participating as a trainer, you agree that all content created within SoluDesks Course Builder Studio is the exclusive property of SoluDesks. You maintain no ownership or publishing rights over the submitted materials. All intellectual property is transferred upon submission.
+            By participating as a trainer, you agree that all content created within SoluDeskss Course Builder Studio is the exclusive property of SoluDeskss. You maintain no ownership or publishing rights over the submitted materials. All intellectual property is transferred upon submission.
           </p>
         </div>
 

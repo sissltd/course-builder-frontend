@@ -78,7 +78,7 @@ export const KYCVerification = ({ isOpen, onOpenChange, onSuccess }: KYCVerifica
 
           <div className="flex flex-col gap-[12px]">
              <p className="text-[12px] text-[#606060] text-center leading-[18px]">
-                By clicking continue, you agree to Soludesk Verification Policy and Terms of Service
+                By clicking continue, you agree to SoluDesks Verification Policy and Terms of Service
              </p>
              <Button variant="app-primary" className="w-full h-[44px]" onClick={handleNext}>
                 Continue

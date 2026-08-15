@@ -26,7 +26,7 @@ export const AuthSidebar = () => {
       {/* Header Text */}
       <div className="absolute left-[54px] top-[41px] w-[529px]">
         <h2 className="font-sans font-semibold text-x text-sd-grey-12 tracking-[-0.48px] mb-2">
-          Welcome to SoluDesk
+          Welcome to SoluDesks
         </h2>
         <p className="font-sans font-normal text-body-lg text-sd-grey-11 tracking-[-0.32px]">
           Your AI assistant course builder

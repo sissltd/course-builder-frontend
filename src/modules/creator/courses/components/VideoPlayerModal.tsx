@@ -105,7 +105,7 @@ export const VideoPlayerModal = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-[12px]">
             <div className="size-[34px] relative">
-               <Image src="/soludeskIcon.png" alt="Soludesk" fill className="object-contain" />
+               <Image src="/SoluDesksIcon.png" alt="SoluDesks" fill className="object-contain" />
             </div>
             <span className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px]">{title}</span>
           </div>

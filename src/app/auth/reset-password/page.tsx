@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ResetPasswordView from "@/modules/auth/views/ResetPasswordView";
 
 export const metadata: Metadata = {
-  title: "Reset password | SoluDesk",
+  title: "Reset password | SoluDesks",
 };
 
 export default async function ResetPasswordPage({
