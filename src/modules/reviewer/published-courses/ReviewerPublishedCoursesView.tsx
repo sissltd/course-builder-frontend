@@ -45,6 +45,14 @@ const tableGridClassName =
   "grid grid-cols-[minmax(200px,1.4fr)_minmax(140px,1fr)_minmax(160px,1.1fr)_minmax(160px,1.1fr)_minmax(80px,0.6fr)_minmax(240px,1.5fr)_minmax(140px,1fr)]";
 
 export const ReviewerPublishedCoursesView = () => {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(publishedCourses.length / itemsPerPage) || 1;
+  const paginatedCourses = publishedCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
   
   const activeCourse = activeCourseIndex !== null ? publishedCourses[activeCourseIndex] : null;
@@ -59,21 +67,7 @@ export const ReviewerPublishedCoursesView = () => {
   };
 
   return (
-    <div className="flex h-full w-full flex-col px-[24px] py-[32px]">
-      {/* Top Bar */}
-      <div className="mb-[24px] flex items-center gap-[16px]">
-        <h1 className="text-[16px] font-bold uppercase leading-[24px] tracking-[0.64px] text-sd-grey-12">
-          PUBLISHED
-        </h1>
-        <div className="h-[20px] w-[1px] bg-[#D9D9D9]" />
-        <div className="flex items-center gap-[8px] text-sd-reviewer-muted">
-          <Timer1 size={16} variant="Linear" color="currentColor" />
-          <span className="text-[14px] font-normal leading-[20px]">
-            05:32:04 min
-          </span>
-        </div>
-      </div>
-
+    <div className="flex h-full w-full flex-col">
       {/* Filters and Table */}
       <div className="flex w-full flex-col gap-[16px]">
         <ReviewerPendingFilters
@@ -104,53 +98,56 @@ export const ReviewerPublishedCoursesView = () => {
 
               {/* Table Body */}
               <div>
-                {publishedCourses.map((course, index) => (
-                  <div
-                    key={`${course.courseId}-${index}`}
-                    onClick={() => setActiveCourseIndex(index)}
-                    role="button"
-                    tabIndex={0}
-                    className={cn(
-                      tableGridClassName,
-                      "cursor-pointer items-center transition-colors hover:bg-sd-grey-2",
-                    )}
-                  >
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.courseTitle}</span>
-                    </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.creator}</span>
-                    </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <div className="flex min-w-0 items-center gap-[10px]">
-                        <span className="truncate">{course.courseId}</span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void copyCourseId(course.courseId);
-                          }}
-                          className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
-                          aria-label={`Copy ${course.courseId}`}
-                        >
-                          <Copy size={14} variant="Linear" color="currentColor" />
-                        </button>
+                {paginatedCourses.map((course, index) => {
+                  const globalIdx = (currentPage - 1) * itemsPerPage + index;
+                  return (
+                    <div
+                      key={`${course.courseId}-${globalIdx}`}
+                      onClick={() => setActiveCourseIndex(globalIdx)}
+                      role="button"
+                      tabIndex={0}
+                      className={cn(
+                        tableGridClassName,
+                        "cursor-pointer items-center transition-colors hover:bg-sd-grey-2",
+                      )}
+                    >
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.courseTitle}</span>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.creator}</span>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <div className="flex min-w-0 items-center gap-[10px]">
+                          <span className="truncate">{course.courseId}</span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void copyCourseId(course.courseId);
+                            }}
+                            className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
+                            aria-label={`Copy ${course.courseId}`}
+                          >
+                            <Copy size={14} variant="Linear" color="currentColor" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.category}</span>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.price}</span>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.channel}</span>
+                      </div>
+                      <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
+                        <span className="truncate">{course.approvedBy}</span>
                       </div>
                     </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.category}</span>
-                    </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.price}</span>
-                    </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.channel}</span>
-                    </div>
-                    <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                      <span className="truncate">{course.approvedBy}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -158,35 +155,49 @@ export const ReviewerPublishedCoursesView = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between py-[12px]">
             <div className="flex h-[36px] items-center justify-center rounded-[20px] border border-sd-grey-3 px-[16px] text-[12px] font-medium leading-[16px] text-[#4B5563]">
-              Showing 50 entries
+              Showing {publishedCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, publishedCourses.length)} of {publishedCourses.length} entries
             </div>
 
             <div className="flex items-center gap-[8px]">
               <button
                 type="button"
-                className="flex h-[32px] items-center justify-center px-[8px] text-[12px] font-medium leading-[16px] text-[#4B5563] transition-colors hover:text-sd-grey-12"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                className={cn(
+                  "flex h-[32px] items-center justify-center px-[8px] text-[12px] font-medium leading-[16px] transition-colors cursor-pointer border-0 bg-transparent",
+                  currentPage === 1 ? "text-sd-grey-11/40 cursor-not-allowed" : "text-[#4B5563] hover:text-sd-grey-12"
+                )}
               >
                 Previous
               </button>
               <div className="flex items-center gap-[4px]">
-                {pages.map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    className={cn(
-                      "flex size-[32px] items-center justify-center rounded-[4px] border transition-colors",
-                      page === 3
-                        ? "border-sd-blue bg-sd-blue text-[12px] font-semibold leading-[16px] text-white"
-                        : "border-[#E5E7EB] bg-white text-[12px] font-medium leading-[16px] text-[#4B5563] hover:bg-sd-grey-2",
-                    )}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const active = page === currentPage;
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={cn(
+                        "flex size-[32px] items-center justify-center rounded-[4px] border transition-colors cursor-pointer",
+                        active
+                          ? "border-sd-blue bg-sd-blue text-[12px] font-semibold leading-[16px] text-white"
+                          : "border-[#E5E7EB] bg-white text-[12px] font-medium leading-[16px] text-[#4B5563] hover:bg-sd-grey-2",
+                      )}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
               </div>
               <button
                 type="button"
-                className="flex h-[32px] items-center justify-center px-[8px] text-[12px] font-medium leading-[16px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                className={cn(
+                  "flex h-[32px] items-center justify-center px-[8px] text-[12px] font-medium leading-[16px] transition-colors cursor-pointer border-0 bg-transparent",
+                  currentPage === totalPages ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-12 hover:text-sd-grey-2"
+                )}
               >
                 Next
               </button>

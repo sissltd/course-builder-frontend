@@ -13,6 +13,15 @@ export const ReviewerPendingView = () => {
   const [isCourseDrawerOpen, setIsCourseDrawerOpen] = React.useState(false);
   const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(pendingCourses.length / itemsPerPage) || 1;
+  const paginatedCourses = pendingCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const activeCourse = activeCourseIndex !== null ? pendingCourses[activeCourseIndex] : null;
 
   const openCourse = (index: number) => {
@@ -36,10 +45,23 @@ export const ReviewerPendingView = () => {
 
   return (
     <div className="flex flex-col gap-[24px]">
-      <ReviewerPendingTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <ReviewerPendingTabs activeTab={activeTab} onTabChange={(tab) => {
+        setActiveTab(tab);
+        setCurrentPage(1);
+      }} />
       <ReviewerPendingFilters />
-      <ReviewerPendingTable onOpenCourse={openCourse} />
-      <ReviewerPendingPager />
+      <ReviewerPendingTable
+        courses={paginatedCourses}
+        startIndex={(currentPage - 1) * itemsPerPage}
+        onOpenCourse={openCourse}
+      />
+      <ReviewerPendingPager
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalEntries={pendingCourses.length}
+        itemsPerPage={itemsPerPage}
+      />
       <ReviewerCourseInfoDrawer
         course={activeCourse}
         isOpen={isCourseDrawerOpen}

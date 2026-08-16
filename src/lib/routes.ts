@@ -21,6 +21,7 @@ export enum AdminRoute {
   NOTIFICATIONS = "/admin/notifications",
   ACTIVITY_LOG = "/admin/activity-log",
   SETTINGS = "/admin/settings",
+  COURSE_OVERVIEW = "/admin/course-overview",
 }
 
 export enum CreatorRoute {

@@ -6,7 +6,7 @@ import { ArrowLeft2, Copy, More } from "iconsax-react";
 import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
-import { ReviewerRoute } from "@/lib/routes";
+import { AdminRoute } from "@/lib/routes";
 
 import { OverviewTab } from "./components/tabs/OverviewTab";
 import { ScriptTab } from "./components/tabs/ScriptTab";
@@ -17,7 +17,7 @@ import { ScriptModuleRail, QuizModuleRail, MediaModuleRail } from "./components/
 import { InfoRow } from "./components/SharedUI";
 import { creatorInfo, courseInfo } from "./data/mockData";
 
-interface ReviewerCourseOverviewViewProps {
+interface AdminCourseOverviewViewProps {
   courseId: string;
 }
 
@@ -31,7 +31,7 @@ const tabs: Array<{ key: TabKey; label: string }> = [
   { key: "plagiarism", label: "Plagiarism" },
 ];
 
-export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewViewProps) => {
+export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewProps) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState<TabKey>("script");
   const [generalComment, setGeneralComment] = React.useState("");
@@ -108,8 +108,8 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
           <div className="flex min-w-0 items-center gap-[12px]">
             <button
               type="button"
-              onClick={() => router.push(ReviewerRoute.PENDING)}
-              className="flex items-center gap-[8px] text-sd-grey-12 transition-colors hover:text-sd-blue"
+              onClick={() => router.push(AdminRoute.COURSES)}
+              className="flex items-center gap-[8px] text-sd-grey-12 transition-colors hover:text-sd-blue cursor-pointer"
             >
               <ArrowLeft2 size={18} variant="Linear" color="currentColor" />
               <span className="text-[14px] font-normal leading-[20px]">Back</span>
@@ -123,7 +123,7 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
           <button
             type="button"
             onClick={copyCourseId}
-            className="flex items-center gap-[8px] text-sd-grey-11 transition-colors hover:text-sd-grey-12"
+            className="flex items-center gap-[8px] text-sd-grey-11 transition-colors hover:text-sd-grey-12 cursor-pointer"
           >
             <span className="text-[14px] font-normal leading-[20px]">{courseId}</span>
             <Copy size={18} variant="Linear" color="currentColor" />
@@ -177,7 +177,7 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
                     className={cn(
-                      "relative whitespace-nowrap pt-[14px] pb-[12px] text-[14px] font-normal leading-[20px] transition-colors hover:text-sd-grey-11",
+                      "relative whitespace-nowrap pt-[14px] pb-[12px] text-[14px] font-normal leading-[20px] transition-colors hover:text-sd-grey-11 cursor-pointer",
                       active ? "text-sd-grey-12 font-medium" : "text-sd-muted-text",
                     )}
                   >
@@ -264,5 +264,3 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
     </div>
   );
 };
-
-export default ReviewerCourseOverviewView;

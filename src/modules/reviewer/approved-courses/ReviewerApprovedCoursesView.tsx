@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SideDrawer } from "@/components/shared/SideDrawer";
+import { Button } from "@/components/shared/Button";
 import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/ReviewerPendingFilters";
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
@@ -119,15 +120,24 @@ export const ReviewerApprovedCoursesView = () => {
   const [selected, setSelected] = React.useState<Record<number, boolean>>({});
   const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(approvedCourses.length / itemsPerPage) || 1;
+  const paginatedCourses = approvedCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const activeCourse = activeCourseIndex !== null ? approvedCourses[activeCourseIndex] : null;
 
   const allSelected =
-    approvedCourses.length > 0 && approvedCourses.every((_, index) => selected[index]);
+    paginatedCourses.length > 0 && paginatedCourses.every((_, index) => selected[(currentPage - 1) * itemsPerPage + index]);
 
   const toggleAll = (checked: boolean) => {
-    const next: Record<number, boolean> = {};
-    approvedCourses.forEach((_, index) => {
-      next[index] = checked;
+    const next = { ...selected };
+    paginatedCourses.forEach((_, index) => {
+      next[(currentPage - 1) * itemsPerPage + index] = checked;
     });
     setSelected(next);
   };
@@ -198,98 +208,107 @@ export const ReviewerApprovedCoursesView = () => {
               </div>
 
               <div>
-                {approvedCourses.map((course, index) => (
-                  <div
-                    key={`${course.courseId}-${index}`}
-                    className={cn(
-                      tableGridClassName,
-                      "items-center transition-colors hover:bg-sd-grey-2",
-                    )}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openCourse(index)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        openCourse(index);
-                      }
-                    }}
-                  >
-                    <div className="flex h-[44px] w-[40px] items-center justify-center border-b border-sd-grey-3">
-                      <div onClick={(event) => event.stopPropagation()}>
-                        <TableCheckbox
-                          checked={Boolean(selected[index])}
-                          onCheckedChange={(checked) =>
-                            setSelected((current) => ({ ...current, [index]: checked }))
-                          }
-                          label={`Select approved course row ${index + 1}`}
-                        />
+                {paginatedCourses.map((course, index) => {
+                  const globalIdx = (currentPage - 1) * itemsPerPage + index;
+                  return (
+                    <div
+                      key={`${course.courseId}-${globalIdx}`}
+                      className={cn(
+                        tableGridClassName,
+                        "items-center transition-colors hover:bg-sd-grey-2",
+                      )}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openCourse(globalIdx)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openCourse(globalIdx);
+                        }
+                      }}
+                    >
+                      <div className="flex h-[44px] w-[40px] items-center justify-center border-b border-sd-grey-3">
+                        <div onClick={(event) => event.stopPropagation()}>
+                          <TableCheckbox
+                            checked={Boolean(selected[globalIdx])}
+                            onCheckedChange={(checked) =>
+                              setSelected((current) => ({ ...current, [globalIdx]: checked }))
+                            }
+                            label={`Select approved course row ${globalIdx + 1}`}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <TableCell>{course.creator}</TableCell>
-                    <TableCell>{course.courseTitle}</TableCell>
-                    <TableCell>
-                      <div className="flex min-w-0 items-center gap-[10px]">
-                        <span className="truncate">{course.courseId}</span>
+                      <TableCell>{course.creator}</TableCell>
+                      <TableCell>{course.courseTitle}</TableCell>
+                      <TableCell>
+                        <div className="flex min-w-0 items-center gap-[10px]">
+                          <span className="truncate">{course.courseId}</span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void copyCourseId(course.courseId);
+                            }}
+                            className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
+                            aria-label={`Copy ${course.courseId}`}
+                          >
+                            <Copy size={14} variant="Linear" color="currentColor" />
+                          </button>
+                        </div>
+                      </TableCell>
+                      <TableCell>{course.category}</TableCell>
+                      <TableCell>{course.reviewer}</TableCell>
+                      <TableCell allowWrap>{course.dateReviewed}</TableCell>
+                      <div className="flex h-[44px] items-center justify-center border-b border-sd-grey-3 p-[10px]">
                         <button
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            void copyCourseId(course.courseId);
+                            openCourse(globalIdx);
                           }}
-                          className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
-                          aria-label={`Copy ${course.courseId}`}
+                          className="flex size-[24px] items-center justify-center text-sd-grey-12"
+                          aria-label={`Open actions for ${course.courseTitle}`}
                         >
-                          <Copy size={14} variant="Linear" color="currentColor" />
+                          <More size={24} variant="Linear" color="currentColor" />
                         </button>
                       </div>
-                    </TableCell>
-                    <TableCell>{course.category}</TableCell>
-                    <TableCell>{course.reviewer}</TableCell>
-                    <TableCell allowWrap>{course.dateReviewed}</TableCell>
-                    <div className="flex h-[44px] items-center justify-center border-b border-sd-grey-3 p-[10px]">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openCourse(index);
-                        }}
-                        className="flex size-[24px] items-center justify-center text-sd-grey-12"
-                        aria-label={`Open actions for ${course.courseTitle}`}
-                      >
-                        <More size={24} variant="Linear" color="currentColor" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
           <div className="flex min-h-[40px] flex-col gap-[16px] md:flex-row md:items-center md:justify-between">
             <div className="flex h-[40px] w-fit items-center justify-center rounded-full border border-sd-grey-4 px-[20px] py-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-              Showing 15 entries
+              Showing {approvedCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, approvedCourses.length)} of {approvedCourses.length} entries
             </div>
 
             <div className="flex items-center gap-[15px]">
               <button
                 type="button"
-                className="flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                className={cn(
+                  "flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] cursor-pointer border-0 bg-transparent",
+                  currentPage === 1 ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
+                )}
               >
                 Previous
               </button>
               <div className="flex items-center gap-[7px]">
-                {pages.map((page) => {
-                  const active = page === 3;
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const active = page === currentPage;
                   return (
                     <button
                       key={page}
                       type="button"
+                      onClick={() => setCurrentPage(page)}
                       className={cn(
-                        "flex size-[32px] items-center justify-center rounded-[6px] border px-[8px] py-[2px] text-center text-[14px] font-normal leading-[20px]",
+                        "flex size-[32px] items-center justify-center rounded-[6px] border px-[8px] py-[2px] text-center text-[14px] font-normal leading-[20px] cursor-pointer",
                         active
                           ? "border-sd-blue bg-sd-blue text-sd-grey-1"
-                          : "border-sd-grey-6 bg-sd-grey-1 text-sd-grey-11",
+                          : "border-sd-grey-6 bg-sd-grey-1 text-sd-grey-11 hover:bg-sd-grey-2",
                       )}
                     >
                       {page}
@@ -299,7 +318,12 @@ export const ReviewerApprovedCoursesView = () => {
               </div>
               <button
                 type="button"
-                className="flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-12"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                className={cn(
+                  "flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] cursor-pointer border-0 bg-transparent",
+                  currentPage === totalPages ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
+                )}
               >
                 Next
               </button>
@@ -615,7 +639,7 @@ const PublishChannelModal = ({
                     [channel.name]: Boolean(checked),
                   }))
                 }
-                className="mt-[4px] size-[16px] rounded-full border-sd-grey-8 data-checked:border-sd-blue data-checked:bg-sd-blue data-checked:text-sd-grey-1"
+                className="mt-[4px] size-[16px] rounded-[4px] border-sd-grey-8 data-checked:border-sd-blue data-checked:bg-sd-blue data-checked:text-sd-grey-1"
                 aria-label={`Select ${channel.name}`}
               />
               <span className="flex flex-col gap-[8px]">
@@ -631,20 +655,24 @@ const PublishChannelModal = ({
         </div>
 
         <div className="mt-[40px] flex items-center gap-[12px]">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="app"
             onClick={() => onOpenChange(false)}
-            className="flex h-[44px] w-[132px] items-center justify-center rounded-[8px] border border-sd-grey-6 bg-sd-grey-1 text-[14px] font-normal leading-[20px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2"
+            className="w-[132px] font-normal"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="app-primary"
+            size="app"
             onClick={() => onContinue(selectedChannels)}
-            className="flex h-[44px] w-[133px] items-center justify-center rounded-[8px] bg-sd-blue text-[14px] font-normal leading-[20px] text-sd-grey-1 transition-colors hover:bg-sd-blue-hover"
+            className="w-[133px] font-normal"
           >
             Continue
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -917,20 +945,24 @@ const ReviewPricesModal = ({
 
         {/* Footer Buttons */}
         <div className="flex shrink-0 items-center gap-[12px] p-[24px] pt-[0px]">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="app"
             onClick={() => onOpenChange(false)}
-            className="flex h-[44px] w-[132px] items-center justify-center rounded-[8px] border border-[#D9D9D9] bg-white text-[14px] font-normal leading-[20px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2"
+            className="w-[132px] font-normal"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="app-primary"
+            size="app"
             onClick={onContinue}
-            className="flex h-[44px] w-[132px] items-center justify-center rounded-[8px] bg-sd-blue text-[14px] font-medium leading-[20px] text-white transition-colors hover:bg-sd-blue-hover"
+            className="w-[132px] font-normal"
           >
             Continue
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -1012,20 +1044,24 @@ const ReviewAndPublishModal = ({
 
         {/* Footer Buttons */}
         <div className="mt-[32px] flex items-center gap-[12px]">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="app"
             onClick={() => onOpenChange(false)}
-            className="flex h-[44px] w-[116px] items-center justify-center rounded-[8px] border border-[#D9D9D9] bg-white text-[14px] font-normal leading-[20px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2"
+            className="w-[116px] font-normal"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="app-primary"
+            size="app"
             onClick={onPublish}
-            className="flex h-[44px] w-[132px] items-center justify-center rounded-[8px] bg-sd-blue text-[14px] font-medium leading-[20px] text-white transition-colors hover:bg-sd-blue-hover"
+            className="w-[132px] font-normal"
           >
             Continue
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -1055,13 +1091,15 @@ const PublishSuccessModal = ({
           <p className="mt-[12px] text-[14px] font-normal leading-[20px] text-[#4B5563]">
             You have successfully approved this course for distribution.
           </p>
-          <button
+          <Button
             type="button"
+            variant="app-primary"
+            size="app"
             onClick={() => onOpenChange(false)}
-            className="mt-[24px] flex h-[44px] w-full items-center justify-center rounded-[8px] bg-sd-blue text-[14px] font-medium leading-[20px] text-white transition-colors hover:opacity-90"
+            className="mt-[24px] w-full font-normal"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
