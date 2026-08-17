@@ -9,7 +9,7 @@ export const PrivacyTab = () => {
 
       <div className="flex flex-col gap-[16px] text-[16px] text-[#636363] leading-[24px]">
         <p>
-          Welcome to SoluDesks. We value your privacy and are committed to protecting your
+          Welcome to SoluDeskss. We value your privacy and are committed to protecting your
           personal information. This Privacy Policy explains how we collect, use, disclose,
           and safeguard your information when you use our platform.
         </p>
@@ -31,14 +31,14 @@ export const PrivacyTab = () => {
         </p>
         <p>
           <strong className="text-[#202020]">Terms of Service</strong><br />
-          By using SoluDesks, you agree to be bound by these Terms. Please read them carefully
+          By using SoluDeskss, you agree to be bound by these Terms. Please read them carefully
           before using the platform. Your continued use of the service constitutes acceptance
           of any changes to these Terms.
         </p>
         <p>
           <strong className="text-[#202020]">Contact Us</strong><br />
           If you have any questions about this Privacy Policy or our Terms of Service, please
-          contact us at support@soludesks.com.
+          contact us at support@SoluDeskss.com.
         </p>
       </div>
     </div>

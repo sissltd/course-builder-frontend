@@ -60,7 +60,7 @@ export const AuthLayout = ({
       {/* Footer */}
       <footer className="py-12 flex justify-center w-full mt-auto z-10">
         <p className="font-sans font-normal text-body-sm text-sd-grey-11 tracking-[-0.28px]">
-          2026 Soludesks Incoporated
+          2026 SoluDeskss Incoporated
         </p>
       </footer>
     </div>

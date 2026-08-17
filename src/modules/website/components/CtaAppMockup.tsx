@@ -103,7 +103,7 @@ export function CtaAppMockup() {
         <div className="flex items-center gap-2.5">
           <img
             src="/assets/auth/logo.png"
-            alt="SoluDesk"
+            alt="SoluDesks"
             className="h-[26px] w-[96px] object-contain"
           />
         </div>

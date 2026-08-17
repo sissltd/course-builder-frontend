@@ -170,7 +170,7 @@ export default function OnboardingPage() {
                   NDA & IP Ownership Agreement
                 </h3>
                 <p className="font-sans font-normal text-body-lg text-sd-grey-11">
-                  By participating as a trainer, you agree that all content created within SoluDesks Course Builder Studio is the exclusive property of SoluDesks. You maintain no ownership or publishing rights over the submitted materials. All intellectual property is transferred upon submission.
+                  By participating as a trainer, you agree that all content created within SoluDeskss Course Builder Studio is the exclusive property of SoluDeskss. You maintain no ownership or publishing rights over the submitted materials. All intellectual property is transferred upon submission.
                 </p>
               </div>
 

@@ -13,7 +13,7 @@ interface PublishedCourse {
   category: string;
   difficulty: string;
   source: string;
-  priceSoludesk: string;
+  priceSoluDesks: string;
   priceCoursera: string;
   priceUdemy: string;
   approvedBy: string;
@@ -77,8 +77,8 @@ export const PublishedDetailsDrawer = ({ isOpen, onOpenChange, course }: Publish
               <Book variant="Linear" size={22} color="#0063EF" />
             </div>
             <div>
-              <p className="text-[14px] text-[#202020] leading-[20px]">SoluDesk</p>
-              <p className="text-[16px] font-medium text-[#202020] leading-[24px]">{course.priceSoludesk}</p>
+              <p className="text-[14px] text-[#202020] leading-[20px]">SoluDesks</p>
+              <p className="text-[16px] font-medium text-[#202020] leading-[24px]">{course.priceSoluDesks}</p>
             </div>
           </div>
           <div className="flex items-center gap-[16px] p-[12px] bg-[#F9FAFB] rounded-[8px]">

@@ -197,7 +197,7 @@ export default function KYCView() {
 
               <div className="flex flex-col gap-[56px]">
                 <p className="text-[14px] text-[#606060] leading-[20px]">
-                  By clicking continue, you agree to Soludesk Verification Policy and Terms of Service
+                  By clicking continue, you agree to SoluDesks Verification Policy and Terms of Service
                 </p>
                 <Button 
                   type="button"
@@ -231,7 +231,7 @@ export default function KYCView() {
               
               <div className="flex flex-col gap-[56px]">
                 <p className="text-[14px] text-[#606060] leading-[20px]">
-                  By clicking continue, you agree to Soludesk Verification Policy and Terms of Service
+                  By clicking continue, you agree to SoluDesks Verification Policy and Terms of Service
                 </p>
                 <Button 
                   type="submit" 

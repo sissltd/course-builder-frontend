@@ -61,7 +61,7 @@ export function FaqSection() {
           <p className="text-center text-[18px] font-medium leading-[1.2] tracking-[-0.48px] text-sd-black md:text-[24px]">
             Can&apos;t Find Your Answers?
           </p>
-          <a href="mailto:support@soludesk.com" className="w-full sm:w-auto">
+          <a href="mailto:support@SoluDesks.com" className="w-full sm:w-auto">
             <Button
               variant="app-primary"
               size="app"

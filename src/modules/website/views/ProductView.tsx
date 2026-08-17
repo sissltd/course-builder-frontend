@@ -11,7 +11,7 @@ const BLOCKS = [
   },
   {
     heading: "Distribution & Payments",
-    body: "Approved courses are automatically distributed to SoluDesks, Udemy, and Coursera. Payment lands in your wallet on approval, ready to withdraw by bank transfer or mobile money.",
+    body: "Approved courses are automatically distributed to SoluDeskss, Udemy, and Coursera. Payment lands in your wallet on approval, ready to withdraw by bank transfer or mobile money.",
   },
 ];
 
@@ -19,7 +19,7 @@ export function ProductView() {
   return (
     <main>
       <FillerPageHeader
-        title="SoluDesk Course Creator Studio"
+        title="SoluDesks Course Creator Studio"
         subtitle="Build professional courses, get them reviewed fairly, and reach learners across the world's biggest platforms."
       />
       <FillerPlaceholderBlocks blocks={BLOCKS} />

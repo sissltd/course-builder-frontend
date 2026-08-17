@@ -52,7 +52,7 @@ export const PRIVACY_SECTIONS: PolicySection[] = [
     id: "security",
     title: "Security",
     type: "paragraph",
-    body: "We use industry-standard safeguards to protect your information, including encryption in transit and at rest, and access controls that limit who at SoluDesks can view sensitive data.",
+    body: "We use industry-standard safeguards to protect your information, including encryption in transit and at rest, and access controls that limit who at SoluDeskss can view sensitive data.",
   },
   {
     id: "changes-to-this-policy",
@@ -64,7 +64,7 @@ export const PRIVACY_SECTIONS: PolicySection[] = [
     id: "contact-us",
     title: "Contact us",
     type: "paragraph",
-    body: "Questions about this policy can be sent to privacy@soludesks.com, or through the help centre.",
+    body: "Questions about this policy can be sent to privacy@SoluDeskss.com, or through the help centre.",
   },
 ];
 
@@ -73,7 +73,7 @@ export function PrivacyPolicyView() {
     <PolicyPage
       title="Privacy policy"
       lastUpdated="17th July, 2026"
-      intro="This policy explains what information SoluDesks collects from creators and learners who use Course Creator Studio, how we use it, and the choices you have."
+      intro="This policy explains what information SoluDeskss collects from creators and learners who use Course Creator Studio, how we use it, and the choices you have."
       sections={PRIVACY_SECTIONS}
     />
   );

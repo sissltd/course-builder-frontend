@@ -20,7 +20,7 @@ export function Footer() {
             <div className="flex flex-col items-start gap-[21px]">
               <img
                 src="/assets/auth/logo.png"
-                alt="SoluDesk"
+                alt="SoluDesks"
                 className=" w-[180px] ml-[-15px] object-contain"
               />
               <p className="text-[14px] leading-[1.4]  mt-[-30px] text-sd-grey-11">
@@ -42,7 +42,7 @@ export function Footer() {
               </div>
             </div>
             <p className="mt-6 text-[14px] leading-[1.4] text-sd-grey-11">
-              © 2026 Soludesk. All rights reserved.
+              © 2026 SoluDesks. All rights reserved.
             </p>
           </div>
 

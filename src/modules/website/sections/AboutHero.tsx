@@ -15,8 +15,8 @@ export function AboutHero() {
             We exist to help experts turn what they know into courses the world can take.
           </h1>
           <p className="max-w-[579px] text-[16px] leading-[1.4] tracking-[-0.32px] text-sd-grey-11">
-            SoluDesks Course Creator Studio lets you build professional courses, ensures fair
-            review, and automatically distributes to SoluDesks, Udemy, and Coursera while you
+            SoluDeskss Course Creator Studio lets you build professional courses, ensures fair
+            review, and automatically distributes to SoluDeskss, Udemy, and Coursera while you
             get paid without you having to manage any of it yourself.
           </p>
         </div>
@@ -24,7 +24,7 @@ export function AboutHero() {
         <div className="mt-[80px] w-full overflow-hidden rounded-[24px]">
           <Image
             src="/assets/about/hero.png"
-            alt="About SoluDesk"
+            alt="About SoluDesks"
             width={1200}
             height={479}
             className="h-auto w-full object-cover"

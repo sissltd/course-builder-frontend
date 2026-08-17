@@ -127,7 +127,7 @@ export default function LoginPage() {
                 <div className="flex flex-col gap-[16px] w-full">
                   <AuthButton type="submit">Continue</AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
-                    By clicking on continue, you agree to Soludesk{" "}
+                    By clicking on continue, you agree to SoluDesks{" "}
                     <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
                     <Link href="/privacy" className="underline">privacy policy</Link>
                   </p>
@@ -171,7 +171,7 @@ export default function LoginPage() {
                     {isLoading ? "Signing in..." : "Continue"}
                   </AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
-                    By clicking on continue, you agree to Soludesk{" "}
+                    By clicking on continue, you agree to SoluDesks{" "}
                     <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
                     <Link href="/privacy" className="underline">privacy policy</Link>
                   </p>

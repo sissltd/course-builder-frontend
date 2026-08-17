@@ -1,1 +1,1 @@
-export const REGISTER_EMAIL_STORAGE_KEY = "soludesk.auth.register.email";
+export const REGISTER_EMAIL_STORAGE_KEY = "SoluDesks.auth.register.email";

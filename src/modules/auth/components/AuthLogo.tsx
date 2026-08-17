@@ -6,7 +6,7 @@ export const AuthLogo = () => {
   return (
     <Link href="/" className="block relative w-[151px] h-[40px] overflow-hidden">
       <Image 
-        alt="SoluDesk Logo" 
+        alt="SoluDesks Logo" 
         src="/assets/auth/logo.png" 
         fill 
         className="object-contain scale-[2.5]"
