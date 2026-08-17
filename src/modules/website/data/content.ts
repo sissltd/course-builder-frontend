@@ -12,6 +12,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: "Creators", href: "/creators" },
   { label: "Company", href: "/company" },
   { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export interface StatItem {
@@ -151,14 +152,14 @@ export interface Faq {
 
 export const FAQS: Faq[] = [
   {
-    question: "Who can become a creator on SoluDesks?",
+    question: "Who can become a creator on SoluDeskss?",
     answer:
       "Anyone with knowledge worth sharing. Create an account, complete your identity and bank verification, and you're ready to start building.",
   },
   {
     question: "Why do I need to verify my identity and bank details?",
     answer:
-      "It protects your income and your reputation. Verified creators are the reason learners — and the platforms we distribute to — can trust what's on SoluDesks.",
+      "It protects your income and your reputation. Verified creators are the reason learners — and the platforms we distribute to — can trust what's on SoluDeskss.",
   },
   {
     question: "When do I actually get paid?",
@@ -173,7 +174,7 @@ export const FAQS: Faq[] = [
   {
     question: "Will my course reach learners outside English speakers?",
     answer:
-      "Yes. Approved courses are distributed across SoluDesks, Udemy, and Coursera so learners around the world can find them.",
+      "Yes. Approved courses are distributed across SoluDeskss, Udemy, and Coursera so learners around the world can find them.",
   },
 ];
 

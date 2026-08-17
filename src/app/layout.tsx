@@ -17,7 +17,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "SoluDesk",
+  title: "SoluDesks",
   description: "Your AI assistant course builder — turn what you know into a course the world can take.",
 };
 

@@ -11,7 +11,7 @@ export function HeroSection() {
         <div className="flex h-[32px] items-center gap-2 rounded-full bg-[#F5F9FF] px-[10px]">
           <Image src="/assets/dashboard/profile-2user-bold.svg" alt="" width={16} height={16} className="size-4" />
           <span className="text-[14px] leading-4 text-[#0A60E1]">
-            Become a creator on SoluDesk
+            Become a creator on SoluDesks
           </span>
         </div>
 
@@ -20,8 +20,8 @@ export function HeroSection() {
         </h1>
 
         <p className="mt-5 max-w-[579px] text-center text-[16px] leading-[1.4] tracking-[-0.32px] text-sd-grey-11">
-          SoluDesks Course Creator Studio lets you build professional courses, ensures fair
-          review, and automatically distributes to SoluDesks, Udemy, and Coursera while you get
+          SoluDeskss Course Creator Studio lets you build professional courses, ensures fair
+          review, and automatically distributes to SoluDeskss, Udemy, and Coursera while you get
           paid without you having to manage any of it yourself.
         </p>
 
@@ -42,7 +42,7 @@ export function HeroSection() {
       <div className="mt-[40px] flex w-full justify-center pb-[80px] lg:pb-[120px]">
         <Image
           src="/assets/dashboard/dashboard.png"
-          alt="SoluDesk dashboard preview"
+          alt="SoluDesks dashboard preview"
           width={1200}
           height={800}
           priority

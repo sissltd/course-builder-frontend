@@ -3,7 +3,7 @@ import { FillerPageHeader, FillerPlaceholderBlocks } from "@/modules/website/com
 const LEGAL_BLOCKS = [
   {
     heading: "Terms placeholder",
-    body: "This page will contain the full terms of use for SoluDesk services. Content is coming soon.",
+    body: "This page will contain the full terms of use for SoluDesks services. Content is coming soon.",
   },
   {
     heading: "Acceptable use",
@@ -20,7 +20,7 @@ export function LegalView() {
     <main>
       <FillerPageHeader
         title="Terms of Use"
-        subtitle="The terms that govern your use of SoluDesk and the Course Creator Studio."
+        subtitle="The terms that govern your use of SoluDesks and the Course Creator Studio."
       />
       <FillerPlaceholderBlocks blocks={LEGAL_BLOCKS} />
     </main>

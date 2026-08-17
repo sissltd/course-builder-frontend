@@ -12,7 +12,7 @@ const STATS = [
 ];
 
 const PARTNERS = [
-  { src: "/images/products/creators/soludesk-logo.png", alt: "SoluDesk", width: 140, height: 36, className: "h-[36px] w-[140px] shrink-0 object-bottom" },
+  { src: "/images/products/creators/SoluDesks-logo.png", alt: "SoluDesks", width: 140, height: 36, className: "h-[36px] w-[140px] shrink-0 object-bottom" },
   { src: "/images/products/creators/udemy-logo.png", alt: "Udemy", width: 97, height: 36, className: "h-[36px] w-[97px] shrink-0 object-cover" },
   { src: "/images/products/creators/coursera-logo.png", alt: "Coursera", width: 163, height: 36, className: "h-[36px] w-[163px] shrink-0 object-bottom" },
 ];
@@ -33,8 +33,8 @@ export function CreatorsHero() {
                 Build your ideas in the ideal marketplace
               </h1>
               <p className="max-w-[579px] text-[16px] leading-[1.4] tracking-[-0.32px] text-sd-grey-11">
-                SoluDesks Course Creator Studio lets you build professional courses, ensures
-                fair review, and automatically distributes to SoluDesks, Udemy, and Coursera
+                SoluDeskss Course Creator Studio lets you build professional courses, ensures
+                fair review, and automatically distributes to SoluDeskss, Udemy, and Coursera
                 while you get paid without you having to manage any of it yourself.
               </p>
             </div>

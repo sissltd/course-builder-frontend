@@ -138,8 +138,8 @@ export function FeaturesSection() {
             The Course Builder
           </h2>
           <p className="text-[16px] leading-[1.4] tracking-[-0.32px] text-sd-grey-11">
-            SoluDesks Course Creator Studio lets you build professional courses, ensures fair
-            review, and automatically distributes to SoluDesks, Udemy, and Coursera while you get
+            SoluDeskss Course Creator Studio lets you build professional courses, ensures fair
+            review, and automatically distributes to SoluDeskss, Udemy, and Coursera while you get
             paid without you having to manage any of it yourself.
           </p>
         </div>
