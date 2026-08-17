@@ -81,6 +81,11 @@
   --color-sd-header-bg: var(--sd-header-bg);
   --color-sd-footer-bg: var(--sd-footer-bg);
   --color-sd-card-border: var(--sd-card-border);
+  --color-sd-reviewer-muted: var(--sd-reviewer-muted);
+  --color-sd-reviewer-axis: var(--sd-reviewer-axis);
+  --color-sd-reviewer-purple: var(--sd-reviewer-purple);
+  --color-sd-reviewer-rejected: var(--sd-reviewer-rejected);
+  --color-sd-reviewer-orange: var(--sd-reviewer-orange);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -172,6 +177,11 @@
   --sd-danger-soft: #FFF0ED;
   --sd-purple-text: #B423FF;
   --sd-purple-bg: #F7E8FF;
+  --sd-reviewer-muted: #606060;
+  --sd-reviewer-axis: #949596;
+  --sd-reviewer-purple: #9747FF;
+  --sd-reviewer-rejected: #FFBA95;
+  --sd-reviewer-orange: #FF6B00;
 
   /* SoluDesks Semantic Map */
   --main-text-1: var(--sd-grey-12);
