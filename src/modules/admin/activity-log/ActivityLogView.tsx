@@ -3,6 +3,8 @@
 import React, { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGetActivityLogQuery, ActivityLogItemApi } from "@/redux/slices/adminApi";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 
 type ActivityLogCategory =
   | "all"
@@ -33,68 +35,12 @@ type ActivityLogGroup = {
 
 const FILTERS: ActivityLogTab[] = [
   { id: "all", filterKey: "all", label: "All" },
-  { id: "approval-1", filterKey: "approval", label: "Approval (12)" },
-  { id: "production", filterKey: "production", label: "Production (12)" },
-  { id: "publish", filterKey: "publish", label: "Publish (12)" },
-  { id: "submission", filterKey: "submission", label: "Submission (12)" },
-  { id: "alert", filterKey: "alert", label: "Laert (12)" },
-  { id: "approval-2", filterKey: "approval", label: "Approval (12)" },
+  { id: "approval", filterKey: "approval", label: "Approval" },
+  { id: "production", filterKey: "production", label: "Production" },
+  { id: "publish", filterKey: "publish", label: "Publish" },
+  { id: "submission", filterKey: "submission", label: "Submission" },
+  { id: "alert", filterKey: "alert", label: "Alert" },
   { id: "configuration", filterKey: "configuration", label: "Configuration" },
-];
-
-const activityLogGroups: ActivityLogGroup[] = [
-  {
-    label: "Today",
-    items: [
-      {
-        id: "1",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-      {
-        id: "2",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-      {
-        id: "3",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-    ],
-  },
-  {
-    label: "Yesterday",
-    items: [
-      {
-        id: "4",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-      {
-        id: "5",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-      {
-        id: "6",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-      {
-        id: "7",
-        title: "Batch approved 56 MIE proposals",
-        meta: "By Admin - 12 minutes ago",
-        category: "approval",
-      },
-    ],
-  },
 ];
 
 const ActivityLogIcon = () => (
@@ -102,6 +48,31 @@ const ActivityLogIcon = () => (
     <Check size={22} strokeWidth={2.25} color="var(--sd-grey-12)" />
   </div>
 );
+
+const groupActivityLogs = (results: ActivityLogItemApi[]): ActivityLogGroup[] => {
+  const groups: Record<string, ActivityLogItem[]> = {};
+
+  results.forEach((log) => {
+    const date = parseISO(log.activity_datetime);
+    let label = format(date, "MMM dd, yyyy");
+    if (isToday(date)) label = "Today";
+    else if (isYesterday(date)) label = "Yesterday";
+
+    if (!groups[label]) groups[label] = [];
+
+    const metaTime = isToday(date) ? `Today - ${format(date, "h:mm a")}` : format(date, "MMM dd, h:mm a");
+    const actorName = log.actor ? `${log.actor.first_name} ${log.actor.last_name}`.trim() : "System";
+
+    groups[label].push({
+      id: log.id,
+      title: log.summary || `${log.action} (${log.category})`,
+      meta: `By ${actorName} - ${metaTime}`,
+      category: log.category.toLowerCase() as Exclude<ActivityLogCategory, "all">,
+    });
+  });
+
+  return Object.entries(groups).map(([label, items]) => ({ label, items }));
+};
 
 export const ActivityLogView = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -111,18 +82,14 @@ export const ActivityLogView = () => {
     [activeTab]
   );
 
-  const displayedGroups = useMemo(() => {
-    if (activeFilter === "all") {
-      return activityLogGroups;
-    }
+  const { data, isLoading } = useGetActivityLogQuery(
+    activeFilter !== "all" ? { category: activeFilter.toUpperCase() } : undefined
+  );
 
-    return activityLogGroups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => item.category === activeFilter),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [activeFilter]);
+  const displayedGroups = useMemo(() => {
+    if (!data?.data?.results) return [];
+    return groupActivityLogs(data.data.results);
+  }, [data]);
 
   return (
     <div className="min-h-[calc(100vh-140px)]">
@@ -148,7 +115,13 @@ export const ActivityLogView = () => {
 
       <div className="w-full pt-[38px] pl-[clamp(24px,22vw,257px)]">
         <div className="max-w-[688px]">
-          {displayedGroups.map((group, groupIndex) => (
+          {isLoading && (
+            <p className="text-sd-grey-11">Loading activity log...</p>
+          )}
+          {!isLoading && displayedGroups.length === 0 && (
+            <p className="text-sd-grey-11">No activity found.</p>
+          )}
+          {!isLoading && displayedGroups.map((group, groupIndex) => (
             <div key={group.label} className={cn(groupIndex > 0 && "pt-[32px]")}>
               {groupIndex > 0 && <div className="mb-[26px] h-px w-full bg-sd-grey-6" />}
               <h2 className="mb-[28px] text-[16px] font-semibold leading-[24px] tracking-[-0.32px] text-sd-grey-12">

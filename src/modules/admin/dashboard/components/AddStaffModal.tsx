@@ -8,34 +8,59 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { TickCircle } from "iconsax-react";
 
+import { useInviteStaffMutation, InviteStaffPayload } from "@/redux/slices/adminApi";
+import { toast } from "sonner";
+
 interface AddStaffModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 const roleOptions = [
-  { label: "Writer", value: "writer" },
-  { label: "Verifier", value: "verifier" },
-  { label: "Approver", value: "approver" },
+  { label: "Writer", value: "STAFF_WRITER" },
+  { label: "Verifier", value: "STAFF_VERIFIER" },
+  { label: "Approver", value: "STAFF_APPROVER" },
 ];
 
 export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
   const [email, setEmail] = React.useState("");
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
   const [role, setRole] = React.useState("");
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
 
+  const [inviteStaff, { isLoading }] = useInviteStaffMutation();
+
   const handleSendInvitation = () => {
+    if (!email || !firstName || !lastName || !role) {
+      toast.error("Please fill all fields");
+      return;
+    }
     setShowConfirm(true);
   };
 
-  const handleConfirmSend = () => {
-    setShowConfirm(false);
-    setTimeout(() => setShowSuccess(true), 300);
+  const handleConfirmSend = async () => {
+    try {
+      await inviteStaff({
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role: role as InviteStaffPayload["role"],
+      }).unwrap();
+      
+      setShowConfirm(false);
+      setTimeout(() => setShowSuccess(true), 300);
+    } catch (error: any) {
+      toast.error(error.data?.detail || error.data?.message || "Failed to send invitation");
+      setShowConfirm(false);
+    }
   };
 
   const handleCancel = () => {
     setEmail("");
+    setFirstName("");
+    setLastName("");
     setRole("");
     onOpenChange(false);
   };
@@ -43,6 +68,8 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
   const handleDone = () => {
     setShowSuccess(false);
     setEmail("");
+    setFirstName("");
+    setLastName("");
     setRole("");
     onOpenChange(false);
   };
@@ -63,6 +90,20 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
         </div>
         <div className="flex flex-col gap-[20px]">
           <div className="flex flex-col gap-[16px]">
+            <FormInput
+              name="first_name"
+              label="First name"
+              placeholder="John"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+            <FormInput
+              name="last_name"
+              label="Last name"
+              placeholder="Doe"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
             <FormInput
               name="email"
               label="Email address"
@@ -94,10 +135,11 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
         isOpen={showConfirm}
         onOpenChange={setShowConfirm}
         title="Send invitation?"
-        description={`An invitation will be sent to ${email || "this email"} with the role of ${role || "selected"}.`}
-        confirmLabel="Yes, send"
+        description={`An invitation will be sent to ${email || "this email"} with the role of ${roleOptions.find(r => r.value === role)?.label || "selected"}.`}
+        confirmLabel={isLoading ? "Sending..." : "Yes, send"}
         variant="primary"
         onConfirm={handleConfirmSend}
+        isLoading={isLoading}
       />
 
       <Modal isOpen={showSuccess} onOpenChange={setShowSuccess}>

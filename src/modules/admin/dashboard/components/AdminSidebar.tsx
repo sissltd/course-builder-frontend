@@ -20,6 +20,7 @@ import {
   Logout,
   TickCircle,
   CloseCircle,
+  SecurityUser,
 } from "iconsax-react";
 
 const adminLinks = [
@@ -29,6 +30,7 @@ const adminLinks = [
   { name: "System Health", href: AdminRoute.SYSTEM_HEALTH, icon: Global },
   { name: "APE Pipeline", href: AdminRoute.APE_PIPELINE, icon: Box },
   { name: "Teams", href: AdminRoute.TEAMS, icon: Profile2User },
+  { name: "KYC Review", href: AdminRoute.KYC_REVIEW, icon: SecurityUser },
 ];
 
 const coursesLinks = [

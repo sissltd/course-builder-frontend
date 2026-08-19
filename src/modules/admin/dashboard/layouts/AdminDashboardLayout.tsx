@@ -21,6 +21,7 @@ const pageTitles: Record<string, string> = {
   "/admin/notifications": "Notification",
   "/admin/activity-log": "Activity Log",
   "/admin/settings": "Settings",
+  "/admin/kyc-review": "KYC Review",
 };
 
 interface AdminDashboardLayoutProps {
