@@ -25,7 +25,19 @@ const isPublicPath = (pathname: string): boolean =>
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-export async function proxy(req: NextRequest) {
+function getDashboardForWorkspace(workspace?: string): string {
+  switch (workspace) {
+    case "admin_studio":
+    case "admin_dashboard":
+      return "/admin/dashboard";
+    case "reviewer_studio":
+      return "/reviewer/dashboard";
+    default:
+      return "/creator/dashboard";
+  }
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({
     req,
@@ -34,10 +46,7 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicPath(pathname)) {
     if (token && pathname.startsWith("/auth")) {
-      const dashboard =
-        token.user?.workspace === "admin_studio"
-          ? "/admin/dashboard"
-          : "/creator/dashboard";
+      const dashboard = getDashboardForWorkspace(token.user?.workspace);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
     return NextResponse.next();

@@ -1,7 +1,8 @@
 export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  STAFF = "STAFF",
   COURSE_CREATOR = "COURSE_CREATOR",
   REVIEWER = "REVIEWER",
-  STAFF = "STAFF",
 }
 
 export enum UserStatus {
