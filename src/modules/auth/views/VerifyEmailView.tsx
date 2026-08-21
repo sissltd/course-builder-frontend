@@ -63,6 +63,7 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
           refreshToken: result.refresh,
           user: JSON.stringify(result.user),
           workspace,
+          role: result.user.role,
           redirect: false,
         });
 

@@ -29,15 +29,19 @@ export interface User {
   first_name: string;
   last_name: string;
   country: string;
+  state?: string;
+  address?: string;
+  phone_number?: string;
   timezone: string;
   avatar_url: string;
-  terms_accepted_at: string;
+  terms_accepted_at: string | null;
   role: UserRole;
   is_active: boolean;
   status: UserStatus;
   created_datetime: string;
   updated_datetime: string;
   has_completed_onboarding: boolean;
+  category?: string | null;
 }
 
 export interface AuthTokens {
@@ -80,6 +84,7 @@ export interface LoginResponse extends AuthTokens {
   user: User;
   role: UserRole;
   workspace: string;
+  mfa_enrollment_overdue?: boolean;
 }
 
 export interface RefreshRequest {

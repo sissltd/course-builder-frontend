@@ -62,6 +62,8 @@ export default function LoginPage() {
         refreshToken: result.refresh,
         user: JSON.stringify(result.user),
         workspace,
+        role: result.role,
+        mfaEnrollmentOverdue: String(result.mfa_enrollment_overdue ?? false),
         redirect: false,
       });
 
