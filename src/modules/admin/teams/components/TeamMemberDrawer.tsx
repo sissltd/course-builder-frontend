@@ -23,15 +23,19 @@ import {
 } from "iconsax-react";
 import { FormSelect } from "@/components/form/FormSelect";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  initials: string;
-  email: string;
-  role: string;
-  date: string;
-  status: string;
-  userId: string;
+interface TeamMemberDrawerProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  member: {
+    id: string;
+    name: string;
+    initials: string;
+    email: string;
+    role: string;
+    date: string;
+    invitationStatus: string;
+    userId: string;
+  } | null;
 }
 
 type Tab = "overview" | "activities" | "analytics" | "ip-log" | "settings";
@@ -83,12 +87,6 @@ const successConfig: Record<NonNullable<ModalAction>, { title: string; descripti
     description: "The IP address has been blacklisted successfully.",
   },
 };
-
-interface TeamMemberDrawerProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  member: TeamMember | null;
-}
 
 const roleOptions = [
   { label: "Super Admin", value: "Super Admin" },
