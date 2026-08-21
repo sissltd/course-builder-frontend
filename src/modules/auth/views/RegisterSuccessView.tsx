@@ -11,6 +11,7 @@ import { useResendVerificationMutation } from "@/modules/auth/api/accountApi";
 import { TokenPurpose } from "@/modules/auth/types/auth";
 import { normalizeApiError } from "@/lib/api/errors";
 import { REGISTER_EMAIL_STORAGE_KEY } from "@/modules/auth/utils/storage";
+import { AuthRoute } from "@/lib/routes";
 
 export default function RegisterSuccessView() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function RegisterSuccessView() {
 
   useEffect(() => {
     if (!email) {
-      router.replace("/auth/register");
+      router.replace(AuthRoute.REGISTER);
     }
   }, [email, router]);
 
@@ -54,7 +55,7 @@ export default function RegisterSuccessView() {
         description={`We've sent a verification link to ${email}. Click the link in the email to activate your account.`}
         linkPrefix="Already verified?"
         linkText="Log In"
-        linkHref="/auth/login"
+        linkHref={AuthRoute.LOGIN}
       />
 
       <div className="flex flex-col gap-[16px] w-full">
@@ -69,7 +70,7 @@ export default function RegisterSuccessView() {
           The link expires after a short time. Check your spam folder if you don&apos;t see it.
         </p>
         <Link
-          href="/auth/login"
+          href={AuthRoute.LOGIN}
           className="text-center text-body-sm text-sd-grey-12 font-medium hover:underline"
         >
           Go back to Log In

@@ -6,10 +6,9 @@ import Image from "next/image";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/shared/Button";
-import { 
-  ArrowLeft, 
-  SearchNormal1, 
-  TickCircle, 
+import {
+  SearchNormal1,
+  TickCircle,
   Magicpen,
   Timer1,
   Play,
@@ -25,6 +24,10 @@ import { RequestTopicModal } from "@/modules/creator/reservation/components/Requ
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
+import { useCreateCourseMutation } from "./hooks";
+import { normalizeApiError } from "@/lib/api/errors";
+import { CreatorRoute } from "@/lib/routes";
+import { toast } from "sonner";
 
 const CATEGORIES = [
   "Software Development",
@@ -82,6 +85,7 @@ const VIDEOS = [
 export default function CreateCourseView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -129,7 +133,7 @@ export default function CreateCourseView() {
   useEffect(() => {
     if (step === 6) {
       const timer = setTimeout(() => {
-        router.push("/courses/builder");
+        router.push(CreatorRoute.COURSES);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -173,17 +177,35 @@ export default function CreateCourseView() {
     if (isValid) nextStep();
   };
 
-  const onSubmit = (data: CourseCreateFormData) => {
-    dispatch(
-      updateCourseInformation({
-        courseTitle: data.courseTitle,
-        description: data.courseDescription,
+  const onSubmit = async (data: CourseCreateFormData) => {
+    try {
+      const result = await createCourse({
         category: data.category,
-        topic: data.topic,
-        creationMethod: data.creationMethod,
-      })
-    );
-    nextStep();
+        title: data.courseTitle,
+        description: data.courseDescription,
+        terms_accepted: true,
+      }).unwrap();
+
+      dispatch(
+        updateCourseInformation({
+          courseTitle: data.courseTitle,
+          description: data.courseDescription,
+          category: data.category,
+          topic: data.topic,
+          creationMethod: data.creationMethod,
+        }),
+      );
+
+      nextStep();
+      setTimeout(() => {
+        router.push(`${CreatorRoute.COURSES_BUILDER}?id=${result.id}`);
+      }, 3000);
+    } catch (err) {
+      const { message } = normalizeApiError(
+        err as Parameters<typeof normalizeApiError>[0],
+      );
+      toast.error(message ?? "Failed to create course");
+    }
   };
 
   // Step 0: Video Guide
@@ -630,11 +652,12 @@ export default function CreateCourseView() {
           >
             Back
           </Button>
-          <Button 
-            type="submit" 
-            variant="app-primary" 
+          <Button
+            type="submit"
+            variant="app-primary"
             className="flex-1 h-[44px]"
-            disabled={!courseTitle || !courseDescription}
+            disabled={!courseTitle || !courseDescription || isCreating}
+            isLoading={isCreating}
           >
             Create course
           </Button>

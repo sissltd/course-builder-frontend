@@ -219,7 +219,7 @@ export const BaseAPI = createApi({
   reducerPath: "baseApi",
   baseQuery: baseQueryWithReauth,
   endpoints: () => ({}),
-  tagTypes: [],
+  tagTypes: ["Course", "Collaborator"],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,
 });

@@ -48,12 +48,12 @@ export function Navbar() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link href={AuthRoute.LOGIN}>
-            <Button variant="app-outline" size="app" className="h-[44px] px-6 text-[14px]">
+            <Button variant="app-outline" size="app" className="h-[36px] px-6 text-[14px]">
               Log in
             </Button>
           </Link>
           <Link href={AuthRoute.REGISTER}>
-            <Button variant="app-primary" size="app" className="h-[44px] px-6 text-[14px]">
+            <Button variant="app-primary" size="app" className="h-[36px] px-6 text-[14px]">
               Contact sales
             </Button>
           </Link>

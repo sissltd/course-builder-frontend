@@ -13,6 +13,7 @@ import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 import { useResetPasswordMutation } from "@/modules/auth/api/passwordApi";
 import { normalizeApiError } from "@/lib/api/errors";
 import { toast } from "sonner";
+import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 
 interface ResetPasswordViewProps {
   email: string;
@@ -73,11 +74,11 @@ export default function ResetPasswordView({ email, token }: ResetPasswordViewPro
           </div>
 
           <div className="flex flex-col gap-[16px] w-full">
-            <AuthButton onClick={() => (window.location.href = "/auth/login")}>Proceed to Login</AuthButton>
+            <AuthButton onClick={() => (window.location.href = AuthRoute.LOGIN)}>Proceed to Login</AuthButton>
             <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
               By clicking on continue, you agree to SoluDesks{" "}
-              <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-              <Link href="/privacy" className="underline">privacy policy</Link>
+              <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+              <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
             </p>
           </div>
         </div>
@@ -118,8 +119,8 @@ export default function ResetPasswordView({ email, token }: ResetPasswordViewPro
             </AuthButton>
             <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
               By clicking on continue, you agree to SoluDesks{" "}
-              <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-              <Link href="/privacy" className="underline">privacy policy</Link>
+              <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+              <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
             </p>
           </div>
         </form>
