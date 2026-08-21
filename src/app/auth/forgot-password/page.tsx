@@ -10,7 +10,6 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, ForgotPasswordFormData } from "@/modules/auth/utils/schemas";
 import { useForgotPasswordMutation } from "@/modules/auth/api/passwordApi";
-import { normalizeApiError } from "@/lib/api/errors";
 import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 
 export default function ForgotPasswordPage() {
@@ -31,10 +30,8 @@ export default function ForgotPasswordPage() {
     try {
       await forgotPassword({ email: data.email }).unwrap();
       setIsSent(true);
-    } catch (error) {
-      const { message } = normalizeApiError(error as never);
-      console.error("Forgot password error:", message);
-      setIsSent(true);
+    } catch {
+      // Global error toast middleware handles the toast
     }
   });
 

@@ -111,8 +111,9 @@ export default function RegisterPage() {
           message: fieldMessage,
         });
       }
-      if (message) {
-        toast.error(message);
+      const errorMessage = message ?? (Object.keys(fieldErrors).length > 0 ? Object.values(fieldErrors)[0] : null);
+      if (errorMessage) {
+        toast.error(errorMessage);
       }
     }
   });
