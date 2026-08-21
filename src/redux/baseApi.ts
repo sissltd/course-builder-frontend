@@ -85,7 +85,7 @@ const refetchSessionToken = async (): Promise<SessionRefreshResult> => {
         accessToken?: string;
         error?: string;
       };
-      if (data.error) {
+      if (data.error === "RefreshAccessTokenError") {
         return { status: "failed" };
       }
       if (data.accessToken) {
