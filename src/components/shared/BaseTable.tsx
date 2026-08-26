@@ -38,7 +38,8 @@ interface BaseTableProps<TData, TValue> {
   contentClassName?: string;
   headerRowClassName?: string;
   headerCellClassName?: string;
-  rowClassName?: string;
+  /** Static classes, or a per-row resolver for conditional row styling. */
+  rowClassName?: string | ((row: TData) => string);
   cellClassName?: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
@@ -64,6 +65,11 @@ interface BaseTableProps<TData, TValue> {
   topContent?: React.ReactNode;
   onRowClick?: (row: TData) => void;
   ignoreRowClickColumns?: string[];
+  /**
+   * Reports the currently selected rows so callers can drive bulk actions.
+   * Must be referentially stable (e.g. a `useState` setter or a `useCallback`).
+   */
+  onSelectionChange?: (rows: TData[]) => void;
   tableOptions?: Partial<TableOptions<TData>>;
 }
 
@@ -95,6 +101,7 @@ export function BaseTable<TData, TValue>({
   topContent,
   onRowClick,
   ignoreRowClickColumns,
+  onSelectionChange,
   tableOptions,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -136,6 +143,10 @@ export function BaseTable<TData, TValue>({
       ...tableOptions?.state,
     },
   });
+
+  React.useEffect(() => {
+    onSelectionChange?.(table.getSelectedRowModel().rows.map((row) => row.original));
+  }, [rowSelection, table, onSelectionChange]);
 
   return (
     <div className={cn("w-full bg-sd-grey-1 border border-sd-grey-3 rounded-[20px] p-[16px] flex flex-col gap-[20px]", className)}>
@@ -273,7 +284,7 @@ export function BaseTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
                     "h-[56px] border-b border-sd-grey-3 hover:bg-sd-grey-1/30 data-[state=selected]:bg-sd-blue-light",
-                    rowClassName,
+                    typeof rowClassName === "function" ? rowClassName(row.original) : rowClassName,
                     onRowClick && "cursor-pointer"
                   )}
                   onClick={(e) => {
