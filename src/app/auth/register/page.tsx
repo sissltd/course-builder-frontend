@@ -21,6 +21,7 @@ import { REGISTER_EMAIL_STORAGE_KEY } from "@/modules/auth/utils/storage";
 import { toast } from "sonner";
 import { Country, isSupportedCountry } from "react-phone-number-input";
 import { Country as CountryMeta } from "country-state-city";
+import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 
 type Step = "email" | "details" | "password";
 
@@ -98,7 +99,7 @@ export default function RegisterPage() {
         terms_accepted: data.agreeToTerms,
       }).unwrap();
       sessionStorage.setItem(REGISTER_EMAIL_STORAGE_KEY, data.email);
-      router.push("/auth/register/success");
+      router.push(AuthRoute.REGISTER_SUCCESS);
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(
         error as never,
@@ -167,8 +168,8 @@ export default function RegisterPage() {
                   <AuthButton type="submit">Continue</AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
-                    <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                    <Link href="/privacy" className="underline">privacy policy</Link>
+                    <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                    <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
                   </p>
                 </div>
               </form>
@@ -219,8 +220,8 @@ export default function RegisterPage() {
                 <AuthButton type="submit">Continue</AuthButton>
                 <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                   By clicking on continue, you agree to SoluDesks{" "}
-                  <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                  <Link href="/privacy" className="underline">privacy policy</Link>
+                  <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                  <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
                 </p>
               </div>
             </form>
@@ -254,8 +255,8 @@ export default function RegisterPage() {
                 </AuthButton>
                 <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                   By clicking on continue, you agree to SoluDesks{" "}
-                  <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                  <Link href="/privacy" className="underline">privacy policy</Link>
+                  <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                  <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
                 </p>
               </div>
             </form>

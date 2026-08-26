@@ -10,6 +10,7 @@ import { FormInput } from "@/components/form/FormInput";
 import { Modal } from "@/components/shared/Modal";
 import { ArrowLeft } from "iconsax-react";
 import { cn } from "@/lib/utils";
+import { CreatorRoute } from "@/lib/routes";
 import { FormSelect } from "@/components/form/FormSelect";
 import { Country } from "country-state-city";
 import { kycSchema, KYCFormData } from "./utils/validation";
@@ -80,7 +81,7 @@ export default function KYCView() {
   };
 
   const handleClose = () => {
-    router.push("/dashboard");
+    router.push(CreatorRoute.DASHBOARD);
   };
 
   return (

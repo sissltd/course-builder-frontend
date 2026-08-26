@@ -25,7 +25,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className={cn("min-h-screen bg-sd-grey-3/80", isBuilder && "h-screen overflow-hidden")}>
-      <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {!hideSidebarAndHeader && (
+        <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      )}
       <div className={cn("flex flex-col min-h-screen", isBuilder && "h-screen overflow-hidden")}>
         {!hideSidebarAndHeader && (
           <DashboardHeader onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />

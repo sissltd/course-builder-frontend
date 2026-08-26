@@ -21,6 +21,7 @@ import {
   getDashboardRoute,
   getWorkspaceForRole,
 } from "@/modules/auth/utils/workspace";
+import { AuthRoute } from "@/lib/routes";
 
 interface VerifyEmailViewProps {
   email: string;
@@ -150,7 +151,7 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
                 : "Resend verification link"}
           </AuthButton>
           <Link
-            href="/auth/login"
+            href={AuthRoute.LOGIN}
             className="text-center text-body-sm text-sd-grey-12 font-medium hover:underline"
           >
             Go back to Log In

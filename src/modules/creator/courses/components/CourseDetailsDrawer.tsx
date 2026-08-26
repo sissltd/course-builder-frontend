@@ -2,77 +2,40 @@
 
 import React from "react";
 import { SideDrawer } from "@/components/shared/SideDrawer";
-import { MyCourse } from "@/modules/creator/dashboard/columns/my-courses";
+import type { CourseSummary } from "@/modules/creator/courses/types";
+import { CourseStatus } from "@/modules/creator/courses/types";
+import { getCourseStatusDisplay } from "@/modules/creator/courses/utils/status";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
 
 interface CourseDetailsDrawerProps {
-  course: MyCourse | null;
+  course: CourseSummary | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onResolveIssues?: (course: MyCourse) => void;
+  onResolveIssues?: (course: CourseSummary) => void;
 }
 
-const StatusChip = ({ status }: { status: string }) => {
-  const styles: Record<string, { bg: string; text: string }> = {
-    "Approved": { bg: "bg-[#EBF7EE]", text: "text-[#27AE60]" },
-    "In Review": { bg: "bg-[#EBF3FF]", text: "text-[#0063EF]" },
-    "Rejected": { bg: "bg-[#FFF0ED]", text: "text-[#FF5025]" },
-    "Draft": { bg: "bg-[#F5F5F5]", text: "text-[#606060]" },
-    "Needs revision": { bg: "bg-[#FFF5ED]", text: "text-[#F2994A]" },
-  };
-
-  const currentStyle = styles[status] || styles["Draft"];
-
-  return (
-    <span className={cn("px-[12px] py-[6px] rounded-[6px] text-[14px] font-medium tracking-[-0.28px] whitespace-nowrap", currentStyle.bg, currentStyle.text)}>
-      {status}
-    </span>
-  );
-};
-
-const DetailRow = ({ label, value, chip }: { label: string; value?: string; chip?: React.ReactNode }) => (
+const DetailRow = ({
+  label,
+  value,
+  chip,
+}: {
+  label: string;
+  value?: string;
+  chip?: React.ReactNode;
+}) => (
   <div className="flex flex-col gap-[8px]">
-    <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] font-normal">{label}</span>
+    <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-[#606060]">
+      {label}
+    </span>
     {chip ? (
       <div className="w-fit">{chip}</div>
     ) : (
-      <span className="text-[16px] text-[#202020] tracking-[-0.32px] leading-[24px] font-normal">{value}</span>
+      <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-[#202020]">
+        {value}
+      </span>
     )}
-  </div>
-);
-
-const ModuleItem = ({ title, lessons }: { title: string; lessons: number }) => (
-  <div className="p-[16px] border border-[#D9D9D9] rounded-[8px] flex items-center justify-between">
-    <div className="flex flex-col gap-[8px]">
-      <p className="text-[16px] text-[#202020] font-normal leading-[24px] tracking-[-0.32px]">{title}</p>
-      <div className="flex items-center gap-[10px]">
-        <span className="text-[16px] text-[#606060] tracking-[-0.32px] leading-[24px]">Total lessons</span>
-        <div className="size-[24px] border border-[#D9D9D9] rounded-[4px] flex items-center justify-center text-[12px] font-medium text-[#202020]">
-          {lessons}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const ReviewerNote = ({ lesson, issue, note }: { lesson: string; issue: string; note: string }) => (
-  <div className="bg-[#FDFDFD] border border-[#8C8C8C] rounded-[10px] p-[16px] flex flex-col gap-[12px]">
-    <div className="flex flex-col gap-[12px]">
-      <div className="flex items-center gap-[4px] text-[#592D18] text-[12px] font-medium">
-        <span>{lesson}</span>
-        <span>-</span>
-        <span>{issue}</span>
-      </div>
-      <p className="text-[14px] text-[#202020] tracking-[-0.28px]">300/500 words below minimum</p>
-    </div>
-    <div className="flex flex-col gap-[4px]">
-      <span className="text-[14px] text-[#202020] tracking-[-0.28px]">Reviewer’ note</span>
-      <div className="border border-[#D9D9D9] rounded-[8px] p-[12px]">
-        <p className="text-[14px] text-[#606060] tracking-[-0.28px]">{note}</p>
-      </div>
-    </div>
   </div>
 );
 
@@ -84,71 +47,94 @@ export const CourseDetailsDrawer = ({
 }: CourseDetailsDrawerProps) => {
   if (!course) return null;
 
-  const showReviewerNote = course.status === "Rejected" || course.status === "Needs revision";
+  const statusDisplay = getCourseStatusDisplay(course.status);
+  const showReviewerNote =
+    course.status === CourseStatus.REJECTED ||
+    course.status === CourseStatus.NEEDS_REVISION;
 
   return (
     <SideDrawer
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Course details"
-      footer={showReviewerNote ? (
-        <Button 
-          variant="app-primary" 
-          className="w-full h-[44px]"
-          onClick={() => onResolveIssues?.(course)}
-          rightIcon={<ArrowRight size={20} variant="Linear" color="#FFF" />}
-        >
-          {course.status === "Rejected" ? "Review changes" : "Resolve issues"}
-        </Button>
-      ) : null}
+      footer={
+        showReviewerNote ? (
+          <Button
+            variant="app-primary"
+            className="h-[44px] w-full"
+            onClick={() => onResolveIssues?.(course)}
+            rightIcon={<ArrowRight size={20} variant="Linear" color="#FFF" />}
+          >
+            {course.status === CourseStatus.REJECTED
+              ? "Review changes"
+              : "Resolve issues"}
+          </Button>
+        ) : null
+      }
     >
       <div className="flex flex-col gap-[32px]">
         {/* Status + Note */}
         <div className="flex flex-col gap-[16px]">
-          <DetailRow label="Status" chip={<StatusChip status={course.status} />} />
+          <DetailRow
+            label="Status"
+            chip={
+              <span
+                className={cn(
+                  "whitespace-nowrap rounded-[6px] px-[12px] py-[6px] text-[14px] font-medium tracking-[-0.28px]",
+                  statusDisplay.bg,
+                  statusDisplay.text,
+                )}
+              >
+                {statusDisplay.label}
+              </span>
+            }
+          />
           {showReviewerNote && (
-            <ReviewerNote 
-              lesson="R1 Lesson 2" 
-              issue="Script Length" 
-              note="Extend the lesson script to resolve this issue" 
-            />
+            <div className="rounded-[10px] border border-[#8C8C8C] bg-[#FDFDFD] p-[16px] flex flex-col gap-[12px]">
+              <div className="flex flex-col gap-[12px]">
+                <div className="flex items-center gap-[4px] text-[12px] font-medium text-[#592D18]">
+                  <span>R1 Lesson 2</span>
+                  <span>-</span>
+                  <span>Script Length</span>
+                </div>
+                <p className="text-[14px] tracking-[-0.28px] text-[#202020]">
+                  300/500 words below minimum
+                </p>
+              </div>
+              <div className="flex flex-col gap-[4px]">
+                <span className="text-[14px] tracking-[-0.28px] text-[#202020]">
+                  Reviewer&apos;s note
+                </span>
+                <div className="rounded-[8px] border border-[#D9D9D9] p-[12px]">
+                  <p className="text-[14px] tracking-[-0.28px] text-[#606060]">
+                    Extend the lesson script to resolve this issue
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
         {/* Info */}
         <div className="flex flex-col gap-[32px]">
           <DetailRow label="Topic" value={course.title} />
-          <DetailRow label="Course category" value={course.category} />
-          <DetailRow label="Difficulty level" value="Intermediate" />
-          <DetailRow 
-            label="Type" 
-            chip={
-              <span className={cn(
-                "px-[12px] py-[8px] rounded-[6px] text-[14px] font-normal tracking-[-0.28px]",
-                course.isAi ? "bg-[#F3F2FE] text-[#594FF2]" : "bg-[#EBF3FF] text-[#0063EF]"
-              )}>
-                {course.isAi ? "Created with AI" : "Creator uploaded"}
-              </span>
-            } 
-          />
+          <DetailRow label="Course category" value={course.category.name} />
         </div>
 
         <div className="h-px bg-[#F0F0F0]" />
 
-        {/* Modules */}
-        <div className="flex flex-col gap-[16px]">
-          <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Course Modules</span>
-          <div className="flex flex-col gap-[16px]">
-            <ModuleItem title="Module 1: The Origin and Advancement of Machines" lessons={3} />
-            <ModuleItem title="Module 2: The Origin and Advancement of Machines" lessons={3} />
-            <ModuleItem title="Module 3: The Introduction of Artificial intelligence" lessons={2} />
-          </div>
-        </div>
-
         {/* Date */}
         <div className="flex flex-col gap-[8px]">
-          <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Date edited</span>
-          <span className="text-[16px] text-[#202020] tracking-[-0.32px] leading-[24px]">{course.lastEdited}</span>
+          <span className="text-[14px] leading-[20px] tracking-[-0.28px] text-[#606060]">
+            Date created
+          </span>
+          <span className="text-[16px] leading-[24px] tracking-[-0.32px] text-[#202020]">
+            {new Date(course.created_datetime).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
         </div>
       </div>
     </SideDrawer>

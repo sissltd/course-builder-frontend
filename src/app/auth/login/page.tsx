@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
+import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 import { AuthInput } from "@/modules/auth/components/AuthInput";
 import { AuthButton } from "@/modules/auth/components/AuthButton";
 import Link from "next/link";
@@ -97,7 +98,7 @@ export default function LoginPage() {
         description="Enter the required information to access your account"
         linkPrefix="Don’t have an account?"
         linkText="Create one"
-        linkHref="/auth/register"
+        linkHref={AuthRoute.REGISTER}
       />
 
       <FormProvider {...methods}>
@@ -128,8 +129,8 @@ export default function LoginPage() {
                   <AuthButton type="submit">Continue</AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
-                    <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                    <Link href="/privacy" className="underline">privacy policy</Link>
+                    <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                    <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
                   </p>
                 </div>
               </form>
@@ -159,7 +160,7 @@ export default function LoginPage() {
                     type="password"
                   />
                   <Link 
-                    href="/auth/forgot-password" 
+                    href={AuthRoute.FORGOT_PASSWORD} 
                     className="text-body-sm text-sd-grey-12 font-medium hover:underline self-start"
                   >
                     Forgot password?
@@ -172,8 +173,8 @@ export default function LoginPage() {
                   </AuthButton>
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
-                    <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                    <Link href="/privacy" className="underline">privacy policy</Link>
+                    <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                    <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
                   </p>
                 </div>
               </form>

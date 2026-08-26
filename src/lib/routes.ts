@@ -1,9 +1,23 @@
 export enum AuthRoute {
   LOGIN = "/auth/login",
   REGISTER = "/auth/register",
+  REGISTER_SUCCESS = "/auth/register/success",
   FORGOT_PASSWORD = "/auth/forgot-password",
   RESET_PASSWORD = "/auth/reset-password",
+  VERIFY_EMAIL = "/auth/verify-email",
   ONBOARDING = "/auth/onboarding",
+}
+
+export enum WebsiteRoute {
+  HOME = "/",
+  TERMS = "/terms",
+  PRIVACY = "/privacy",
+  ABOUT = "/about",
+  CONTACT = "/contact",
+  COMPANY = "/company",
+  CREATORS = "/creators",
+  PRODUCT = "/product",
+  COOKIES = "/cookies",
 }
 
 export enum AdminRoute {
@@ -51,4 +65,6 @@ export enum ReviewerRoute {
   NOTIFICATIONS = "/reviewer/notifications",
   SETTINGS = "/reviewer/settings",
   COURSE_OVERVIEW = "/reviewer/course-overview",
+  FEEDBACK = "/reviewer/feedback",
+  REVIEW_QUEUE = "/reviewer/review-queue",
 }

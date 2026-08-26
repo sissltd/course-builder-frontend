@@ -7,6 +7,7 @@ import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { useRouter } from "next/navigation";
+import { CreatorRoute } from "@/lib/routes";
 
 export const AccountSettingsTab = () => {
   const router = useRouter();
@@ -53,7 +54,7 @@ export const AccountSettingsTab = () => {
           </div>
         ) : (
           <button 
-            onClick={() => router.push("/kyc?step=2")}
+            onClick={() => router.push(`${CreatorRoute.KYC}?step=2`)}
             className="bg-white border border-[#D9D9D9] flex items-center justify-center px-[12px] py-[8px] rounded-[6px] hover:bg-sd-grey-1 transition-colors"
           >
             <p className="text-[#202020] text-[14px] font-medium tracking-[-0.28px] whitespace-nowrap">

@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, ForgotPasswordFormData } from "@/modules/auth/utils/schemas";
 import { useForgotPasswordMutation } from "@/modules/auth/api/passwordApi";
 import { normalizeApiError } from "@/lib/api/errors";
+import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 
 export default function ForgotPasswordPage() {
   const [isSent, setIsSent] = useState(false);
@@ -66,11 +67,11 @@ export default function ForgotPasswordPage() {
             </div>
             
             <div className="flex flex-col gap-[16px]">
-              <AuthButton onClick={() => window.location.href = '/auth/login'}>Back to Login</AuthButton>
+              <AuthButton onClick={() => window.location.href = AuthRoute.LOGIN}>Back to Login</AuthButton>
               <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                 By clicking on continue, you agree to SoluDesks{" "}
-                <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-                <Link href="/privacy" className="underline">privacy policy</Link>
+                <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+                <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
               </p>
             </div>
           </div>
@@ -102,8 +103,8 @@ export default function ForgotPasswordPage() {
             </AuthButton>
             <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
               By clicking on continue, you agree to SoluDesks{" "}
-              <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
-              <Link href="/privacy" className="underline">privacy policy</Link>
+              <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
+              <Link href={WebsiteRoute.PRIVACY} className="underline">privacy policy</Link>
             </p>
           </div>
         </form>
