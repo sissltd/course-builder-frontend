@@ -1,11 +1,11 @@
 import React from "react";
-import { MieRecommendationView } from "@/modules/admin/mie-recommendation/MieRecommendationView";
 import type { Metadata } from "next";
+import { MieSubmissionsView } from "@/modules/admin/mie-recommendation/MieSubmissionsView";
 
 export const metadata: Metadata = {
-  title: "MIE Recommendation",
+  title: "MIE Submissions",
 };
 
-export default function MieRecommendationPage() {
-  return <MieRecommendationView />;
+export default function MieSubmissionsPage() {
+  return <MieSubmissionsView />;
 }

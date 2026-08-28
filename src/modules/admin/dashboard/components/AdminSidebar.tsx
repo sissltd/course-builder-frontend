@@ -6,6 +6,10 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AdminRoute } from "@/lib/routes";
+import { signOut, useSession } from "next-auth/react";
+import { useAppDispatch } from "@/redux";
+import { clearAuth } from "@/redux/slices/authSlice";
+import { serverLogout } from "@/modules/auth/actions/logout";
 import {
   Home2,
   Graph,
@@ -54,8 +58,29 @@ interface AdminSidebarProps {
 
 export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const isActive = (href: string) => pathname === href;
+  const displayName =
+    user?.first_name || user?.last_name
+      ? `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()
+      : (user?.email ?? "");
+  const avatarSrc =
+    user?.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+      user?.email ?? "admin",
+    )}`;
+
+  const handleLogout = async () => {
+    dispatch(clearAuth());
+    await serverLogout();
+    await signOut({ callbackUrl: "/auth/login" });
+  };
+
+  // Sub-routes (e.g. /admin/mie-recommendation/developers) keep their parent lit.
+  const isActive = (href: string) =>
+    pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
 
   return (
     <>
@@ -209,7 +234,7 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
           </div>
 
           <div className="flex flex-col gap-[12px] w-full mt-auto">
-            <button className="flex flex-col w-full cursor-pointer">
+            <button onClick={handleLogout} className="flex flex-col w-full cursor-pointer">
               <div className="flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] hover:bg-[#2A2A2A]">
                 <Logout variant="Linear" size={20} color="#FF5025" />
                 <span className="text-[14px] font-normal text-[#FF5025] tracking-[-0.28px] leading-[20px]">
@@ -223,7 +248,7 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
                 <div className="flex gap-[9px] items-center">
                   <div className="size-[36px] rounded-[8px] overflow-hidden relative">
                     <Image
-                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel"
+                      src={avatarSrc}
                       alt="Avatar"
                       fill
                       className="object-cover"
@@ -231,7 +256,7 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
                   </div>
                   <div className="flex flex-col gap-[4px]">
                     <span className="text-[12px] font-medium text-[#F2F2F2] leading-[16px]">
-                      Osaite Emmanuel
+                      {displayName}
                     </span>
                     <span className="text-[12px] font-normal text-[#B6B6B6] leading-[16px]">
                       Admin

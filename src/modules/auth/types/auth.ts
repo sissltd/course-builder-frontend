@@ -1,4 +1,5 @@
 export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
   COURSE_CREATOR = "COURSE_CREATOR",
   REVIEWER = "REVIEWER",
   STAFF = "STAFF",
@@ -18,7 +19,7 @@ export enum TokenPurpose {
 
 export enum Workspace {
   CREATOR_STUDIO = "creator_studio",
-  ADMIN_STUDIO = "admin_studio",
+  ADMIN_DASHBOARD = "admin_dashboard",
   REVIEWER_STUDIO = "reviewer_studio",
 }
 

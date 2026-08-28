@@ -50,6 +50,10 @@ interface BaseTableProps<TData, TValue> {
     onValueChange: (value: string) => void;
     searchable?: boolean;
     searchPlaceholder?: string;
+    /** Pass to make the filter controlled so the trigger reflects the active value. */
+    value?: string;
+    clearable?: boolean;
+    clearLabel?: string;
   }[];
   showDateFilter?: boolean;
   dateFilterInline?: boolean;
@@ -194,12 +198,15 @@ export function BaseTable<TData, TValue>({
                   <FormSelect
                     placeholder={filter.label}
                     options={filter.options}
+                    value={filter.value}
                     onValueChange={filter.onValueChange}
                     triggerClassName="h-[40px] px-[16px] border-sd-grey-6 bg-white text-[14px] text-sd-grey-11 tracking-[-0.28px]"
                     icon={filter.icon}
                     name="tableFilter"
                     searchable={filter.searchable}
                     searchPlaceholder={filter.searchPlaceholder}
+                    clearable={filter.clearable}
+                    clearLabel={filter.clearLabel}
                   />
                 </div>
               ))}

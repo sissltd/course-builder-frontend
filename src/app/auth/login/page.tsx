@@ -55,8 +55,7 @@ export default function LoginPage() {
         password: data.password,
       }).unwrap();
 
-      const workspace =
-        result.workspace || getWorkspaceForRole(result.role);
+      const workspace = getWorkspaceForRole(result.role);
       const signInResult = await signIn("credentials", {
         accessToken: result.access,
         refreshToken: result.refresh,

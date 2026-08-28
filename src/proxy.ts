@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getDashboardRoute } from "@/modules/auth/utils/workspace";
 
 const PUBLIC_PATHS = [
   "/",
@@ -34,10 +35,7 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicPath(pathname)) {
     if (token && pathname.startsWith("/auth")) {
-      const dashboard =
-        token.user?.workspace === "admin_studio"
-          ? "/admin/dashboard"
-          : "/creator/dashboard";
+      const dashboard = getDashboardRoute(token.user?.workspace);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
     return NextResponse.next();
