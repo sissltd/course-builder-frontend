@@ -3,14 +3,16 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { 
-  ArrowLeft, 
-  Note, 
-  Add, 
-  Global, 
+import {
+  ArrowLeft,
+  Note,
+  Add,
+  Global,
   Eye,
 } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
+import { useAppDispatch, useAppSelector } from "@/redux";
+import { saveAllDirty } from "@/redux/slices/builderSync";
 
 interface BuilderHeaderProps {
   moduleName?: string;
@@ -19,14 +21,28 @@ interface BuilderHeaderProps {
 
 export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProps) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const isSaving = useAppSelector((state) => state.courseBuilder.isSaving);
+  const lastSavedAt = useAppSelector((state) => state.courseBuilder.lastSavedAt);
+  const isDirty = useAppSelector((state) => state.courseBuilder.isDirty);
+
+  const getSaveStatusText = () => {
+    if (isSaving) return "Saving...";
+    if (!lastSavedAt) return "Not saved yet";
+    return "Saved";
+  };
+
+  const handleSave = () => {
+    dispatch(saveAllDirty());
+  };
 
   return (
     <div className="h-[70px] w-full bg-white border-b border-[#F0F0F0] px-[24px] py-[12px] flex items-center justify-between z-10 sticky top-0 shrink-0">
-      
+
       {/* Left Section */}
       <div className="flex items-center gap-[12px]">
         {/* Back Button */}
-        <Button 
+        <Button
           variant="app-outline"
           isGhost
           onClick={onBackToModules || (() => router.back())}
@@ -55,9 +71,13 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
         </span>
 
         {/* Saved Status Badge */}
-        <div className="h-[24px] px-[8px] bg-[#061E2D] rounded-[4px] flex items-center justify-center shrink-0 ml-[4px]">
-          <span className="text-[11px] text-[#F2F2F2] font-normal leading-[14px]">
-            Saved 2 mins ago
+        <div className={`h-[24px] px-[8px] rounded-[4px] flex items-center justify-center shrink-0 ml-[4px] ${
+          isSaving ? "bg-[#FFF3E0]" : isDirty ? "bg-[#FFF3E0]" : "bg-[#061E2D]"
+        }`}>
+          <span className={`text-[11px] font-normal leading-[14px] ${
+            isSaving ? "text-[#E65100]" : isDirty ? "text-[#E65100]" : "text-[#F2F2F2]"
+          }`}>
+            {isDirty && !isSaving ? "Unsaved changes" : getSaveStatusText()}
           </span>
         </div>
       </div>
@@ -76,7 +96,7 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
 
         {/* Action Buttons */}
         <div className="flex items-center gap-[16px]">
-          <Button 
+          <Button
             variant="app-outline"
             isGhost
             className="h-[36px] text-[#606060]"
@@ -84,8 +104,8 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
           >
             <span className="text-[14px] font-medium tracking-[-0.28px]">Invite collaborators</span>
           </Button>
-          
-          <Button 
+
+          <Button
             variant="app-outline"
             isGhost
             className="h-[36px] text-[#606060]"
@@ -96,19 +116,21 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
 
           <div className="h-[20px] w-px bg-[#F0F0F0]" />
 
-          <Button 
+          <Button
             variant="app-outline"
             className="h-[36px] px-[12px] rounded-[8px] text-[#0A60E1]"
             leftIcon={<Eye size={18} variant="Linear" color="#0A60E1" />}
           >
             <span className="text-[14px] tracking-[-0.28px]">Preview</span>
           </Button>
-          
-          <Button 
+
+          <Button
             variant="app-primary"
             className="h-[36px] px-[16px] rounded-[8px] text-white text-[14px] font-medium"
+            onClick={handleSave}
+            disabled={isSaving || !isDirty}
           >
-            Save
+            {isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>

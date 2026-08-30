@@ -12,6 +12,26 @@ export enum DifficultyLevel {
   ADVANCED = "ADVANCED",
 }
 
+export enum CourseSource {
+  CREATOR = "CREATOR",
+  ADMIN = "ADMIN",
+}
+
+export enum ThumbnailSourceType {
+  UPLOAD = "UPLOAD",
+  GOOGLE_DRIVE = "GOOGLE_DRIVE",
+  YOUTUBE = "YOUTUBE",
+  DROPBOX = "DROPBOX",
+  LINK = "LINK",
+}
+
+export enum MediaAssetKind {
+  VIDEO = "VIDEO",
+  AUDIO = "AUDIO",
+  IMAGE = "IMAGE",
+  DOCUMENT = "DOCUMENT",
+}
+
 export interface CourseCategory {
   id: string;
   name: string;
@@ -27,10 +47,12 @@ export interface CourseSummary {
   title: string;
   category: CourseCategory;
   topic: CourseTopic | null;
+  source: CourseSource;
   status: CourseStatus;
   creator_price_snapshot: string | null;
   submitted_at: string | null;
   created_datetime: string;
+  updated_datetime: string;
 }
 
 export interface CourseModule {
@@ -61,10 +83,12 @@ export interface Course {
   title: string;
   category: CourseCategory;
   topic: CourseTopic | null;
+  source: CourseSource;
   status: CourseStatus;
   creator_price_snapshot: string | null;
   submitted_at: string | null;
   created_datetime: string;
+  updated_datetime: string;
   description: string;
   difficulty_level: DifficultyLevel;
   learning_objectives: string[];
@@ -80,7 +104,6 @@ export interface Course {
   final_assessment: CourseAssessment | null;
   duration_estimate_minutes: number;
   version: string;
-  updated_datetime: string;
 }
 
 export interface CreateCourseRequest {
@@ -145,4 +168,53 @@ export interface SubmitCourseResponse extends Course {
 export interface StructuralValidationError {
   field: string;
   message: string;
+}
+
+export interface CourseThumbnail {
+  id: string;
+  course: string;
+  media_type: string;
+  source: ThumbnailSourceType;
+  file: string | null;
+  external_url: string | null;
+  width: number | null;
+  height: number | null;
+  is_active: boolean;
+  created_datetime: string;
+}
+
+export interface SetThumbnailRequest {
+  media_type: string;
+  source: ThumbnailSourceType;
+  file?: string;
+  external_url?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface MediaAsset {
+  id: string;
+  lesson: string | null;
+  kind: MediaAssetKind;
+  url: string;
+  mime_type: string | null;
+  duration_seconds: number | null;
+  resolution: string | null;
+  subtitle_url: string | null;
+}
+
+export interface RegisterMediaAssetRequest {
+  lesson?: string;
+  kind: MediaAssetKind;
+  url: string;
+  mime_type?: string;
+  duration_seconds?: number;
+  resolution?: string;
+  subtitle_url?: string;
+  caption_accuracy_percent?: string;
+  audio_lufs?: string;
+  audio_video_drift_ms?: number;
+  accessibility?: {
+    captions?: boolean;
+  };
 }

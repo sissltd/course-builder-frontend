@@ -24,18 +24,12 @@ import { RequestTopicModal } from "@/modules/creator/reservation/components/Requ
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { useCreateCourseMutation } from "./hooks";
+import { useCreateCourseMutation, useGetCategoriesQuery, useGetTopicsQuery } from "./hooks";
+import { CategoryStatus } from "./types/category";
+import { TopicStatus } from "./types/topic";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
 import { toast } from "sonner";
-
-const CATEGORIES = [
-  "Software Development",
-  "Leadership",
-  "Guidance and counselling",
-  "Humanities",
-  "Research",
-];
 
 const RightArrowIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -67,15 +61,6 @@ const ImportDocumentIcon = () => (
   </div>
 );
 
-const TOPICS = [
-  "Software Development",
-  "Machine Learning",
-  "Network Security",
-  "Web Development",
-  "Mobile App Development",
-  "UI/UX Design",
-];
-
 const VIDEOS = [
   { id: 1, title: "How to create with AI", desc: "This video will teach you how to create your course using ai", duration: "1hr:32min", thumb: "/assets/courses/video-thumb-1.png", isCompleted: true },
   { id: 2, title: "How to create a course", desc: "This video will guide you on how to create your course manually.", duration: "30min", thumb: "/assets/courses/video-thumb-2.png", isCompleted: false },
@@ -86,6 +71,8 @@ export default function CreateCourseView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
+  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
+  const categories = categoriesResponse?.data?.results || [];
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -127,6 +114,12 @@ export default function CreateCourseView() {
   const courseTitle = watch("courseTitle");
   const courseDescription = watch("courseDescription");
 
+  const { data: topicsResponse, isLoading: isLoadingTopics } = useGetTopicsQuery(
+    selectedCategory ? { category: selectedCategory, status: TopicStatus.ACTIVE } : { status: TopicStatus.ACTIVE },
+    { skip: !selectedCategory }
+  );
+  const topics = topicsResponse?.data?.results || [];
+
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => Math.max(0, s - 1));
 
@@ -139,12 +132,12 @@ export default function CreateCourseView() {
     }
   }, [step, router]);
 
-  const filteredCategories = CATEGORIES.filter(c => 
-    c.toLowerCase().includes(searchCategory.toLowerCase())
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 
-  const filteredTopics = TOPICS.filter(t => 
-    t.toLowerCase().includes(searchTopic.toLowerCase())
+  const filteredTopics = topics.filter(t => 
+    t.name.toLowerCase().includes(searchTopic.toLowerCase())
   );
 
   const handleVideoClick = (video: typeof VIDEOS[0]) => {
@@ -426,7 +419,7 @@ export default function CreateCourseView() {
               )}
             >
               <span className={cn("text-[14px]", selectedCategory ? "text-[#202020] font-semibold" : "text-[#B6B6B6]")}>
-                {selectedCategory || "Select option"}
+                {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || "Selected" : "Select option"}
               </span>
               <RightArrowIcon />
             </button>
@@ -449,24 +442,29 @@ export default function CreateCourseView() {
                 </div>
                 
                 <div className="flex flex-col gap-[4px] max-h-[200px] overflow-y-auto">
-                  {filteredCategories.length > 0 ? (
+                  {isLoadingCategories ? (
+                    <p className="text-[12px] text-[#B6B6B6] text-center py-[12px]">Loading categories...</p>
+                  ) : filteredCategories.length > 0 ? (
                     filteredCategories.map((c) => (
                       <button
-                        key={c}
+                        key={c.id}
                         type="button"
                         onClick={() => {
-                          setValue("category", c, { shouldValidate: true });
+                          setValue("category", c.id, { shouldValidate: true });
                           setIsCategoryDropdownOpen(false);
                           setSearchCategory("");
                         }}
                         className={cn(
-                          "w-full text-left px-[12px] py-[10px] text-[14px] font-medium rounded-[8px] transition-colors",
-                          selectedCategory === c 
+                          "w-full text-left px-[12px] py-[10px] text-[14px] font-medium rounded-[8px] transition-colors flex items-center justify-between",
+                          selectedCategory === c.id 
                             ? "bg-sd-grey-2 text-[#202020]" 
                             : "text-[#636363] hover:bg-sd-grey-1 hover:text-[#202020]"
                         )}
                       >
-                        {c}
+                        <span>{c.name}</span>
+                        <span className="bg-[#EBF3FF] text-[#0063EF] text-[12px] font-semibold px-[8px] py-[2px] rounded-[6px]">
+                          ${c.creator_price}
+                        </span>
                       </button>
                     ))
                   ) : (
@@ -535,7 +533,7 @@ export default function CreateCourseView() {
               )}
             >
               <span className={cn("text-[14px]", selectedTopic ? "text-[#202020] font-semibold" : "text-[#B6B6B6]")}>
-                {selectedTopic || "Select option"}
+                {selectedTopic ? topics.find(t => t.id === selectedTopic)?.name || "Selected" : "Select option"}
               </span>
               <RightArrowIcon />
             </button>
@@ -565,26 +563,28 @@ export default function CreateCourseView() {
                 </div>
                 
                 <div className="flex flex-col gap-[4px] max-h-[200px] overflow-y-auto">
-                  {filteredTopics.length > 0 ? (
+                  {isLoadingTopics ? (
+                    <p className="text-[12px] text-[#B6B6B6] text-center py-[12px]">Loading topics...</p>
+                  ) : filteredTopics.length > 0 ? (
                     filteredTopics.map((t) => (
                       <button
-                        key={t}
+                        key={t.id}
                         type="button"
                         onClick={() => {
-                          setValue("topic", t, { shouldValidate: true });
+                          setValue("topic", t.id, { shouldValidate: true });
                           setIsTopicDropdownOpen(false);
                           setSearchTopic("");
                         }}
                         className={cn(
                           "w-full text-left px-[12px] py-[10px] text-[14px] font-medium rounded-[8px] transition-colors flex items-center justify-between",
-                          selectedTopic === t 
+                          selectedTopic === t.id 
                             ? "bg-sd-grey-2 text-[#202020]" 
                             : "text-[#636363] hover:bg-sd-grey-1 hover:text-[#202020]"
                         )}
                       >
-                        <span>{t}</span>
+                        <span>{t.name}</span>
                         <span className="bg-[#EBF3FF] text-[#0063EF] text-[12px] font-semibold px-[8px] py-[2px] rounded-[6px]">
-                          $25
+                          ${t.creator_price}
                         </span>
                       </button>
                     ))

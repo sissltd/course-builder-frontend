@@ -62,7 +62,7 @@ export interface CourseInformationData {
   creationMethod?: string;
 }
 
-export type BuilderStep = 
+export type BuilderStep =
   | "information"
   | "outline"
   | "version"
@@ -71,6 +71,7 @@ export type BuilderStep =
   | "quality";
 
 export interface CourseBuilderState {
+  courseId: string | null;
   courseInformation: CourseInformationData;
   modules: Module[];
   version: string;
@@ -78,9 +79,14 @@ export interface CourseBuilderState {
   activeModuleIndex: number;
   editingLesson: { moduleId: string; lessonId: string } | null;
   editingQuiz: { moduleId: string; lessonId: string } | null;
+  isLoading: boolean;
+  isSaving: boolean;
+  isDirty: boolean;
+  lastSavedAt: number | null;
 }
 
 const initialState: CourseBuilderState = {
+  courseId: null,
   courseInformation: {
     courseTitle: "",
     description: "",
@@ -101,12 +107,30 @@ const initialState: CourseBuilderState = {
   activeModuleIndex: 0,
   editingLesson: null,
   editingQuiz: null,
+  isLoading: false,
+  isSaving: false,
+  isDirty: false,
+  lastSavedAt: null,
 };
 
 const courseBuilderSlice = createSlice({
   name: "courseBuilder",
   initialState,
   reducers: {
+    setCourseId: (state, action: PayloadAction<string>) => {
+      state.courseId = action.payload;
+    },
+    setIsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
+    setIsSaving: (state, action: PayloadAction<boolean>) => {
+      state.isSaving = action.payload;
+    },
+    markSaved: (state) => {
+      state.isDirty = false;
+      state.isSaving = false;
+      state.lastSavedAt = Date.now();
+    },
     setCourseInformation: (state, action: PayloadAction<CourseInformationData>) => {
       state.courseInformation = action.payload;
     },
@@ -115,6 +139,7 @@ const courseBuilderSlice = createSlice({
         ...state.courseInformation,
         ...action.payload,
       };
+      state.isDirty = true;
     },
     setModules: (state, action: PayloadAction<Module[]>) => {
       state.modules = action.payload;
@@ -131,11 +156,13 @@ const courseBuilderSlice = createSlice({
       };
       state.modules.push(newModule);
       state.activeModuleIndex = state.modules.length - 1;
+      state.isDirty = true;
     },
     updateModule: (state, action: PayloadAction<Module>) => {
       const index = state.modules.findIndex((m) => m.id === action.payload.id);
       if (index !== -1) {
         state.modules[index] = action.payload;
+        state.isDirty = true;
       }
     },
     removeModule: (state, action: PayloadAction<string>) => {
@@ -143,22 +170,25 @@ const courseBuilderSlice = createSlice({
       if (state.activeModuleIndex >= state.modules.length) {
         state.activeModuleIndex = Math.max(0, state.modules.length - 1);
       }
+      state.isDirty = true;
     },
     updateModuleField: (
       state,
       action: PayloadAction<{ id: string; field: "title" | "description"; value: string }>
     ) => {
       const { id, field, value } = action.payload;
-      const module = state.modules.find((m) => m.id === id);
-      if (module) {
-        module[field] = value;
+      const mod = state.modules.find((m) => m.id === id);
+      if (mod) {
+        mod[field] = value;
+        state.isDirty = true;
       }
     },
     addObjectiveToModule: (state, action: PayloadAction<{ moduleId: string; objective: string }>) => {
       const { moduleId, objective } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        module.objectives.push(objective);
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        mod.objectives.push(objective);
+        state.isDirty = true;
       }
     },
     editObjectiveInModule: (
@@ -166,22 +196,24 @@ const courseBuilderSlice = createSlice({
       action: PayloadAction<{ moduleId: string; index: number; objective: string }>
     ) => {
       const { moduleId, index, objective } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module && module.objectives[index] !== undefined) {
-        module.objectives[index] = objective;
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod && mod.objectives[index] !== undefined) {
+        mod.objectives[index] = objective;
+        state.isDirty = true;
       }
     },
     removeObjectiveFromModule: (state, action: PayloadAction<{ moduleId: string; index: number }>) => {
       const { moduleId, index } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        module.objectives = module.objectives.filter((_, i) => i !== index);
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        mod.objectives = mod.objectives.filter((_, i) => i !== index);
+        state.isDirty = true;
       }
     },
     addLessonToModule: (state, action: PayloadAction<{ moduleId: string; type: "video" | "quiz" | "text"; lessonId?: string }>) => {
       const { moduleId, type, lessonId } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
         const newLesson: Lesson = {
           id: lessonId || Date.now().toString(),
           title: "",
@@ -193,7 +225,8 @@ const courseBuilderSlice = createSlice({
           content: "",
           quizQuestions: [],
         };
-        module.lessons.push(newLesson);
+        mod.lessons.push(newLesson);
+        state.isDirty = true;
       }
     },
     updateLessonInModule: (
@@ -201,40 +234,45 @@ const courseBuilderSlice = createSlice({
       action: PayloadAction<{ moduleId: string; lessonId: string; updatedLesson: Lesson }>
     ) => {
       const { moduleId, lessonId, updatedLesson } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        const lessonIndex = module.lessons.findIndex((l) => l.id === lessonId);
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        const lessonIndex = mod.lessons.findIndex((l) => l.id === lessonId);
         if (lessonIndex !== -1) {
-          module.lessons[lessonIndex] = updatedLesson;
+          mod.lessons[lessonIndex] = updatedLesson;
+          state.isDirty = true;
         }
       }
     },
     removeLessonFromModule: (state, action: PayloadAction<{ moduleId: string; lessonId: string }>) => {
       const { moduleId, lessonId } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        module.lessons = module.lessons.filter((l) => l.id !== lessonId);
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        mod.lessons = mod.lessons.filter((l) => l.id !== lessonId);
+        state.isDirty = true;
       }
     },
     addQuizQuestionToModule: (state, action: PayloadAction<{ moduleId: string }>) => {
       const { moduleId } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        module.quizQuestions.push({
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        mod.quizQuestions.push({
           question: "",
           options: ["", "", "", ""],
         });
+        state.isDirty = true;
       }
     },
     removeQuizQuestionFromModule: (state, action: PayloadAction<{ moduleId: string; index: number }>) => {
       const { moduleId, index } = action.payload;
-      const module = state.modules.find((m) => m.id === moduleId);
-      if (module) {
-        module.quizQuestions = module.quizQuestions.filter((_, i) => i !== index);
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        mod.quizQuestions = mod.quizQuestions.filter((_, i) => i !== index);
+        state.isDirty = true;
       }
     },
     setVersion: (state, action: PayloadAction<string>) => {
       state.version = action.payload;
+      state.isDirty = true;
     },
     setActiveStep: (state, action: PayloadAction<BuilderStep>) => {
       state.activeStep = action.payload;
@@ -248,11 +286,47 @@ const courseBuilderSlice = createSlice({
     setEditingQuiz: (state, action: PayloadAction<{ moduleId: string; lessonId: string } | null>) => {
       state.editingQuiz = action.payload;
     },
+    replaceModuleId: (state, action: PayloadAction<{ oldId: string; newId: string }>) => {
+      const { oldId, newId } = action.payload;
+      const mod = state.modules.find((m) => m.id === oldId);
+      if (mod) {
+        mod.id = newId;
+        if (state.editingLesson?.moduleId === oldId) {
+          state.editingLesson.moduleId = newId;
+        }
+        if (state.editingQuiz?.moduleId === oldId) {
+          state.editingQuiz.moduleId = newId;
+        }
+      }
+    },
+    replaceLessonId: (
+      state,
+      action: PayloadAction<{ moduleId: string; oldLessonId: string; newLessonId: string }>
+    ) => {
+      const { moduleId, oldLessonId, newLessonId } = action.payload;
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        const lesson = mod.lessons.find((l) => l.id === oldLessonId);
+        if (lesson) {
+          lesson.id = newLessonId;
+          if (state.editingLesson?.lessonId === oldLessonId) {
+            state.editingLesson.lessonId = newLessonId;
+          }
+          if (state.editingQuiz?.lessonId === oldLessonId) {
+            state.editingQuiz.lessonId = newLessonId;
+          }
+        }
+      }
+    },
     resetCourseBuilder: () => initialState,
   },
 });
 
 export const {
+  setCourseId,
+  setIsLoading,
+  setIsSaving,
+  markSaved,
   setCourseInformation,
   updateCourseInformation,
   setModules,
@@ -273,6 +347,8 @@ export const {
   setActiveModuleIndex,
   setEditingLesson,
   setEditingQuiz,
+  replaceModuleId,
+  replaceLessonId,
   resetCourseBuilder,
 } = courseBuilderSlice.actions;
 

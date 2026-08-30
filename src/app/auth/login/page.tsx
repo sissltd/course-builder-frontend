@@ -89,7 +89,9 @@ export default function LoginPage() {
           message: fieldMessage,
         });
       }
-      toast.error(message ?? "Invalid email or password.");
+      if (Object.keys(fieldErrors).length === 0 && message) {
+        toast.error(message);
+      }
     }
   });
 
