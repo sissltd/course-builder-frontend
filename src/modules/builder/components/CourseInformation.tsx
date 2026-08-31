@@ -7,11 +7,9 @@ import {
   Video, 
   ArrowLeft2, 
   ArrowRight2,
-  CloseCircle
 } from "iconsax-react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { FormSelect } from "@/components/form/FormSelect";
@@ -19,6 +17,8 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
+import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
+import { CategoryStatus } from "@/modules/creator/courses/types/category";
 
 interface CourseInformationProps {
   onNext?: () => void;
@@ -28,10 +28,12 @@ interface CourseInformationProps {
 export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) => {
   const dispatch = useAppDispatch();
   const info = useAppSelector((state) => state.courseBuilder.courseInformation);
+  const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
+  const categories = categoriesResponse?.data?.results || [];
 
   // Main form
   const methods = useForm<CourseInformationFormData>({
-    resolver: zodResolver(courseInformationSchema) as any,
+    resolver: zodResolver(courseInformationSchema),
     mode: "onBlur",
     values: {
       courseTitle: info.courseTitle,
@@ -202,13 +204,10 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 label="Course category"
                 required
                 placeholder="Select category"
-                options={[
-                  { label: "Software Development", value: "Software Development" },
-                  { label: "Leadership", value: "Leadership" },
-                  { label: "Guidance and counselling", value: "Guidance and counselling" },
-                  { label: "Humanities", value: "Humanities" },
-                  { label: "Research", value: "Research" }
-                ]}
+                options={categories.map((c) => ({
+                  label: c.name,
+                  value: c.id,
+                }))}
                 triggerClassName="h-[44px] bg-white border-[#D9D9D9] text-[#202020]"
               />
             </div>
@@ -226,9 +225,9 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
             name="difficulty"
             placeholder="Select level"
             options={[
-              { label: "Beginner", value: "beginner" },
-              { label: "Intermediate", value: "intermediate" },
-              { label: "Advanced", value: "advanced" },
+              { label: "Beginner", value: "BEGINNER" },
+              { label: "Intermediate", value: "INTERMEDIATE" },
+              { label: "Advanced", value: "ADVANCED" },
             ]}
             triggerClassName="h-[44px] bg-white border-[#D9D9D9] text-[#202020]"
           />

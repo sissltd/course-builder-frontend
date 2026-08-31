@@ -17,9 +17,9 @@ export const courseInformationSchema = z.object({
   tags: z
     .array(z.string().min(1, "Tag cannot be empty"))
     .min(3, "Minimum of 3 tags required"),
-  hours: z.coerce.number().min(0, "Hours cannot be negative"),
-  minutes: z.coerce.number().min(0, "Minutes cannot be negative").max(59, "Minutes must be 0-59"),
-  seconds: z.coerce.number().min(0, "Seconds cannot be negative").max(59, "Seconds must be 0-59"),
+  hours: z.number().min(0, "Hours cannot be negative"),
+  minutes: z.number().min(0, "Minutes cannot be negative").max(59, "Minutes must be 0-59"),
+  seconds: z.number().min(0, "Seconds cannot be negative").max(59, "Seconds must be 0-59"),
 }).refine(
   (data) => data.hours > 0 || data.minutes > 0 || data.seconds > 0,
   {

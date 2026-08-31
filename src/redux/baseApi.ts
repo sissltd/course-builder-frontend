@@ -222,6 +222,8 @@ export const BaseAPI = createApi({
   tagTypes: [
     "Course",
     "Collaborator",
+    "CollaboratorInvite",
+    "WorkspaceCollaborator",
     "MieDeveloper",
     "MieSubmission",
     "MieRejectionReason",
@@ -235,7 +237,7 @@ export const BaseAPI = createApi({
     "LessonRequirement",
     "MediaAsset",
     "Category",
-    "Topic"
+    "Topic",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

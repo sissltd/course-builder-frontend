@@ -5,9 +5,8 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/components/shared/Modal";
 import { FormInput } from "@/components/form/FormInput";
-import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
-import { requestTopicSchema, RequestTopicFormData } from "../utils/schemas";
+import { requestCategorySchema, RequestCategoryFormData } from "../utils/schemas";
 
 interface RequestTopicModalProps {
   isOpen: boolean;
@@ -15,24 +14,16 @@ interface RequestTopicModalProps {
   onSuccess: () => void;
 }
 
-const CATEGORY_OPTIONS = [
-  { label: "Information technology", value: "Information technology" },
-  { label: "Artificial intelligence", value: "Artificial intelligence" },
-  { label: "Cloud computing", value: "Cloud computing" },
-  { label: "Cybersecurity", value: "Cybersecurity" },
-];
-
 export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTopicModalProps) => {
-  const methods = useForm<RequestTopicFormData>({
-    resolver: zodResolver(requestTopicSchema),
+  const methods = useForm<RequestCategoryFormData>({
+    resolver: zodResolver(requestCategorySchema),
     defaultValues: {
-      topicTitle: "",
-      category: "",
+      categoryName: "",
     },
   });
 
-  const onSubmit = (data: RequestTopicFormData) => {
-    console.log("Request Topic Data:", data);
+  const onSubmit = (data: RequestCategoryFormData) => {
+    console.log("Request Category Data:", data);
     // Simulate API call
     setTimeout(() => {
       onSuccess();
@@ -44,22 +35,15 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Request topic"
+      title="Request category"
       className="sm:max-w-[500px]"
     >
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="flex flex-col gap-[24px]">
           <FormInput
-            name="topicTitle"
-            label="Topic Title"
-            placeholder="E.g. Introduction to Software Development"
-            required
-          />
-          <FormSelect
-            name="category"
-            label="Category"
-            placeholder="Select category"
-            options={CATEGORY_OPTIONS}
+            name="categoryName"
+            label="Category Name"
+            placeholder="E.g. Software Development"
             required
           />
           

@@ -25,23 +25,48 @@ import {
   AppealSuccessModal,
 } from "./components/CourseActionsModals";
 import { toast } from "sonner";
-import { useGetCoursesQuery, useDeleteCourseMutation } from "./hooks";
+import {
+  useGetCoursesQuery,
+  useDeleteCourseMutation,
+  useGetCategoriesQuery,
+} from "./hooks";
 import type { CourseSummary, CoursesListParams } from "./types";
+import {
+  CourseStatus,
+  SourceType,
+} from "./types";
+import { CategoryStatus } from "./types/category";
 import { CreatorRoute } from "@/lib/routes";
 import { normalizeApiError } from "@/lib/api/errors";
 
 export const CoursesView = () => {
   const router = useRouter();
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
   const pageSize = 10;
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<CourseStatus | "">("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType | "">("");
+  const [dateFrom, setDateFrom] = useState<string | undefined>(undefined);
 
   const queryParams: CoursesListParams = {
     page,
     size: pageSize,
+    ...(search && { search }),
+    ...(statusFilter && { status: statusFilter }),
+    ...(categoryFilter && { category: categoryFilter }),
+    ...(sourceTypeFilter && { source_type: sourceTypeFilter }),
+    ...(dateFrom && { date_from: dateFrom }),
   };
 
   const { data: response, isLoading, error } = useGetCoursesQuery(queryParams);
   const [deleteCourse] = useDeleteCourseMutation();
+
+  const { data: categoriesResponse } = useGetCategoriesQuery({
+    status: CategoryStatus.ACTIVE,
+  });
+  const categories = categoriesResponse?.data?.results ?? [];
 
   const courses = response?.data?.results ?? [];
   const paginator = response?.data?.paginator;
@@ -196,10 +221,27 @@ export const CoursesView = () => {
             columns={myCoursesColumns}
             data={courses}
             searchPlaceholder="Search course, ID"
+            onSearchChange={(val) => {
+              setSearch(val);
+              setPage(1);
+            }}
             onRowClick={handleViewDetails}
             tableOptions={{
               manualPagination: true,
               pageCount: paginator?.total_pages ?? 1,
+              state: {
+                pagination: {
+                  pageIndex: page - 1,
+                  pageSize,
+                },
+              },
+              onPaginationChange: (updater) => {
+                const newPage =
+                  typeof updater === "function"
+                    ? updater({ pageIndex: page - 1, pageSize }).pageIndex
+                    : updater.pageIndex;
+                setPage(newPage + 1);
+              },
               meta: {
                 onViewDetails: handleViewDetails,
                 onEdit: handleEdit,
@@ -212,44 +254,59 @@ export const CoursesView = () => {
               {
                 label: "Category",
                 icon: <Filter size={20} variant="Linear" color="#606060" />,
-                options: [
-                  {
-                    label: "Information technology",
-                    value: "Information technology",
-                  },
-                  {
-                    label: "Artificial intelligence",
-                    value: "Artificial intelligence",
-                  },
-                  { label: "Cloud computing", value: "Cloud computing" },
-                  { label: "Cybersecurity", value: "Cybersecurity" },
-                ],
-                onValueChange: (val) => console.log("Category filter", val),
+                searchable: true,
+                searchPlaceholder: "Search category...",
+                options: categories.map((c) => ({
+                  label: c.name,
+                  value: c.id,
+                })),
+                onValueChange: (val) => {
+                  setCategoryFilter(val);
+                  setPage(1);
+                },
               },
               {
                 label: "Status",
                 icon: <Sort size={20} variant="Linear" color="#606060" />,
                 options: [
-                  { label: "Approved", value: "Approved" },
-                  { label: "In Review", value: "In Review" },
-                  { label: "Rejected", value: "Rejected" },
-                  { label: "Needs revision", value: "Needs revision" },
+                  { label: "Draft", value: CourseStatus.DRAFT },
+                  { label: "Submitted", value: CourseStatus.SUBMITTED },
+                  { label: "In Review", value: CourseStatus.IN_REVIEW },
+                  { label: "Needs Revision", value: CourseStatus.NEEDS_REVISION },
+                  { label: "Approved", value: CourseStatus.APPROVED },
+                  { label: "Published", value: CourseStatus.PUBLISHED },
+                  { label: "Rejected", value: CourseStatus.REJECTED },
+                  { label: "Archived", value: CourseStatus.ARCHIVED },
                 ],
-                onValueChange: (val) => console.log("Status filter", val),
+                onValueChange: (val) => {
+                  setStatusFilter(val as CourseStatus | "");
+                  setPage(1);
+                },
               },
               {
                 label: "Course type",
                 icon: <Filter size={20} variant="Linear" color="#606060" />,
                 options: [
-                  { label: "All", value: "All" },
-                  { label: "AI-assisted", value: "AI-assisted" },
-                  { label: "Manual", value: "Manual" },
+                  { label: "Creator Uploaded", value: SourceType.CREATOR_UPLOADED },
+                  { label: "AI Generated", value: SourceType.AI_GENERATED },
+                  { label: "Developer API", value: SourceType.DEVELOPER_API },
                 ],
-                onValueChange: (val) =>
-                  console.log("Course type filter", val),
+                onValueChange: (val) => {
+                  setSourceTypeFilter(val as SourceType | "");
+                  setPage(1);
+                },
               },
             ]}
             showDateFilter
+            selectedDate={dateFrom ? new Date(dateFrom) : undefined}
+            onDateChange={(date) => {
+              if (date) {
+                setDateFrom(date.toISOString().split("T")[0]);
+              } else {
+                setDateFrom(undefined);
+              }
+              setPage(1);
+            }}
             showPagination
             showHeader={false}
           />

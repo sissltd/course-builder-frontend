@@ -1,9 +1,13 @@
 export enum CourseStatus {
   DRAFT = "DRAFT",
   SUBMITTED = "SUBMITTED",
+  IN_REVIEW = "IN_REVIEW",
   NEEDS_REVISION = "NEEDS_REVISION",
-  REJECTED = "REJECTED",
+  QA_VERIFICATION = "QA_VERIFICATION",
   APPROVED = "APPROVED",
+  PUBLISHED = "PUBLISHED",
+  ARCHIVED = "ARCHIVED",
+  REJECTED = "REJECTED",
 }
 
 export enum DifficultyLevel {
@@ -13,8 +17,15 @@ export enum DifficultyLevel {
 }
 
 export enum CourseSource {
-  CREATOR = "CREATOR",
-  ADMIN = "ADMIN",
+  CREATOR_UPLOADED = "CREATOR_UPLOADED",
+  AI_GENERATED = "AI_GENERATED",
+  DEVELOPER_API = "DEVELOPER_API",
+}
+
+export enum SourceType {
+  CREATOR_UPLOADED = "CREATOR_UPLOADED",
+  AI_GENERATED = "AI_GENERATED",
+  DEVELOPER_API = "DEVELOPER_API",
 }
 
 export enum ThumbnailSourceType {
@@ -156,6 +167,17 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CoursesListParams {
+  category?: string;
+  topic?: string;
+  status?: CourseStatus;
+  source_type?: SourceType;
+  difficulty_level?: DifficultyLevel;
+  course_id?: string;
+  search?: string;
+  creator_type?: SourceType;
+  quality_score?: number;
+  date_from?: string;
+  date_to?: string;
   ordering?: string;
   page?: number;
   size?: number;

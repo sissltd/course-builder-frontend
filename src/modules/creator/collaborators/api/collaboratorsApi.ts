@@ -2,7 +2,6 @@ import { BaseAPI } from "@/redux/baseApi";
 import type {
   Collaborator,
   CollaboratorsListParams,
-  InviteCollaboratorRequest,
   UpdateCollaboratorRequest,
   PaginatedResponse,
 } from "../types";
@@ -13,10 +12,10 @@ export const collaboratorsApi = BaseAPI.injectEndpoints({
       PaginatedResponse<Collaborator[]>,
       CollaboratorsListParams
     >({
-      query: ({ course_id, ...params }) => ({
+      query: (params) => ({
         url: "/collaborators/",
         method: "GET",
-        params: { course_id, ...params },
+        params,
       }),
       transformResponse: (response: {
         status: boolean;
@@ -41,18 +40,6 @@ export const collaboratorsApi = BaseAPI.injectEndpoints({
         method: "GET",
       }),
       providesTags: (_result, _error, id) => [{ type: "Collaborator", id }],
-    }),
-
-    inviteCollaborator: builder.mutation<
-      Collaborator,
-      InviteCollaboratorRequest
-    >({
-      query: (body) => ({
-        url: "/collaborators/",
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: ["Collaborator"],
     }),
 
     updateCollaborator: builder.mutation<
@@ -83,7 +70,6 @@ export const collaboratorsApi = BaseAPI.injectEndpoints({
 export const {
   useGetCollaboratorsQuery,
   useGetCollaboratorQuery,
-  useInviteCollaboratorMutation,
   useUpdateCollaboratorMutation,
   useRemoveCollaboratorMutation,
 } = collaboratorsApi;

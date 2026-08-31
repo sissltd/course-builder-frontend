@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { SearchNormal1, Sort, ArrowDown2, FolderOpen } from "iconsax-react";
-import { DraftCard, Draft } from "./components/DraftCard";
+import { SearchNormal1, Sort, ArrowDown2 } from "iconsax-react";
+import { DraftCard } from "./components/DraftCard";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -10,57 +10,64 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const initialDrafts: Draft[] = [
-  {
-    id: "1",
-    title: "How to create with AI",
-    description: "This video will teach you how to create your course using ai",
-    date: "3 April 2026",
-    thumbnail: "/assets/drafts/draft-thumb-1.png",
-  },
-  {
-    id: "2",
-    title: "Mastering AI in Design",
-    description: "Explore techniques to enhance your design workflow with AI tools.",
-    date: "3 April 2026",
-    thumbnail: "/assets/drafts/draft-thumb-1.png",
-  },
-  {
-    id: "3",
-    title: "AI for Content Creation",
-    description: "Learn how to generate engaging content effortlessly using artificial intelligence.",
-    date: "3 April 2026",
-    thumbnail: "/assets/drafts/draft-thumb-1.png",
-  },
-  {
-    id: "4",
-    title: "Advanced Prompt Engineering",
-    description: "Master the art of crafting perfect prompts for various AI models.",
-    date: "4 April 2026",
-    thumbnail: "/assets/drafts/draft-thumb-1.png",
-  },
-  {
-    id: "5",
-    title: "AI-Powered Marketing",
-    description: "Leverage AI to supercharge your marketing campaigns and reach.",
-    date: "5 April 2026",
-    thumbnail: "/assets/drafts/draft-thumb-1.png",
-  },
-];
+import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
+import { CourseStatus } from "@/modules/creator/courses/types";
+import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { CreatorRoute } from "@/lib/routes";
+import { Button } from "@/components/shared/Button";
+import { CloseCircle } from "iconsax-react";
 
 export const DraftsView = () => {
-  const [drafts, setDrafts] = useState<Draft[]>(initialDrafts);
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("Last modified");
 
-  const filteredDrafts = drafts.filter((d) =>
-    d.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: response, isLoading, error } = useGetCoursesQuery({
+    status: CourseStatus.DRAFT,
+    size: 50,
+    ...(search && { search }),
+  });
+
+  const courses = response?.data?.results ?? [];
+
+  const drafts = courses.map((course) => ({
+    id: course.id,
+    title: course.title,
+    description: "",
+    date: format(new Date(course.created_datetime), "d MMM yyyy"),
+    thumbnail: "/assets/drafts/draft-thumb-1.png",
+  }));
 
   const handleDelete = (id: string) => {
-    setDrafts((prev) => prev.filter((d) => d.id !== id));
+    console.log("Delete draft", id);
   };
+
+  const handleEdit = (id: string) => {
+    router.push(`${CreatorRoute.COURSES_BUILDER}?id=${id}`);
+  };
+
+  const handlePreview = (id: string) => {
+    console.log("Preview draft", id);
+  };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <CloseCircle size={48} variant="Bulk" color="#FF5025" />
+        <p className="text-[16px] text-[#606060]">
+          Failed to load drafts. Please try again.
+        </p>
+        <Button
+          variant="app-primary"
+          onClick={() => window.location.reload()}
+          className="h-[40px]"
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -107,15 +114,19 @@ export const DraftsView = () => {
       </div>
 
       {/* Grid */}
-      {filteredDrafts.length > 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-sd-grey-3 border-t-sd-blue" />
+        </div>
+      ) : drafts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[16px]">
-          {filteredDrafts.map((draft) => (
+          {drafts.map((draft) => (
             <DraftCard
               key={draft.id}
               draft={draft}
               onDelete={handleDelete}
-              onEdit={(id) => console.log("Edit", id)}
-              onPreview={(id) => console.log("Preview", id)}
+              onEdit={handleEdit}
+              onPreview={handlePreview}
             />
           ))}
         </div>
