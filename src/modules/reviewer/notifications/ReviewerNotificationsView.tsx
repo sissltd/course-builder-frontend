@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button as AppButton } from "@/components/shared/Button";
+import { useGetNotificationsQuery, NotificationItem as ApiNotificationItem } from "@/redux/slices/notificationApi";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 
 type AdminNotificationItem = {
   id: string;
@@ -19,59 +21,6 @@ type AdminNotificationGroup = {
   label: string;
   items: AdminNotificationItem[];
 };
-
-const initialGroups: AdminNotificationGroup[] = [
-  {
-    label: "Today",
-    items: [
-      {
-        id: "1",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
-        isRead: false,
-        type: "approval",
-      },
-      {
-        id: "2",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
-        isRead: false,
-        type: "approval",
-      },
-    ],
-  },
-  {
-    label: "Yesterday",
-    items: [
-      {
-        id: "3",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
-        isRead: false,
-        type: "approval",
-      },
-      {
-        id: "4",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
-        isRead: false,
-        type: "approval",
-      },
-      {
-        id: "5",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minutes ago",
-        isRead: false,
-        type: "approval",
-      },
-    ],
-  },
-];
 
 const NotificationIcon = ({ type, isRead }: { type: AdminNotificationItem["type"]; isRead: boolean }) => (
   <div className="relative shrink-0">
@@ -116,42 +65,54 @@ const EmptyState = () => (
   </div>
 );
 
+const groupNotifications = (notifications: ApiNotificationItem[]): AdminNotificationGroup[] => {
+  const groups: Record<string, AdminNotificationItem[]> = {};
+
+  notifications.forEach((notif) => {
+    const date = parseISO(notif.created_datetime);
+    let label = format(date, "MMM dd, yyyy");
+    if (isToday(date)) label = "Today";
+    else if (isYesterday(date)) label = "Yesterday";
+
+    if (!groups[label]) groups[label] = [];
+
+    groups[label].push({
+      id: notif.id,
+      title: notif.title,
+      body: notif.content,
+      time: isToday(date) ? `Today - ${format(date, "h:mm a")}` : format(date, "h:mm a"),
+      isRead: notif.is_read,
+      type: notif.metadata?.action?.includes("approv") ? "approval" : "review",
+    });
+  });
+
+  return Object.entries(groups).map(([label, items]) => ({ label, items }));
+};
+
 export const ReviewerNotificationsView = () => {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
-  const [groups, setGroups] = useState(initialGroups);
-
-  const unreadCount = useMemo(
-    () => groups.flatMap((group) => group.items).filter((item) => !item.isRead).length,
-    [groups]
+  const { data, isLoading } = useGetNotificationsQuery(
+    activeTab === "unread" ? { is_read: false } : undefined
   );
 
-  const displayedGroups = useMemo(() => {
-    if (activeTab === "all") return groups;
+  const groups = useMemo(() => {
+    if (!data?.data?.results) return [];
+    return groupNotifications(data.data.results);
+  }, [data]);
 
-    return groups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => !item.isRead),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [activeTab, groups]);
+  const unreadCount = useMemo(
+    () => (data?.data?.results || []).filter((item) => !item.is_read).length,
+    [data]
+  );
+
+  const displayedGroups = groups;
 
   const handleMarkAsRead = (id: string) => {
-    setGroups((current) =>
-      current.map((group) => ({
-        ...group,
-        items: group.items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
-      }))
-    );
+    // TODO: implement mark as read mutation
   };
 
   const handleMarkAllAsRead = () => {
-    setGroups((current) =>
-      current.map((group) => ({
-        ...group,
-        items: group.items.map((item) => ({ ...item, isRead: true })),
-      }))
-    );
+    // TODO: implement mark all as read mutation
   };
 
   return (

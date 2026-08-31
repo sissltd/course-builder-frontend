@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { CourseViewToggle, type CourseViewMode } from "./CourseViewToggle";
 
 interface TriggerProps {
   icon: React.ReactNode;
@@ -82,6 +83,8 @@ interface AdminCoursesFiltersProps {
   setFromDate: (date: Date | undefined) => void;
   toDate: Date | undefined;
   setToDate: (date: Date | undefined) => void;
+  viewMode: CourseViewMode;
+  setViewMode: (mode: CourseViewMode) => void;
 }
 
 export const AdminCoursesFilters = ({
@@ -99,6 +102,8 @@ export const AdminCoursesFilters = ({
   setFromDate,
   toDate,
   setToDate,
+  viewMode,
+  setViewMode,
 }: AdminCoursesFiltersProps) => {
   const categoryOptions = [
     "All",
@@ -368,6 +373,11 @@ export const AdminCoursesFilters = ({
             </div>
           </DropdownShell>
         </Popover>
+
+        {/* Table / Grid switch — pushed to the end of the toolbar */}
+        <div className="ml-auto">
+          <CourseViewToggle value={viewMode} onChange={setViewMode} />
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getDashboardRoute } from "@/modules/auth/utils/workspace";
 
 const PUBLIC_PATHS = [
   "/",
@@ -25,17 +26,6 @@ const isPublicPath = (pathname: string): boolean =>
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-function getDashboardForWorkspace(workspace?: string): string {
-  switch (workspace) {
-    case "admin_studio":
-    case "admin_dashboard":
-      return "/admin/dashboard";
-    case "reviewer_studio":
-      return "/reviewer/dashboard";
-    default:
-      return "/creator/dashboard";
-  }
-}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -46,7 +36,7 @@ export async function middleware(req: NextRequest) {
 
   if (isPublicPath(pathname)) {
     if (token && pathname.startsWith("/auth")) {
-      const dashboard = getDashboardForWorkspace(token.user?.workspace);
+      const dashboard = getDashboardRoute(token.user?.workspace);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
     return NextResponse.next();

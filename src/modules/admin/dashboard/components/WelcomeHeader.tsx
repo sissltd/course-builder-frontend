@@ -2,6 +2,7 @@
 
 import React from "react";
 import { UserAdd } from "iconsax-react";
+import { useSession } from "next-auth/react";
 
 const timeChips = ["24 hrs", "7 days", "31 days", "6 months"];
 
@@ -10,6 +11,14 @@ interface WelcomeHeaderProps {
 }
 
 export const WelcomeHeader = ({ onInviteClick }: WelcomeHeaderProps) => {
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const displayName =
+    user?.first_name || user?.last_name
+      ? `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()
+      : (user?.email ?? "");
+
   return (
     <div className="flex flex-col md:flex-row items-start justify-between w-full gap-[16px]">
       <div className="flex flex-col gap-[4px]">
@@ -24,7 +33,7 @@ export const WelcomeHeader = ({ onInviteClick }: WelcomeHeaderProps) => {
           </div>
         </div>
         <p className="text-[16px] font-normal text-[#606060] leading-[24px]">
-          Emmanuel
+          {displayName}
         </p>
       </div>
 

@@ -24,6 +24,8 @@ export enum AdminRoute {
   OVERVIEW = "/admin/dashboard",
   ANALYTICS = "/admin/analytics",
   MIE_RECOMMENDATION = "/admin/mie-recommendation",
+  MIE_DEVELOPERS = "/admin/mie-recommendation/developers",
+  MIE_REJECTION_REASONS = "/admin/mie-recommendation/rejection-reasons",
   SYSTEM_HEALTH = "/admin/system-health",
   APE_PIPELINE = "/admin/ape-pipeline",
   TEAMS = "/admin/teams",
@@ -36,6 +38,7 @@ export enum AdminRoute {
   ACTIVITY_LOG = "/admin/activity-log",
   SETTINGS = "/admin/settings",
   COURSE_OVERVIEW = "/admin/course-overview",
+  KYC_REVIEW = "/admin/kyc-review",
 }
 
 export enum CreatorRoute {

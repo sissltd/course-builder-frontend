@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, More, UserAdd, CloseCircle, SearchNormal1 } from "iconsax-react";
+import {
+  Copy,
+  More,
+  UserAdd,
+  CloseCircle,
+  SearchNormal1,
+  TickCircle,
+} from "iconsax-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AdminRoute } from "@/lib/routes";
@@ -19,190 +26,44 @@ import {
 } from "@/components/ui/popover";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { AdminCoursesFilters } from "./components/AdminCoursesFilters";
+import { AdminCoursesGrid } from "./components/AdminCoursesGrid";
+import type { CourseViewMode } from "./components/CourseViewToggle";
+import { mockCourses, type CourseRow, type CourseStatus } from "./data/mockData";
 
-interface CourseRow {
-  id: string;
-  creator: string;
-  courseTitle: string;
-  courseId: string;
-  category: string;
-  difficultyLevel: string;
-  dateApproved: string;
-  hasVideo: boolean;
-  isAi: boolean;
-}
+const STATUS_PILL: Record<CourseStatus, { label: string; className: string }> = {
+  pending: {
+    label: "Pending",
+    className: "bg-sd-warning-bg text-sd-warning-text",
+  },
+  approved: {
+    label: "Approved",
+    className: "bg-sd-success-bg text-sd-success-text",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-sd-danger-soft text-sd-danger",
+  },
+};
 
-const mockCourses: CourseRow[] = [
-  {
-    id: "1",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "2",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "3",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "4",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "5",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "6",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "7",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "8",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "9",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "10",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "11",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "12",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  {
-    id: "13",
-    creator: "Osaite Emmanuel",
-    courseTitle: "Machine Learning and Design",
-    courseId: "SLD-e4de-0ed5...3d5",
-    category: "Software Engineering",
-    difficultyLevel: "Intermediate",
-    dateApproved: "15 May 2026, 03:40PM",
-    hasVideo: true,
-    isAi: false,
-  },
-  // Add some AI generated courses too
-  {
-    id: "14",
-    creator: "AI Assistant",
-    courseTitle: "Generative Art Patterns",
-    courseId: "SLD-ai3f-9fe2...4c2",
-    category: "Artificial Intelligence",
-    difficultyLevel: "Advanced",
-    dateApproved: "16 May 2026, 11:20AM",
-    hasVideo: false,
-    isAi: true,
-  },
-  {
-    id: "15",
-    creator: "AI Assistant",
-    courseTitle: "Neural Networks Fundamentals",
-    courseId: "SLD-ai8k-019f...7a9",
-    category: "Artificial Intelligence",
-    difficultyLevel: "Intermediate",
-    dateApproved: "16 May 2026, 02:30PM",
-    hasVideo: true,
-    isAi: true,
-  }
-];
+const StatusPill = ({ status }: { status: CourseStatus }) => {
+  const pill = STATUS_PILL[status];
+  return (
+    <span
+      className={cn(
+        "flex w-fit items-center rounded-full px-[10px] py-[3px] text-[12px] font-medium leading-[16px]",
+        pill.className,
+      )}
+    >
+      {pill.label}
+    </span>
+  );
+};
+
+/** Grid fits a 3-row board; the table keeps its original page size. */
+const PAGE_SIZE: Record<CourseViewMode, number> = { table: 8, grid: 12 };
 
 const tableGridClassName =
-  "grid grid-cols-[40px_minmax(140px,1.2fr)_minmax(180px,1.5fr)_minmax(160px,1.3fr)_minmax(140px,1.2fr)_minmax(120px,0.9fr)_minmax(160px,1.3fr)_60px] gap-[16px] items-center px-[20px] py-[12px]";
+  "grid grid-cols-[40px_minmax(140px,1.2fr)_minmax(180px,1.5fr)_minmax(160px,1.3fr)_minmax(140px,1.2fr)_minmax(120px,0.9fr)_minmax(160px,1.3fr)_minmax(110px,0.8fr)_60px] gap-[16px] items-center px-[20px] py-[12px]";
 
 const DrawerDetailRow = ({
   label,
@@ -245,6 +106,8 @@ const AdminCourseInfoDrawer = ({
   onNext,
   canPrevious,
   canNext,
+  onApprove,
+  onReject,
 }: {
   course: CourseRow | null;
   isOpen: boolean;
@@ -253,7 +116,11 @@ const AdminCourseInfoDrawer = ({
   onNext: () => void;
   canPrevious: boolean;
   canNext: boolean;
+  onApprove: (course: CourseRow) => void;
+  onReject: (course: CourseRow) => void;
 }) => {
+  const router = useRouter();
+
   if (!course) return null;
 
   const copyText = async (value: string) => {
@@ -264,8 +131,6 @@ const AdminCourseInfoDrawer = ({
       toast.error("Could not copy course ID");
     }
   };
-
-  const router = useRouter();
 
   return (
     <SideDrawer
@@ -420,13 +285,43 @@ const AdminCourseInfoDrawer = ({
             onCopy={() => void copyText("Td4fJcvnJ88-04924945")}
           />
           <DrawerDetailRow label="Date Created" value="21 May 2026, 08:43PM" />
+          <div className="flex items-center justify-between gap-[16px]">
+            <span className="shrink-0 text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
+              Status
+            </span>
+            <StatusPill status={course.status} />
+          </div>
         </section>
+
+        {/* Decision */}
+        {course.status === "pending" && (
+          <div className="flex items-center gap-[12px]">
+            <button
+              type="button"
+              onClick={() => onReject(course)}
+              className="flex h-[44px] flex-1 items-center justify-center gap-[8px] rounded-[8px] border border-sd-grey-4 bg-white text-[14px] font-medium text-sd-grey-12 transition-colors hover:bg-sd-grey-2 cursor-pointer"
+            >
+              <CloseCircle size={18} variant="Linear" color="#D54800" />
+              Reject course
+            </button>
+            <button
+              type="button"
+              onClick={() => onApprove(course)}
+              className="flex h-[44px] flex-1 items-center justify-center gap-[8px] rounded-[8px] bg-sd-blue text-[14px] font-medium text-white transition-colors hover:bg-sd-blue-hover cursor-pointer"
+            >
+              <TickCircle size={18} variant="Linear" color="#FFFFFF" />
+              Approve course
+            </button>
+          </div>
+        )}
       </div>
     </SideDrawer>
   );
 };
 
 export const AdminCoursesView = () => {
+  const [courses, setCourses] = useState<CourseRow[]>(mockCourses);
+  const [viewMode, setViewMode] = useState<CourseViewMode>("table");
   const [activeTab, setActiveTab] = useState<"creators" | "ai">("creators");
   const [videoFilter, setVideoFilter] = useState<"with" | "without" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -467,10 +362,10 @@ export const AdminCoursesView = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = PAGE_SIZE[viewMode];
 
   // Filter logic
-  const filteredCourses = mockCourses.filter((course) => {
+  const filteredCourses = courses.filter((course) => {
     // Tab filter
     if (activeTab === "creators" && course.isAi) return false;
     if (activeTab === "ai" && !course.isAi) return false;
@@ -505,12 +400,14 @@ export const AdminCoursesView = () => {
 
   const activeCourse = activeCourseIndex !== null ? filteredCourses[activeCourseIndex] : null;
 
+  const allOnPageSelected =
+    paginatedCourses.length > 0 && paginatedCourses.every((c) => selectedIds.has(c.id));
+
   const toggleSelectAll = () => {
     const pageIds = paginatedCourses.map((c) => c.id);
-    const allPageSelected = pageIds.every((id) => selectedIds.has(id));
 
     const next = new Set(selectedIds);
-    if (allPageSelected) {
+    if (allOnPageSelected) {
       pageIds.forEach((id) => next.delete(id));
     } else {
       pageIds.forEach((id) => next.add(id));
@@ -543,8 +440,39 @@ export const AdminCoursesView = () => {
     setAssignOpen(false);
   };
 
+  /** Table, grid and drawer all funnel their decisions through here. */
+  const applyStatus = (ids: string[], status: CourseStatus) => {
+    const target = new Set(ids);
+    setCourses((current) =>
+      current.map((course) => (target.has(course.id) ? { ...course, status } : course)),
+    );
+  };
+
+  const handleApprove = (course: CourseRow) => {
+    applyStatus([course.id], "approved");
+    toast.success(`Approved "${course.courseTitle}"`);
+  };
+
+  const handleReject = (course: CourseRow) => {
+    applyStatus([course.id], "rejected");
+    toast.success(`Rejected "${course.courseTitle}"`);
+  };
+
+  const openCourse = (course: CourseRow) => {
+    setActiveCourseIndex(filteredCourses.findIndex((entry) => entry.id === course.id));
+  };
+
+  const handleApproveSelected = () => {
+    const count = selectedIds.size;
+    applyStatus([...selectedIds], "approved");
+    toast.success(`Approved ${count} ${count === 1 ? "course" : "courses"} successfully`);
+    setSelectedIds(new Set());
+  };
+
   const handleRejectSelected = () => {
-    toast.success(`Rejected ${selectedIds.size} courses successfully`);
+    const count = selectedIds.size;
+    applyStatus([...selectedIds], "rejected");
+    toast.success(`Rejected ${count} ${count === 1 ? "course" : "courses"} successfully`);
     setSelectedIds(new Set());
   };
 
@@ -591,6 +519,14 @@ export const AdminCoursesView = () => {
           setToDate(d);
           setCurrentPage(1);
         }}
+        viewMode={viewMode}
+        setViewMode={(mode) => {
+          setViewMode(mode);
+          // Page size differs between the two views, so the current page index
+          // would otherwise point at a different slice of the list.
+          setCurrentPage(1);
+          setActiveCourseIndex(null);
+        }}
       />
 
       {/* Main Table Content Container */}
@@ -603,8 +539,21 @@ export const AdminCoursesView = () => {
           <div className="h-[20px] px-[4px]" />
         )}
         
+        {viewMode === "grid" ? (
+          <AdminCoursesGrid
+            courses={paginatedCourses}
+            legendSource={filteredCourses}
+            selectedIds={selectedIds}
+            allOnPageSelected={allOnPageSelected}
+            onToggleSelectAll={toggleSelectAll}
+            onToggleSelect={toggleSelectRow}
+            onOpen={openCourse}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        ) : (
         <div className="w-full overflow-x-auto rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 shadow-[0px_4px_12px_rgba(0,0,0,0.02)]">
-          <div className="w-full min-w-[1100px]">
+          <div className="w-full min-w-[1240px]">
             {/* Table Header Row */}
             <div className={cn(tableGridClassName, "bg-[#F0F0F0CC] border-b border-sd-grey-3")}>
               <div className="flex items-center justify-center">
@@ -633,6 +582,9 @@ export const AdminCoursesView = () => {
               </span>
               <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
                 Date Approved
+              </span>
+              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                Status
               </span>
               <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12 text-center">
                 Action
@@ -700,6 +652,7 @@ export const AdminCoursesView = () => {
                       <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
                         {course.dateApproved}
                       </span>
+                      <StatusPill status={course.status} />
                       <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -713,9 +666,31 @@ export const AdminCoursesView = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="bg-sd-grey-1 border border-sd-grey-3 rounded-[12px] p-[6px] w-[140px]"
+                            className="bg-sd-grey-1 border border-sd-grey-3 rounded-[12px] p-[6px] w-[160px]"
                           >
-                            <DropdownMenuItem className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer">
+                            {course.status === "pending" && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => handleApprove(course)}
+                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                >
+                                  <TickCircle size={16} variant="Linear" color="#008500" />
+                                  Approve course
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleReject(course)}
+                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                >
+                                  <CloseCircle size={16} variant="Linear" color="#D54800" />
+                                  Reject course
+                                </DropdownMenuItem>
+                                <div className="my-[4px] h-px bg-sd-grey-3" />
+                              </>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => setActiveCourseIndex(globalIdx)}
+                              className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer"
+                            >
                               View details
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer">
@@ -734,6 +709,7 @@ export const AdminCoursesView = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Table Footer: Entries & Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-[16px] w-full px-[4px] mt-[4px]">
@@ -802,6 +778,15 @@ export const AdminCoursesView = () => {
           >
             <CloseCircle size={20} variant="Linear" color="#EA580C" className="shrink-0" />
             <span>Reject course</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleApproveSelected}
+            className="flex h-[40px] items-center gap-[8px] px-[16px] text-[16px] font-normal text-sd-grey-11 hover:text-sd-grey-12 transition-colors cursor-pointer bg-transparent border-0"
+          >
+            <TickCircle size={20} variant="Linear" color="#008500" className="shrink-0" />
+            <span>Approve course</span>
           </button>
 
           <Popover open={assignOpen} onOpenChange={setAssignOpen}>
@@ -888,6 +873,14 @@ export const AdminCoursesView = () => {
         }}
         canPrevious={activeCourseIndex !== null && activeCourseIndex > 0}
         canNext={activeCourseIndex !== null && activeCourseIndex < filteredCourses.length - 1}
+        onApprove={(course) => {
+          handleApprove(course);
+          setActiveCourseIndex(null);
+        }}
+        onReject={(course) => {
+          handleReject(course);
+          setActiveCourseIndex(null);
+        }}
       />
     </div>
   );

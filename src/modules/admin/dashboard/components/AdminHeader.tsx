@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSession } from "next-auth/react";
 
 interface AdminHeaderProps {
   title?: string;
@@ -25,6 +26,18 @@ interface AdminHeaderProps {
 
 export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const displayName =
+    user?.first_name || user?.last_name
+      ? `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim()
+      : (user?.email ?? "");
+  const avatarSrc =
+    user?.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+      user?.email ?? "admin",
+    )}`;
 
   return (
     <header className="h-[59px] bg-[#FDFDFD] border-b border-[#F0F0F0] flex items-center px-[12px] md:px-[24px] sticky top-0 z-30 ml-0 md:ml-[237px] gap-[12px] md:gap-[24px]">
@@ -103,14 +116,14 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
             <div className="flex items-center gap-[8px] p-[8px]">
               <div className="size-[28px] rounded-full bg-[#7B7272] overflow-hidden relative shrink-0">
                 <Image
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel"
+                  src={avatarSrc}
                   alt="Avatar"
                   fill
                   className="object-cover"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-[14px] font-medium text-[#202020] leading-[20px]">Emmanuel</span>
+                <span className="text-[14px] font-medium text-[#202020] leading-[20px]">{displayName}</span>
                 <span className="text-[12px] text-[#606060] leading-[16px]">Admin</span>
               </div>
             </div>
@@ -139,7 +152,7 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
         <div className="border border-[#F0F0F0] rounded-full p-[4px] size-[32px] flex items-center justify-center cursor-pointer">
           <div className="size-[20px] rounded-full bg-[#7B7272] overflow-hidden relative">
             <Image
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel"
+              src={avatarSrc}
               alt="Avatar"
               fill
               className="object-cover"
