@@ -5,6 +5,7 @@ export function getDashboardRoute(workspace?: string): string {
     case Workspace.CREATOR_STUDIO:
       return "/creator/dashboard";
     case Workspace.ADMIN_DASHBOARD:
+    case "admin_studio":
       return "/admin/dashboard";
     case Workspace.REVIEWER_STUDIO:
       return "/reviewer/dashboard";
@@ -21,7 +22,6 @@ export function getWorkspaceForRole(role: UserRole): string {
     case UserRole.REVIEWER:
       return Workspace.REVIEWER_STUDIO;
     case UserRole.COURSE_CREATOR:
-      return Workspace.CREATOR_STUDIO;
     default:
       return Workspace.CREATOR_STUDIO;
   }

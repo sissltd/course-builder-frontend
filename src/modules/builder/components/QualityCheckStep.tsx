@@ -1,9 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ArrowLeft2, ArrowRight2, TickCircle, InfoCircle } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
-import { useAppSelector } from "@/redux";
+import { useAppDispatch, useAppSelector } from "@/redux";
+import { syncSubmitCourse } from "@/redux/slices/builderSync";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { CreatorRoute } from "@/lib/routes";
 
 interface QualityCheckStepProps {
   onNext?: () => void;
@@ -39,9 +43,12 @@ const QualityCheckItem = ({ label, passed, warning }: QualityCheckItemProps) => 
 };
 
 export const QualityCheckStep = ({ onNext, onBack, onPreview }: QualityCheckStepProps) => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const courseInfo = useAppSelector((state) => state.courseBuilder.courseInformation);
   const modules = useAppSelector((state) => state.courseBuilder.modules);
   const version = useAppSelector((state) => state.courseBuilder.version);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTitle = courseInfo.courseTitle.trim().length > 0;
   const descWordCount = courseInfo.description.trim() === "" ? 0 : courseInfo.description.trim().split(/\s+/).length;
@@ -165,10 +172,32 @@ export const QualityCheckStep = ({ onNext, onBack, onPreview }: QualityCheckStep
         </Button>
         <Button
           variant="app-primary"
-          onClick={onPreview || onNext}
+          onClick={async () => {
+            setIsSubmitting(true);
+            try {
+              const result = await dispatch(syncSubmitCourse()).unwrap();
+              if (result.success) {
+                toast.success("Course submitted for review!");
+                router.push(CreatorRoute.COURSES);
+              } else if (result.errors) {
+                const errorMessages = (result.errors as Array<{ message?: string }>)
+                  .map((e) => e.message)
+                  .filter(Boolean)
+                  .join(", ");
+                toast.error(errorMessages || "Course failed structural validation.");
+              } else {
+                toast.error("Failed to submit course. Please try again.");
+              }
+            } catch {
+              toast.error("Failed to submit course. Please try again.");
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          disabled={isSubmitting}
           rightIcon={<ArrowRight2 size={24} variant="Linear" color="#FFFFFF" />}
         >
-          Preview and Submit
+          {isSubmitting ? "Submitting..." : "Preview and Submit"}
         </Button>
       </div>
     </div>

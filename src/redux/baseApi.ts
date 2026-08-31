@@ -85,7 +85,7 @@ const refetchSessionToken = async (): Promise<SessionRefreshResult> => {
         accessToken?: string;
         error?: string;
       };
-      if (data.error) {
+      if (data.error === "RefreshAccessTokenError") {
         return { status: "failed" };
       }
       if (data.accessToken) {
@@ -225,6 +225,17 @@ export const BaseAPI = createApi({
     "MieDeveloper",
     "MieSubmission",
     "MieRejectionReason",
+    "AdminUser",
+    "AdminStaff",
+    "Assessment",
+    "Module",
+    "Lesson",
+    "ContentBlock",
+    "LessonImage",
+    "LessonRequirement",
+    "MediaAsset",
+    "Category",
+    "Topic"
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

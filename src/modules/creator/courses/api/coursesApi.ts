@@ -6,6 +6,10 @@ import type {
   UpdateCourseRequest,
   CoursesListParams,
   PaginatedResponse,
+  CourseThumbnail,
+  SetThumbnailRequest,
+  MediaAsset,
+  RegisterMediaAssetRequest,
 } from "../types";
 
 export const coursesApi = BaseAPI.injectEndpoints({
@@ -98,6 +102,73 @@ export const coursesApi = BaseAPI.injectEndpoints({
         "Course",
       ],
     }),
+
+    getCourseThumbnail: builder.query<CourseThumbnail[], string>({
+      query: (courseId) => ({
+        url: `/courses/${courseId}/thumbnail/`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, courseId) => [
+        { type: "Course", id: `${courseId}-thumbnail` },
+      ],
+    }),
+
+    setCourseThumbnail: builder.mutation<
+      CourseThumbnail,
+      { courseId: string; body: SetThumbnailRequest }
+    >({
+      query: ({ courseId, body }) => ({
+        url: `/courses/${courseId}/thumbnail/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { courseId }) => [
+        { type: "Course", id: `${courseId}-thumbnail` },
+        { type: "Course", id: courseId },
+      ],
+    }),
+
+    getMediaAssets: builder.query<
+      PaginatedResponse<MediaAsset[]>,
+      { courseId: string; params?: CoursesListParams }
+    >({
+      query: ({ courseId, params }) => ({
+        url: `/courses/${courseId}/media-assets/`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: PaginatedResponse<MediaAsset[]>["data"]["paginator"];
+          results: MediaAsset[][];
+        };
+      }) => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: response.data.results.flat(),
+        },
+      }),
+      providesTags: (_result, _error, { courseId }) => [
+        { type: "MediaAsset", id: `list-${courseId}` },
+      ],
+    }),
+
+    registerMediaAsset: builder.mutation<
+      MediaAsset,
+      { courseId: string; body: RegisterMediaAssetRequest }
+    >({
+      query: ({ courseId, body }) => ({
+        url: `/courses/${courseId}/media-assets/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { courseId }) => [
+        { type: "MediaAsset", id: `list-${courseId}` },
+      ],
+    }),
   }),
 });
 
@@ -109,4 +180,8 @@ export const {
   useReplaceCourseMutation,
   useDeleteCourseMutation,
   useSubmitCourseMutation,
+  useGetCourseThumbnailQuery,
+  useSetCourseThumbnailMutation,
+  useGetMediaAssetsQuery,
+  useRegisterMediaAssetMutation,
 } = coursesApi;

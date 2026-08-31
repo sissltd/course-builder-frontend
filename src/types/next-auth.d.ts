@@ -9,6 +9,8 @@ declare module "next-auth" {
     };
     accessToken?: string;
     accessTokenExpiresAt?: number;
+    role?: string;
+    mfaEnrollmentOverdue?: boolean;
     error?: string;
   }
 
@@ -17,18 +19,23 @@ declare module "next-auth" {
     refreshToken?: string;
     accessTokenExpiresAt?: number;
     workspace?: string;
+    role?: string;
+    mfaEnrollmentOverdue?: boolean;
     first_name?: string;
     last_name?: string;
     country?: string;
+    state?: string;
+    address?: string;
+    phone_number?: string;
     timezone?: string;
     avatar_url?: string;
-    terms_accepted_at?: string;
-    role?: string;
+    terms_accepted_at?: string | null;
     is_active?: boolean;
     status?: string;
     created_datetime?: string;
     updated_datetime?: string;
     has_completed_onboarding?: boolean;
+    category?: string | null;
   }
 }
 
@@ -40,6 +47,8 @@ declare module "next-auth/jwt" {
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpiresAt?: number;
+    role?: string;
+    mfaEnrollmentOverdue?: boolean;
     error?: string;
   }
 }

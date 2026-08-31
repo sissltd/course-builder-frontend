@@ -27,9 +27,10 @@ import { courseOutlineSchema } from "../utils/schemas";
 interface CourseOutlineProps {
   onNext?: () => void;
   onBack?: () => void;
+  onRemoveModule?: (moduleId: string) => void;
 }
 
-export const CourseOutline = ({ onNext, onBack }: CourseOutlineProps) => {
+export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineProps) => {
   const dispatch = useAppDispatch();
   const modules = useAppSelector((state) => state.courseBuilder.modules);
 
@@ -57,7 +58,11 @@ export const CourseOutline = ({ onNext, onBack }: CourseOutlineProps) => {
 
   const handleRemoveModule = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    dispatch(removeModule(id));
+    if (onRemoveModule) {
+      onRemoveModule(id);
+    } else {
+      dispatch(removeModule(id));
+    }
     if (expandedModuleId === id) {
       setExpandedModuleId(null);
     }

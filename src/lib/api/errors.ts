@@ -47,5 +47,9 @@ export function normalizeApiError(
     }
   }
 
+  if (!message && envelope.errors.length > 0) {
+    message = envelope.errors[0].message;
+  }
+
   return { fieldErrors, message };
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setQuestions, QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
 import { updateLessonInModule, setEditingQuiz } from "@/redux/slices/courseBuilderSlice";
+import { syncSaveLessonAssessment } from "@/redux/slices/builderSync";
 import { QuizBuilderView } from "./QuizBuilderView";
 
 export const QuizEditorPageView = () => {
@@ -26,6 +27,11 @@ export const QuizEditorPageView = () => {
         updatedLesson,
       })
     );
+    dispatch(syncSaveLessonAssessment({
+      moduleId: editingQuiz.moduleId,
+      lessonId: editingQuiz.lessonId,
+      lessonTitle: currentLesson.title || "Lesson",
+    }));
     dispatch(setEditingQuiz(null));
   };
 

@@ -63,6 +63,7 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
           refreshToken: result.refresh,
           user: JSON.stringify(result.user),
           workspace,
+          role: result.user.role,
           redirect: false,
         });
 
@@ -103,7 +104,8 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
     return () => {
       active = false;
     };
-  }, [email, token, verifyEmail, router, dispatch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, token, verifyEmail, dispatch]);
 
   const handleResend = async () => {
     try {

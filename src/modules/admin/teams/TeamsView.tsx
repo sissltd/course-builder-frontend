@@ -1,91 +1,164 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { User, UserTick, Designtools, UserOctagon, More, Copy, Filter, Sort, TickCircle } from "iconsax-react";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { Modal } from "@/components/shared/Modal";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Button } from "@/components/shared/Button";
 import { AddStaffModal } from "@/modules/admin/dashboard/components/AddStaffModal";
 import { TeamActionMenu, ActionType } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import {
+  useGetStaffQuery,
+  useSuspendUserMutation,
+  useDeactivateUserMutation,
+  useReinstateUserMutation,
+  useRevokeStaffMutation,
+} from "./hooks";
+import type { StaffMember } from "./types";
 
-interface TeamMember {
+interface TeamRow {
   id: string;
   name: string;
   initials: string;
   email: string;
   role: string;
   date: string;
-  status: string;
+  invitationStatus: string;
   userId: string;
 }
 
-const data: TeamMember[] = [
-  { id: "1", name: "Osaite Emmanuel", initials: "O", email: "emmanuelosaite@gmil.com", role: "Super Admin", date: "25 March 2025, 07:40 PM", status: "Active", userId: "SLD-e43r-3d55-09dE-0" },
-  { id: "2", name: "Sarah Johnson", initials: "S", email: "sarah.j@example.com", role: "Admin", date: "24 March 2025, 02:15 PM", status: "Active", userId: "SLD-f54s-4d66-19fF-1" },
-  { id: "3", name: "Michael Chen", initials: "M", email: "michael.c@example.com", role: "Creator", date: "23 March 2025, 11:30 AM", status: "Active", userId: "SLD-g65t-5e77-29gG-2" },
-  { id: "4", name: "Emily Davis", initials: "E", email: "emily.d@example.com", role: "Reviewer (Writer)", date: "22 March 2025, 09:00 AM", status: "Active", userId: "SLD-h76u-6f88-39hH-3" },
-  { id: "5", name: "James Wilson", initials: "J", email: "james.w@example.com", role: "Reviewer (Verifier)", date: "21 March 2025, 04:45 PM", status: "Active", userId: "SLD-i87v-7g99-49iI-4" },
-  { id: "6", name: "Anna Martinez", initials: "A", email: "anna.m@example.com", role: "Reviewer (Approver)", date: "20 March 2025, 10:20 AM", status: "Active", userId: "SLD-j98w-8h00-59jJ-5" },
-  { id: "7", name: "David Brown", initials: "D", email: "david.b@example.com", role: "Contributor", date: "19 March 2025, 03:10 PM", status: "Inactive", userId: "SLD-k09x-9i11-69kK-6" },
-  { id: "8", name: "Lisa Anderson", initials: "L", email: "lisa.a@example.com", role: "Creator", date: "18 March 2025, 01:30 PM", status: "Active", userId: "SLD-l10y-0j22-79lL-7" },
-];
+function toInitials(first: string, last: string): string {
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
+}
+
+function formatDateTime(dt: string | null): string {
+  if (!dt) return "—";
+  const d = new Date(dt);
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function staffToRow(s: StaffMember): TeamRow {
+  return {
+    id: s.id,
+    name: `${s.first_name} ${s.last_name}`,
+    initials: toInitials(s.first_name, s.last_name),
+    email: s.email,
+    role: s.role_label,
+    date: formatDateTime(s.created_datetime),
+    invitationStatus: s.invitation_status,
+    userId: s.id,
+  };
+}
 
 const userColors = ["#0A60E1", "#FF8A00", "#00C48C", "#FF3D57", "#7C3AED", "#14B8A6", "#8B5CF6", "#F59E0B"];
 
 const roleOptions = [
-  { label: "Super Admin", value: "Super Admin" },
-  { label: "Admin", value: "Admin" },
-  { label: "Creator", value: "Creator" },
-  { label: "Reviewer (Writer)", value: "Reviewer (Writer)" },
-  { label: "Reviewer (Verifier)", value: "Reviewer (Verifier)" },
-  { label: "Reviewer (Approver)", value: "Reviewer (Approver)" },
-  { label: "Contributor", value: "Contributor" },
+  { label: "Writer", value: "STAFF_WRITER" },
+  { label: "Verifier", value: "STAFF_VERIFIER" },
+  { label: "Approver", value: "STAFF_APPROVER" },
 ];
 
 const successLabels: Record<string, { title: string; description: string }> = {
   suspend: { title: "Account suspended!", description: "The account has been suspended. They will not be able to access the platform." },
   delete: { title: "Account deleted!", description: "The account has been permanently deleted." },
   "change-role": { title: "Role changed!", description: "The user's role has been updated successfully." },
+  reinstate: { title: "Account reinstated!", description: "The account has been reinstated and can access the platform again." },
+  revoke: { title: "Access revoked!", description: "The staff member's access has been revoked." },
 };
 
 export const TeamsView = () => {
-  const [isInviteOpen, setIsInviteOpen] = React.useState(false);
-  const [openMenuRow, setOpenMenuRow] = React.useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const [actionMember, setActionMember] = React.useState<TeamMember | null>(null);
-  const [confirmAction, setConfirmAction] = React.useState<ActionType | null>(null);
-  const [successAction, setSuccessAction] = React.useState<string | null>(null);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [openMenuRow, setOpenMenuRow] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TeamRow | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [actionMember, setActionMember] = useState<TeamRow | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
+  const [successAction, setSuccessAction] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const [showReasonModal, setShowReasonModal] = useState(false);
 
-  const handleAction = (member: TeamMember, action: ActionType) => {
+  const { data: staffData, isLoading } = useGetStaffQuery();
+  const [suspendUser] = useSuspendUserMutation();
+  const [deactivateUser] = useDeactivateUserMutation();
+  const [reinstateUser] = useReinstateUserMutation();
+  const [revokeStaff] = useRevokeStaffMutation();
+
+  const rows: TeamRow[] = (staffData ?? []).map(staffToRow);
+
+  const totalStaff = rows.length;
+  const totalActive = rows.filter((r) => r.invitationStatus === "ACTIVE").length;
+  const totalPending = rows.filter((r) => r.invitationStatus === "PENDING").length;
+  const totalRevoked = rows.filter((r) => r.invitationStatus === "REVOKED").length;
+
+  const handleAction = (member: TeamRow, action: ActionType) => {
     setActionMember(member);
     if (action === "copy-id") {
       navigator.clipboard.writeText(member.userId);
+      toast.success("User ID copied to clipboard");
+      return;
+    }
+    if (action === "suspend" || action === "delete") {
+      setReason("");
+      setShowReasonModal(true);
+      setConfirmAction(action);
       return;
     }
     if (action === "change-role") {
       // For now treat like a confirmation + success flow
     }
     setConfirmAction(action);
+    setReason("");
   };
 
-  const handleConfirm = () => {
-    if (confirmAction) {
+  const handleReasonConfirm = () => {
+    setShowReasonModal(false);
+    // The confirmAction is already set, just show the confirmation modal
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmAction || !actionMember) return;
+
+    try {
+      switch (confirmAction) {
+        case "suspend":
+          await suspendUser({ id: actionMember.id, body: { reason: reason || "Suspended by admin" } }).unwrap();
+          break;
+        case "delete":
+          await deactivateUser({ id: actionMember.id, body: { reason: reason || "Deactivated by admin" } }).unwrap();
+          break;
+        case "reinstate":
+          await reinstateUser(actionMember.id).unwrap();
+          break;
+        case "revoke":
+          await revokeStaff(actionMember.id).unwrap();
+          break;
+      }
       setConfirmAction(null);
       setTimeout(() => setSuccessAction(confirmAction), 300);
+    } catch (err) {
+      setConfirmAction(null);
+      const data = err as { data?: { errors?: { message: string }[] } };
+      const message = data?.data?.errors?.[0]?.message ?? "Action failed";
+      toast.error(message);
     }
   };
 
   const currentSuccess = successAction ? successLabels[successAction] : null;
 
-  const columns: ColumnDef<TeamMember>[] = [
+  const columns: ColumnDef<TeamRow>[] = [
     {
       accessorKey: "name",
       header: "Names",
       cell: ({ row }) => {
-        const idx = data.findIndex((d) => d.id === row.original.id);
+        const idx = rows.findIndex((d) => d.id === row.original.id);
         const color = userColors[idx % userColors.length];
         return (
           <div className="flex items-center gap-[8px] w-[216px]">
@@ -128,17 +201,23 @@ export const TeamsView = () => {
       size: 186,
     },
     {
-      accessorKey: "status",
+      accessorKey: "invitationStatus",
       header: "Status",
       cell: ({ row }) => {
-        const active = row.original.status === "Active";
+        const status = row.original.invitationStatus;
+        const isActive = status === "ACTIVE";
+        const isPending = status === "PENDING";
         return (
-          <div className={`inline-flex items-center px-[8px] py-[4px] rounded-[6px] ${active ? "bg-[#F1F8F2] text-[#3C7E44]" : "bg-[#FEF3F2] text-[#B42318]"}`}>
-            <span className="text-[12px] font-normal leading-[16px]">{row.original.status}</span>
+          <div className={`inline-flex items-center px-[8px] py-[4px] rounded-[6px] ${
+            isActive ? "bg-[#F1F8F2] text-[#3C7E44]"
+              : isPending ? "bg-[#FFF5ED] text-[#B54708]"
+                : "bg-[#FEF3F2] text-[#B42318]"
+          }`}>
+            <span className="text-[12px] font-normal leading-[16px]">{status}</span>
           </div>
         );
       },
-      size: 94,
+      size: 120,
     },
     {
       accessorKey: "userId",
@@ -171,6 +250,7 @@ export const TeamsView = () => {
             <TeamActionMenu
               onClose={() => setOpenMenuRow(null)}
               onAction={(action) => handleAction(row.original, action)}
+              invitationStatus={row.original.invitationStatus}
             />
           )}
         </div>
@@ -180,11 +260,10 @@ export const TeamsView = () => {
   ];
 
   const statCards = [
-    { icon: <User variant="Bold" size={20} color="#202020" />, label: "Total Staff", value: "203" },
-    { icon: <UserTick variant="Bold" size={20} color="#202020" />, label: "Total Active", value: "100" },
-    { icon: <Designtools variant="Bold" size={20} color="#202020" />, label: "Creators", value: "150" },
-    { icon: <UserOctagon variant="Bold" size={20} color="#202020" />, label: "Super Admin", value: "24" },
-    { icon: <UserOctagon variant="Bold" size={20} color="#202020" />, label: "Admin", value: "2" },
+    { icon: <User variant="Bold" size={20} color="#202020" />, label: "Total Staff", value: String(totalStaff) },
+    { icon: <UserTick variant="Bold" size={20} color="#202020" />, label: "Active", value: String(totalActive) },
+    { icon: <Designtools variant="Bold" size={20} color="#202020" />, label: "Pending", value: String(totalPending) },
+    { icon: <UserOctagon variant="Bold" size={20} color="#202020" />, label: "Revoked", value: String(totalRevoked) },
   ];
 
   return (
@@ -224,46 +303,101 @@ export const TeamsView = () => {
           ))}
         </div>
 
-        <BaseTable
-          title="Teams"
-          columns={columns}
-          data={data}
-          searchPlaceholder="Search names, user id etc"
-          filters={[
-            {
-              label: "Admin",
-              icon: <Filter size={20} variant="Linear" color="#606060" />,
-              searchable: true,
-              searchPlaceholder: "Search role",
-              options: roleOptions.map((r) => ({ label: r.label, value: r.value })),
-              onValueChange: (val) => {},
-            },
-            {
-              label: "Sort",
-              icon: <Sort size={20} variant="Linear" color="#606060" />,
-              options: [
-                { label: "Newest", value: "newest" },
-                { label: "Oldest", value: "oldest" },
-                { label: "A-Z", value: "az" },
-              ],
-              onValueChange: (val) => {},
-            },
-          ]}
-          showDateFilter
-          dateFilterInline
-          showHeader={false}
-          showPagination
-          ignoreRowClickColumns={["actions"]}
-          onRowClick={(member) => {
-            setSelectedMember(member);
-            setIsDrawerOpen(true);
-          }}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-sd-grey-3 border-t-[#0063EF]" />
+          </div>
+        ) : (
+          <BaseTable
+            title="Teams"
+            columns={columns}
+            data={rows}
+            searchPlaceholder="Search names, email etc"
+            filters={[
+              {
+                label: "Role",
+                icon: <Filter size={20} variant="Linear" color="#606060" />,
+                searchable: true,
+                searchPlaceholder: "Search role",
+                options: roleOptions.map((r) => ({ label: r.label, value: r.value })),
+                onValueChange: () => {},
+              },
+              {
+                label: "Sort",
+                icon: <Sort size={20} variant="Linear" color="#606060" />,
+                options: [
+                  { label: "Newest", value: "newest" },
+                  { label: "Oldest", value: "oldest" },
+                  { label: "A-Z", value: "az" },
+                ],
+                onValueChange: () => {},
+              },
+            ]}
+            showDateFilter
+            dateFilterInline
+            showHeader={false}
+            showPagination={false}
+            ignoreRowClickColumns={["actions"]}
+            onRowClick={(member) => {
+              setSelectedMember(member);
+              setIsDrawerOpen(true);
+            }}
+          />
+        )}
       </div>
+
+      {/* Reason Input Modal */}
+      <Modal
+        isOpen={showReasonModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowReasonModal(false);
+            setConfirmAction(null);
+          }
+        }}
+        title={confirmAction === "suspend" ? "Suspend account?" : "Deactivate account?"}
+        className="sm:max-w-[500px]"
+      >
+        <div className="flex flex-col gap-[16px]">
+          <p className="text-[14px] text-[#606060] leading-[20px]">
+            {confirmAction === "suspend"
+              ? `Are you sure you want to suspend ${actionMember?.name || "this user"}?`
+              : `Are you sure you want to deactivate ${actionMember?.name || "this user"}? This action is permanent.`}
+          </p>
+          <div className="flex flex-col gap-[8px]">
+            <label className="text-[14px] font-medium text-[#202020]">Reason</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={confirmAction === "suspend" ? "Enter reason for suspension..." : "Enter reason for deactivation..."}
+              className="w-full h-[80px] border border-[#E8E8E8] rounded-[8px] p-[12px] text-[14px] text-[#202020] resize-none focus:outline-none focus:border-[#0063EF]"
+            />
+          </div>
+          <div className="flex gap-[12px]">
+            <Button
+              variant="outline"
+              className="flex-1 h-[44px] text-[14px]"
+              onClick={() => {
+                setShowReasonModal(false);
+                setConfirmAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={confirmAction === "suspend" ? "destructive" : "destructive"}
+              className="flex-1 h-[44px] text-[14px]"
+              onClick={handleReasonConfirm}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Confirmation Modals */}
       <ConfirmModal
-        isOpen={confirmAction === "suspend"}
+        isOpen={confirmAction === "suspend" && !showReasonModal}
         onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
         title="Suspend account?"
         description={`Are you sure you want to suspend ${actionMember?.name || "this user"}? They will lose access to the platform.`}
@@ -272,11 +406,11 @@ export const TeamsView = () => {
         onConfirm={handleConfirm}
       />
       <ConfirmModal
-        isOpen={confirmAction === "delete"}
+        isOpen={confirmAction === "delete" && !showReasonModal}
         onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Delete account?"
+        title="Deactivate account?"
         description={`This action is permanent and cannot be undone. ${actionMember?.name || "This user"} will lose all access.`}
-        confirmLabel="Yes, delete"
+        confirmLabel="Yes, deactivate"
         variant="danger"
         onConfirm={handleConfirm}
       />
@@ -287,6 +421,24 @@ export const TeamsView = () => {
         description={`Are you sure you want to change the role for ${actionMember?.name || "this user"}?`}
         confirmLabel="Yes, change"
         variant="primary"
+        onConfirm={handleConfirm}
+      />
+      <ConfirmModal
+        isOpen={confirmAction === "reinstate"}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title="Reinstate account?"
+        description={`Are you sure you want to reinstate ${actionMember?.name || "this user"}? They will regain access to the platform.`}
+        confirmLabel="Yes, reinstate"
+        variant="primary"
+        onConfirm={handleConfirm}
+      />
+      <ConfirmModal
+        isOpen={confirmAction === "revoke"}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        title="Revoke access?"
+        description={`Are you sure you want to revoke access for ${actionMember?.name || "this user"}? They will no longer be able to sign in.`}
+        confirmLabel="Yes, revoke"
+        variant="danger"
         onConfirm={handleConfirm}
       />
 

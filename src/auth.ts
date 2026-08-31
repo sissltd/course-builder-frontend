@@ -28,6 +28,8 @@ export const authOptions: NextAuthOptions = {
         refreshToken: { label: "Refresh Token", type: "text" },
         user: { label: "User", type: "text" },
         workspace: { label: "Workspace", type: "text" },
+        role: { label: "Role", type: "text" },
+        mfaEnrollmentOverdue: { label: "MFA Enrollment Overdue", type: "text" },
       },
       async authorize(credentials): Promise<AuthUser | null> {
         if (
@@ -51,6 +53,8 @@ export const authOptions: NextAuthOptions = {
           refreshToken: credentials.refreshToken,
           accessTokenExpiresAt: getAccessTokenExpiresAt(credentials.accessToken),
           workspace: credentials.workspace,
+          role: credentials.role,
+          mfaEnrollmentOverdue: credentials.mfaEnrollmentOverdue === "true",
         };
       },
     }),
@@ -64,6 +68,9 @@ export const authOptions: NextAuthOptions = {
           first_name: user.first_name ?? "",
           last_name: user.last_name ?? "",
           country: user.country ?? "",
+          state: user.state ?? "",
+          address: user.address ?? "",
+          phone_number: user.phone_number ?? "",
           timezone: user.timezone ?? "",
           avatar_url: user.avatar_url ?? "",
           terms_accepted_at: user.terms_accepted_at ?? "",
@@ -73,11 +80,14 @@ export const authOptions: NextAuthOptions = {
           created_datetime: user.created_datetime ?? "",
           updated_datetime: user.updated_datetime ?? "",
           has_completed_onboarding: user.has_completed_onboarding ?? false,
+          category: user.category ?? null,
           workspace: user.workspace,
         };
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token.accessTokenExpiresAt = user.accessTokenExpiresAt;
+        token.role = user.role;
+        token.mfaEnrollmentOverdue = user.mfaEnrollmentOverdue;
         return token;
       }
 
@@ -96,6 +106,8 @@ export const authOptions: NextAuthOptions = {
       }
       session.accessToken = token.accessToken;
       session.accessTokenExpiresAt = token.accessTokenExpiresAt;
+      session.role = token.role;
+      session.mfaEnrollmentOverdue = token.mfaEnrollmentOverdue;
       session.error = token.error;
       return session;
     },

@@ -53,17 +53,21 @@ export interface Module {
 interface ModulesStepProps {
   module: Module;
   onUpdateModule: (updated: Module) => void;
+  onRemoveModule?: (moduleId: string) => void;
   onEditLesson: (lessonId: string) => void;
+  onRemoveLesson?: (lessonId: string) => void;
   onNext?: () => void;
   onBack?: () => void;
 }
 
-export const ModulesStep = ({ 
-  module, 
-  onUpdateModule, 
+export const ModulesStep = ({
+  module,
+  onUpdateModule,
+  onRemoveModule,
   onEditLesson,
-  onNext, 
-  onBack 
+  onRemoveLesson,
+  onNext,
+  onBack
 }: ModulesStepProps) => {
 
   const methods = useForm<ModuleFormData>({
@@ -271,10 +275,11 @@ export const ModulesStep = ({
                 <span>Time {moduleTime}</span>
               </div>
             </div>
-            <Button 
+            <Button
               variant="app-outline"
               isGhost
               leftIcon={<Trash size={16} variant="Linear" color="#FF6B00" />}
+              onClick={() => onRemoveModule?.(module.id)}
             >
               Delete module
             </Button>

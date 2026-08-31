@@ -61,6 +61,8 @@ export default function LoginPage() {
         refreshToken: result.refresh,
         user: JSON.stringify(result.user),
         workspace,
+        role: result.role,
+        mfaEnrollmentOverdue: String(result.mfa_enrollment_overdue ?? false),
         redirect: false,
       });
 
@@ -86,7 +88,9 @@ export default function LoginPage() {
           message: fieldMessage,
         });
       }
-      toast.error(message ?? "Invalid email or password.");
+      if (Object.keys(fieldErrors).length === 0 && message) {
+        toast.error(message);
+      }
     }
   });
 

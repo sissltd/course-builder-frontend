@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Briefcase, Copy, UserMinus, Trash, ArrowRight2 } from "iconsax-react";
+import { Briefcase, Copy, UserMinus, Trash, ArrowRight2, Refresh, UserTick } from "iconsax-react";
 
-export type ActionType = "change-role" | "copy-id" | "suspend" | "delete";
+export type ActionType = "change-role" | "copy-id" | "suspend" | "delete" | "reinstate" | "revoke";
 
 interface ActionItem {
   icon: React.ReactNode;
@@ -14,19 +14,51 @@ interface ActionItem {
   hoverBg: string;
 }
 
-const items: ActionItem[] = [
+const baseItems: ActionItem[] = [
   { icon: <Briefcase variant="Linear" size={16} color="#606060" />, label: "Change role", action: "change-role", hasArrow: true, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
   { icon: <Copy variant="Linear" size={16} color="#606060" />, label: "Copy user ID", action: "copy-id", hasArrow: false, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
   { icon: <UserMinus variant="Linear" size={16} color="#F2994A" />, label: "Suspend account", action: "suspend", hasArrow: false, color: "#F2994A", hoverBg: "hover:bg-[#FFF5ED]" },
   { icon: <Trash variant="Linear" size={16} color="#D54800" />, label: "Delete account", action: "delete", hasArrow: false, color: "#D54800", hoverBg: "hover:bg-[#FFF0ED]" },
 ];
 
+const reinstateItem: ActionItem = {
+  icon: <Refresh variant="Linear" size={16} color="#008500" />,
+  label: "Reinstate account",
+  action: "reinstate",
+  hasArrow: false,
+  color: "#008500",
+  hoverBg: "hover:bg-[#EBF7EE]",
+};
+
+const revokeItem: ActionItem = {
+  icon: <UserTick variant="Linear" size={16} color="#D54800" />,
+  label: "Revoke access",
+  action: "revoke",
+  hasArrow: false,
+  color: "#D54800",
+  hoverBg: "hover:bg-[#FFF0ED]",
+};
+
 interface TeamActionMenuProps {
   onClose: () => void;
   onAction: (action: ActionType) => void;
+  invitationStatus?: string;
 }
 
-export const TeamActionMenu = ({ onClose, onAction }: TeamActionMenuProps) => {
+export const TeamActionMenu = ({ onClose, onAction, invitationStatus }: TeamActionMenuProps) => {
+  const items = React.useMemo(() => {
+    if (invitationStatus === "PENDING") {
+      return baseItems.filter((item) => item.action !== "suspend");
+    }
+    if (invitationStatus === "REVOKED") {
+      return [reinstateItem];
+    }
+    if (invitationStatus === "ACTIVE") {
+      return [...baseItems, revokeItem];
+    }
+    return baseItems;
+  }, [invitationStatus]);
+
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
