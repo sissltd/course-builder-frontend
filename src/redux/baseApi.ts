@@ -238,6 +238,7 @@ export const BaseAPI = createApi({
     "MediaAsset",
     "Category",
     "Topic",
+    "QualityCheck",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

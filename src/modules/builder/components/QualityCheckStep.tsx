@@ -6,8 +6,10 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { syncSubmitCourse } from "@/redux/slices/builderSync";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CreatorRoute } from "@/lib/routes";
+import { useGetQualityChecksQuery, useRefreshQualityChecksMutation } from "@/modules/creator/hooks";
+import type { QualityCheckResult } from "@/modules/creator/dashboard/types";
 
 interface QualityCheckStepProps {
   onNext?: () => void;
@@ -42,13 +44,157 @@ const QualityCheckItem = ({ label, passed, warning }: QualityCheckItemProps) => 
   );
 };
 
-export const QualityCheckStep = ({ onNext, onBack, onPreview }: QualityCheckStepProps) => {
+interface QualityCheckSection {
+  section: string;
+  items: QualityCheckResult[];
+}
+
+const groupBySection = (checks: QualityCheckResult[]): QualityCheckSection[] => {
+  const grouped = new Map<string, QualityCheckResult[]>();
+  
+  for (const check of checks) {
+    const section = check.criterion.section;
+    if (!grouped.has(section)) {
+      grouped.set(section, []);
+    }
+    grouped.get(section)!.push(check);
+  }
+  
+  return Array.from(grouped.entries()).map(([section, items]) => ({
+    section,
+    items: items.sort((a, b) => a.criterion.order_index - b.criterion.order_index),
+  }));
+};
+
+export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get("id");
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshQualityChecks] = useRefreshQualityChecksMutation();
+
+  const { data: qualityChecks, isLoading: isLoadingChecks } = useGetQualityChecksQuery(
+    courseId ?? "",
+    { skip: !courseId }
+  );
+
+  const groupedChecks = qualityChecks ? groupBySection(qualityChecks) : [];
+
+  const handleRefreshChecks = async () => {
+    if (!courseId) return;
+    try {
+      await refreshQualityChecks(courseId).unwrap();
+      toast.success("Quality checks refreshed");
+    } catch {
+      toast.error("Failed to refresh quality checks");
+    }
+  };
+
+  return (
+    <div className="w-full bg-[#FDFDFD] pl-[24px] pr-[200px] py-[40px] flex flex-col gap-[40px] pb-[100px]">
+      {/* Title Section */}
+      <div className="flex flex-col gap-[12px]">
+        <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">
+          Quality check
+        </h2>
+        <p className="text-[16px] text-[#606060] leading-[24px]">
+          Review and confirm your course meets all quality standards before submitting for review
+        </p>
+      </div>
+
+      {/* Refresh Button */}
+      {courseId && (
+        <div className="flex justify-end">
+          <Button
+            variant="app-outline"
+            onClick={handleRefreshChecks}
+            disabled={isLoadingChecks}
+          >
+            {isLoadingChecks ? "Refreshing..." : "Refresh Quality Checks"}
+          </Button>
+        </div>
+      )}
+
+      {/* Quality Check Sections */}
+      {isLoadingChecks ? (
+        <div className="flex items-center justify-center py-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-sd-grey-3 border-t-sd-blue" />
+        </div>
+      ) : groupedChecks.length > 0 ? (
+        groupedChecks.map((group) => (
+          <React.Fragment key={group.section}>
+            <div className="flex flex-col gap-[20px]">
+              <h3 className="text-[20px] font-semibold text-[#202020] tracking-[-0.48px] leading-[28px]">
+                {group.section}
+              </h3>
+              <div className="flex flex-col gap-[16px]">
+                {group.items.map((check) => (
+                  <QualityCheckItem
+                    key={check.id}
+                    label={check.criterion.label}
+                    passed={check.is_checked}
+                    warning={check.warning_note ?? undefined}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="w-full h-[1px] bg-[#E8E8E8]" />
+          </React.Fragment>
+        ))
+      ) : (
+        /* Fallback to client-side validation if no API data */
+        <QualityCheckFallback />
+      )}
+
+      {/* Footer Navigation */}
+      <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
+        <Button
+          variant="app-outline"
+          onClick={onBack}
+          leftIcon={<ArrowLeft2 size={24} variant="Linear" color="#0A60E1" />}
+        >
+          Go back
+        </Button>
+        <Button
+          variant="app-primary"
+          onClick={async () => {
+            setIsSubmitting(true);
+            try {
+              const result = await dispatch(syncSubmitCourse()).unwrap();
+              if (result.success) {
+                toast.success("Course submitted for review!");
+                router.push(CreatorRoute.COURSES);
+              } else if (result.errors) {
+                const errorMessages = (result.errors as Array<{ message?: string }>)
+                  .map((e) => e.message)
+                  .filter(Boolean)
+                  .join(", ");
+                toast.error(errorMessages || "Course failed structural validation.");
+              } else {
+                toast.error("Failed to submit course. Please try again.");
+              }
+            } catch {
+              toast.error("Failed to submit course. Please try again.");
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          disabled={isSubmitting}
+          rightIcon={<ArrowRight2 size={24} variant="Linear" color="#FFFFFF" />}
+        >
+          {isSubmitting ? "Submitting..." : "Preview and Submit"}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const QualityCheckFallback = () => {
   const courseInfo = useAppSelector((state) => state.courseBuilder.courseInformation);
   const modules = useAppSelector((state) => state.courseBuilder.modules);
   const version = useAppSelector((state) => state.courseBuilder.version);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTitle = courseInfo.courseTitle.trim().length > 0;
   const descWordCount = courseInfo.description.trim() === "" ? 0 : courseInfo.description.trim().split(/\s+/).length;
@@ -75,17 +221,7 @@ export const QualityCheckStep = ({ onNext, onBack, onPreview }: QualityCheckStep
   );
 
   return (
-    <div className="w-full bg-[#FDFDFD] pl-[24px] pr-[200px] py-[40px] flex flex-col gap-[40px] pb-[100px]">
-      {/* Title Section */}
-      <div className="flex flex-col gap-[12px]">
-        <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">
-          Quality check
-        </h2>
-        <p className="text-[16px] text-[#606060] leading-[24px]">
-          Review and confirm your course meets all quality standards before submitting for review
-        </p>
-      </div>
-
+    <>
       {/* Course Information Section */}
       <div className="flex flex-col gap-[20px]">
         <h3 className="text-[20px] font-semibold text-[#202020] tracking-[-0.48px] leading-[28px]">
@@ -160,46 +296,6 @@ export const QualityCheckStep = ({ onNext, onBack, onPreview }: QualityCheckStep
           <QualityCheckItem label="Thumbnail" passed={hasThumbnail} />
         </div>
       </div>
-
-      {/* Footer Navigation */}
-      <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
-        <Button
-          variant="app-outline"
-          onClick={onBack}
-          leftIcon={<ArrowLeft2 size={24} variant="Linear" color="#0A60E1" />}
-        >
-          Go back
-        </Button>
-        <Button
-          variant="app-primary"
-          onClick={async () => {
-            setIsSubmitting(true);
-            try {
-              const result = await dispatch(syncSubmitCourse()).unwrap();
-              if (result.success) {
-                toast.success("Course submitted for review!");
-                router.push(CreatorRoute.COURSES);
-              } else if (result.errors) {
-                const errorMessages = (result.errors as Array<{ message?: string }>)
-                  .map((e) => e.message)
-                  .filter(Boolean)
-                  .join(", ");
-                toast.error(errorMessages || "Course failed structural validation.");
-              } else {
-                toast.error("Failed to submit course. Please try again.");
-              }
-            } catch {
-              toast.error("Failed to submit course. Please try again.");
-            } finally {
-              setIsSubmitting(false);
-            }
-          }}
-          disabled={isSubmitting}
-          rightIcon={<ArrowRight2 size={24} variant="Linear" color="#FFFFFF" />}
-        >
-          {isSubmitting ? "Submitting..." : "Preview and Submit"}
-        </Button>
-      </div>
-    </div>
+    </>
   );
 };
