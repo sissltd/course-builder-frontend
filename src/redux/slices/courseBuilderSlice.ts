@@ -57,6 +57,7 @@ export interface CourseInformationData {
   minutes: number;
   seconds: number;
   coverVideo: { name: string; size: number; type: string } | null;
+  coverVideoUrl?: string;
   thumbnail?: string;
   topic?: string;
   creationMethod?: string;

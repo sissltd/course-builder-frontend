@@ -6,6 +6,7 @@ import { Button } from "@/components/shared/Button";
 import { AddMediaModal } from "./AddMediaModal";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
+import { syncSetThumbnail } from "@/redux/slices/builderSync";
 
 interface ThumbnailStepProps {
   onNext?: () => void;
@@ -32,6 +33,12 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
   const handleSave = () => {
     if (thumbnail) {
       dispatch(updateCourseInformation({ thumbnail }));
+      const isExternalUrl = thumbnail.startsWith("http");
+      if (isExternalUrl) {
+        dispatch(syncSetThumbnail({ source: "LINK", externalUrl: thumbnail }));
+      } else {
+        dispatch(syncSetThumbnail({ source: "UPLOAD", file: thumbnail }));
+      }
     }
     onNext?.();
   };

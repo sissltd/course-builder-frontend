@@ -9,12 +9,16 @@ import { RequestSuccessModal } from "./components/RequestSuccessModal";
 import { Reservation } from "./columns/reservation";
 import { Button } from "@/components/shared/Button";
 import { Add } from "iconsax-react";
+import { useGetTopicReservationsQuery } from "./hooks";
 
 export const ReservationView = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  const { data: reservationsResponse } = useGetTopicReservationsQuery();
+  const reservations = reservationsResponse?.data?.results ?? [];
 
   const handleRowClick = (reservation: Reservation) => {
     setSelectedReservation(reservation);
@@ -54,11 +58,12 @@ export const ReservationView = () => {
       </div>
 
       {/* Stats Cards */}
-      <ReservationStats />
+      <ReservationStats reservations={reservations} />
 
       {/* Reservation Table */}
       <div className="mt-[8px]">
         <ReservationTable 
+          data={reservations}
           onRowClick={handleRowClick} 
           onActionClick={handleActionClick} 
         />

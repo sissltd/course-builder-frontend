@@ -234,9 +234,9 @@ export interface CreatorTransaction {
 }
 
 export const CREATOR_TRANSACTIONS: CreatorTransaction[] = [
-  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+$500.00", status: "Pending" },
-  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "-$234.00", status: "Successful" },
-  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+$1,200.00", status: "Failed" },
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+₦500.00", status: "Pending" },
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "-₦234.00", status: "Successful" },
+  { title: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "+₦1,200.00", status: "Failed" },
 ];
 
 export interface WalletStat {
@@ -245,9 +245,9 @@ export interface WalletStat {
 }
 
 export const WALLET_STATS: WalletStat[] = [
-  { label: "Total amount earned", value: "$456,000.03" },
-  { label: "Wallet Balance", value: "$456,000" },
-  { label: "Pending payments", value: "$34,000" },
+  { label: "Total amount earned", value: "₦456,000.03" },
+  { label: "Wallet Balance", value: "₦456,000" },
+  { label: "Pending payments", value: "₦34,000" },
 ];
 
 export interface CreatorCollaborator {

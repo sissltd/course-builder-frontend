@@ -20,15 +20,19 @@ export const courseInformationSchema = z.object({
   hours: z.coerce.number().min(0, "Hours cannot be negative"),
   minutes: z.coerce.number().min(0, "Minutes cannot be negative").max(59, "Minutes must be 0-59"),
   seconds: z.coerce.number().min(0, "Seconds cannot be negative").max(59, "Seconds must be 0-59"),
-}).refine(
-  (data) => data.hours > 0 || data.minutes > 0 || data.seconds > 0,
-  {
-    message: "Course duration must be greater than zero",
-    path: ["hours"],
-  }
-);
+});
 
-export type CourseInformationFormData = z.infer<typeof courseInformationSchema>;
+export type CourseInformationFormData = {
+  courseTitle: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  objectives: string[];
+  tags: string[];
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
 
 export const courseOutlineModuleSchema = z.object({
   id: z.string(),

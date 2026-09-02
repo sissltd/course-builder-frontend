@@ -24,16 +24,16 @@ const trackOptions = [
 export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModalProps) => {
   const [categoryName, setCategoryName] = React.useState("");
   const [trackPreference, setTrackPreference] = React.useState("");
-  const [beginnerPrice, setBeginnerPrice] = React.useState("$0.00");
-  const [intermediatePrice, setIntermediatePrice] = React.useState("$0.00");
-  const [advancedPrice, setAdvancedPrice] = React.useState("$0.00");
+  const [beginnerPrice, setBeginnerPrice] = React.useState("₦0.00");
+  const [intermediatePrice, setIntermediatePrice] = React.useState("₦0.00");
+  const [advancedPrice, setAdvancedPrice] = React.useState("₦0.00");
 
   const handleClose = () => {
     setCategoryName("");
     setTrackPreference("");
-    setBeginnerPrice("$0.00");
-    setIntermediatePrice("$0.00");
-    setAdvancedPrice("$0.00");
+    setBeginnerPrice("₦0.00");
+    setIntermediatePrice("₦0.00");
+    setAdvancedPrice("₦0.00");
     onOpenChange(false);
   };
 

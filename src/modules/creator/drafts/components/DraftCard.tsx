@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/shared/Button";
+
 
 export interface Draft {
   id: string;
@@ -56,42 +56,33 @@ export const DraftCard = ({ draft, onEdit, onDelete, onPreview }: DraftCardProps
           {draft.date}
         </span>
         
-        <div className="flex items-center gap-[12px]">
-          <button
-            onClick={() => onEdit?.(draft.id)}
-            className="h-[32px] px-[12px] rounded-full border border-[#d9d9d9] text-[14px] font-normal text-[#202020] tracking-[-0.28px] hover:bg-white transition-colors"
-          >
-            Continue editing
-          </button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1 rounded-full hover:bg-sd-grey-2 transition-colors outline-none">
-                <More size={24} variant="Linear" color="#636363" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px] bg-white border border-[#F0F0F0] rounded-[12px] p-[8px] ">
-              <DropdownMenuItem 
-                className="p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] focus:bg-[#F5F5F5] outline-none"
-                onClick={() => onPreview?.(draft.id)}
-              >
-                Preview
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] focus:bg-[#F5F5F5] outline-none"
-                onClick={() => onEdit?.(draft.id)}
-              >
-                Edit draft
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="p-[8px] rounded-[8px] text-[14px] text-[#FF5025] cursor-pointer hover:bg-[#FFF0ED] focus:bg-[#FFF0ED] outline-none"
-                onClick={() => onDelete?.(draft.id)}
-              >
-                Delete draft
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1 rounded-full hover:bg-sd-grey-2 transition-colors outline-none">
+              <More size={24} variant="Linear" color="#636363" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[180px] bg-white border border-[#F0F0F0] rounded-[12px] p-[8px] ">
+            <DropdownMenuItem 
+              className="p-[8px] rounded-[8px] text-[14px] text-[#202020] font-medium cursor-pointer hover:bg-[#F5F5F5] focus:bg-[#F5F5F5] outline-none"
+              onClick={() => onEdit?.(draft.id)}
+            >
+              Continue editing
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] focus:bg-[#F5F5F5] outline-none"
+              onClick={() => onPreview?.(draft.id)}
+            >
+              Preview
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="p-[8px] rounded-[8px] text-[14px] text-[#FF5025] cursor-pointer hover:bg-[#FFF0ED] focus:bg-[#FFF0ED] outline-none"
+              onClick={() => onDelete?.(draft.id)}
+            >
+              Delete draft
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

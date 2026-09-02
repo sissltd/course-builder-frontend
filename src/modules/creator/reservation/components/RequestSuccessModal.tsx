@@ -28,7 +28,7 @@ export const RequestSuccessModal = ({ isOpen, onOpenChange }: RequestSuccessModa
             Request Initiated
           </h2>
           <p className="text-[14px] text-[#606060] leading-relaxed">
-            Your topic request has been sent. You'll receive an update once its approved
+            Your topic request has been sent. You&apos;ll receive an update once its approved
           </p>
         </div>
         

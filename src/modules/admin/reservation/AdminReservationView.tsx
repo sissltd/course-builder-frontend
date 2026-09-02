@@ -6,44 +6,20 @@ import { BaseTable } from "@/components/shared/BaseTable";
 import { Modal } from "@/components/shared/Modal";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { ColumnDef } from "@tanstack/react-table";
+import { useGetTopicReservationsQuery } from "@/modules/creator/reservation/hooks";
+import type { TopicReservation } from "@/modules/creator/reservation/types";
+import { TopicReservationStatus } from "@/modules/creator/reservation/types";
 
 type ReservationStatus = "Pending" | "Approved" | "Rejected";
 
-interface Reservation {
-  id: string;
-  topic: string;
-  requestedBy: string;
-  category: string;
-  duration: string;
-  price: string;
-  status: ReservationStatus;
-}
-
-const data: Reservation[] = [
-  { id: "1", topic: "Machine Learning and AI", requestedBy: "Osaite Emmanuel", category: "Software Engineering", duration: "12 weeks", price: "$250.00", status: "Pending" },
-  { id: "2", topic: "Advanced Python Programming", requestedBy: "Sarah Johnson", category: "Data Science", duration: "8 weeks", price: "$180.00", status: "Pending" },
-  { id: "3", topic: "UI/UX Design Principles", requestedBy: "Emily Davis", category: "Design", duration: "6 weeks", price: "$150.00", status: "Approved" },
-  { id: "4", topic: "Cloud Architecture", requestedBy: "Michael Chen", category: "Software Engineering", duration: "10 weeks", price: "$300.00", status: "Pending" },
-  { id: "5", topic: "Network Security", requestedBy: "James Wilson", category: "Security", duration: "8 weeks", price: "$220.00", status: "Pending" },
-  { id: "6", topic: "Digital Marketing", requestedBy: "Lisa Anderson", category: "Business", duration: "4 weeks", price: "$120.00", status: "Rejected" },
-  { id: "7", topic: "Blockchain Fundamentals", requestedBy: "David Brown", category: "Software Engineering", duration: "6 weeks", price: "$200.00", status: "Pending" },
-  { id: "8", topic: "Data Science with R", requestedBy: "Anna Martinez", category: "Data Science", duration: "10 weeks", price: "$260.00", status: "Approved" },
-  { id: "9", topic: "DevOps Practices", requestedBy: "Osaite Emmanuel", category: "Software Engineering", duration: "8 weeks", price: "$240.00", status: "Pending" },
-  { id: "10", topic: "Mobile App Development", requestedBy: "Sarah Johnson", category: "Software Engineering", duration: "12 weeks", price: "$280.00", status: "Pending" },
-  { id: "11", topic: "Business Intelligence", requestedBy: "Emily Davis", category: "Business", duration: "6 weeks", price: "$160.00", status: "Pending" },
-  { id: "12", topic: "Cybersecurity", requestedBy: "James Wilson", category: "Security", duration: "8 weeks", price: "$250.00", status: "Approved" },
-  { id: "13", topic: "Data Analytics", requestedBy: "Lisa Anderson", category: "Data Science", duration: "6 weeks", price: "$190.00", status: "Pending" },
-  { id: "14", topic: "Software Testing", requestedBy: "David Brown", category: "Software Engineering", duration: "4 weeks", price: "$130.00", status: "Pending" },
-  { id: "15", topic: "Agile Project Management", requestedBy: "Anna Martinez", category: "Business", duration: "4 weeks", price: "$110.00", status: "Rejected" },
-];
+const statusLabel: Record<TopicReservationStatus, ReservationStatus> = {
+  [TopicReservationStatus.PENDING]: "Pending",
+  [TopicReservationStatus.APPROVED]: "Approved",
+  [TopicReservationStatus.REJECTED]: "Rejected",
+};
 
 const categoryOptions = [
   { label: "All", value: "all" },
-  { label: "Software Engineering", value: "Software Engineering" },
-  { label: "Data Science", value: "Data Science" },
-  { label: "Design", value: "Design" },
-  { label: "Security", value: "Security" },
-  { label: "Business", value: "Business" },
 ];
 
 const StatusChip = ({ status }: { status: ReservationStatus }) => {
@@ -87,6 +63,9 @@ export const AdminReservationView = () => {
   const [successDesc, setSuccessDesc] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
 
+  const { data: reservationsResponse } = useGetTopicReservationsQuery();
+  const reservations = reservationsResponse?.data?.results ?? [];
+
   const handleBulkApprove = () => {
     setShowApproveConfirm(false);
     setSuccessTitle("Topics approved");
@@ -101,51 +80,37 @@ export const AdminReservationView = () => {
     setTimeout(() => setShowSuccess(true), 300);
   };
 
-  const columns: ColumnDef<Reservation>[] = [
+  const columns: ColumnDef<TopicReservation>[] = [
     {
-      accessorKey: "topic",
+      accessorKey: "name",
       header: "Topic",
       cell: ({ row }) => (
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px]">{row.original.topic}</span>
+        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px]">{row.original.name}</span>
       ),
       size: 273,
     },
     {
-      accessorKey: "requestedBy",
+      accessorFn: (row) => row.category.name,
+      id: "requestedBy",
       header: "Requested by",
       cell: ({ row }) => (
-        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.requestedBy}</span>
+        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.category.name}</span>
       ),
       size: 193,
     },
     {
-      accessorKey: "category",
+      accessorFn: (row) => row.category.name,
+      id: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.category}</span>
+        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.category.name}</span>
       ),
       size: 221,
     },
     {
-      accessorKey: "duration",
-      header: "Duration",
-      cell: ({ row }) => (
-        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.duration}</span>
-      ),
-      size: 99,
-    },
-    {
-      accessorKey: "price",
-      header: "Price",
-      cell: ({ row }) => (
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px]">{row.original.price}</span>
-      ),
-      size: 170,
-    },
-    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusChip status={row.original.status} />,
+      cell: ({ row }) => <StatusChip status={statusLabel[row.original.status]} />,
       size: 98,
     },
     {
@@ -193,7 +158,7 @@ export const AdminReservationView = () => {
       <BaseTable
         title="Reservation"
         columns={columns}
-        data={data}
+        data={reservations}
         searchPlaceholder="Search course title, ID etc"
         filters={[
           {

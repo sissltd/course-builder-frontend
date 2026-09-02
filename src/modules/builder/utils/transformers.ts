@@ -1,18 +1,30 @@
 import type { Course, CourseModule } from "@/modules/creator/courses/types";
-import type { AssessmentQuestion } from "@/modules/creator/courses/types/assessment";
-import type { Module, Lesson, CourseInformationData, QuizQuestionData } from "@/redux/slices/courseBuilderSlice";
+import type { AssessmentQuestion, Assessment } from "@/modules/creator/courses/types/assessment";
+import type { Module, Lesson, CourseInformationData, QuizQuestionData, QuizQuestion } from "@/redux/slices/courseBuilderSlice";
 
 interface ApiLessonLike {
   id: string;
   title: string;
+  script?: string;
   video_url?: string;
+  embedded_link?: string;
+  video_script_file?: string;
   duration_minutes?: number;
   learning_objectives?: string[];
-  assessment?: unknown;
+  assessment?: Assessment | null;
+}
+
+interface ApiModuleLike {
+  id: string;
+  title: string;
+  description?: string;
+  learning_objectives?: string | string[];
+  lessons?: ApiLessonLike[];
+  assessment?: Assessment | null;
 }
 
 const mapContentType = (lesson: ApiLessonLike): Lesson["type"] => {
-  if (lesson.video_url) return "video";
+  if (lesson.video_url || lesson.embedded_link) return "video";
   if (lesson.assessment) return "quiz";
   return "text";
 };
@@ -49,31 +61,67 @@ const mapAssessmentQuestions = (
   });
 };
 
+const mapAssessmentToQuizQuestions = (
+  questions: AssessmentQuestion[],
+): QuizQuestion[] => {
+  return questions.map((q) => {
+    if (q.type === "ESSAY") {
+      return {
+        question: q.question,
+        options: [],
+        correctAnswer: "",
+      };
+    }
+    const correctText = q.options[q.correct_index]?.text || "";
+    return {
+      question: q.question,
+      options: q.options.map((opt) => opt.text),
+      correctAnswer: correctText,
+    };
+  });
+};
+
 export const apiModuleToRedux = (apiModule: CourseModule): Module => {
-  const lessons: Lesson[] = ((apiModule.lessons || []) as unknown as ApiLessonLike[]).map((l) => {
+  const apiMod = apiModule as unknown as ApiModuleLike;
+  const lessons: Lesson[] = (apiMod.lessons || []).map((l) => {
     const type = mapContentType(l);
+    const lessonQuizQuestions = l.assessment?.questions
+      ? mapAssessmentQuestions(l.assessment.questions)
+      : [];
     return {
       id: l.id,
       title: l.title,
       duration: l.duration_minutes ? `${l.duration_minutes} mins` : "0 mins",
-      assessments: "0 Assessment",
+      assessments: l.assessment
+        ? `${l.assessment.summary?.total_questions || 0} Assessment`
+        : "0 Assessment",
       type,
       objectives: l.learning_objectives || [],
       requirements: "",
-      content: "",
-      videoScript: "",
-      embedLink: l.video_url || "",
-      quizQuestions: [],
+      content: l.script || "",
+      videoScript: l.video_script_file || "",
+      embedLink: l.embedded_link || l.video_url || "",
+      quizQuestions: lessonQuizQuestions,
     };
   });
 
+  const moduleQuizQuestions = apiMod.assessment?.questions
+    ? mapAssessmentToQuizQuestions(apiMod.assessment.questions)
+    : [];
+
+  const objectives = Array.isArray(apiMod.learning_objectives)
+    ? apiMod.learning_objectives
+    : apiMod.learning_objectives
+      ? apiMod.learning_objectives.split(", ").filter(Boolean)
+      : [];
+
   return {
-    id: apiModule.id,
-    title: apiModule.title,
-    description: "",
-    objectives: [],
+    id: apiMod.id,
+    title: apiMod.title,
+    description: apiMod.description || "",
+    objectives,
     lessons,
-    quizQuestions: [],
+    quizQuestions: moduleQuizQuestions,
   };
 };
 
@@ -101,6 +149,7 @@ export const apiCourseToCourseInfo = (
     minutes,
     seconds,
     coverVideo: null,
+    coverVideoUrl: course.preview_video_url || "",
     thumbnail: course.thumbnail_url || "",
   };
 };
@@ -113,9 +162,10 @@ export const reduxLessonToApiPayload = (lesson: Lesson) => {
 
   return {
     title: lesson.title,
-    script: lesson.videoScript || lesson.content || "",
-    video_url: lesson.embedLink || "",
-    learning_objectives: (lesson.objectives || []).join(", "),
+    script: lesson.content || "",
+    embedded_link: lesson.embedLink || "",
+    video_script_file: lesson.videoScript || "",
+    learning_objectives: lesson.objectives || [],
     duration_minutes: durationMinutes,
   };
 };

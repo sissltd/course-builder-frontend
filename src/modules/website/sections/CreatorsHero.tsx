@@ -7,7 +7,7 @@ import { AuthRoute } from "@/lib/routes";
 
 const STATS = [
   { icon: <User variant="Bold" color="#606060" size={16} />, value: "12,400+" },
-  { icon: <Money variant="Bold" color="#606060" size={16} />, value: "$18,000" },
+  { icon: <Money variant="Bold" color="#606060" size={16} />, value: "₦18,000" },
   { icon: <Book1 variant="Bold" color="#606060" size={16} />, value: "9,000+" },
 ];
 

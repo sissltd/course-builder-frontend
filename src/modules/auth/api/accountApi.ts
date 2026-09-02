@@ -5,6 +5,7 @@ import type {
   SignupResponse,
   VerifyEmailRequest,
   VerifyEmailResponse,
+  ChangePasswordRequest,
 } from "@/modules/auth/types/auth";
 
 export const accountApi = BaseAPI.injectEndpoints({
@@ -33,6 +34,16 @@ export const accountApi = BaseAPI.injectEndpoints({
         body,
       }),
     }),
+    changePassword: builder.mutation<
+      { detail: string },
+      ChangePasswordRequest
+    >({
+      query: (body) => ({
+        url: "/auth/change-password/",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -40,4 +51,5 @@ export const {
   useSignupMutation,
   useVerifyEmailMutation,
   useResendVerificationMutation,
+  useChangePasswordMutation,
 } = accountApi;

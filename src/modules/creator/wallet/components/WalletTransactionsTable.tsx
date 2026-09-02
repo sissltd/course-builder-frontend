@@ -3,21 +3,19 @@
 import React, { useState } from "react";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { transactionColumns, Transaction } from "@/modules/creator/dashboard/columns/transactions";
+import type { WalletTransactionListParams } from "@/modules/creator/api/transactionsApi";
+import { TransactionType, TransactionStatus } from "@/modules/creator/api/transactionsApi";
 import { Sort } from "iconsax-react";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
-
-const walletTransactions: Transaction[] = [
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Pending", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Version Control and Collaboration", date: "23 Mar 2026, 10:34 PM", amount: "$500", status: "Successful", type: "Withdrawal" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Successful", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Failed", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Failed", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Successful", type: "Credit" },
-];
+import { useGetWalletTransactionsQuery } from "@/modules/creator/hooks";
 
 export const WalletTransactionsTable = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [filters, setFilters] = useState<WalletTransactionListParams>({});
+
+  const { data: transactionsResponse } = useGetWalletTransactionsQuery(filters);
+  const walletTransactions: Transaction[] = transactionsResponse?.data?.results ?? [];
 
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -36,20 +34,28 @@ export const WalletTransactionsTable = () => {
             label: "Status",
             icon: <Sort size={20} variant="Linear" color="#606060" />,
             options: [
-              { label: "Pending", value: "Pending" },
-              { label: "Successful", value: "Successful" },
-              { label: "Failed", value: "Failed" },
+              { label: "Pending", value: TransactionStatus.PENDING },
+              { label: "Successful", value: TransactionStatus.COMPLETED },
+              { label: "Failed", value: TransactionStatus.FAILED },
             ],
-            onValueChange: (val) => console.log("Status filter:", val),
+            onValueChange: (val) =>
+              setFilters((prev) => ({
+                ...prev,
+                status: (val as TransactionStatus) || undefined,
+              })),
           },
           {
             label: "Type",
             icon: <Sort size={20} variant="Linear" color="#606060" />,
             options: [
-              { label: "Credit", value: "Credit" },
-              { label: "Withdrawal", value: "Withdrawal" },
+              { label: "Credit", value: TransactionType.CREDIT },
+              { label: "Withdrawal", value: TransactionType.DEBIT },
             ],
-            onValueChange: (val) => console.log("Type filter:", val),
+            onValueChange: (val) =>
+              setFilters((prev) => ({
+                ...prev,
+                type: (val as TransactionType) || undefined,
+              })),
           },
         ]}
         showDateFilter

@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { NotificationsEmptyState } from "./NotificationsEmptyState";
+import {
+  useGetNotificationsQuery,
+  useToggleNotificationReadMutation,
+  NotificationItem as ApiNotificationItem,
+} from "@/redux/slices/notificationApi";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 
 export type NotificationItem = {
   id: string;
@@ -90,92 +96,87 @@ const NotificationGroupSection = ({ group, onMarkRead }: NotificationGroupSectio
   </div>
 );
 
-/* ─── Notifications list ─── */
-const INITIAL_GROUPS: NotificationGroup[] = [
-  {
-    date: "Today",
-    items: [
-      {
-        id: "1",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minuites ago",
-        isRead: false,
-        type: "course",
-      },
-      {
-        id: "2",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minuites ago",
-        isRead: false,
-        type: "account",
-      },
-    ],
-  },
-  {
-    date: "Yesterday",
-    items: [
-      {
-        id: "3",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minuites ago",
-        isRead: false,
-        type: "course",
-      },
-      {
-        id: "4",
-        title: "Account approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minuites ago",
-        isRead: false,
-        type: "account",
-      },
-      {
-        id: "5",
-        title: "Congratulations! your course has been approved",
-        body: "Your account review has been approved! You can now proceed with your activities.",
-        time: "Today - 12 minuites ago",
-        isRead: false,
-        type: "account",
-      },
-    ],
-  },
-];
+/* ─── Map API notification to UI notification ─── */
+const mapApiNotification = (notif: ApiNotificationItem): NotificationItem => {
+  const date = parseISO(notif.created_datetime);
+  const isAccountType =
+    notif.metadata?.action?.includes("account") ||
+    notif.metadata?.action?.includes("kyc");
 
+  return {
+    id: notif.id,
+    title: notif.title,
+    body: notif.content,
+    time: isToday(date)
+      ? `Today - ${format(date, "h:mm a")}`
+      : isYesterday(date)
+        ? `Yesterday - ${format(date, "h:mm a")}`
+        : format(date, "MMM dd, yyyy - h:mm a"),
+    isRead: notif.is_read,
+    type: isAccountType ? "account" : "course",
+  };
+};
+
+/* ─── Notifications list ─── */
 export const NotificationsList = () => {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
-  const [groups, setGroups] = useState<NotificationGroup[]>(INITIAL_GROUPS);
+  const [toggleRead] = useToggleNotificationReadMutation();
 
-  const unreadCount = groups.flatMap((g) => g.items).filter((i) => !i.isRead).length;
+  const { data, isLoading } = useGetNotificationsQuery(
+    activeTab === "unread" ? { is_read: false } : undefined
+  );
 
-  const handleMarkRead = (id: string) => {
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((item) =>
-          item.id === id ? { ...item, isRead: true } : item
-        ),
-      }))
-    );
+  const allNotifications = useMemo(() => {
+    if (!data?.data?.results) return [];
+    return data.data.results.map(mapApiNotification);
+  }, [data]);
+
+  const unreadCount = useMemo(
+    () => allNotifications.filter((n) => !n.isRead).length,
+    [allNotifications]
+  );
+
+  const groups = useMemo(() => {
+    const grouped: Record<string, NotificationItem[]> = {};
+    allNotifications.forEach((notif) => {
+      let label = "Older";
+      if (notif.time.startsWith("Today")) label = "Today";
+      else if (notif.time.startsWith("Yesterday")) label = "Yesterday";
+
+      if (!grouped[label]) grouped[label] = [];
+      grouped[label].push(notif);
+    });
+    return Object.entries(grouped).map(([date, items]) => ({ date, items }));
+  }, [allNotifications]);
+
+  const displayedGroups = activeTab === "unread"
+    ? groups
+        .map((g) => ({ ...g, items: g.items.filter((i) => !i.isRead) }))
+        .filter((g) => g.items.length > 0)
+    : groups;
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await toggleRead({ notification_id: id, read_status: true }).unwrap();
+    } catch {
+      // error handled by RTK Query
+    }
   };
 
-  const handleMarkAllRead = () => {
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        items: g.items.map((item) => ({ ...item, isRead: true })),
-      }))
-    );
+  const handleMarkAllRead = async () => {
+    const unreadIds = allNotifications
+      .filter((n) => !n.isRead)
+      .map((n) => n.id);
+    try {
+      await Promise.all(
+        unreadIds.map((id) =>
+          toggleRead({ notification_id: id, read_status: true }).unwrap()
+        )
+      );
+    } catch {
+      // error handled by RTK Query
+    }
   };
-
-  const displayedGroups =
-    activeTab === "unread"
-      ? groups
-          .map((g) => ({ ...g, items: g.items.filter((i) => !i.isRead) }))
-          .filter((g) => g.items.length > 0)
-      : groups;
 
   return (
     <div className="w-full flex flex-col gap-[16px]">
@@ -221,7 +222,11 @@ export const NotificationsList = () => {
 
         {/* Grouped notifications */}
         <div className="flex flex-col max-w-[1020px] w-full">
-          {displayedGroups.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-[40px]">
+              <p className="text-[14px] text-[#606060]">Loading notifications...</p>
+            </div>
+          ) : displayedGroups.length > 0 ? (
             displayedGroups.map((group, idx) => (
               <React.Fragment key={group.date}>
                 {idx > 0 && <div className="h-[1px] bg-[#F0F0F0] w-full mt-[16px]" />}

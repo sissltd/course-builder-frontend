@@ -13,6 +13,11 @@ const STATUS_DISPLAY_MAP: Record<CourseStatus, StatusDisplay> = {
     text: "text-[#606060]",
   },
   [CourseStatus.SUBMITTED]: {
+    label: "Submitted",
+    bg: "bg-[#EBF3FF]",
+    text: "text-[#0063EF]",
+  },
+  [CourseStatus.IN_REVIEW]: {
     label: "In Review",
     bg: "bg-[#EBF3FF]",
     text: "text-[#0063EF]",
@@ -22,15 +27,30 @@ const STATUS_DISPLAY_MAP: Record<CourseStatus, StatusDisplay> = {
     bg: "bg-[#FFF5ED]",
     text: "text-[#F2994A]",
   },
-  [CourseStatus.REJECTED]: {
-    label: "Rejected",
-    bg: "bg-[#FFF0ED]",
-    text: "text-[#FF5025]",
+  [CourseStatus.QA_VERIFICATION]: {
+    label: "QA Verification",
+    bg: "bg-[#EBF3FF]",
+    text: "text-[#0063EF]",
   },
   [CourseStatus.APPROVED]: {
     label: "Approved",
     bg: "bg-[#EBF7EE]",
     text: "text-[#27AE60]",
+  },
+  [CourseStatus.PUBLISHED]: {
+    label: "Published",
+    bg: "bg-[#EBF7EE]",
+    text: "text-[#27AE60]",
+  },
+  [CourseStatus.ARCHIVED]: {
+    label: "Archived",
+    bg: "bg-[#F5F5F5]",
+    text: "text-[#606060]",
+  },
+  [CourseStatus.REJECTED]: {
+    label: "Rejected",
+    bg: "bg-[#FFF0ED]",
+    text: "text-[#FF5025]",
   },
 };
 

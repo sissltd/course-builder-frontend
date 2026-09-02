@@ -89,7 +89,7 @@ function PricingModalVisual() {
             <li key={row} className="flex h-[40px] items-center justify-between px-3">
               <span className="text-[14px] text-sd-grey-11">{row}</span>
               <span className="flex h-6 items-center rounded-[6px] bg-[#EAF3FF] px-1 text-[12px] leading-4 text-[#0A60E1]">
-                $25
+                ₦25
               </span>
             </li>
           ))}

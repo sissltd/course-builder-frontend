@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -23,21 +23,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { CreatorRoute } from "@/lib/routes";
 import { signOut, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
+import { useGetNotificationsQuery } from "@/redux/slices/notificationApi";
 
 interface DashboardHeaderProps {
   onToggleSidebar?: () => void;
 }
 
+function formatDateTime(date: Date): string {
+  const day = date.getDate();
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
+
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const displayName =
     user?.first_name || user?.last_name
@@ -55,6 +76,10 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
     await signOut({ callbackUrl: "/auth/login" });
   };
 
+  const { data: notificationsResponse } = useGetNotificationsQuery({ size: 5 });
+  const recentNotifications = notificationsResponse?.data?.results ?? [];
+  const unreadCount = recentNotifications.filter((n) => !n.is_read).length;
+
   return (
     <header className="h-[60px] bg-[#FDFDFD] border-b border-[#F0F0F0] flex items-center justify-between px-[12px] md:px-[19px] sticky top-0 z-30 ml-0 md:ml-[225px]">
       {/* Left: Hamburger + Date */}
@@ -67,7 +92,7 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
           <Menu variant="Linear" size={20} color="#636363" />
         </button>
         <div className="text-[16px] text-[#636363] tracking-[-0.32px] font-normal leading-[24px] hidden md:block">
-          21 August 2024, 14:00
+          {formatDateTime(now)}
         </div>
       </div>
 
@@ -110,7 +135,9 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
                 <Link href={CreatorRoute.NOTIFICATIONS} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
                   <Notification size={20} color="#606060" variant="Bold" />
                   <span>Notifications</span>
-                  <span className="ml-auto size-2 bg-red-500 rounded-full" />
+                  {unreadCount > 0 && (
+                    <span className="ml-auto size-2 bg-red-500 rounded-full" />
+                  )}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -183,10 +210,58 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
                 <SearchNormal1 size={20} color="#202020" variant="Linear" />
               </button>
             )}
-            <Link href={CreatorRoute.NOTIFICATIONS} className="relative cursor-pointer flex items-center justify-center p-1">
-              <Notification size={20} color="#202020" variant="Bold" />
-              <span className="absolute top-1 right-1 size-2 bg-red-500 rounded-full border border-white" />
-            </Link>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative cursor-pointer flex items-center justify-center p-1">
+                  <Notification size={20} color="#202020" variant="Bold" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 size-2 bg-red-500 rounded-full border border-white" />
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" sideOffset={8} className="w-[360px] p-0 rounded-[16px] border border-[#F0F0F0] shadow-lg">
+                <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[#F0F0F0]">
+                  <span className="text-[16px] font-semibold text-[#202020]">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="text-[12px] font-medium text-white bg-[#FF5025] rounded-full px-[8px] py-[2px]">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col max-h-[320px] overflow-y-auto">
+                  {recentNotifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-[32px] text-[#606060]">
+                      <Notification size={32} color="#D9D9D9" variant="Bulk" />
+                      <p className="text-[14px] mt-[8px]">No notifications yet</p>
+                    </div>
+                  ) : (
+                    recentNotifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className={`flex items-start gap-[12px] px-[16px] py-[12px] hover:bg-[#F8F8F8] transition-colors cursor-pointer ${!notif.is_read ? "bg-[#F4F9FF]" : ""}`}
+                      >
+                        <div className="size-[32px] rounded-full bg-[#EBF3FF] flex items-center justify-center shrink-0 mt-[2px]">
+                          <Notification size={16} variant="Bulk" color="#0A60E1" />
+                        </div>
+                        <div className="flex flex-col gap-[4px] min-w-0">
+                          <p className="text-[14px] font-medium text-[#202020] truncate">{notif.title}</p>
+                          <p className="text-[12px] text-[#606060] line-clamp-2">{notif.content}</p>
+                        </div>
+                        {!notif.is_read && (
+                          <span className="size-[8px] rounded-full bg-[#0A60E1] shrink-0 mt-[6px]" />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+                <Link
+                  href={CreatorRoute.NOTIFICATIONS}
+                  className="flex items-center justify-center py-[12px] border-t border-[#F0F0F0] text-[14px] font-medium text-[#0A60E1] hover:bg-[#F4F9FF] transition-colors rounded-b-[16px]"
+                >
+                  See more
+                </Link>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* User Profile Dropdown */}

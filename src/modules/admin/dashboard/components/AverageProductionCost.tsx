@@ -34,7 +34,7 @@ export const AverageProductionCost = () => {
           Average production cost
         </span>
         <span className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">
-          $1,500.94
+          ₦1,500.94
         </span>
       </div>
       <div className="absolute bottom-[24px] left-[24px] right-[24px] h-[200px]">

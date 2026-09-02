@@ -1,10 +1,18 @@
 "use client";
 
+import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { More } from "iconsax-react";
+import { More, Eye, Edit, Trash } from "iconsax-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type Course = {
+  id: string;
   title: string;
   category: string;
   qualityScore: number;
@@ -85,6 +93,53 @@ export const courseColumns: ColumnDef<Course>[] = [
   {
     id: "actions",
     header: "ACTION",
-    cell: () => <More size={24} variant="Linear" color="#606060" className="cursor-pointer" />,
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as Record<string, unknown> | undefined;
+      const course = row.original;
+
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-[#606060] hover:text-[#202020] transition-colors cursor-pointer p-[4px] hover:bg-sd-grey-2 rounded-[4px] flex items-center justify-center outline-none">
+                <More size={24} variant="Linear" color="currentColor" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-[180px] bg-white border border-[#F0F0F0] rounded-[12px] p-[8px]"
+            >
+              <DropdownMenuItem
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                onClick={() =>
+                  (meta?.onViewDetails as (c: Course) => void)?.(course)
+                }
+              >
+                <Eye size={18} variant="Linear" color="currentColor" />
+                <span>View details</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#606060] cursor-pointer hover:bg-[#F5F5F5] outline-none"
+                onClick={() =>
+                  (meta?.onEdit as (c: Course) => void)?.(course)
+                }
+              >
+                <Edit size={18} variant="Linear" color="currentColor" />
+                <span>Edit course</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-[10px] p-[8px] rounded-[8px] text-[14px] text-[#FF5025] cursor-pointer hover:bg-[#FFF0ED] focus:bg-[#FFF0ED] outline-none"
+                onClick={() =>
+                  (meta?.onDelete as (c: Course) => void)?.(course)
+                }
+              >
+                <Trash size={18} variant="Linear" color="currentColor" />
+                <span>Delete course</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

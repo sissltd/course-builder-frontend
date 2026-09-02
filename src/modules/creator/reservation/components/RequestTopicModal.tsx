@@ -7,7 +7,10 @@ import { Modal } from "@/components/shared/Modal";
 import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
-import { requestTopicSchema, RequestTopicFormData } from "../utils/schemas";
+import { requestCategorySchema, RequestCategoryFormData } from "../utils/schemas";
+import { useCreateTopicReservationMutation } from "../hooks";
+import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
+import { CategoryStatus } from "@/modules/creator/courses/types/category";
 
 interface RequestTopicModalProps {
   isOpen: boolean;
@@ -15,29 +18,31 @@ interface RequestTopicModalProps {
   onSuccess: () => void;
 }
 
-const CATEGORY_OPTIONS = [
-  { label: "Information technology", value: "Information technology" },
-  { label: "Artificial intelligence", value: "Artificial intelligence" },
-  { label: "Cloud computing", value: "Cloud computing" },
-  { label: "Cybersecurity", value: "Cybersecurity" },
-];
-
 export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTopicModalProps) => {
-  const methods = useForm<RequestTopicFormData>({
-    resolver: zodResolver(requestTopicSchema),
+  const [createReservation, { isLoading }] = useCreateTopicReservationMutation();
+  const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
+
+  const methods = useForm<RequestCategoryFormData>({
+    resolver: zodResolver(requestCategorySchema),
     defaultValues: {
-      topicTitle: "",
+      name: "",
       category: "",
     },
   });
 
-  const onSubmit = (data: RequestTopicFormData) => {
-    console.log("Request Topic Data:", data);
-    // Simulate API call
-    setTimeout(() => {
+  const categoryOptions = categoriesResponse?.data?.results?.map((cat) => ({
+    label: cat.name,
+    value: cat.id,
+  })) ?? [];
+
+  const onSubmit = async (data: RequestCategoryFormData) => {
+    try {
+      await createReservation(data).unwrap();
       onSuccess();
       methods.reset();
-    }, 1000);
+    } catch {
+      // error handled by RTK Query
+    }
   };
 
   return (
@@ -50,16 +55,17 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="flex flex-col gap-[24px]">
           <FormInput
-            name="topicTitle"
-            label="Topic Title"
-            placeholder="E.g. Introduction to Software Development"
+            name="name"
+            label="Topic Name"
+            placeholder="E.g. Fundamentals of Programming"
             required
           />
+
           <FormSelect
             name="category"
             label="Category"
-            placeholder="Select category"
-            options={CATEGORY_OPTIONS}
+            placeholder="Select a category"
+            options={categoryOptions}
             required
           />
           
@@ -76,7 +82,7 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
               type="submit"
               variant="app-primary"
               className="flex-1"
-              isLoading={methods.formState.isSubmitting}
+              isLoading={isLoading}
             >
               Request
             </Button>

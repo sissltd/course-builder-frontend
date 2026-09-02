@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { useSession } from "next-auth/react";
 import { JourneyCard } from "./components/JourneyCard";
 import { CreatorOverview } from "./components/CreatorOverview";
 import { CoursesTable } from "./components/CoursesTable";
@@ -6,13 +9,22 @@ import { TransactionsTable } from "./components/TransactionsTable";
 import { TopCreatorIcon } from "./components/icons/TopCreatorIcon";
 
 export const DashboardView = () => {
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const firstName =
+    (user?.first_name || (user?.email?.split("@")[0] ?? "there")).replace(
+      /^./,
+      (c) => c.toUpperCase(),
+    );
+
   return (
     <div className="flex flex-col gap-[24px] pb-[20px]">
       {/* Welcome Section */}
       <div className="flex items-start justify-between w-full">
         <div className="flex flex-col gap-[16px]">
           <div className="flex flex-col gap-[8px]">
-            <h1 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Welcome, emmanuel!</h1>
+            <h1 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Welcome, {firstName}!</h1>
             <p className="text-[16px] text-[#636363] leading-[24px]">Lets help you create something good today</p>
           </div>
           <div className="bg-[#FDFDFD] border border-[#C3DEF3] flex gap-[8px] items-center justify-center pl-[8px] pr-[12px] py-[8px] relative rounded-[8px] w-fit">

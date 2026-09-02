@@ -35,8 +35,8 @@ export const AnalyticsView = () => {
         <AnalyticsStatCard
           icon={<Money variant="Bold" size={20} color="#202020" />}
           label="Overall Cost"
-          value="$23.5k"
-          trend="Avg $1,455 daily"
+          value="₦23.5k"
+          trend="Avg ₦1,455 daily"
         />
       </div>
 
@@ -50,10 +50,10 @@ export const AnalyticsView = () => {
           </div>
           <div className="flex flex-col gap-[12px] w-full">
             <span className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">
-              $5,000
+              ₦5,000
             </span>
             <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px] leading-[20px]">
-              + $360 (2.3%) this month
+              + ₦360 (2.3%) this month
             </span>
           </div>
         </div>

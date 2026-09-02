@@ -6,6 +6,7 @@ import type {
   ReplaceModuleRequest,
   UpdateModuleRequest,
   ModuleListParams,
+  ReorderRequest,
 } from "../types/module";
 
 export const modulesApi = BaseAPI.injectEndpoints({
@@ -119,6 +120,59 @@ export const modulesApi = BaseAPI.injectEndpoints({
         "Module",
       ],
     }),
+
+    reorderModules: builder.mutation<
+      Module[],
+      { courseId: string; body: ReorderRequest }
+    >({
+      query: ({ courseId, body }) => ({
+        url: `/courses/${courseId}/modules/reorder/`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { courseId }) => [
+        { type: "Module", id: `list-${courseId}` },
+        "Module",
+      ],
+    }),
+
+    lockModule: builder.mutation<
+      Module,
+      { courseId: string; moduleId: string }
+    >({
+      query: ({ courseId, moduleId }) => ({
+        url: `/courses/${courseId}/modules/${moduleId}/lock/`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { courseId, moduleId }) => [
+        { type: "Module", id: `${courseId}-${moduleId}` },
+        { type: "Module", id: `list-${courseId}` },
+      ],
+    }),
+
+    unlockModule: builder.mutation<
+      Module,
+      { courseId: string; moduleId: string }
+    >({
+      query: ({ courseId, moduleId }) => ({
+        url: `/courses/${courseId}/modules/${moduleId}/unlock/`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { courseId, moduleId }) => [
+        { type: "Module", id: `${courseId}-${moduleId}` },
+        { type: "Module", id: `list-${courseId}` },
+      ],
+    }),
+
+    heartbeatModule: builder.mutation<
+      Module,
+      { courseId: string; moduleId: string }
+    >({
+      query: ({ courseId, moduleId }) => ({
+        url: `/courses/${courseId}/modules/${moduleId}/heartbeat/`,
+        method: "POST",
+      }),
+    }),
   }),
 });
 
@@ -129,4 +183,8 @@ export const {
   useReplaceModuleMutation,
   useUpdateModuleMutation,
   useDeleteModuleMutation,
+  useReorderModulesMutation,
+  useLockModuleMutation,
+  useUnlockModuleMutation,
+  useHeartbeatModuleMutation,
 } = modulesApi;

@@ -3,6 +3,7 @@
 import React from "react";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { Transaction } from "@/modules/creator/dashboard/columns/transactions";
+import { TransactionType, TransactionStatus } from "@/modules/creator/api/transactionsApi";
 import { Copy, ArrowDown } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -39,29 +40,40 @@ const InfoRow = ({ label, value, isCopyable }: { label: string; value: string; i
   );
 };
 
-const StatusChip = ({ status }: { status: string }) => {
+const statusLabel: Record<TransactionStatus, string> = {
+  [TransactionStatus.COMPLETED]: "Successful",
+  [TransactionStatus.PENDING]: "Pending",
+  [TransactionStatus.FAILED]: "Failed",
+};
+
+const typeLabel: Record<TransactionType, string> = {
+  [TransactionType.CREDIT]: "Credit",
+  [TransactionType.DEBIT]: "Withdrawal",
+};
+
+const StatusChip = ({ status }: { status: TransactionStatus }) => {
   const styles: Record<string, string> = {
-    "Successful": "bg-[#f1f8f2] text-[#3c7e44]",
-    "Pending": "bg-[#ebf3fe] text-[#0a60e1]",
-    "Failed": "bg-[#ffeceb] text-[#fc5049]",
+    [TransactionStatus.COMPLETED]: "bg-[#f1f8f2] text-[#3c7e44]",
+    [TransactionStatus.PENDING]: "bg-[#ebf3fe] text-[#0a60e1]",
+    [TransactionStatus.FAILED]: "bg-[#ffeceb] text-[#fc5049]",
   };
 
   return (
     <span className={cn("px-[12px] py-[4px] rounded-[6px] text-[14px] font-medium leading-[20px]", styles[status] || "bg-sd-grey-2 text-sd-grey-12")}>
-      {status}
+      {statusLabel[status]}
     </span>
   );
 };
 
-const TypeChip = ({ type }: { type: string }) => {
+const TypeChip = ({ type }: { type: TransactionType }) => {
   const styles: Record<string, string> = {
-    "Credit": "bg-[#EBF3FF] text-[#0063EF]",
-    "Withdrawal": "bg-[#FFF0ED] text-[#F05A25]",
+    [TransactionType.CREDIT]: "bg-[#EBF3FF] text-[#0063EF]",
+    [TransactionType.DEBIT]: "bg-[#FFF0ED] text-[#F05A25]",
   };
 
   return (
     <span className={cn("px-[12px] py-[4px] rounded-[6px] text-[14px] font-medium leading-[20px]", styles[type] || "bg-sd-grey-2 text-sd-grey-12")}>
-      {type}
+      {typeLabel[type]}
     </span>
   );
 };
@@ -72,6 +84,14 @@ export const TransactionDetailsDrawer = ({
   onOpenChange,
 }: TransactionDetailsDrawerProps) => {
   if (!transaction) return null;
+
+  const formattedDate = new Date(transaction.created_datetime).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <SideDrawer
@@ -92,7 +112,7 @@ export const TransactionDetailsDrawer = ({
         {/* Header Section */}
         <div className="flex items-center justify-between pb-[24px] border-b border-[#F0F0F0]">
           <span className="text-[28px] font-semibold text-[#202020] tracking-[-0.56px]">
-            {transaction.type === "Withdrawal" ? "-" : ""}{transaction.amount}
+            {transaction.type === TransactionType.DEBIT ? "-" : ""}\u20A6{transaction.amount}
           </span>
           <StatusChip status={transaction.status} />
         </div>
@@ -106,10 +126,10 @@ export const TransactionDetailsDrawer = ({
             <span className="text-[14px] text-[#606060] font-normal leading-[20px]">Type</span>
             <TypeChip type={transaction.type} />
           </div>
-          <InfoRow label="Approved date/time" value={transaction.date} />
+          <InfoRow label="Approved date/time" value={formattedDate} />
           <InfoRow label="Reference ID" value={transaction.reference} isCopyable />
-          <InfoRow label="Description" value={transaction.description} />
-          <InfoRow label="Fee" value="$0.00" />
+          <InfoRow label="Description" value={transaction.course?.title ?? transaction.description} />
+          <InfoRow label="Fee" value={`\u20A6${transaction.fee}`} />
         </div>
 
         {/* Divider */}
@@ -120,18 +140,16 @@ export const TransactionDetailsDrawer = ({
           <h3 className="text-[14px] font-semibold text-[#B6B6B6] tracking-[0.7px] uppercase mb-[8px]">
             RECIPIENT INFORMATION
           </h3>
-          <InfoRow label="Account name" value="Osaite Emmanuel" />
-          {transaction.type === "Withdrawal" && (
-            <InfoRow label="Account number" value="1110003893" isCopyable />
+          <InfoRow label="Account name" value={transaction.recipient_account_name || "—"} />
+          {transaction.type === TransactionType.DEBIT && (
+            <InfoRow label="Account number" value={transaction.recipient_account_number || "—"} isCopyable />
           )}
-          {transaction.type === "Withdrawal" && (
-            <InfoRow label="Bank name" value="Access Bank" />
+          {transaction.type === TransactionType.DEBIT && (
+            <InfoRow label="Bank name" value={transaction.recipient_provider_name || "—"} />
           )}
-          <InfoRow label="Account ID" value="Td4fJcvnJ88-04924945" isCopyable />
-          <InfoRow label="Reference code" value="Td4fJcvnJ88-04924945" isCopyable />
           <InfoRow 
-            label={transaction.type === "Withdrawal" ? "Payment received" : "Date received"} 
-            value={transaction.date} 
+            label={transaction.type === TransactionType.DEBIT ? "Payment received" : "Date received"} 
+            value={formattedDate} 
           />
         </div>
       </div>

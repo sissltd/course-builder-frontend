@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useForm, FormProvider } from "react-hook-form";
@@ -123,16 +123,7 @@ export default function CreateCourseView() {
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => Math.max(0, s - 1));
 
-  useEffect(() => {
-    if (step === 6) {
-      const timer = setTimeout(() => {
-        router.push(CreatorRoute.COURSES);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [step, router]);
-
-  const filteredCategories = categories.filter(c => 
+  const filteredCategories = categories.filter(c =>
     c.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 

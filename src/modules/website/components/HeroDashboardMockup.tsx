@@ -157,8 +157,8 @@ export function HeroDashboardMockup() {
             <p className="text-[15px] font-semibold leading-6 text-sd-black">Creator&apos;s overview</p>
             <div className="mt-2.5 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
-                { icon: `${ICON}/money-bold.svg`, label: "Total amount earned", value: "$456,000.03" },
-                { icon: `${ICON}/wallet-bold.svg`, label: "Wallet Balance", value: "$456,000" },
+                { icon: `${ICON}/money-bold.svg`, label: "Total amount earned", value: "₦456,000.03" },
+                { icon: `${ICON}/wallet-bold.svg`, label: "Wallet Balance", value: "₦456,000" },
                 { icon: `${ICON}/book-bold.svg`, label: "Total courses", value: "32" },
                 { icon: `${ICON}/eye-bold.svg`, label: "In review", value: "12" },
               ].map((stat) => (
@@ -311,7 +311,7 @@ export function HeroDashboardMockup() {
                       <td className="whitespace-nowrap px-4 py-3 text-[12px] text-sd-grey-11">
                         23 Mar 2026, 10:34 PM
                       </td>
-                      <td className="px-4 py-3 text-[12px] text-sd-black">$5</td>
+                      <td className="px-4 py-3 text-[12px] text-sd-black">₦5</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex h-[22px] items-center rounded-full px-2 text-[10px] ${

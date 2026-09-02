@@ -116,7 +116,10 @@ export default function BuilderView() {
     if (courseId && !/^\d+$/.test(updated.id)) {
       dispatch(syncUpdateModule({
         moduleId: updated.id,
-        body: { title: updated.title, order: modules.indexOf(updated) + 1 },
+        title: updated.title,
+        order: modules.indexOf(updated) + 1,
+        description: updated.description,
+        learningObjectives: updated.objectives,
       }));
     }
   };

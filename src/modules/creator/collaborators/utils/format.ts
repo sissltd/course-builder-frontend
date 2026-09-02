@@ -26,8 +26,10 @@ export function getAvatarColor(index: number): string {
 }
 
 export function getCollaboratorInitials(collaborator: Collaborator): string {
-  const first = collaborator.user.first_name?.[0] ?? "";
-  const last = collaborator.user.last_name?.[0] ?? "";
+  const name = collaborator.name ?? "";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "";
   return `${first}${last}`.toUpperCase() || "?";
 }
 

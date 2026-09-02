@@ -11,6 +11,7 @@ import {
   replaceLessonId,
   type Lesson,
 } from "./courseBuilderSlice";
+import { uploadFile } from "@/lib/uploads";
 import {
   apiCourseToReduxModules,
   apiCourseToCourseInfo,
@@ -94,9 +95,9 @@ export const syncCreateModule = createAsyncThunk<
 
 export const syncUpdateModule = createAsyncThunk<
   void,
-  { moduleId: string; body: UpdateModuleRequest },
+  { moduleId: string; title: string; order: number; description?: string; learningObjectives?: string[] },
   { state: RootState; dispatch: AppDispatch }
->("builderSync/syncUpdateModule", async ({ moduleId, body }, { dispatch, getState }) => {
+>("builderSync/syncUpdateModule", async ({ moduleId, title, order, description, learningObjectives }, { dispatch, getState }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
@@ -104,6 +105,12 @@ export const syncUpdateModule = createAsyncThunk<
   dispatch(setIsSaving(true));
   try {
     const token = getToken(state);
+    const body: UpdateModuleRequest = {
+      title,
+      order,
+      description: description || "",
+      learning_objectives: learningObjectives?.join(", ") || "",
+    };
     await fetchJson(`/courses/${courseId}/modules/${moduleId}/`, token, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -322,7 +329,7 @@ export const syncUpdateCourseInfo = createAsyncThunk<
       description: info.description,
       category: info.category,
       topic: info.topic || null,
-      difficulty_level: info.difficulty,
+      difficulty_level: info.difficulty ? info.difficulty.toUpperCase() : "",
       learning_objectives: info.objectives,
       tags: info.tags,
       duration_hours: info.hours,
@@ -360,6 +367,29 @@ export const syncSetThumbnail = createAsyncThunk<
     await fetchJson(`/courses/${courseId}/thumbnail/`, token, {
       method: "POST",
       body: JSON.stringify(body),
+    });
+    dispatch(markSaved());
+  } catch {
+    dispatch(setIsSaving(false));
+  }
+});
+
+export const syncSetCoverVideo = createAsyncThunk<
+  void,
+  File,
+  { state: RootState; dispatch: AppDispatch }
+>("builderSync/syncSetCoverVideo", async (file, { dispatch, getState }) => {
+  const state = getState();
+  const courseId = state.courseBuilder.courseId;
+  if (!courseId) return;
+
+  dispatch(setIsSaving(true));
+  try {
+    const token = getToken(state);
+    const presigned = await uploadFile(file, {}, token);
+    await fetchJson(`/courses/${courseId}/`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ preview_video_url: presigned.file_url }),
     });
     dispatch(markSaved());
   } catch {
@@ -414,9 +444,18 @@ export const saveAllDirty = createAsyncThunk<
         await dispatch(
           syncUpdateModule({
             moduleId: mod.id,
-            body: { title: mod.title, order: state.courseBuilder.modules.indexOf(mod) + 1 },
+            title: mod.title,
+            order: state.courseBuilder.modules.indexOf(mod) + 1,
+            description: mod.description,
+            learningObjectives: mod.objectives,
           }),
         ).unwrap();
+
+        if (mod.quizQuestions.length > 0) {
+          await dispatch(
+            syncSaveModuleAssessment({ moduleId: mod.id, moduleTitle: mod.title }),
+          ).unwrap();
+        }
       }
 
       for (const lesson of mod.lessons) {
@@ -424,6 +463,16 @@ export const saveAllDirty = createAsyncThunk<
           await dispatch(
             syncUpdateLesson({ moduleId: mod.id, lessonId: lesson.id, lesson }),
           ).unwrap();
+
+          if (lesson.quizQuestions && lesson.quizQuestions.length > 0) {
+            await dispatch(
+              syncSaveLessonAssessment({
+                moduleId: mod.id,
+                lessonId: lesson.id,
+                lessonTitle: lesson.title,
+              }),
+            ).unwrap();
+          }
         }
       }
     }

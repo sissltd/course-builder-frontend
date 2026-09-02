@@ -729,61 +729,61 @@ const ReviewPricesModal = ({
     SoluDesk: {
       channelTitle: "Channel A (SoluDesks LMS)",
       approvalRate: "Approval Rate: Published within 60 seconds",
-      inputDefault: "$149.00",
-      suggestionText: "MIE Suggestion: $140",
+      inputDefault: "₦149.00",
+      suggestionText: "MIE Suggestion: ₦140",
       showInfoBox: true,
       feesTitle: "COURSE FEES",
       fees: [
-        { label: "Learner fee", value: "$149.00" },
-        { label: "Creator payout (Fixed)", value: "$150.00" },
-        { label: "Platform revenue per enrolment", value: "$149.00" },
+        { label: "Learner fee", value: "₦149.00" },
+        { label: "Creator payout (Fixed)", value: "₦150.00" },
+        { label: "Platform revenue per enrolment", value: "₦149.00" },
         { label: "Model", value: "One-time purchase" }
       ],
       comparableTitle: "RELATED COURSES",
       relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "$150" },
-        { name: "Introduction to computing", level: "Advanced", price: "$190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "$160" }
+        { name: "Modern computing language", level: "Beginner", price: "₦150" },
+        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
       ]
     },
     Coursera: {
       channelTitle: "Channel C (Coursera Marketplace)",
       approvalRate: "Approval Rate: Published within 10 - 15 minuites",
-      inputDefault: "$0.00",
-      suggestionText: "MIE Suggestion: $100",
+      inputDefault: "₦0.00",
+      suggestionText: "MIE Suggestion: ₦100",
       showInfoBox: false,
       feesTitle: "COURSE FEES ON COURSERA",
       fees: [
         { label: "Course fee", value: "32% of net revenue" },
-        { label: "Promotional pricing", value: "$150.00" },
-        { label: "Platform revenue per enrolment", value: "$149.00" },
+        { label: "Promotional pricing", value: "₦150.00" },
+        { label: "Platform revenue per enrolment", value: "₦149.00" },
         { label: "Model", value: "One-time purchase" }
       ],
       comparableTitle: "COMPARABLE COURSES ON COURSERA",
       relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "$100" },
-        { name: "Introduction to computing", level: "Advanced", price: "$190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "$160" }
+        { name: "Modern computing language", level: "Beginner", price: "₦100" },
+        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
       ]
     },
     Udemy: {
       channelTitle: "Channel B (Udemy Marketplace)",
       approvalRate: "Approval Rate: Published within 10 - 15 minuites",
-      inputDefault: "$0.00",
-      suggestionText: "MIE Suggestion: $100",
+      inputDefault: "₦0.00",
+      suggestionText: "MIE Suggestion: ₦100",
       showInfoBox: false,
       feesTitle: "COURSE FEES ON UDEMY",
       fees: [
         { label: "Course fee", value: "32% of net revenue" },
-        { label: "Promotional pricing", value: "$150.00" },
-        { label: "Platform revenue per enrolment", value: "$149.00" },
+        { label: "Promotional pricing", value: "₦150.00" },
+        { label: "Platform revenue per enrolment", value: "₦149.00" },
         { label: "Model", value: "One-time purchase" }
       ],
       comparableTitle: "COMPARABLE COURSES ON UDEMY",
       relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "$100" },
-        { name: "Introduction to computing", level: "Advanced", price: "$190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "$160" }
+        { name: "Modern computing language", level: "Beginner", price: "₦100" },
+        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
       ]
     }
   };
@@ -900,10 +900,10 @@ const ReviewPricesModal = ({
                 <span className="text-[12px] font-bold">!</span>
               </div>
               <p className="text-[12px] font-normal leading-[16px] text-[#4B5563]">
-                <span className="font-bold text-sd-grey-12">$149</span> is the MIE-suggested
+                <span className="font-bold text-sd-grey-12">₦149</span> is the MIE-suggested
                 price based on competitor analysis across Udemy and Coursera. Advanced
                 leadership courses in this price range average 890 enrollments on the SoluDesks
-                LMS. Pricing above $159 is associated with a measurable drop in conversion rate
+                LMS. Pricing above ₦159 is associated with a measurable drop in conversion rate
                 for this category.
               </p>
             </div>
@@ -1023,7 +1023,7 @@ const ReviewAndPublishModal = ({
             ) : (
               activeChannelNames.map((channel) => {
                 // Hardcoded prices for demonstration matching the design
-                const price = channel === 'SoluDesk' ? '$100' : channel === 'Udemy' ? '$190' : '$160';
+                const price = channel === 'SoluDesk' ? '₦100' : channel === 'Udemy' ? '₦190' : '₦160';
                 
                 return (
                   <div key={channel} className="flex items-center justify-between border-b border-[#F0F0F0] py-[16px] last:border-b-0">

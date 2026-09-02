@@ -3,13 +3,17 @@ export enum CollaboratorRole {
   COLLABORATOR = "COLLABORATOR",
 }
 
-export interface CollaboratorUser {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  country: string;
-  sex: string;
+export enum InviteStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  DECLINED = "DECLINED",
+  REVOKED = "REVOKED",
+}
+
+export enum WorkspaceCollaboratorRole {
+  ADMIN = "ADMIN",
+  AUTHOR = "AUTHOR",
+  COLLABORATOR = "COLLABORATOR",
 }
 
 export interface CollaboratorModule {
@@ -18,19 +22,35 @@ export interface CollaboratorModule {
   order: number;
 }
 
-export interface Collaborator {
+export interface CollaboratorCategory {
   id: string;
-  user: CollaboratorUser;
-  role: CollaboratorRole;
-  assigned_modules: CollaboratorModule[];
-  created_datetime: string;
+  name: string;
 }
 
-export interface InviteCollaboratorRequest {
-  course_id: string;
+export interface Collaborator {
+  id: string;
+  name: string;
   email: string;
+  country_of_origin: string;
+  date_added: string;
+  role: CollaboratorRole;
+  role_label: string;
+  course_id: string;
+  course_title: string;
+  category: CollaboratorCategory;
+  assigned_modules: CollaboratorModule[];
+}
+
+export interface CollaboratorsListParams {
+  course_id?: string;
   role?: CollaboratorRole;
-  assigned_modules?: string[];
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  category?: string;
+  ordering?: string;
+  page?: number;
+  size?: number;
 }
 
 export interface UpdateCollaboratorRequest {
@@ -38,8 +58,62 @@ export interface UpdateCollaboratorRequest {
   assigned_modules?: string[];
 }
 
-export interface CollaboratorsListParams {
+export interface CourseInvite {
+  id: string;
+  course: string;
+  email: string;
+  invitee: Record<string, string> | null;
+  role: CollaboratorRole;
+  assigned_modules: CollaboratorModule[];
+  status: InviteStatus;
+  is_expired: boolean;
+  expires_at: string;
+  responded_at: string | null;
+  created_datetime: string;
+}
+
+export interface CreateInviteRequest {
   course_id: string;
+  email: string;
+  role?: CollaboratorRole;
+  assigned_modules?: string[];
+}
+
+export interface CourseInvitesListParams {
+  course_id: string;
+  ordering?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface WorkspaceCollaborator {
+  id: string;
+  owner: string;
+  user: string | null;
+  invited_email: string;
+  role: WorkspaceCollaboratorRole;
+  sex: string | null;
+  country_of_origin: string | null;
+  status: InviteStatus;
+  removed_at: string | null;
+  created_datetime: string;
+}
+
+export interface CreateWorkspaceCollaboratorRequest {
+  invited_email: string;
+  role: WorkspaceCollaboratorRole;
+  sex?: string;
+  country_of_origin?: string;
+}
+
+export interface UpdateWorkspaceCollaboratorRequest {
+  invited_email?: string;
+  role?: WorkspaceCollaboratorRole;
+  sex?: string;
+  country_of_origin?: string;
+}
+
+export interface WorkspaceCollaboratorsListParams {
   ordering?: string;
   page?: number;
   size?: number;
