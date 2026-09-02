@@ -8,7 +8,8 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { TickCircle } from "iconsax-react";
 import { StaffRole } from "@/modules/admin/teams/types";
-import { useInviteStaffMutation, InviteStaffPayload } from "@/redux/slices/adminApi";
+import { useInviteStaffMutation } from "@/modules/admin/teams/api/staffApi";
+import type { InviteStaffRequest as InviteStaffPayload } from "@/modules/admin/teams/types";
 import { toast } from "sonner";
 
 interface AddStaffModalProps {

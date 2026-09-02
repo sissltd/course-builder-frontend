@@ -39,6 +39,7 @@ export enum AdminRoute {
   SETTINGS = "/admin/settings",
   COURSE_OVERVIEW = "/admin/course-overview",
   KYC_REVIEW = "/admin/kyc-review",
+  WALLETS = "/admin/wallets",
 }
 
 export enum CreatorRoute {
