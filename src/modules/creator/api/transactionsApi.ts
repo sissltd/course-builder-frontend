@@ -43,19 +43,28 @@ export interface WalletTransactionListParams {
   size?: number;
 }
 
-interface WalletTransactionInnerResponse {
+export interface WalletTransactionListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: PaginatedPaginator;
+    results: WalletTransaction[];
+  };
+}
+
+interface RawWalletTransactionInnerResponse {
   success: boolean;
   status: number;
   message: string;
   data: WalletTransaction[];
 }
 
-export interface WalletTransactionListResponse {
+interface RawWalletTransactionListResponse {
   status: boolean;
   message: string;
   data: {
     paginator: PaginatedPaginator;
-    results: WalletTransactionInnerResponse[];
+    results: RawWalletTransactionInnerResponse[];
   };
 }
 
@@ -70,7 +79,7 @@ export const transactionsApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || {},
       }),
-      transformResponse: (response: WalletTransactionListResponse) => ({
+      transformResponse: (response: RawWalletTransactionListResponse) => ({
         ...response,
         data: {
           ...response.data,

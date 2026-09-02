@@ -2,24 +2,20 @@
 
 import React, { useState } from "react";
 import { BaseTable } from "@/components/shared/BaseTable";
-import { transactionColumns, Transaction } from "@/modules/creator/dashboard/columns/transactions";
+import { transactionColumns } from "@/modules/creator/dashboard/columns/transactions";
+import type { WalletTransaction } from "@/modules/creator/api/transactionsApi";
 import { Sort } from "iconsax-react";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
-
-const walletTransactions: Transaction[] = [
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Fundamentals of programming", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Pending", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Version Control and Collaboration", date: "23 Mar 2026, 10:34 PM", amount: "$500", status: "Successful", type: "Withdrawal" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Successful", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Failed", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Failed", type: "Credit" },
-  { reference: "EARSF4FCkeeEqgB5n...", description: "Deployment and Maintenance Strategies", date: "23 Mar 2026, 10:34 PM", amount: "$5", status: "Successful", type: "Credit" },
-];
+import { useGetWalletTransactionsQuery } from "@/modules/creator/hooks";
 
 export const WalletTransactionsTable = () => {
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<WalletTransaction | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleRowClick = (transaction: Transaction) => {
+  const { data: transactionsResponse } = useGetWalletTransactionsQuery();
+  const walletTransactions = transactionsResponse?.data?.results ?? [];
+
+  const handleRowClick = (transaction: WalletTransaction) => {
     setSelectedTransaction(transaction);
     setIsDrawerOpen(true);
   };

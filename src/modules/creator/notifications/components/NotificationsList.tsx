@@ -117,31 +117,6 @@ const mapApiNotification = (notif: ApiNotificationItem): NotificationItem => {
   };
 };
 
-/* ─── Group notifications by date ─── */
-const groupNotifications = (notifications: NotificationItem[]): NotificationGroup[] => {
-  const groups: Record<string, NotificationItem[]> = {};
-
-  notifications.forEach((notif) => {
-    const date = parseISO(notif.id ? "" : "");
-    let label = "Older";
-
-    try {
-      const parsed = notifications.length > 0 ? null : null;
-      // Use the time string to determine group
-      if (notif.time.startsWith("Today")) label = "Today";
-      else if (notif.time.startsWith("Yesterday")) label = "Yesterday";
-      else label = "Older";
-    } catch {
-      label = "Older";
-    }
-
-    if (!groups[label]) groups[label] = [];
-    groups[label].push(notif);
-  });
-
-  return Object.entries(groups).map(([date, items]) => ({ date, items }));
-};
-
 /* ─── Notifications list ─── */
 export const NotificationsList = () => {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
