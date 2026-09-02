@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { 
   Trash, 
   Add, 
@@ -16,6 +16,8 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
+import { syncSetCoverVideo } from "@/redux/slices/builderSync";
+import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
 import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
 import { CategoryStatus } from "@/modules/creator/courses/types/category";
@@ -28,12 +30,13 @@ interface CourseInformationProps {
 export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) => {
   const dispatch = useAppDispatch();
   const info = useAppSelector((state) => state.courseBuilder.courseInformation);
+  const { updateAndSave } = useDebouncedCourseSave();
   const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
   const categories = categoriesResponse?.data?.results || [];
 
   // Main form
   const methods = useForm<CourseInformationFormData>({
-    resolver: zodResolver(courseInformationSchema),
+    resolver: zodResolver(courseInformationSchema) as never,
     mode: "onBlur",
     values: {
       courseTitle: info.courseTitle,
@@ -50,7 +53,14 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   const { handleSubmit, watch, setValue, formState: { errors } } = methods;
   const description = watch("description");
+  const watchedDifficulty = watch("difficulty");
   const wordCount = description?.trim() === "" ? 0 : (description?.trim()?.split(/\s+/).length ?? 0);
+
+  useEffect(() => {
+    if (watchedDifficulty && watchedDifficulty !== info.difficulty) {
+      updateAndSave({ difficulty: watchedDifficulty });
+    }
+  }, [watchedDifficulty, info.difficulty, updateAndSave]);
 
   // Objectives states
   const [objectives, setObjectives] = useState<string[]>(info.objectives);
@@ -76,6 +86,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
       const updated = [...objectives, newObjective.trim()];
       setObjectives(updated);
       setValue("objectives", updated, { shouldValidate: true });
+      updateAndSave({ objectives: updated });
       setNewObjective("");
       setIsAddingObjective(false);
     }
@@ -87,6 +98,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
       updated[index] = editingObjectiveValue.trim();
       setObjectives(updated);
       setValue("objectives", updated, { shouldValidate: true });
+      updateAndSave({ objectives: updated });
       setEditingObjectiveIndex(null);
       setEditingObjectiveValue("");
     }
@@ -96,6 +108,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
     const updated = objectives.filter((_, i) => i !== index);
     setObjectives(updated);
     setValue("objectives", updated, { shouldValidate: true });
+    updateAndSave({ objectives: updated });
   };
 
   // Tag Handlers
@@ -104,6 +117,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
       const updated = [...tags, newTag.trim()];
       setTags(updated);
       setValue("tags", updated, { shouldValidate: true });
+      updateAndSave({ tags: updated });
       setNewTag("");
       setIsAddingTag(false);
     }
@@ -113,6 +127,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
     const updated = tags.filter((_, i) => i !== index);
     setTags(updated);
     setValue("tags", updated, { shouldValidate: true });
+    updateAndSave({ tags: updated });
   };
 
   // Video Handlers
@@ -164,6 +179,9 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
           ? { name: savedVideoName, size: savedVideoSize || 0, type: "" }
           : null,
     }));
+    if (videoFile) {
+      dispatch(syncSetCoverVideo(videoFile));
+    }
     onNext?.();
   };
 
@@ -270,6 +288,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                           <Button 
                             variant="app-outline"
                             isGhost
+                            type="button"
                             onClick={() => handleSaveEditObjective(i)}
                           >
                             Save
@@ -277,6 +296,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                           <Button 
                             variant="app-outline"
                             isGhost
+                            type="button"
                             onClick={() => setEditingObjectiveIndex(null)}
                           >
                             Cancel
@@ -297,6 +317,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                           <Button 
                             variant="app-outline"
                             isGhost
+                            type="button"
                             onClick={() => {
                               setEditingObjectiveIndex(i);
                               setEditingObjectiveValue(obj);
@@ -307,6 +328,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                           <Button 
                             variant="app-outline"
                             isGhost
+                            type="button"
                             onClick={() => handleRemoveObjective(i)}
                           >
                             <Trash size={20} variant="Linear" color="#FF6B00" />
@@ -338,6 +360,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                       <Button 
                         variant="app-outline"
                         isGhost
+                        type="button"
                         onClick={handleAddObjective}
                       >
                         Save
@@ -345,6 +368,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                       <Button 
                         variant="app-outline"
                         isGhost
+                        type="button"
                         onClick={() => {
                           setIsAddingObjective(false);
                           setNewObjective("");
@@ -358,6 +382,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                   <Button 
                     variant="app-outline"
                     isGhost
+                    type="button"
                     onClick={() => setIsAddingObjective(true)}
                     leftIcon={<Add size={24} variant="Linear" color="#202020" />}
                     className="self-start mt-[6px]"
@@ -390,6 +415,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                       <Button 
                         variant="app-outline"
                         isGhost
+                        type="button"
                         onClick={handleAddObjective}
                       >
                         Save
@@ -397,6 +423,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                       <Button 
                         variant="app-outline"
                         isGhost
+                        type="button"
                         onClick={() => {
                           setIsAddingObjective(false);
                           setNewObjective("");
@@ -410,6 +437,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                   <Button 
                     variant="app-outline"
                     isGhost
+                    type="button"
                     onClick={() => setIsAddingObjective(true)}
                     leftIcon={<Add size={24} variant="Linear" color="#202020" />}
                     className="self-start"
@@ -442,6 +470,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
               <div key={i} className="h-[32px] flex items-center gap-[6px] bg-transparent">
                 <span className="text-[14px] text-black tracking-[-0.28px] font-medium">{tag}</span>
                 <button 
+                  type="button"
                   onClick={() => handleRemoveTag(i)}
                   className="text-black hover:text-[#FF6B00] transition-colors text-[14px] font-light px-[2px]"
                 >
@@ -467,6 +496,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                   autoFocus
                 />
                 <button 
+                  type="button"
                   onClick={handleAddTag} 
                   className="text-[#0A60E1] font-semibold hover:text-[#0051C8] text-[14px]"
                 >
@@ -477,6 +507,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
               <Button 
                 variant="app-outline"
                 isGhost
+                type="button"
                 onClick={() => setIsAddingTag(true)}
                 rightIcon={<Add size={18} variant="Linear" color="#606060" />}
                 className="h-[32px] px-[12px] rounded-full"
@@ -567,12 +598,14 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                   <div className="flex items-center gap-[12px]">
                     <Button 
                       variant="app-outline"
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       Change video
                     </Button>
                     <Button 
                       variant="app-outline"
+                      type="button"
                       onClick={() => {
                         setVideoFile(null);
                         setSavedVideoName(null);
@@ -585,7 +618,11 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 </div>
               ) : (
                 <div 
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                   className="flex flex-col items-center gap-[20px] w-[330px] cursor-pointer"
                 >
                   <div className="size-[60px] rounded-full bg-[#FAFAFA] flex items-center justify-center">
@@ -601,6 +638,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                   </div>
                   <Button 
                     variant="app-outline"
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       fileInputRef.current?.click();
@@ -618,6 +656,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
         <div className="flex items-center justify-between w-full pt-[24px]">
           <Button 
             variant="app-outline"
+            type="button"
             onClick={onBack}
             leftIcon={<ArrowLeft2 size={24} variant="Linear" color="#0A60E1" />}
           >

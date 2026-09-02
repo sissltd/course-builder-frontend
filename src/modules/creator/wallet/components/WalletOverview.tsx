@@ -13,7 +13,7 @@ export const WalletOverview = () => {
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value) || 0;
-    return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u20A6${num.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (

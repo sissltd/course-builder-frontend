@@ -246,6 +246,7 @@ export const BaseAPI = createApi({
     "PayoutAccount",
     "UserProfile",
     "OnboardingProfile",
+    "NotificationPreferences",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

@@ -24,7 +24,7 @@ const publishedCourses: PublishedCourse[] = Array.from({ length: 15 }, () => ({
   creator: "Osaite Emmanuel",
   courseId: "SLD-e4...3d5",
   category: "Software Engineering",
-  price: "$120.00",
+  price: "₦120.00",
   channel: "Soludesk, Udemy & Coursera",
   approvedBy: "Osaite Emmanuel",
 }));
@@ -391,7 +391,7 @@ const PublishedCourseInfoDrawer = ({
               </div>
               <div className="flex flex-col gap-[4px]">
                 <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">SoluDesk</span>
-                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">$250.98</span>
+                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">₦250.98</span>
               </div>
             </div>
 
@@ -402,7 +402,7 @@ const PublishedCourseInfoDrawer = ({
               </div>
               <div className="flex flex-col gap-[4px]">
                 <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">Coursera Marketplace</span>
-                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">$250.00</span>
+                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">₦250.00</span>
               </div>
             </div>
 
@@ -413,7 +413,7 @@ const PublishedCourseInfoDrawer = ({
               </div>
               <div className="flex flex-col gap-[4px]">
                 <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">Udemy Marketplace</span>
-                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">$250.00</span>
+                <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12">₦250.00</span>
               </div>
             </div>
           </div>

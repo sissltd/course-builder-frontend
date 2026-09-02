@@ -141,6 +141,7 @@ export const apiCourseToCourseInfo = (
     minutes,
     seconds,
     coverVideo: null,
+    coverVideoUrl: course.preview_video_url || "",
     thumbnail: course.thumbnail_url || "",
   };
 };

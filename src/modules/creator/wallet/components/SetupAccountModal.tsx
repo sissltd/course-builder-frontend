@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
 import { TickCircle } from "iconsax-react";
+import {
+  useGetBanksQuery,
+  useVerifyBankAccountMutation,
+  useCreatePayoutAccountMutation,
+} from "@/modules/creator/hooks";
+import { toast } from "sonner";
 
 interface SetupAccountModalProps {
   isOpen: boolean;
@@ -16,22 +22,78 @@ type Step = "form" | "success";
 
 export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalProps) => {
   const [step, setStep] = useState<Step>("form");
-  const [provider, setProvider] = useState("");
+  const [selectedBankCode, setSelectedBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [accountName, setAccountName] = useState("");
+  const [verifiedName, setVerifiedName] = useState("");
+  const verifyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verifiedKeyRef = useRef("");
 
-  const handleSave = (e: React.FormEvent) => {
+  const { data: banks = [] } = useGetBanksQuery();
+  const [verifyAccount, { isLoading: isVerifying }] = useVerifyBankAccountMutation();
+  const [createAccount, { isLoading: isCreating }] = useCreatePayoutAccountMutation();
+
+  const bankOptions = banks.map((b) => ({ label: b.name, value: b.code }));
+
+  useEffect(() => {
+    return () => {
+      if (verifyTimeoutRef.current) clearTimeout(verifyTimeoutRef.current);
+    };
+  }, []);
+
+  const runVerification = useCallback(
+    async (bankCode: string, accNumber: string) => {
+      try {
+        const result = await verifyAccount({
+          bank_code: bankCode,
+          account_number: accNumber,
+        }).unwrap();
+        verifiedKeyRef.current = `${bankCode}-${accNumber}`;
+        setVerifiedName(result.account_name);
+      } catch {
+        verifiedKeyRef.current = "";
+        setVerifiedName("");
+        toast.error("Could not verify account. Check bank and account number.");
+      }
+    },
+    [verifyAccount],
+  );
+
+  useEffect(() => {
+    if (verifyTimeoutRef.current) clearTimeout(verifyTimeoutRef.current);
+
+    if (selectedBankCode && accountNumber.length === 10) {
+      verifyTimeoutRef.current = setTimeout(() => {
+        runVerification(selectedBankCode, accountNumber);
+      }, 500);
+    }
+  }, [selectedBankCode, accountNumber, runVerification]);
+
+  const currentKey = `${selectedBankCode}-${accountNumber}`;
+  const accountName = currentKey === verifiedKeyRef.current ? verifiedName : "";
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (provider && accountNumber && accountName) {
+    if (!selectedBankCode || !accountNumber || !accountName) return;
+    try {
+      await createAccount({
+        account_name: accountName,
+        account_number: accountNumber,
+        bank_code: selectedBankCode,
+        account_type: "Local Account",
+        is_default: false,
+      }).unwrap();
       setStep("success");
+    } catch {
+      toast.error("Failed to add account. Please try again.");
     }
   };
 
   const handleClose = () => {
     setStep("form");
-    setProvider("");
+    setSelectedBankCode("");
     setAccountNumber("");
-    setAccountName("");
+    setVerifiedName("");
+    verifiedKeyRef.current = "";
     onOpenChange(false);
   };
 
@@ -41,23 +103,21 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
         <Modal
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-          title="Add mobile account"
-          description="Add your mobile account information"
+          title="Add bank account"
+          description="Add your bank account information"
         >
           <form onSubmit={handleSave} className="flex flex-col gap-[20px] pt-[10px]">
             <FormSelect
               name="provider"
-              label="Select provider"
-              placeholder="Select provider"
-              value={provider}
-              onValueChange={setProvider}
+              label="Select bank"
+              placeholder="Select bank"
+              searchable
+              searchPlaceholder="Search banks..."
+              emptyText="No banks found"
+              value={selectedBankCode}
+              onValueChange={setSelectedBankCode}
+              options={bankOptions}
               required
-              options={[
-                { label: "Access Bank", value: "Access Bank" },
-                { label: "Guaranty Trust Bank", value: "GTBank" },
-                { label: "Zenith Bank", value: "Zenith Bank" },
-                { label: "United Bank for Africa", value: "UBA" },
-              ]}
             />
 
             <div className="flex flex-col gap-[4px]">
@@ -65,21 +125,18 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
                 label="Account number"
                 placeholder="1234567890"
                 value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
+                onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 required
                 name="accountNumber"
+                hint={isVerifying ? "Verifying account..." : "Enter 10-digit account number"}
               />
-              <span className="text-[12px] text-sd-grey-11 font-medium leading-[16px]">
-                This process is automatic
-              </span>
             </div>
 
             <FormInput
               label="Account name"
               placeholder="Account name"
               value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              required
+              readOnly
               name="accountName"
             />
 
@@ -96,7 +153,8 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
                 type="submit"
                 variant="app-primary"
                 className="flex-1 h-[44px]"
-                disabled={!provider || !accountNumber || !accountName}
+                disabled={!selectedBankCode || !accountNumber || !accountName || isVerifying || isCreating}
+                isLoading={isCreating}
               >
                 Save account
               </Button>

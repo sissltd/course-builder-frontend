@@ -111,3 +111,70 @@ export interface ChangePasswordRequest {
   current_password: string;
   new_password: string;
 }
+
+export interface ProfileCategory {
+  id: string;
+  name: string;
+}
+
+export interface UserProfile extends User {
+  full_name: string;
+  member_since: string;
+  is_verified: boolean;
+  badges: string[];
+  category: ProfileCategory | null;
+}
+
+export interface UpdateProfileRequest {
+  first_name?: string;
+  last_name?: string;
+  timezone?: string;
+  avatar_url?: string;
+  phone_number?: string;
+  country?: string;
+  state?: string;
+  address?: string;
+  category?: string;
+}
+
+export interface OnboardingProfile {
+  id: string;
+  primary_expertise_category: string | null;
+  primary_expertise_area: string | null;
+  primary_expertise_other: string | null;
+  video_comfort_level: string | null;
+  monthly_course_capacity: string | null;
+  agreement_accepted_at: string | null;
+  onboarding_completed_at: string | null;
+  has_completed_onboarding: boolean;
+}
+
+export interface UpdateOnboardingRequest {
+  category_id?: string;
+  expertise_area?: string;
+  other_expertise?: string;
+  video_comfort_level?: string;
+  monthly_course_capacity?: string;
+  agreement_accepted?: boolean;
+}
+
+export interface NotificationPreferences {
+  id: string;
+  new_course_assigned: boolean;
+  escalation_assigned: boolean;
+  creator_feedback: boolean;
+  sla_amber_warning: boolean;
+  sla_red_critical_alert: boolean;
+  sla_breached: boolean;
+  kyc_submission_alert: boolean;
+  account_deletion_detection_alert: boolean;
+  mie_recommendation_alert: boolean;
+  mie_pipeline_alert: boolean;
+  in_app_enabled: boolean;
+  sla_amber_threshold_hours_override: number;
+  sla_red_threshold_hours_override: number;
+}
+
+export type UpdateNotificationPreferencesRequest = Partial<
+  Omit<NotificationPreferences, "id">
+>;

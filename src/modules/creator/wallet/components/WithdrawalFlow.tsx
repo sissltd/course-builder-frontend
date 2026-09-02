@@ -78,7 +78,7 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value) || 0;
-    return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u20A6${num.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -93,7 +93,7 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
           <div className="flex flex-col gap-[20px]">
             <FormInput
               label="Enter amount"
-              placeholder="$0.00"
+              placeholder="₦0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               name="withdrawalAmount"
@@ -175,7 +175,7 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="text-[14px] font-medium text-[#202020]">{account.account_name}</span>
-                                <span className="text-[12px] text-[#606060]">{account.provider} - {account.account_number}</span>
+                                <span className="text-[12px] text-[#606060]">{account.bank_name} - {account.account_number}</span>
                             </div>
                         </div>
                         {account.is_default && (

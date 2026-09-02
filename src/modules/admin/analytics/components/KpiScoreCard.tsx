@@ -8,7 +8,7 @@ const kpiRow1 = [
 ];
 
 const kpiRow2 = [
-  { label: "Cost Per Course", value: "$5.45", target: "Target: > $5.00", valueClass: "text-[#FF5025]" },
+  { label: "Cost Per Course", value: "₦5.45", target: "Target: > ₦5.00", valueClass: "text-[#FF5025]" },
   { label: "Review Turnaround", value: "34hr", target: "Target: 48hr", valueClass: "" },
   { label: "System Uptime", value: "99.91%", target: "Target: 99.9%", valueClass: "" },
 ];

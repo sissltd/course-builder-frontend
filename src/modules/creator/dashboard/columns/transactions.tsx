@@ -71,7 +71,7 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
     accessorKey: "amount",
     header: "AMOUNT",
     cell: ({ row }) => (
-      <span>${row.original.amount}</span>
+      <span>₦{row.original.amount}</span>
     ),
   },
   {

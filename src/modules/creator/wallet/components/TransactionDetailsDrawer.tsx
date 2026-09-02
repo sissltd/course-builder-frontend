@@ -112,7 +112,7 @@ export const TransactionDetailsDrawer = ({
         {/* Header Section */}
         <div className="flex items-center justify-between pb-[24px] border-b border-[#F0F0F0]">
           <span className="text-[28px] font-semibold text-[#202020] tracking-[-0.56px]">
-            {transaction.type === TransactionType.DEBIT ? "-" : ""}${transaction.amount}
+            {transaction.type === TransactionType.DEBIT ? "-" : ""}\u20A6{transaction.amount}
           </span>
           <StatusChip status={transaction.status} />
         </div>
@@ -129,7 +129,7 @@ export const TransactionDetailsDrawer = ({
           <InfoRow label="Approved date/time" value={formattedDate} />
           <InfoRow label="Reference ID" value={transaction.reference} isCopyable />
           <InfoRow label="Description" value={transaction.course?.title ?? transaction.description} />
-          <InfoRow label="Fee" value={`$${transaction.fee}`} />
+          <InfoRow label="Fee" value={`\u20A6${transaction.fee}`} />
         </div>
 
         {/* Divider */}

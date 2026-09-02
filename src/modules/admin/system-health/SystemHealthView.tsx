@@ -112,7 +112,7 @@ export const SystemHealthView = () => {
         <AdminStatCard
           icon={<Money variant="Bold" size={20} color="#202020" />}
           label="MTTR"
-          value="$1,500"
+          value="₦1,500"
           trend="4hr Recover Time"
         />
       </div>

@@ -40,17 +40,17 @@ const tabs: TabBarItem[] = [
 ];
 
 const categoryRows: CategoryRow[] = [
-  { id: "1", category: "Software Engineering", track: "open", beginnerPrice: "Beg $300", intermediatePrice: "Int $400", advancedPrice: "Adv $500", totalCourses: 23, createdAt: "15 May 2026, 03:40PM", createdDate: "2026-05-15" },
-  { id: "2", category: "Product Design", track: "creator-preferred", beginnerPrice: "Beg $260", intermediatePrice: "Int $360", advancedPrice: "Adv $460", totalCourses: 18, createdAt: "15 May 2026, 03:40PM", createdDate: "2026-05-15" },
-  { id: "3", category: "Data Analysis", track: "ai-preferred", beginnerPrice: "Beg $320", intermediatePrice: "Int $420", advancedPrice: "Adv $520", totalCourses: 16, createdAt: "16 May 2026, 09:25AM", createdDate: "2026-05-16" },
-  { id: "4", category: "Cyber Security", track: "creator-preferred", beginnerPrice: "Beg $290", intermediatePrice: "Int $390", advancedPrice: "Adv $490", totalCourses: 14, createdAt: "17 May 2026, 12:10PM", createdDate: "2026-05-17" },
-  { id: "5", category: "Mobile Development", track: "creator-preferred", beginnerPrice: "Beg $310", intermediatePrice: "Int $410", advancedPrice: "Adv $510", totalCourses: 19, createdAt: "18 May 2026, 11:00AM", createdDate: "2026-05-18" },
-  { id: "6", category: "Cloud Computing", track: "creator-preferred", beginnerPrice: "Beg $340", intermediatePrice: "Int $440", advancedPrice: "Adv $540", totalCourses: 21, createdAt: "19 May 2026, 05:20PM", createdDate: "2026-05-19" },
-  { id: "7", category: "Business Strategy", track: "creator-preferred", beginnerPrice: "Beg $250", intermediatePrice: "Int $350", advancedPrice: "Adv $450", totalCourses: 11, createdAt: "20 May 2026, 10:30AM", createdDate: "2026-05-20" },
-  { id: "8", category: "UI Animation", track: "creator-preferred", beginnerPrice: "Beg $280", intermediatePrice: "Int $380", advancedPrice: "Adv $480", totalCourses: 9, createdAt: "21 May 2026, 02:15PM", createdDate: "2026-05-21" },
-  { id: "9", category: "DevOps", track: "creator-preferred", beginnerPrice: "Beg $305", intermediatePrice: "Int $405", advancedPrice: "Adv $505", totalCourses: 17, createdAt: "22 May 2026, 08:45AM", createdDate: "2026-05-22" },
-  { id: "10", category: "Content Marketing", track: "creator-preferred", beginnerPrice: "Beg $240", intermediatePrice: "Int $340", advancedPrice: "Adv $440", totalCourses: 12, createdAt: "23 May 2026, 04:05PM", createdDate: "2026-05-23" },
-  { id: "11", category: "Archived Finance", track: "archive", beginnerPrice: "Beg $220", intermediatePrice: "Int $320", advancedPrice: "Adv $420", totalCourses: 6, createdAt: "24 May 2026, 01:00PM", createdDate: "2026-05-24" },
+  { id: "1", category: "Software Engineering", track: "open", beginnerPrice: "Beg ₦300", intermediatePrice: "Int ₦400", advancedPrice: "Adv ₦500", totalCourses: 23, createdAt: "15 May 2026, 03:40PM", createdDate: "2026-05-15" },
+  { id: "2", category: "Product Design", track: "creator-preferred", beginnerPrice: "Beg ₦260", intermediatePrice: "Int ₦360", advancedPrice: "Adv ₦460", totalCourses: 18, createdAt: "15 May 2026, 03:40PM", createdDate: "2026-05-15" },
+  { id: "3", category: "Data Analysis", track: "ai-preferred", beginnerPrice: "Beg ₦320", intermediatePrice: "Int ₦420", advancedPrice: "Adv ₦520", totalCourses: 16, createdAt: "16 May 2026, 09:25AM", createdDate: "2026-05-16" },
+  { id: "4", category: "Cyber Security", track: "creator-preferred", beginnerPrice: "Beg ₦290", intermediatePrice: "Int ₦390", advancedPrice: "Adv ₦490", totalCourses: 14, createdAt: "17 May 2026, 12:10PM", createdDate: "2026-05-17" },
+  { id: "5", category: "Mobile Development", track: "creator-preferred", beginnerPrice: "Beg ₦310", intermediatePrice: "Int ₦410", advancedPrice: "Adv ₦510", totalCourses: 19, createdAt: "18 May 2026, 11:00AM", createdDate: "2026-05-18" },
+  { id: "6", category: "Cloud Computing", track: "creator-preferred", beginnerPrice: "Beg ₦340", intermediatePrice: "Int ₦440", advancedPrice: "Adv ₦540", totalCourses: 21, createdAt: "19 May 2026, 05:20PM", createdDate: "2026-05-19" },
+  { id: "7", category: "Business Strategy", track: "creator-preferred", beginnerPrice: "Beg ₦250", intermediatePrice: "Int ₦350", advancedPrice: "Adv ₦450", totalCourses: 11, createdAt: "20 May 2026, 10:30AM", createdDate: "2026-05-20" },
+  { id: "8", category: "UI Animation", track: "creator-preferred", beginnerPrice: "Beg ₦280", intermediatePrice: "Int ₦380", advancedPrice: "Adv ₦480", totalCourses: 9, createdAt: "21 May 2026, 02:15PM", createdDate: "2026-05-21" },
+  { id: "9", category: "DevOps", track: "creator-preferred", beginnerPrice: "Beg ₦305", intermediatePrice: "Int ₦405", advancedPrice: "Adv ₦505", totalCourses: 17, createdAt: "22 May 2026, 08:45AM", createdDate: "2026-05-22" },
+  { id: "10", category: "Content Marketing", track: "creator-preferred", beginnerPrice: "Beg ₦240", intermediatePrice: "Int ₦340", advancedPrice: "Adv ₦440", totalCourses: 12, createdAt: "23 May 2026, 04:05PM", createdDate: "2026-05-23" },
+  { id: "11", category: "Archived Finance", track: "archive", beginnerPrice: "Beg ₦220", intermediatePrice: "Int ₦320", advancedPrice: "Adv ₦420", totalCourses: 6, createdAt: "24 May 2026, 01:00PM", createdDate: "2026-05-24" },
 ];
 
 const totalCategories = "205";

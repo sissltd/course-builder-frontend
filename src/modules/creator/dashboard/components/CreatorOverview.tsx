@@ -14,14 +14,13 @@ export const CreatorOverview = () => {
   const inReviewCount = overview?.courses.IN_REVIEW ?? 0;
   const totalEarned = overview?.wallet.total_earned ?? "0.00";
   const walletBalance = overview?.wallet.balance ?? "0.00";
-  const currency = overview?.wallet.currency ?? "USD";
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    if (isNaN(num)) return `$0.00`;
-    return new Intl.NumberFormat("en-US", {
+    if (isNaN(num)) return `₦0.00`;
+    return new Intl.NumberFormat("en-NG", {
       style: "currency",
-      currency,
+      currency: "NGN",
       minimumFractionDigits: 2,
     }).format(num);
   };

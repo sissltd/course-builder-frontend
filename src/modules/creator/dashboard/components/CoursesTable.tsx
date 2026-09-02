@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
@@ -9,6 +10,7 @@ import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
 import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
 import { CategoryStatus } from "@/modules/creator/courses/types/category";
 import { format } from "date-fns";
+import { CreatorRoute } from "@/lib/routes";
 
 const mapCourseStatusToDisplay = (status: CourseStatus): Course["status"] => {
   const map: Record<CourseStatus, Course["status"]> = {
@@ -26,6 +28,7 @@ const mapCourseStatusToDisplay = (status: CourseStatus): Course["status"] => {
 };
 
 export const CoursesTable = () => {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CourseStatus | "">("");
@@ -45,6 +48,7 @@ export const CoursesTable = () => {
   const categories = categoriesResponse?.data?.results ?? [];
 
   const courses: Course[] = (response?.data?.results ?? []).map((c) => ({
+    id: c.id,
     title: c.title,
     category: c.category?.name ?? "—",
     qualityScore: 0,
@@ -52,6 +56,18 @@ export const CoursesTable = () => {
     lastEdited: format(new Date(c.updated_datetime), "d MMM yyyy, hh:mm a"),
     isAi: c.source === CourseSource.AI_GENERATED,
   }));
+
+  const handleViewDetails = (course: Course) => {
+    router.push(`${CreatorRoute.COURSES}?highlight=${course.id}`);
+  };
+
+  const handleEdit = (course: Course) => {
+    router.push(`${CreatorRoute.COURSES_BUILDER}?id=${course.id}`);
+  };
+
+  const handleDelete = (course: Course) => {
+    console.log("Delete course", course.id);
+  };
 
   return (
     <BaseTable
@@ -78,6 +94,11 @@ export const CoursesTable = () => {
               ? updater({ pageIndex: page - 1, pageSize: 6 }).pageIndex
               : updater.pageIndex;
           setPage(newPage + 1);
+        },
+        meta: {
+          onViewDetails: handleViewDetails,
+          onEdit: handleEdit,
+          onDelete: handleDelete,
         },
       }}
       filters={[

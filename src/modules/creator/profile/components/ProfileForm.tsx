@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
 import { FormSelect } from "@/components/form/FormSelect";
 import { FormPhoneInput } from "@/components/form/FormPhoneInput";
@@ -10,6 +11,9 @@ import {
   Value as PhoneValue,
   isSupportedCountry,
 } from "react-phone-number-input";
+import { useUpdateMyProfileMutation } from "../api/profileApi";
+import { useGetCategoriesQuery } from "@/modules/creator/courses/api/categoriesApi";
+import type { UserProfile } from "@/modules/auth/types/auth";
 
 interface ProfileFormRowProps {
   label: string;
@@ -19,20 +23,25 @@ interface ProfileFormRowProps {
 const ProfileFormRow = ({ label, children }: ProfileFormRowProps) => (
   <div className="flex items-start gap-[40px] py-[24px] border-b border-[#F0F0F0] last:border-b-0">
     <div className="w-[160px] shrink-0">
-      <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] font-medium pt-[10px]">{label}</p>
+      <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] font-medium pt-[10px]">
+        {label}
+      </p>
     </div>
     <div className="flex-1 flex flex-col gap-[16px]">{children}</div>
   </div>
 );
 
-interface ProfileFormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface ProfileFormInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
 }
 
 const ProfileFormInput = ({ label, ...props }: ProfileFormInputProps) => (
   <div className="flex flex-col gap-[6px]">
     {label && (
-      <label className="text-[13px] text-[#606060] tracking-[-0.26px] font-medium">{label}</label>
+      <label className="text-[13px] text-[#606060] tracking-[-0.26px] font-medium">
+        {label}
+      </label>
     )}
     <input
       {...props}
@@ -47,11 +56,48 @@ const countryOptions = CountryInfo.getAllCountries().map((c) => ({
   searchValue: `${c.name} ${c.isoCode}`,
 }));
 
-export const ProfileForm = () => {
-  const [country, setCountry] = useState("NG");
-  const [state, setState] = useState("");
-  const [phoneValue, setPhoneValue] = useState<PhoneValue | undefined>("+2349012345678");
-  const [phoneDefaultCountry, setPhoneDefaultCountry] = useState<PhoneCountry>("NG");
+interface ProfileFormProps {
+  profile: UserProfile;
+}
+
+export const ProfileForm = ({ profile }: ProfileFormProps) => {
+  const [updateProfile, { isLoading: isSaving }] = useUpdateMyProfileMutation();
+  const { data: categoriesData } = useGetCategoriesQuery();
+
+  const [firstName, setFirstName] = useState(profile.first_name);
+  const [lastName, setLastName] = useState(profile.last_name);
+  const [country, setCountry] = useState(profile.country || "NG");
+  const [state, setState] = useState(profile.state || "");
+  const [address, setAddress] = useState(profile.address || "");
+  const [categoryId, setCategoryId] = useState(
+    typeof profile.category === "object" && profile.category
+      ? profile.category.id
+      : typeof profile.category === "string"
+        ? profile.category
+        : "",
+  );
+
+  const initialPhone = profile.phone_number || "";
+  const initialPhoneCountry = profile.country
+    ? isSupportedCountry(profile.country)
+      ? (profile.country as PhoneCountry)
+      : "NG"
+    : "NG";
+
+  const [phoneValue, setPhoneValue] = useState<PhoneValue | undefined>(
+    initialPhone || undefined,
+  );
+  const [phoneDefaultCountry, setPhoneDefaultCountry] =
+    useState<PhoneCountry>(initialPhoneCountry);
+
+  const categoryOptions = useMemo(() => {
+    if (!categoriesData?.data?.results) return [];
+    return categoriesData.data.results.map((c) => ({
+      label: c.name,
+      value: c.id,
+      searchValue: c.name,
+    }));
+  }, [categoriesData]);
 
   const stateOptions = useMemo(
     () =>
@@ -60,14 +106,31 @@ export const ProfileForm = () => {
         value: s.isoCode,
         searchValue: s.name,
       })),
-    [country]
+    [country],
   );
 
   const handleCountryChange = (val: string) => {
     setCountry(val);
     setState("");
-    if (!phoneValue && isSupportedCountry(val)) {
+    if (isSupportedCountry(val)) {
       setPhoneDefaultCountry(val as PhoneCountry);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        first_name: firstName,
+        last_name: lastName,
+        country,
+        state,
+        address,
+        phone_number: phoneValue ? String(phoneValue) : undefined,
+        category: categoryId || undefined,
+      }).unwrap();
+      toast.success("Profile updated successfully.");
+    } catch {
+      toast.error("Failed to update profile. Please try again.");
     }
   };
 
@@ -75,8 +138,18 @@ export const ProfileForm = () => {
     <div className="flex flex-col">
       {/* Full Name */}
       <ProfileFormRow label="Full name">
-        <ProfileFormInput label="Firstname" placeholder="Enter name" />
-        <ProfileFormInput label="Last name" placeholder="Enter name" />
+        <ProfileFormInput
+          label="Firstname"
+          placeholder="Enter name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+        <ProfileFormInput
+          label="Last name"
+          placeholder="Enter name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
       </ProfileFormRow>
 
       {/* Email */}
@@ -84,8 +157,7 @@ export const ProfileForm = () => {
         <ProfileFormInput
           label="Email address"
           type="email"
-          placeholder="emmanuelosaite@gmail.com"
-          defaultValue="emmanuelosaite@gmail.com"
+          value={profile.email}
           readOnly
           className="w-full h-[44px] px-[16px] border border-[#D9D9D9] rounded-[8px] text-[14px] text-[#B6B6B6] bg-[#F9F9F9] outline-none cursor-not-allowed"
         />
@@ -122,7 +194,9 @@ export const ProfileForm = () => {
         <FormSelect
           name="state"
           label="State"
-          placeholder={stateOptions.length ? "Select state" : "No states available"}
+          placeholder={
+            stateOptions.length ? "Select state" : "No states available"
+          }
           disabled={stateOptions.length === 0}
           searchable
           searchPlaceholder="Search state"
@@ -131,7 +205,12 @@ export const ProfileForm = () => {
           options={stateOptions}
           triggerClassName="h-[44px]"
         />
-        <ProfileFormInput label="Address" placeholder="Enter address" />
+        <ProfileFormInput
+          label="Address"
+          placeholder="Enter address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
       </ProfileFormRow>
 
       {/* Area of Expertise */}
@@ -140,13 +219,11 @@ export const ProfileForm = () => {
           name="expertiseCategory"
           label="Category"
           placeholder="Select area of expertise"
-          options={[
-            { label: "Information technology", value: "it" },
-            { label: "Artificial intelligence", value: "ai" },
-            { label: "Cloud computing", value: "cloud" },
-            { label: "Cybersecurity", value: "cyber" },
-          ]}
-          onValueChange={(val) => console.log("Expertise:", val)}
+          searchable
+          searchPlaceholder="Search category"
+          value={categoryId}
+          onValueChange={setCategoryId}
+          options={categoryOptions}
           triggerClassName="h-[44px]"
         />
       </ProfileFormRow>
@@ -158,6 +235,8 @@ export const ProfileForm = () => {
           <Button
             variant="app-primary"
             className="h-[44px] px-[32px] text-[14px]"
+            onClick={handleSave}
+            isLoading={isSaving}
           >
             Save changes
           </Button>

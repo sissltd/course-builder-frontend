@@ -11,6 +11,10 @@ export {
   useGetWalletQuery,
   useGetPayoutAccountsQuery,
   useCreatePayoutAccountMutation,
+  useDeletePayoutAccountMutation,
+  useSetDefaultPayoutAccountMutation,
   useRequestWithdrawalMutation,
   useConfirmWithdrawalMutation,
 } from "../api/walletApi";
+
+export { useGetBanksQuery, useVerifyBankAccountMutation } from "../api/banksApi";

@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
+import { FormSelect } from "@/components/form/FormSelect";
 import { Bank, Mobile, ArrowRight, TickCircle } from "iconsax-react";
-import { cn } from "@/lib/utils";
+import {
+  useGetBanksQuery,
+  useVerifyBankAccountMutation,
+  useCreatePayoutAccountMutation,
+} from "@/modules/creator/hooks";
+import { toast } from "sonner";
 
 interface AddPayoutAccountProps {
   isOpen: boolean;
@@ -17,9 +23,68 @@ type Step = "type" | "local" | "mobile" | "success";
 
 export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutAccountProps) => {
   const [step, setStep] = useState<Step>("type");
+  const [selectedBankCode, setSelectedBankCode] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [verifiedName, setVerifiedName] = useState("");
+  const verifyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verifiedKeyRef = useRef("");
 
-  const handleSuccess = () => {
-    setStep("success");
+  const { data: banks = [] } = useGetBanksQuery();
+  const [verifyAccount, { isLoading: isVerifying }] = useVerifyBankAccountMutation();
+  const [createAccount, { isLoading: isCreating }] = useCreatePayoutAccountMutation();
+
+  const bankOptions = banks.map((b) => ({ label: b.name, value: b.code }));
+
+  useEffect(() => {
+    return () => {
+      if (verifyTimeoutRef.current) clearTimeout(verifyTimeoutRef.current);
+    };
+  }, []);
+
+  const runVerification = useCallback(
+    async (bankCode: string, accNumber: string) => {
+      try {
+        const result = await verifyAccount({
+          bank_code: bankCode,
+          account_number: accNumber,
+        }).unwrap();
+        verifiedKeyRef.current = `${bankCode}-${accNumber}`;
+        setVerifiedName(result.account_name);
+      } catch {
+        verifiedKeyRef.current = "";
+        setVerifiedName("");
+        toast.error("Could not verify account. Check bank and account number.");
+      }
+    },
+    [verifyAccount],
+  );
+
+  useEffect(() => {
+    if (verifyTimeoutRef.current) clearTimeout(verifyTimeoutRef.current);
+
+    if (selectedBankCode && accountNumber.length === 10) {
+      verifyTimeoutRef.current = setTimeout(() => {
+        runVerification(selectedBankCode, accountNumber);
+      }, 500);
+    }
+  }, [selectedBankCode, accountNumber, runVerification]);
+
+  const currentKey = `${selectedBankCode}-${accountNumber}`;
+  const accountName = currentKey === verifiedKeyRef.current ? verifiedName : "";
+
+  const handleSave = async () => {
+    try {
+      await createAccount({
+        account_name: accountName,
+        account_number: accountNumber,
+        bank_code: selectedBankCode,
+        account_type: "Local Account",
+        is_default: false,
+      }).unwrap();
+      setStep("success");
+    } catch {
+      toast.error("Failed to add account. Please try again.");
+    }
   };
 
   const handleClose = () => {
@@ -28,6 +93,10 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
     }
     onOpenChange(false);
     setStep("type");
+    setSelectedBankCode("");
+    setAccountNumber("");
+    setVerifiedName("");
+    verifiedKeyRef.current = "";
   };
 
   return (
@@ -79,14 +148,46 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
         description="Add your local account information"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <FormInput name="bank" label="Bank" placeholder="Select bank" />
-          <FormInput name="accountNumber" label="Account number" placeholder="1234567890" hint="This process is automatic" />
-          <FormInput name="accountName" label="Account name" placeholder="Account name" readOnly />
+          <FormSelect
+            name="bank"
+            label="Bank"
+            placeholder="Select bank"
+            searchable
+            searchPlaceholder="Search banks..."
+            emptyText="No banks found"
+            options={bankOptions}
+            value={selectedBankCode}
+            onValueChange={setSelectedBankCode}
+          />
+          <div className="flex flex-col gap-[4px]">
+            <FormInput
+              name="accountNumber"
+              label="Account number"
+              placeholder="1234567890"
+              hint={isVerifying ? "Verifying account..." : "Enter 10-digit account number"}
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            />
+          </div>
+          <FormInput
+            name="accountName"
+            label="Account name"
+            placeholder="Account name"
+            value={accountName}
+            readOnly
+            isSuccess={!!verifiedName}
+          />
           <div className="flex gap-[12px]">
             <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
               Cancel
             </Button>
-            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
+            <Button
+              variant="app-primary"
+              className="flex-1 h-[44px]"
+              onClick={handleSave}
+              disabled={!selectedBankCode || !accountNumber || !accountName || isVerifying || isCreating}
+              isLoading={isCreating}
+            >
               Save account
             </Button>
           </div>
@@ -100,14 +201,46 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
         description="Add your mobile account information"
       >
         <div className="flex flex-col gap-[20px] mt-[8px]">
-          <FormInput name="mobileProvider" label="Select provider" placeholder="Select provider" />
-          <FormInput name="mobileAccountNumber" label="Account number" placeholder="1234567890" hint="This process is automatic" />
-          <FormInput name="mobileAccountName" label="Account name" placeholder="Account name" readOnly />
+          <FormSelect
+            name="mobileProvider"
+            label="Select provider"
+            placeholder="Select provider"
+            searchable
+            searchPlaceholder="Search providers..."
+            emptyText="No providers found"
+            options={bankOptions}
+            value={selectedBankCode}
+            onValueChange={setSelectedBankCode}
+          />
+          <div className="flex flex-col gap-[4px]">
+            <FormInput
+              name="mobileAccountNumber"
+              label="Account number"
+              placeholder="1234567890"
+              hint={isVerifying ? "Verifying account..." : "Enter 10-digit account number"}
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            />
+          </div>
+          <FormInput
+            name="mobileAccountName"
+            label="Account name"
+            placeholder="Account name"
+            value={accountName}
+            readOnly
+            isSuccess={!!verifiedName}
+          />
           <div className="flex gap-[12px]">
             <Button variant="app-outline" className="flex-1 h-[44px]" onClick={() => setStep("type")}>
               Cancel
             </Button>
-            <Button variant="app-primary" className="flex-1 h-[44px]" onClick={handleSuccess}>
+            <Button
+              variant="app-primary"
+              className="flex-1 h-[44px]"
+              onClick={handleSave}
+              disabled={!selectedBankCode || !accountNumber || !accountName || isVerifying || isCreating}
+              isLoading={isCreating}
+            >
               Save account
             </Button>
           </div>
@@ -126,7 +259,7 @@ export const AddPayoutAccount = ({ isOpen, onOpenChange, onSuccess }: AddPayoutA
           <div className="flex flex-col gap-[8px]">
             <p className="text-[20px] font-semibold text-[#202020]">Account added</p>
             <p className="text-[14px] text-[#606060] leading-[20px]">
-              Your account has been successfully added. You can now use it for your payouts.
+              Your account (<strong className="text-[#202020] font-medium">{accountName} - {accountNumber}</strong>) has been successfully added.
             </p>
           </div>
           <Button variant="app-primary" className="w-full h-[44px]" onClick={handleClose}>

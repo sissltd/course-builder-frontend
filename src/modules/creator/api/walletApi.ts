@@ -11,17 +11,19 @@ export interface Wallet {
 
 export interface PayoutAccount {
   id: string;
-  provider: string;
-  account_number: string;
+  bank_name: string;
   account_name: string;
+  account_number: string;
+  bank_code: string;
   is_default: boolean;
-  created_datetime: string;
 }
 
 export interface CreatePayoutAccountRequest {
-  provider: string;
-  account_number: string;
   account_name: string;
+  account_number: string;
+  bank_code: string;
+  account_type: string;
+  is_default?: boolean;
 }
 
 export interface WithdrawalRequest {
@@ -54,6 +56,8 @@ export const walletApi = BaseAPI.injectEndpoints({
         url: "/payout-accounts/",
         method: "GET",
       }),
+      transformResponse: (response: { success: boolean; status: number; message: string; data: PayoutAccount[] }) =>
+        response.data,
       providesTags: ["PayoutAccount"],
     }),
 
@@ -65,6 +69,22 @@ export const walletApi = BaseAPI.injectEndpoints({
         url: "/payout-accounts/",
         method: "POST",
         body,
+      }),
+      invalidatesTags: ["PayoutAccount"],
+    }),
+
+    deletePayoutAccount: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/payout-accounts/${id}/`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["PayoutAccount"],
+    }),
+
+    setDefaultPayoutAccount: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/payout-accounts/${id}/default/`,
+        method: "POST",
       }),
       invalidatesTags: ["PayoutAccount"],
     }),
@@ -98,6 +118,8 @@ export const {
   useGetWalletQuery,
   useGetPayoutAccountsQuery,
   useCreatePayoutAccountMutation,
+  useDeletePayoutAccountMutation,
+  useSetDefaultPayoutAccountMutation,
   useRequestWithdrawalMutation,
   useConfirmWithdrawalMutation,
 } = walletApi;

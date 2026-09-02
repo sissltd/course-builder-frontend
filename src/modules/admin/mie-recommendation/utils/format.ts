@@ -127,12 +127,12 @@ export const formatRelative = (iso: string | null | undefined) => {
 
 /* ──────────────────────────── Numbers ──────────────────────────── */
 
-/** `"4200.00"` → `"$4,200.00"`. Left alone when the backend sends nothing. */
+/** `"4200.00"` → `"₦4,200.00"`. Left alone when the backend sends nothing. */
 export const formatEarnings = (value: string | null | undefined) => {
   if (value === null || value === undefined || value === "") return "—";
   const numeric = Number(value);
   if (Number.isNaN(numeric)) return value;
-  return `$${numeric.toLocaleString(undefined, {
+  return `\u20A6${numeric.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

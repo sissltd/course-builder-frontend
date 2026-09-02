@@ -22,12 +22,12 @@ const TRANSACTION_CHIP: Record<string, string> = {
 const WALLET_ICONS = [Money, Wallet, MoneyTime];
 
 const WALLET_ROWS = [
-  { description: "Fundamentals of programming", amount: "$5", type: "Credit", status: "Pending" },
-  { description: "Version Control and Collaboration", amount: "$500", type: "Withdrawal", status: "Successful" },
-  { description: "Deployment and Maintenance Strategies", amount: "$5", type: "Credit", status: "Failed" },
-  { description: "Deployment and Maintenance Strategies", amount: "$5", type: "Credit", status: "Pending" },
-  { description: "Deployment and Maintenance Strategies", amount: "$5", type: "Credit", status: "Successful" },
-  { description: "Deployment and Maintenance Strategies", amount: "$5", type: "Credit", status: "Pending" },
+  { description: "Fundamentals of programming", amount: "₦5", type: "Credit", status: "Pending" },
+  { description: "Version Control and Collaboration", amount: "₦500", type: "Withdrawal", status: "Successful" },
+  { description: "Deployment and Maintenance Strategies", amount: "₦5", type: "Credit", status: "Failed" },
+  { description: "Deployment and Maintenance Strategies", amount: "₦5", type: "Credit", status: "Pending" },
+  { description: "Deployment and Maintenance Strategies", amount: "₦5", type: "Credit", status: "Successful" },
+  { description: "Deployment and Maintenance Strategies", amount: "₦5", type: "Credit", status: "Pending" },
 ];
 
 const FilterChip = ({ children }: { children: React.ReactNode }) => (
@@ -112,7 +112,7 @@ export function CreatorsWalletSection() {
                   <p className="text-[12px] leading-4 text-[#606060]">23 Mar 2026, 10:34 PM</p>
                 </div>
               </div>
-              <p className="text-[14px] leading-5 tracking-[-0.28px] text-[#606060]">+$500.00</p>
+              <p className="text-[14px] leading-5 tracking-[-0.28px] text-[#606060]">+₦500.00</p>
             </div>
           </div>
 

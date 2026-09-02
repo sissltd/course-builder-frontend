@@ -28,9 +28,9 @@ const toDrawerPrice = (value: string) => `${value.replace(/^(Beg|Int|Adv)\s/, ""
 export const EditCategoryModal = ({ isOpen, onOpenChange, category }: EditCategoryModalProps) => {
   const [categoryName, setCategoryName] = React.useState(category?.category ?? "");
   const [trackPreference, setTrackPreference] = React.useState(category?.track ?? "");
-  const [beginnerPrice, setBeginnerPrice] = React.useState(category ? toDrawerPrice(category.beginnerPrice) : "$0.00");
-  const [intermediatePrice, setIntermediatePrice] = React.useState(category ? toDrawerPrice(category.intermediatePrice) : "$0.00");
-  const [advancedPrice, setAdvancedPrice] = React.useState(category ? toDrawerPrice(category.advancedPrice) : "$0.00");
+  const [beginnerPrice, setBeginnerPrice] = React.useState(category ? toDrawerPrice(category.beginnerPrice) : "₦0.00");
+  const [intermediatePrice, setIntermediatePrice] = React.useState(category ? toDrawerPrice(category.intermediatePrice) : "₦0.00");
+  const [advancedPrice, setAdvancedPrice] = React.useState(category ? toDrawerPrice(category.advancedPrice) : "₦0.00");
 
   const handleClose = () => {
     onOpenChange(false);
