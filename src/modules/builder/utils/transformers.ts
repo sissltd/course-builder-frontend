@@ -17,6 +17,8 @@ interface ApiLessonLike {
 interface ApiModuleLike {
   id: string;
   title: string;
+  description?: string;
+  learning_objectives?: string | string[];
   lessons?: ApiLessonLike[];
   assessment?: Assessment | null;
 }
@@ -107,11 +109,17 @@ export const apiModuleToRedux = (apiModule: CourseModule): Module => {
     ? mapAssessmentToQuizQuestions(apiMod.assessment.questions)
     : [];
 
+  const objectives = Array.isArray(apiMod.learning_objectives)
+    ? apiMod.learning_objectives
+    : apiMod.learning_objectives
+      ? apiMod.learning_objectives.split(", ").filter(Boolean)
+      : [];
+
   return {
     id: apiMod.id,
     title: apiMod.title,
-    description: "",
-    objectives: [],
+    description: apiMod.description || "",
+    objectives,
     lessons,
     quizQuestions: moduleQuizQuestions,
   };

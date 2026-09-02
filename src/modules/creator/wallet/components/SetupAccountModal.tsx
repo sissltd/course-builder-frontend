@@ -16,11 +16,12 @@ import { toast } from "sonner";
 interface SetupAccountModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 type Step = "form" | "success";
 
-export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalProps) => {
+export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAccountModalProps) => {
   const [step, setStep] = useState<Step>("form");
   const [selectedBankCode, setSelectedBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -83,6 +84,7 @@ export const SetupAccountModal = ({ isOpen, onOpenChange }: SetupAccountModalPro
         is_default: false,
       }).unwrap();
       setStep("success");
+      onSuccess?.();
     } catch {
       toast.error("Failed to add account. Please try again.");
     }

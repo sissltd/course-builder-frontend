@@ -12,6 +12,7 @@ import {
   useConfirmWithdrawalMutation,
 } from "@/modules/creator/hooks";
 import { toast } from "sonner";
+import { SetupAccountModal } from "./SetupAccountModal";
 
 interface WithdrawalFlowProps {
   isOpen: boolean;
@@ -25,8 +26,9 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
   const [amount, setAmount] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [withdrawalRequestId, setWithdrawalRequestId] = useState<string | null>(null);
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
 
-  const { data: payoutAccounts } = useGetPayoutAccountsQuery();
+  const { data: payoutAccounts, refetch: refetchAccounts } = useGetPayoutAccountsQuery();
   const [requestWithdrawal, { isLoading: isRequesting }] = useRequestWithdrawalMutation();
   const [confirmWithdrawal, { isLoading: isConfirming }] = useConfirmWithdrawalMutation();
 
@@ -127,7 +129,11 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
              </div>
              <div className="flex flex-col gap-[8px]">
                 <p className="text-[16px] font-medium text-[#202020]">Ooops!, please add an account to continue</p>
-                <Button variant="app-outline" className="w-fit mx-auto h-[40px] px-[20px] text-[#0063EF] border-[#0063EF]">
+                <Button 
+                  variant="app-outline" 
+                  className="w-fit mx-auto h-[40px] px-[20px] text-[#0063EF] border-[#0063EF]"
+                  onClick={() => setIsSetupModalOpen(true)}
+                >
                    Add bank account
                 </Button>
              </div>
@@ -257,6 +263,15 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
           </div>
         </Modal>
       )}
+
+      <SetupAccountModal
+        isOpen={isSetupModalOpen}
+        onOpenChange={setIsSetupModalOpen}
+        onSuccess={async () => {
+          await refetchAccounts();
+          setStep("select-account");
+        }}
+      />
     </>
   );
 };

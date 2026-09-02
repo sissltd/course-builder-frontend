@@ -16,7 +16,6 @@ import storage from "redux-persist/lib/storage";
 import { TypedUseSelectorHook, useDispatch, useSelector, useStore } from "react-redux";
 import { rootReducer } from "./root-reducer";
 import BaseAPI from "./baseApi";
-import { errorToastMiddleware } from "./errorToastMiddleware";
 
 const persistConfig = {
   key: "root",
@@ -33,7 +32,7 @@ const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(BaseAPI.middleware, errorToastMiddleware),
+    }).concat(BaseAPI.middleware),
   devTools: process.env.NODE_ENV !== "production",
 });
 

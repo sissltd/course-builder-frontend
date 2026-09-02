@@ -117,7 +117,7 @@ export interface ProfileCategory {
   name: string;
 }
 
-export interface UserProfile extends User {
+export interface UserProfile extends Omit<User, "category"> {
   full_name: string;
   member_since: string;
   is_verified: boolean;
