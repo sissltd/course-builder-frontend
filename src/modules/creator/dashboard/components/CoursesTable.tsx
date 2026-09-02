@@ -5,7 +5,7 @@ import { BaseTable } from "@/components/shared/BaseTable";
 import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
 import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
-import { CourseStatus, SourceType } from "@/modules/creator/courses/types";
+import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
 import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
 import { CategoryStatus } from "@/modules/creator/courses/types/category";
 import { format } from "date-fns";
@@ -50,7 +50,7 @@ export const CoursesTable = () => {
     qualityScore: 0,
     status: mapCourseStatusToDisplay(c.status),
     lastEdited: format(new Date(c.updated_datetime), "d MMM yyyy, hh:mm a"),
-    isAi: c.source === SourceType.AI_GENERATED,
+    isAi: c.source === CourseSource.AI_GENERATED,
   }));
 
   return (

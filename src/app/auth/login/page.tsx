@@ -98,7 +98,7 @@ export default function LoginPage() {
           } catch {
             toast.info("Please check your email for a verification link.");
           }
-          router.push(`${AuthRoute.VERIFY_EMAIL}?email=${encodeURIComponent(emailValue)}`);
+          router.push(`${AuthRoute.VERIFY_EMAIL}?email=${encodeURIComponent(emailValue)}&fromLogin=true`);
           return;
         }
       }

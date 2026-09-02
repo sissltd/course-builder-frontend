@@ -121,3 +121,16 @@ export interface LessonListParams {
   page?: number;
   size?: number;
 }
+
+export interface ReorderItem {
+  id: string;
+  order: number;
+}
+
+export interface ReorderRequest {
+  order: ReorderItem[];
+}
+
+export interface BulkContentBlockRequest {
+  order: CreateContentBlockRequest[];
+}

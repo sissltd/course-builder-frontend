@@ -240,3 +240,9 @@ export interface RegisterMediaAssetRequest {
     captions?: boolean;
   };
 }
+
+export interface CoursePreviewResponse {
+  preview_url: string;
+  expires_at: string;
+  expires_in: number;
+}

@@ -26,6 +26,7 @@ import { AuthRoute } from "@/lib/routes";
 interface VerifyEmailViewProps {
   email: string;
   token: string;
+  fromLogin?: boolean;
 }
 
 type VerifyState =
@@ -33,14 +34,21 @@ type VerifyState =
   | { status: "signed-in"; redirectTo: string }
   | { status: "failed"; message: string };
 
-export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) {
+export default function VerifyEmailView({ email, token, fromLogin }: VerifyEmailViewProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [verifyEmail, { isLoading }] = useVerifyEmailMutation();
   const [resendVerification, { isLoading: isResending }] =
     useResendVerificationMutation();
   const [state, setState] = useState<VerifyState>(() =>
-    email && token ? { status: "verifying" } : { status: "failed", message: "This verification link is invalid." },
+    email && token
+      ? { status: "verifying" }
+      : {
+          status: "failed",
+          message: fromLogin
+            ? "Please check your email for a verification link."
+            : "This verification link is invalid.",
+        },
   );
   const [resent, setResent] = useState(false);
 
@@ -130,7 +138,9 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
             ? "Verifying your email, please wait..."
             : state.status === "signed-in"
               ? "Email verified. Taking you to your dashboard..."
-              : "We couldn't verify your email with this link."
+              : fromLogin
+                ? "A verification link has been sent to your email address."
+                : "We couldn't verify your email with this link."
         }
       />
 
@@ -156,7 +166,7 @@ export default function VerifyEmailView({ email, token }: VerifyEmailViewProps) 
             href={AuthRoute.LOGIN}
             className="text-center text-body-sm text-sd-grey-12 font-medium hover:underline"
           >
-            Go back to Log In
+            {fromLogin ? "Back to Log In" : "Go back to Log In"}
           </Link>
         </div>
       )}

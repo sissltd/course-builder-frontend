@@ -12,6 +12,8 @@ import type {
   LessonRequirement,
   CreateLessonRequirementRequest,
   LessonListParams,
+  ReorderRequest,
+  BulkContentBlockRequest,
 } from "../types/lesson";
 
 export const lessonsApi = BaseAPI.injectEndpoints({
@@ -349,6 +351,51 @@ export const lessonsApi = BaseAPI.injectEndpoints({
         },
       ],
     }),
+
+    reorderLessons: builder.mutation<
+      Lesson[],
+      {
+        courseId: string;
+        moduleId: string;
+        body: ReorderRequest;
+      }
+    >({
+      query: ({ courseId, moduleId, body }) => ({
+        url: `/courses/${courseId}/modules/${moduleId}/lessons/reorder/`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { courseId, moduleId }) => [
+        { type: "Lesson", id: `list-${courseId}-${moduleId}` },
+        "Lesson",
+      ],
+    }),
+
+    bulkUpdateContentBlocks: builder.mutation<
+      ContentBlock[],
+      {
+        courseId: string;
+        moduleId: string;
+        lessonId: string;
+        body: BulkContentBlockRequest;
+      }
+    >({
+      query: ({ courseId, moduleId, lessonId, body }) => ({
+        url: `/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/content-blocks/bulk/`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (
+        _result,
+        _error,
+        { courseId, moduleId, lessonId },
+      ) => [
+        {
+          type: "ContentBlock",
+          id: `list-${courseId}-${moduleId}-${lessonId}`,
+        },
+      ],
+    }),
   }),
 });
 
@@ -365,4 +412,6 @@ export const {
   useCreateLessonImageMutation,
   useGetLessonRequirementsQuery,
   useCreateLessonRequirementMutation,
+  useReorderLessonsMutation,
+  useBulkUpdateContentBlocksMutation,
 } = lessonsApi;

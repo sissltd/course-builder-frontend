@@ -9,6 +9,7 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setVersion } from "@/redux/slices/courseBuilderSlice";
 import { versionSchema, VersionFormData } from "../utils/schemas";
+import { useGetCourseVersionsQuery } from "@/modules/creator/courses/hooks";
 
 interface VersionStepProps {
   onNext?: () => void;
@@ -18,6 +19,14 @@ interface VersionStepProps {
 export const VersionStep = ({ onNext, onBack }: VersionStepProps) => {
   const dispatch = useAppDispatch();
   const currentVersion = useAppSelector((state) => state.courseBuilder.version);
+  const { data: versions, isLoading } = useGetCourseVersionsQuery();
+
+  const versionOptions = (versions ?? [])
+    .filter((v) => v.is_active)
+    .map((v) => ({
+      label: `v${v.label}`,
+      value: v.id,
+    }));
 
   const methods = useForm<VersionFormData>({
     resolver: zodResolver(versionSchema),
@@ -47,16 +56,18 @@ export const VersionStep = ({ onNext, onBack }: VersionStepProps) => {
         </div>
 
         {/* Dropdown Container */}
-        <FormSelect 
-          name="version"
-          placeholder="Select version"
-          options={[
-            { label: "v1.0", value: "v1.0" },
-            { label: "v1.1", value: "v1.1" },
-            { label: "v2.0", value: "v2.0" },
-          ]}
-          triggerClassName="h-[44px] bg-white border-[#D9D9D9] text-[#202020]"
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-sd-grey-3 border-t-sd-blue" />
+          </div>
+        ) : (
+          <FormSelect 
+            name="version"
+            placeholder="Select version"
+            options={versionOptions}
+            triggerClassName="h-[44px] bg-white border-[#D9D9D9] text-[#202020]"
+          />
+        )}
 
         {/* Footer Navigation */}
         <div className="flex items-center justify-between w-full pt-[24px]">

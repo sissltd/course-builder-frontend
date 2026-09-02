@@ -10,6 +10,7 @@ export {
   useSetCourseThumbnailMutation,
   useGetMediaAssetsQuery,
   useRegisterMediaAssetMutation,
+  useGetCoursePreviewQuery,
 } from "../api/coursesApi";
 
 export {
@@ -28,6 +29,10 @@ export {
   useReplaceModuleMutation,
   useUpdateModuleMutation,
   useDeleteModuleMutation,
+  useReorderModulesMutation,
+  useLockModuleMutation,
+  useUnlockModuleMutation,
+  useHeartbeatModuleMutation,
 } from "../api/modulesApi";
 
 export {
@@ -43,6 +48,8 @@ export {
   useCreateLessonImageMutation,
   useGetLessonRequirementsQuery,
   useCreateLessonRequirementMutation,
+  useReorderLessonsMutation,
+  useBulkUpdateContentBlocksMutation,
 } from "../api/lessonsApi";
 
 export {
@@ -54,3 +61,12 @@ export {
   useGetTopicsQuery,
   useGetTopicQuery,
 } from "../api/topicsApi";
+
+export {
+  useGetCourseVersionsQuery,
+} from "../api/courseVersionsApi";
+
+export {
+  useGetCategoryRequestsQuery,
+  useCreateCategoryRequestMutation,
+} from "../api/categoryRequestsApi";

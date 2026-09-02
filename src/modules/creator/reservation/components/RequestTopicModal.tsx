@@ -5,8 +5,12 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/components/shared/Modal";
 import { FormInput } from "@/components/form/FormInput";
+import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { requestCategorySchema, RequestCategoryFormData } from "../utils/schemas";
+import { useCreateTopicReservationMutation } from "../hooks";
+import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
+import { CategoryStatus } from "@/modules/creator/courses/types/category";
 
 interface RequestTopicModalProps {
   isOpen: boolean;
@@ -15,35 +19,53 @@ interface RequestTopicModalProps {
 }
 
 export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTopicModalProps) => {
+  const [createReservation, { isLoading }] = useCreateTopicReservationMutation();
+  const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
+
   const methods = useForm<RequestCategoryFormData>({
     resolver: zodResolver(requestCategorySchema),
     defaultValues: {
-      categoryName: "",
+      name: "",
+      category: "",
     },
   });
 
-  const onSubmit = (data: RequestCategoryFormData) => {
-    console.log("Request Category Data:", data);
-    // Simulate API call
-    setTimeout(() => {
+  const categoryOptions = categoriesResponse?.data?.results?.map((cat) => ({
+    label: cat.name,
+    value: cat.id,
+  })) ?? [];
+
+  const onSubmit = async (data: RequestCategoryFormData) => {
+    try {
+      await createReservation(data).unwrap();
       onSuccess();
       methods.reset();
-    }, 1000);
+    } catch {
+      // error handled by RTK Query
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Request category"
+      title="Request topic"
       className="sm:max-w-[500px]"
     >
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="flex flex-col gap-[24px]">
           <FormInput
-            name="categoryName"
-            label="Category Name"
-            placeholder="E.g. Software Development"
+            name="name"
+            label="Topic Name"
+            placeholder="E.g. Fundamentals of Programming"
+            required
+          />
+
+          <FormSelect
+            name="category"
+            label="Category"
+            placeholder="Select a category"
+            options={categoryOptions}
             required
           />
           
@@ -60,7 +82,7 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
               type="submit"
               variant="app-primary"
               className="flex-1"
-              isLoading={methods.formState.isSubmitting}
+              isLoading={isLoading}
             >
               Request
             </Button>

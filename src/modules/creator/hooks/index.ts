@@ -3,4 +3,6 @@ export {
   useGetQualityChecksQuery,
   useRefreshQualityChecksMutation,
   useGetQualityCheckCriteriaQuery,
-} from "./api/creatorApi";
+} from "../api/creatorApi";
+
+export { useGetWalletTransactionsQuery } from "../api/transactionsApi";

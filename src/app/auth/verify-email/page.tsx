@@ -8,8 +8,14 @@ export const metadata: Metadata = {
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string; token?: string }>;
+  searchParams: Promise<{ email?: string; token?: string; fromLogin?: string }>;
 }) {
-  const { email, token } = await searchParams;
-  return <VerifyEmailView email={email ?? ""} token={token ?? ""} />;
+  const { email, token, fromLogin } = await searchParams;
+  return (
+    <VerifyEmailView
+      email={email ?? ""}
+      token={token ?? ""}
+      fromLogin={fromLogin === "true"}
+    />
+  );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -33,11 +33,26 @@ interface DashboardHeaderProps {
   onToggleSidebar?: () => void;
 }
 
+function formatDateTime(date: Date): string {
+  const day = date.getDate();
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
+
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const displayName =
     user?.first_name || user?.last_name
@@ -67,7 +82,7 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
           <Menu variant="Linear" size={20} color="#636363" />
         </button>
         <div className="text-[16px] text-[#636363] tracking-[-0.32px] font-normal leading-[24px] hidden md:block">
-          21 August 2024, 14:00
+          {formatDateTime(now)}
         </div>
       </div>
 

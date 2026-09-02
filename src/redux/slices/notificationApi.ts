@@ -1,5 +1,11 @@
 import { BaseAPI } from "../baseApi";
 
+export interface NotificationMetadata {
+  course_id?: string;
+  action?: string;
+  [key: string]: unknown;
+}
+
 export interface NotificationItem {
   id: string;
   title: string;
@@ -7,10 +13,16 @@ export interface NotificationItem {
   content_type: string;
   is_read: boolean;
   created_datetime: string;
-  metadata: Record<string, any>;
+  metadata: NotificationMetadata;
 }
 
-export interface NotificationResponse {
+export interface NotificationListParams {
+  cursor?: string;
+  is_read?: boolean;
+  size?: number;
+}
+
+export interface NotificationListResponse {
   status: boolean;
   message: string;
   data: {
@@ -22,17 +34,52 @@ export interface NotificationResponse {
   };
 }
 
+export interface ToggleNotificationReadRequest {
+  notification_id: string;
+  read_status: boolean;
+}
+
+export interface ToggleNotificationReadResponse {
+  status: number;
+  success: boolean;
+  message: string;
+}
+
 export const notificationApi = BaseAPI.injectEndpoints({
   endpoints: (builder) => ({
-    getNotifications: builder.query<NotificationResponse, { cursor?: string; is_read?: boolean; size?: number } | void>({
+    getNotifications: builder.query<
+      NotificationListResponse,
+      NotificationListParams | void
+    >({
       query: (params) => ({
         url: "/users/me/notifications/",
         method: "GET",
-        params: params ? { cursor: params.cursor, is_read: params.is_read, size: params.size } : undefined,
+        params: params
+          ? {
+              cursor: params.cursor,
+              is_read: params.is_read,
+              size: params.size,
+            }
+          : undefined,
       }),
-      providesTags: ["Notifications"] as any,
+      providesTags: ["Notification"],
+    }),
+
+    toggleNotificationRead: builder.mutation<
+      ToggleNotificationReadResponse,
+      ToggleNotificationReadRequest
+    >({
+      query: (body) => ({
+        url: "/users/me/notifications/toggle-read/",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Notification"],
     }),
   }),
 });
 
-export const { useGetNotificationsQuery } = notificationApi;
+export const {
+  useGetNotificationsQuery,
+  useToggleNotificationReadMutation,
+} = notificationApi;

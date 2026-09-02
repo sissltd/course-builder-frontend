@@ -10,6 +10,7 @@ import type {
   SetThumbnailRequest,
   MediaAsset,
   RegisterMediaAssetRequest,
+  CoursePreviewResponse,
 } from "../types";
 
 export const coursesApi = BaseAPI.injectEndpoints({
@@ -169,6 +170,13 @@ export const coursesApi = BaseAPI.injectEndpoints({
         { type: "MediaAsset", id: `list-${courseId}` },
       ],
     }),
+
+    getCoursePreview: builder.query<CoursePreviewResponse, string>({
+      query: (courseId) => ({
+        url: `/courses/${courseId}/preview/`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -184,4 +192,5 @@ export const {
   useSetCourseThumbnailMutation,
   useGetMediaAssetsQuery,
   useRegisterMediaAssetMutation,
+  useGetCoursePreviewQuery,
 } = coursesApi;
