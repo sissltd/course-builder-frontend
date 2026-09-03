@@ -1,4 +1,4 @@
-export type CourseStatus = "pending" | "approved" | "rejected";
+export type CourseStatus = "pending" | "approved" | "rejected" | string;
 
 export interface CourseRow {
   id: string;
@@ -8,6 +8,7 @@ export interface CourseRow {
   category: string;
   difficultyLevel: string;
   dateApproved: string;
+  dateCreated?: string;
   hasVideo: boolean;
   isAi: boolean;
   status: CourseStatus;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Copy,
@@ -11,6 +11,7 @@ import {
   TickCircle,
 } from "iconsax-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminRoute } from "@/lib/routes";
 import {
@@ -25,12 +26,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SideDrawer } from "@/components/shared/SideDrawer";
-import { AdminCoursesFilters } from "./components/AdminCoursesFilters";
+import { AdminCoursesFilters, type AdminCoursesTab } from "./components/AdminCoursesFilters";
 import { AdminCoursesGrid } from "./components/AdminCoursesGrid";
 import type { CourseViewMode } from "./components/CourseViewToggle";
-import { mockCourses, type CourseRow, type CourseStatus } from "./data/mockData";
+import { initialsFor, type CourseRow } from "./data/mockData";
+import {
+  useGetAdminCoursesQuery,
+  useApproveAdminCourseMutation,
+  useRejectAdminCourseMutation,
+} from "@/redux/slices/adminApi";
+import type { AdminCourseItem, AdminCoursesListParams } from "@/redux/slices/adminApi";
+import { useDebouncedValue } from "@/modules/admin/mie-recommendation/hooks/useDebouncedValue";
+import { CourseRejectModal } from "./components/CourseRejectModal";
 
-const STATUS_PILL: Record<CourseStatus, { label: string; className: string }> = {
+const isPendingStatus = (status: string) => {
+  const s = (status || "").toUpperCase();
+  return s === "PENDING" || s === "SUBMITTED" || s === "IN_REVIEW";
+};
+
+const STATUS_PILL: Record<string, { label: string; className: string }> = {
   pending: {
     label: "Pending",
     className: "bg-sd-warning-bg text-sd-warning-text",
@@ -43,10 +57,48 @@ const STATUS_PILL: Record<CourseStatus, { label: string; className: string }> = 
     label: "Rejected",
     className: "bg-sd-danger-soft text-sd-danger",
   },
+  SUBMITTED: {
+    label: "Submitted",
+    className: "bg-sd-warning-bg text-sd-warning-text",
+  },
+  IN_REVIEW: {
+    label: "In Review",
+    className: "bg-blue-50 text-blue-600",
+  },
+  QA_VERIFICATION: {
+    label: "QA Verification",
+    className: "bg-purple-50 text-purple-600",
+  },
+  DRAFT: {
+    label: "Draft",
+    className: "bg-sd-grey-3 text-sd-grey-11",
+  },
+  APPROVED: {
+    label: "Approved",
+    className: "bg-sd-success-bg text-sd-success-text",
+  },
+  PUBLISHED: {
+    label: "Published",
+    className: "bg-emerald-50 text-emerald-600",
+  },
+  REJECTED: {
+    label: "Rejected",
+    className: "bg-sd-danger-soft text-sd-danger",
+  },
 };
 
-const StatusPill = ({ status }: { status: CourseStatus }) => {
-  const pill = STATUS_PILL[status];
+const getStatusPillInfo = (status: string) => {
+  const normalized = (status || "").toUpperCase();
+  if (STATUS_PILL[status]) return STATUS_PILL[status];
+  if (STATUS_PILL[normalized]) return STATUS_PILL[normalized];
+  if (normalized.includes("REJECT")) return STATUS_PILL.REJECTED;
+  if (normalized.includes("APPROV") || normalized.includes("PUBLISH")) return STATUS_PILL.APPROVED;
+  if (normalized.includes("SUBMIT") || normalized.includes("PENDING")) return STATUS_PILL.SUBMITTED;
+  return { label: status || "Unknown", className: "bg-sd-grey-3 text-sd-grey-11" };
+};
+
+const StatusPill = ({ status }: { status: string }) => {
+  const pill = getStatusPillInfo(status);
   return (
     <span
       className={cn(
@@ -239,7 +291,7 @@ const AdminCourseInfoDrawer = ({
         <button
           type="button"
           onClick={() =>
-            router.push(`${AdminRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.courseId)}`)
+            router.push(`${AdminRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.id)}`)
           }
           className="flex h-[44px] w-fit items-center justify-center gap-[8px] rounded-[8px] border border-sd-blue bg-white px-[24px] py-[12px] text-[14px] font-medium leading-[20px] tracking-[-0.28px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2 cursor-pointer"
         >
@@ -280,11 +332,11 @@ const AdminCourseInfoDrawer = ({
           <DrawerDetailRow label="Difficulty Level" value={course.difficultyLevel} />
           <DrawerDetailRow
             label="Course ID"
-            value="Td4fJcvnJ88-04924945"
+            value={course.id}
             canCopy
-            onCopy={() => void copyText("Td4fJcvnJ88-04924945")}
+            onCopy={() => void copyText(course.id)}
           />
-          <DrawerDetailRow label="Date Created" value="21 May 2026, 08:43PM" />
+          <DrawerDetailRow label="Date Created" value={course.dateCreated || course.dateApproved} />
           <div className="flex items-center justify-between gap-[16px]">
             <span className="shrink-0 text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
               Status
@@ -294,7 +346,7 @@ const AdminCourseInfoDrawer = ({
         </section>
 
         {/* Decision */}
-        {course.status === "pending" && (
+        {isPendingStatus(course.status) && (
           <div className="flex items-center gap-[12px]">
             <button
               type="button"
@@ -320,9 +372,8 @@ const AdminCourseInfoDrawer = ({
 };
 
 export const AdminCoursesView = () => {
-  const [courses, setCourses] = useState<CourseRow[]>(mockCourses);
   const [viewMode, setViewMode] = useState<CourseViewMode>("table");
-  const [activeTab, setActiveTab] = useState<"creators" | "ai">("creators");
+  const [activeTab, setActiveTab] = useState<AdminCoursesTab>("creators");
   const [videoFilter, setVideoFilter] = useState<"with" | "without" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("Category");
@@ -330,8 +381,8 @@ export const AdminCoursesView = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
   const [toDate, setToDate] = useState<Date | undefined>(undefined);
 
-  // Sidebar info drawer state
-  const [activeCourseIndex, setActiveCourseIndex] = useState<number | null>(null);
+  // Active course for drawer (tracked by course ID for robustness)
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
 
   // User assignment popover state
   const [assignOpen, setAssignOpen] = useState(false);
@@ -364,48 +415,126 @@ export const AdminCoursesView = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = PAGE_SIZE[viewMode];
 
-  // Filter logic
-  const filteredCourses = courses.filter((course) => {
-    // Tab filter
-    if (activeTab === "creators" && course.isAi) return false;
-    if (activeTab === "ai" && !course.isAi) return false;
+  // Debounced search query
+  const debouncedSearch = useDebouncedValue(searchQuery, 400);
 
-    // Video filter
-    if (videoFilter === "with" && !course.hasVideo) return false;
-    if (videoFilter === "without" && course.hasVideo) return false;
+  // Build query parameters for API call
+  const queryParams = useMemo(() => {
+    const params: AdminCoursesListParams = {
+      page: currentPage,
+      size: itemsPerPage,
+    };
 
-    // Category filter
-    if (category !== "Category" && category !== "All" && course.category !== category) return false;
-
-    // Difficulty filter
-    if (difficulty !== "Difficulty level" && difficulty !== "All" && course.difficultyLevel !== difficulty) return false;
-
-    // Search query filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = course.courseTitle.toLowerCase().includes(q);
-      const matchId = course.courseId.toLowerCase().includes(q);
-      const matchCreator = course.creator.toLowerCase().includes(q);
-      if (!matchTitle && !matchId && !matchCreator) return false;
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
     }
 
-    return true;
-  });
+    if (activeTab === "creators") {
+      params.source_type = "CREATOR_UPLOADED";
+    } else if (activeTab === "ai") {
+      params.source_type = "AI_GENERATED";
+    } else if (activeTab === "developer") {
+      params.source_type = "DEVELOPER_API";
+    }
 
-  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage) || 1;
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+    if (category && category !== "Category" && category !== "All") {
+      params.category = category;
+    }
 
-  const activeCourse = activeCourseIndex !== null ? filteredCourses[activeCourseIndex] : null;
+    if (difficulty && difficulty !== "Difficulty level" && difficulty !== "All") {
+      params.difficulty_level = difficulty.toUpperCase() as "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+    }
+
+    if (fromDate) {
+      params.date_from = format(fromDate, "yyyy-MM-dd");
+    }
+
+    if (toDate) {
+      params.date_to = format(toDate, "yyyy-MM-dd");
+    }
+
+    return params;
+  }, [currentPage, itemsPerPage, debouncedSearch, activeTab, category, difficulty, fromDate, toDate]);
+
+  const { data, isLoading, isFetching, error, refetch } = useGetAdminCoursesQuery(queryParams);
+
+  const paginator = data?.data?.paginator;
+  const rawResults: AdminCourseItem[] = useMemo(() => data?.data?.results ?? [], [data]);
+
+  const formatApiDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "—";
+    try {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? dateStr : format(d, "dd MMM yyyy, hh:mma");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatShortCourseId = (id: string): string => {
+    if (!id) return "";
+    if (id.length <= 16) return id;
+    return `SLD-${id.slice(0, 4)}...${id.slice(-4)}`;
+  };
+
+  const formatCreatorName = (creator: AdminCourseItem["creator"]): string => {
+    if (!creator) return "Creator";
+    if (typeof creator === "string") return creator;
+    if (creator.name) return creator.name;
+    const full = `${creator.first_name ?? ""} ${creator.last_name ?? ""}`.trim();
+    return full || creator.email || "Creator";
+  };
+
+  const formatDifficulty = (diff: string | null | undefined): string => {
+    if (!diff) return "Beginner";
+    const lower = diff.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
+
+  // Convert raw API courses to CourseRow format
+  const courses: CourseRow[] = useMemo(() => {
+    return rawResults.map((item) => {
+      const isAi = item.source === "AI" || item.source === "AI_GENERATED";
+      return {
+        id: item.id,
+        creator: formatCreatorName(item.creator),
+        courseTitle: item.title || "Untitled Course",
+        courseId: formatShortCourseId(item.id),
+        category: item.category?.name || "General",
+        difficultyLevel: formatDifficulty(item.difficulty_level),
+        dateApproved: formatApiDate(item.submitted_at || item.created_datetime),
+        dateCreated: formatApiDate(item.created_datetime),
+        hasVideo: Boolean(item.has_video ?? true),
+        isAi,
+        status: item.status,
+        moduleCount: item.modules_count ?? 0,
+        lessonCount: item.lessons_count ?? 0,
+      };
+    });
+  }, [rawResults]);
+
+  // Client-side video filter (if backend doesn't filter directly)
+  const displayCourses = useMemo(() => {
+    if (!videoFilter) return courses;
+    return courses.filter((c) => (videoFilter === "with" ? c.hasVideo : !c.hasVideo));
+  }, [courses, videoFilter]);
+
+  const totalCount = paginator?.count ?? displayCourses.length;
+  const totalPages = paginator?.total_pages ?? Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
+  const activeCourseIndex = useMemo(() => {
+    if (!activeCourseId) return null;
+    const idx = displayCourses.findIndex((c) => c.id === activeCourseId);
+    return idx >= 0 ? idx : null;
+  }, [activeCourseId, displayCourses]);
+
+  const activeCourse = activeCourseIndex !== null ? displayCourses[activeCourseIndex] : null;
 
   const allOnPageSelected =
-    paginatedCourses.length > 0 && paginatedCourses.every((c) => selectedIds.has(c.id));
+    displayCourses.length > 0 && displayCourses.every((c) => selectedIds.has(c.id));
 
   const toggleSelectAll = () => {
-    const pageIds = paginatedCourses.map((c) => c.id);
-
+    const pageIds = displayCourses.map((c) => c.id);
     const next = new Set(selectedIds);
     if (allOnPageSelected) {
       pageIds.forEach((id) => next.delete(id));
@@ -440,40 +569,103 @@ export const AdminCoursesView = () => {
     setAssignOpen(false);
   };
 
-  /** Table, grid and drawer all funnel their decisions through here. */
-  const applyStatus = (ids: string[], status: CourseStatus) => {
-    const target = new Set(ids);
-    setCourses((current) =>
-      current.map((course) => (target.has(course.id) ? { ...course, status } : course)),
-    );
+  const [approveCourseMutation] = useApproveAdminCourseMutation();
+
+  const handleApprove = async (course: CourseRow) => {
+    try {
+      await approveCourseMutation({ id: course.id }).unwrap();
+      toast.success(`Approved "${course.courseTitle}" successfully`);
+    } catch (err: any) {
+      toast.error(
+        err?.data?.message ||
+        err?.data?.errors?.[0]?.message ||
+        `Failed to approve "${course.courseTitle}"`
+      );
+    }
   };
 
-  const handleApprove = (course: CourseRow) => {
-    applyStatus([course.id], "approved");
-    toast.success(`Approved "${course.courseTitle}"`);
-  };
+  const [rejectCourseMutation, { isLoading: isRejecting }] = useRejectAdminCourseMutation();
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [courseToReject, setCourseToReject] = useState<CourseRow | null>(null);
+  const [isBulkReject, setIsBulkReject] = useState(false);
 
   const handleReject = (course: CourseRow) => {
-    applyStatus([course.id], "rejected");
-    toast.success(`Rejected "${course.courseTitle}"`);
+    setCourseToReject(course);
+    setIsBulkReject(false);
+    setRejectModalOpen(true);
   };
 
   const openCourse = (course: CourseRow) => {
-    setActiveCourseIndex(filteredCourses.findIndex((entry) => entry.id === course.id));
+    setActiveCourseId(course.id);
   };
 
-  const handleApproveSelected = () => {
-    const count = selectedIds.size;
-    applyStatus([...selectedIds], "approved");
-    toast.success(`Approved ${count} ${count === 1 ? "course" : "courses"} successfully`);
+  const handleApproveSelected = async () => {
+    const ids = Array.from(selectedIds);
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        await approveCourseMutation({ id }).unwrap();
+        successCount++;
+      } catch {
+        // continue
+      }
+    }
+    if (successCount > 0) {
+      toast.success(`Approved ${successCount} ${successCount === 1 ? "course" : "courses"} successfully`);
+    } else {
+      toast.error("Could not approve selected courses");
+    }
     setSelectedIds(new Set());
   };
 
   const handleRejectSelected = () => {
-    const count = selectedIds.size;
-    applyStatus([...selectedIds], "rejected");
-    toast.success(`Rejected ${count} ${count === 1 ? "course" : "courses"} successfully`);
-    setSelectedIds(new Set());
+    setCourseToReject(null);
+    setIsBulkReject(true);
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async (summary: string) => {
+    if (isBulkReject) {
+      const ids = Array.from(selectedIds);
+      let successCount = 0;
+      for (const id of ids) {
+        try {
+          await rejectCourseMutation({
+            id,
+            feedback: { summary },
+          }).unwrap();
+          successCount++;
+        } catch {
+          // continue
+        }
+      }
+      if (successCount > 0) {
+        toast.success(`Rejected ${successCount} ${successCount === 1 ? "course" : "courses"} and returned to Draft`);
+      } else {
+        toast.error("Failed to reject selected courses");
+      }
+      setSelectedIds(new Set());
+    } else if (courseToReject) {
+      try {
+        await rejectCourseMutation({
+          id: courseToReject.id,
+          feedback: { summary },
+        }).unwrap();
+        toast.success(`Rejected "${courseToReject.courseTitle}" and returned to Draft`);
+        if (activeCourseId === courseToReject.id) {
+          setActiveCourseId(null);
+        }
+      } catch (err: any) {
+        toast.error(
+          err?.data?.message ||
+          err?.data?.errors?.[0]?.message ||
+          `Failed to reject "${courseToReject.courseTitle}"`
+        );
+      }
+    }
+    setRejectModalOpen(false);
+    setCourseToReject(null);
+    setIsBulkReject(false);
   };
 
   return (
@@ -484,14 +676,14 @@ export const AdminCoursesView = () => {
         setActiveTab={(tab) => {
           setActiveTab(tab);
           setSelectedIds(new Set());
-          setActiveCourseIndex(null);
+          setActiveCourseId(null);
           setCurrentPage(1);
         }}
         videoFilter={videoFilter}
         setVideoFilter={(filter) => {
           setVideoFilter(filter);
           setSelectedIds(new Set());
-          setActiveCourseIndex(null);
+          setActiveCourseId(null);
           setCurrentPage(1);
         }}
         searchQuery={searchQuery}
@@ -522,10 +714,8 @@ export const AdminCoursesView = () => {
         viewMode={viewMode}
         setViewMode={(mode) => {
           setViewMode(mode);
-          // Page size differs between the two views, so the current page index
-          // would otherwise point at a different slice of the list.
           setCurrentPage(1);
-          setActiveCourseIndex(null);
+          setActiveCourseId(null);
         }}
       />
 
@@ -538,185 +728,431 @@ export const AdminCoursesView = () => {
         ) : (
           <div className="h-[20px] px-[4px]" />
         )}
-        
-        {viewMode === "grid" ? (
-          <AdminCoursesGrid
-            courses={paginatedCourses}
-            legendSource={filteredCourses}
-            selectedIds={selectedIds}
-            allOnPageSelected={allOnPageSelected}
-            onToggleSelectAll={toggleSelectAll}
-            onToggleSelect={toggleSelectRow}
-            onOpen={openCourse}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        ) : (
-        <div className="w-full overflow-x-auto rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 shadow-[0px_4px_12px_rgba(0,0,0,0.02)]">
-          <div className="w-full min-w-[1240px]">
-            {/* Table Header Row */}
-            <div className={cn(tableGridClassName, "bg-[#F0F0F0CC] border-b border-sd-grey-3")}>
-              <div className="flex items-center justify-center">
-                <input
-                  type="checkbox"
-                  checked={paginatedCourses.length > 0 && paginatedCourses.every((c) => selectedIds.has(c.id))}
-                  onChange={toggleSelectAll}
-                  className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer"
-                  aria-label="Select all courses"
-                />
-              </div>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Creator
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Course Title
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Course ID
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Category
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Difficulty Level
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Date Approved
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
-                Status
-              </span>
-              <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12 text-center">
-                Action
-              </span>
-            </div>
 
-            {/* Table Body Rows */}
-            <div className="flex flex-col">
-              {paginatedCourses.length === 0 ? (
-                <div className="flex h-[120px] items-center justify-center text-sd-grey-11 text-[14px]">
+        {error ? (
+          <div className="flex h-[200px] flex-col items-center justify-center gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-6 text-center shadow-[0px_4px_12px_rgba(0,0,0,0.02)]">
+            <p className="text-[14px] font-medium text-sd-danger">Failed to load courses from the server.</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="rounded-[8px] bg-sd-blue px-[16px] py-[8px] text-[14px] font-medium text-white transition-colors hover:bg-sd-blue-hover cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        ) : viewMode === "grid" ? (
+          isLoading ? (
+            <div className="grid grid-cols-1 gap-[16px] sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {Array.from({ length: itemsPerPage }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex h-[220px] flex-col justify-between rounded-[4px] border border-sd-grey-3 bg-sd-grey-2/50 p-[18px] animate-pulse"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="h-[14px] w-[90px] rounded bg-sd-grey-3" />
+                    <div className="size-[20px] rounded bg-sd-grey-3" />
+                  </div>
+                  <div className="space-y-[8px]">
+                    <div className="h-[18px] w-3/4 rounded bg-sd-grey-3" />
+                    <div className="h-[14px] w-1/2 rounded bg-sd-grey-3" />
+                  </div>
+                  <div className="flex items-center justify-between border-t border-sd-grey-3 pt-[12px]">
+                    <div className="h-[14px] w-[70px] rounded bg-sd-grey-3" />
+                    <div className="h-[14px] w-[50px] rounded bg-sd-grey-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AdminCoursesGrid
+              courses={displayCourses}
+              legendSource={displayCourses}
+              selectedIds={selectedIds}
+              allOnPageSelected={allOnPageSelected}
+              onToggleSelectAll={toggleSelectAll}
+              onToggleSelect={toggleSelectRow}
+              onOpen={openCourse}
+              onApprove={handleApprove}
+              onReject={handleReject}
+            />
+          )
+        ) : (
+          <>
+            {/* Mobile View: Dedicated clean cards when on mobile devices (< sm) */}
+            <div className="flex flex-col gap-[12px] sm:hidden w-full">
+              {/* Mobile Select All Header */}
+              <div className="flex items-center justify-between rounded-[10px] border border-sd-grey-3 bg-[#F0F0F0CC] px-[14px] py-[10px]">
+                <label
+                  className="flex items-center gap-[8px] cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      displayCourses.length > 0 &&
+                      displayCourses.every((c) => selectedIds.has(c.id))
+                    }
+                    onChange={toggleSelectAll}
+                    disabled={displayCourses.length === 0}
+                    className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer"
+                    aria-label="Select all courses"
+                  />
+                  <span className="text-[12px] font-semibold uppercase text-sd-grey-12 tracking-wide">
+                    Select all ({displayCourses.length})
+                  </span>
+                </label>
+                {selectedIds.size > 0 && (
+                  <span className="text-[12px] font-medium text-sd-blue">
+                    {selectedIds.size} selected
+                  </span>
+                )}
+              </div>
+
+              {/* Mobile Cards List */}
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[16px] animate-pulse"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-[8px]">
+                        <div className="size-[28px] rounded-full bg-sd-grey-3" />
+                        <div className="h-[14px] w-[90px] rounded bg-sd-grey-3" />
+                      </div>
+                      <div className="h-[22px] w-[80px] rounded-full bg-sd-grey-3" />
+                    </div>
+                    <div className="h-[18px] w-[70%] rounded bg-sd-grey-3" />
+                    <div className="flex gap-[8px]">
+                      <div className="h-[16px] w-[60px] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[80px] rounded bg-sd-grey-3" />
+                    </div>
+                  </div>
+                ))
+              ) : displayCourses.length === 0 ? (
+                <div className="flex h-[120px] items-center justify-center rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 text-sd-grey-11 text-[14px]">
                   No courses found matching filters.
                 </div>
               ) : (
-                paginatedCourses.map((course, idx) => {
+                displayCourses.map((course) => {
                   const isChecked = selectedIds.has(course.id);
-                  const globalIdx = (currentPage - 1) * itemsPerPage + idx;
                   return (
                     <div
                       key={course.id}
-                      onClick={() => setActiveCourseIndex(globalIdx)}
+                      onClick={() => setActiveCourseId(course.id)}
                       className={cn(
-                        tableGridClassName,
-                        "border-b border-sd-grey-3/70 transition-colors hover:bg-sd-grey-2/50 cursor-pointer",
-                        isChecked && "bg-sd-blue/5",
-                        idx === paginatedCourses.length - 1 && "border-b-0"
+                        "flex flex-col gap-[12px] rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[14px] shadow-[0px_2px_8px_rgba(0,0,0,0.03)] transition-all cursor-pointer hover:border-sd-grey-4",
+                        isChecked && "border-sd-blue/60 bg-sd-blue/[0.02]"
                       )}
                     >
-                      <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSelectRow(course.id)}
-                          className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer"
-                          aria-label={`Select ${course.courseTitle}`}
-                        />
-                      </div>
-                      <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                        {course.creator}
-                      </span>
-                      <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                        {course.courseTitle}
-                      </span>
-                      <div className="flex items-center gap-[6px] min-w-0">
-                        <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                          {course.courseId}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void copyText(course.id);
-                          }}
-                          className="text-sd-grey-11 hover:text-sd-blue transition-colors cursor-pointer shrink-0 p-1 rounded-md hover:bg-sd-grey-3/50"
-                          aria-label="Copy course ID"
+                      {/* Top Row: Checkbox + Creator + Status + Kebab */}
+                      <div className="flex items-center justify-between gap-[8px]">
+                        <div
+                          className="flex items-center gap-[8px] min-w-0"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Copy size={16} variant="Linear" color="currentColor" />
-                        </button>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelectRow(course.id)}
+                            className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer shrink-0"
+                            aria-label={`Select ${course.courseTitle}`}
+                          />
+                          <div className="flex items-center gap-[6px] min-w-0">
+                            <div className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-sd-blue/10 text-[11px] font-semibold text-sd-blue">
+                              {initialsFor(course.creator)}
+                            </div>
+                            <span className="text-[13px] font-medium text-sd-grey-12 truncate">
+                              {course.creator}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div
+                          className="flex items-center gap-[6px] shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <StatusPill status={course.status} />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-sd-grey-11 hover:text-sd-grey-12 p-1 rounded-md hover:bg-sd-grey-3/50 cursor-pointer"
+                                aria-label="More options"
+                              >
+                                <More size={18} variant="Linear" color="currentColor" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="bg-sd-grey-1 border border-sd-grey-3 rounded-[12px] p-[6px] w-[160px]"
+                            >
+                              {isPendingStatus(course.status) && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleApprove(course)}
+                                    className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                  >
+                                    <TickCircle size={16} variant="Linear" color="#008500" />
+                                    Approve course
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleReject(course)}
+                                    className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                  >
+                                    <CloseCircle size={16} variant="Linear" color="#D54800" />
+                                    Reject course
+                                  </DropdownMenuItem>
+                                  <div className="my-[4px] h-px bg-sd-grey-3" />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => setActiveCourseId(course.id)}
+                                className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                              >
+                                View details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                        {course.category}
-                      </span>
-                      <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                        {course.difficultyLevel}
-                      </span>
-                      <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                        {course.dateApproved}
-                      </span>
-                      <StatusPill status={course.status} />
-                      <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="text-sd-grey-11 hover:text-sd-grey-12 p-1 rounded-md hover:bg-sd-grey-3/50 cursor-pointer"
-                              aria-label="More options"
-                            >
-                              <More size={20} variant="Linear" color="currentColor" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="bg-sd-grey-1 border border-sd-grey-3 rounded-[12px] p-[6px] w-[160px]"
+
+                      {/* Course Title */}
+                      <h3 className="text-[14px] font-semibold text-sd-grey-12 leading-[20px] line-clamp-2">
+                        {course.courseTitle}
+                      </h3>
+
+                      {/* Metadata Chips: Course ID, Category, Difficulty */}
+                      <div className="flex flex-wrap items-center gap-[6px] text-[12px]">
+                        <div
+                          className="flex items-center gap-[4px] rounded bg-sd-grey-2 px-[6px] py-[2px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="font-mono text-sd-grey-12">{course.courseId}</span>
+                          <button
+                            type="button"
+                            onClick={() => void copyText(course.id)}
+                            className="text-sd-grey-11 hover:text-sd-blue p-0.5 cursor-pointer"
+                            aria-label="Copy course ID"
                           >
-                            {course.status === "pending" && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={() => handleApprove(course)}
-                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
-                                >
-                                  <TickCircle size={16} variant="Linear" color="#008500" />
-                                  Approve course
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleReject(course)}
-                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
-                                >
-                                  <CloseCircle size={16} variant="Linear" color="#D54800" />
-                                  Reject course
-                                </DropdownMenuItem>
-                                <div className="my-[4px] h-px bg-sd-grey-3" />
-                              </>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => setActiveCourseIndex(globalIdx)}
-                              className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer"
-                            >
-                              View details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer">
-                              Edit course
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-[14px] font-normal text-red-500 hover:bg-red-50 p-[8px] rounded-[8px] cursor-pointer">
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <Copy size={12} variant="Linear" color="currentColor" />
+                          </button>
+                        </div>
+
+                        <span className="rounded bg-sd-blue/10 px-[7px] py-[2px] font-medium text-sd-blue">
+                          {course.category}
+                        </span>
+
+                        <span className="rounded bg-sd-grey-2 px-[7px] py-[2px] text-sd-grey-11">
+                          {course.difficultyLevel}
+                        </span>
+
+                        {course.hasVideo && (
+                          <span className="rounded bg-emerald-50 px-[6px] py-[2px] text-emerald-600 font-medium text-[11px]">
+                            Video
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer Row: Date */}
+                      <div className="flex items-center justify-between border-t border-sd-grey-3/50 pt-[8px] text-[11px] text-sd-grey-11">
+                        <span>Submitted</span>
+                        <span className="font-medium text-sd-grey-12">{course.dateApproved}</span>
                       </div>
                     </div>
                   );
                 })
               )}
             </div>
-          </div>
-        </div>
+
+            {/* Desktop Table View (Hidden on mobile < sm) */}
+            <div className="hidden sm:block w-full overflow-x-auto rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 shadow-[0px_4px_12px_rgba(0,0,0,0.02)]">
+              <div className="w-full min-w-[1240px]">
+                {/* Table Header Row */}
+                <div className={cn(tableGridClassName, "bg-[#F0F0F0CC] border-b border-sd-grey-3")}>
+                  <div className="flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={displayCourses.length > 0 && displayCourses.every((c) => selectedIds.has(c.id))}
+                      onChange={toggleSelectAll}
+                      disabled={displayCourses.length === 0}
+                      className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer"
+                      aria-label="Select all courses"
+                    />
+                  </div>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Creator
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Course Title
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Course ID
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Category
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Difficulty Level
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Date Approved
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12">
+                    Status
+                  </span>
+                  <span className="text-[12px] font-semibold uppercase leading-[16px] text-sd-grey-12 text-center">
+                    Action
+                  </span>
+                </div>
+
+                {/* Table Body Rows */}
+                <div className="flex flex-col">
+                  {isLoading ? (
+                    Array.from({ length: itemsPerPage }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={cn(tableGridClassName, "border-b border-sd-grey-3/70 animate-pulse")}
+                      >
+                        <div className="flex items-center justify-center">
+                          <div className="size-[16px] rounded-[4px] bg-sd-grey-3" />
+                        </div>
+                        <div className="h-[14px] w-[100px] rounded bg-sd-grey-3" />
+                        <div className="h-[14px] w-[160px] rounded bg-sd-grey-3" />
+                        <div className="h-[14px] w-[90px] rounded bg-sd-grey-3" />
+                        <div className="h-[14px] w-[110px] rounded bg-sd-grey-3" />
+                        <div className="h-[14px] w-[80px] rounded bg-sd-grey-3" />
+                        <div className="h-[14px] w-[110px] rounded bg-sd-grey-3" />
+                        <div className="h-[22px] w-[80px] rounded-full bg-sd-grey-3" />
+                        <div className="flex justify-center">
+                          <div className="size-[20px] rounded bg-sd-grey-3" />
+                        </div>
+                      </div>
+                    ))
+                  ) : displayCourses.length === 0 ? (
+                    <div className="flex h-[120px] items-center justify-center text-sd-grey-11 text-[14px]">
+                      No courses found matching filters.
+                    </div>
+                  ) : (
+                    displayCourses.map((course, idx) => {
+                      const isChecked = selectedIds.has(course.id);
+                      return (
+                        <div
+                          key={course.id}
+                          onClick={() => setActiveCourseId(course.id)}
+                          className={cn(
+                            tableGridClassName,
+                            "border-b border-sd-grey-3/70 transition-colors hover:bg-sd-grey-2/50 cursor-pointer",
+                            isChecked && "bg-sd-blue/5",
+                            idx === displayCourses.length - 1 && "border-b-0"
+                          )}
+                        >
+                          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleSelectRow(course.id)}
+                              className="size-[16px] rounded-[4px] accent-sd-blue cursor-pointer"
+                              aria-label={`Select ${course.courseTitle}`}
+                            />
+                          </div>
+                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                            {course.creator}
+                          </span>
+                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                            {course.courseTitle}
+                          </span>
+                          <div className="flex items-center gap-[6px] min-w-0">
+                            <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                              {course.courseId}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void copyText(course.id);
+                              }}
+                              className="text-sd-grey-11 hover:text-sd-blue transition-colors cursor-pointer shrink-0 p-1 rounded-md hover:bg-sd-grey-3/50"
+                              aria-label="Copy course ID"
+                            >
+                              <Copy size={16} variant="Linear" color="currentColor" />
+                            </button>
+                          </div>
+                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                            {course.category}
+                          </span>
+                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                            {course.difficultyLevel}
+                          </span>
+                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
+                            {course.dateApproved}
+                          </span>
+                          <StatusPill status={course.status} />
+                          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="text-sd-grey-11 hover:text-sd-grey-12 p-1 rounded-md hover:bg-sd-grey-3/50 cursor-pointer"
+                                  aria-label="More options"
+                                >
+                                  <More size={20} variant="Linear" color="currentColor" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="bg-sd-grey-1 border border-sd-grey-3 rounded-[12px] p-[6px] w-[160px]"
+                              >
+                                {isPendingStatus(course.status) && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={() => handleApprove(course)}
+                                      className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                    >
+                                      <TickCircle size={16} variant="Linear" color="#008500" />
+                                      Approve course
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleReject(course)}
+                                      className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                    >
+                                      <CloseCircle size={16} variant="Linear" color="#D54800" />
+                                      Reject course
+                                    </DropdownMenuItem>
+                                    <div className="my-[4px] h-px bg-sd-grey-3" />
+                                  </>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() => setActiveCourseId(course.id)}
+                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                >
+                                  View details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer">
+                                  Edit course
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-[14px] font-normal text-red-500 hover:bg-red-50 p-[8px] rounded-[8px] cursor-pointer">
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Table Footer: Entries & Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-[16px] w-full px-[4px] mt-[4px]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-[12px] sm:gap-[16px] w-full px-[4px] mt-[4px]">
           {/* Entries Indicator Pill */}
           <div className="flex h-[36px] items-center justify-center rounded-full border border-sd-grey-3 bg-sd-grey-1 px-[16px] shadow-[0px_2px_4px_rgba(0,0,0,0.01)]">
             <span className="text-[12px] font-normal leading-[16px] text-sd-grey-11">
-              Showing {filteredCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCourses.length)} of {filteredCourses.length} submissions
+              Showing {totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} submissions
             </span>
           </div>
 
@@ -755,11 +1191,11 @@ export const AdminCoursesView = () => {
             </div>
             <button
               type="button"
-              disabled={currentPage === totalPages}
+              disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               className={cn(
                 "text-[14px] font-medium leading-[20px] px-[8px] py-[6px] transition-colors cursor-pointer border-0 bg-transparent",
-                currentPage === totalPages ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
+                currentPage >= totalPages ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
               )}
             >
               Next
@@ -861,26 +1297,40 @@ export const AdminCoursesView = () => {
       {/* Sidebar Course Information Drawer */}
       <AdminCourseInfoDrawer
         course={activeCourse}
-        isOpen={activeCourseIndex !== null}
+        isOpen={activeCourseId !== null}
         onOpenChange={(open) => {
-          if (!open) setActiveCourseIndex(null);
+          if (!open) setActiveCourseId(null);
         }}
         onPrevious={() => {
-          setActiveCourseIndex((current) => (current !== null ? Math.max(0, current - 1) : null));
+          if (activeCourseIndex !== null && activeCourseIndex > 0) {
+            setActiveCourseId(displayCourses[activeCourseIndex - 1].id);
+          }
         }}
         onNext={() => {
-          setActiveCourseIndex((current) => (current !== null ? Math.min(filteredCourses.length - 1, current + 1) : null));
+          if (activeCourseIndex !== null && activeCourseIndex < displayCourses.length - 1) {
+            setActiveCourseId(displayCourses[activeCourseIndex + 1].id);
+          }
         }}
         canPrevious={activeCourseIndex !== null && activeCourseIndex > 0}
-        canNext={activeCourseIndex !== null && activeCourseIndex < filteredCourses.length - 1}
+        canNext={activeCourseIndex !== null && activeCourseIndex < displayCourses.length - 1}
         onApprove={(course) => {
           handleApprove(course);
-          setActiveCourseIndex(null);
+          setActiveCourseId(null);
         }}
         onReject={(course) => {
           handleReject(course);
-          setActiveCourseIndex(null);
+          setActiveCourseId(null);
         }}
+      />
+
+      {/* Rejection Feedback Modal Dialog */}
+      <CourseRejectModal
+        isOpen={rejectModalOpen}
+        onOpenChange={setRejectModalOpen}
+        courseTitle={courseToReject?.courseTitle}
+        courseCount={isBulkReject ? selectedIds.size : undefined}
+        isLoading={isRejecting}
+        onConfirm={handleConfirmReject}
       />
     </div>
   );

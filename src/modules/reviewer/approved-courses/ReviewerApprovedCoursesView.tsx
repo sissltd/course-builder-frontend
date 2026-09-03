@@ -19,6 +19,12 @@ import { Button } from "@/components/shared/Button";
 import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/ReviewerPendingFilters";
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
+import {
+  useGetCourseReviewPricesQuery,
+  useSaveCoursePricesMutation,
+  usePublishCourseMutation,
+} from "@/redux/slices/adminApi";
+import type { DistributionChannelPayload } from "@/redux/slices/adminApi";
 
 interface ApprovedCourse {
   creator: string;
@@ -549,6 +555,7 @@ const ApprovedCourseInfoDrawer = ({
         isOpen={reviewPricesModalOpen}
         onOpenChange={setReviewPricesModalOpen}
         selectedChannels={selectedPublishChannels}
+        courseId={course.fullCourseId || course.courseId}
         onContinue={() => {
           setReviewPricesModalOpen(false);
           setReviewAndPublishModalOpen(true);
@@ -558,6 +565,7 @@ const ApprovedCourseInfoDrawer = ({
         isOpen={reviewAndPublishModalOpen}
         onOpenChange={setReviewAndPublishModalOpen}
         selectedChannels={selectedPublishChannels}
+        courseId={course.fullCourseId || course.courseId}
         onEdit={() => {
           setReviewAndPublishModalOpen(false);
           setReviewPricesModalOpen(true);
@@ -704,11 +712,13 @@ const ReviewPricesModal = ({
   isOpen,
   onOpenChange,
   selectedChannels,
+  courseId,
   onContinue,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedChannels: Record<string, boolean>;
+  courseId?: string;
   onContinue: () => void;
 }) => {
   const activeChannelNames = Object.entries(selectedChannels)
@@ -724,6 +734,43 @@ const ReviewPricesModal = ({
   }, [isOpen, activeChannelNames, activeTab]);
 
   const [pricingModel, setPricingModel] = React.useState("One-time");
+  const [learnerPrices, setLearnerPrices] = React.useState<Record<string, string>>({
+    SoluDesk: "149.00",
+    Coursera: "160.00",
+    Udemy: "190.00",
+  });
+
+  const { data: serverPricesData } = useGetCourseReviewPricesQuery(courseId!, {
+    skip: !isOpen || !courseId,
+  });
+
+  const [savePricesMutation, { isLoading: isSaving }] = useSaveCoursePricesMutation();
+
+  const handleSaveAndContinue = async () => {
+    if (courseId) {
+      try {
+        const payloadChannels: DistributionChannelPayload[] = activeChannelNames.map((ch) => {
+          const chKey = ch.toUpperCase();
+          const channelUpper = chKey.includes("SOLU")
+            ? "SOLUDESK"
+            : chKey.includes("COUR")
+            ? "COURSERA"
+            : "UDEMY";
+          return {
+            channel: channelUpper,
+            learner_price: learnerPrices[ch] || "149.00",
+            model: "ONE_TIME",
+            approval_rate: ch === "SoluDesk" ? "Published within 60 seconds" : "Published within 10 - 15 minutes",
+          };
+        });
+        await savePricesMutation({ id: courseId, body: { distribution_channels: payloadChannels } }).unwrap();
+        toast.success("Pricing saved successfully");
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Could not save prices");
+      }
+    }
+    onContinue();
+  };
 
   const channelData = {
     SoluDesk: {
@@ -949,6 +996,7 @@ const ReviewPricesModal = ({
             type="button"
             variant="outline"
             size="app"
+            disabled={isSaving}
             onClick={() => onOpenChange(false)}
             className="w-[132px] font-normal"
           >
@@ -958,10 +1006,11 @@ const ReviewPricesModal = ({
             type="button"
             variant="app-primary"
             size="app"
-            onClick={onContinue}
+            disabled={isSaving}
+            onClick={handleSaveAndContinue}
             className="w-[132px] font-normal"
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </Button>
         </div>
       </DialogContent>
@@ -973,18 +1022,54 @@ const ReviewAndPublishModal = ({
   isOpen,
   onOpenChange,
   selectedChannels,
+  courseId,
   onEdit,
   onPublish,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedChannels: Record<string, boolean>;
+  courseId?: string;
   onEdit: () => void;
   onPublish: () => void;
 }) => {
   const activeChannelNames = Object.entries(selectedChannels)
     .filter(([_, isSelected]) => isSelected)
     .map(([name]) => name);
+
+  const [publishMutation, { isLoading: isPublishing }] = usePublishCourseMutation();
+
+  const handlePublish = async () => {
+    if (courseId) {
+      try {
+        const payloadChannels: DistributionChannelPayload[] = activeChannelNames.map((ch) => {
+          const chKey = ch.toUpperCase();
+          const channelUpper = chKey.includes("SOLU")
+            ? "SOLUDESK"
+            : chKey.includes("COUR")
+            ? "COURSERA"
+            : "UDEMY";
+          return {
+            channel: channelUpper,
+            learner_price: ch === "SoluDesk" ? "149.00" : ch === "Udemy" ? "190.00" : "160.00",
+            model: "ONE_TIME",
+            approval_rate:
+              ch === "SoluDesk"
+                ? "Published within 60 seconds"
+                : "Published within 10 - 15 minutes",
+          };
+        });
+        await publishMutation({
+          id: courseId,
+          body: { distribution_channels: payloadChannels },
+        }).unwrap();
+        toast.success("Course published successfully!");
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to publish course");
+      }
+    }
+    onPublish();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1005,6 +1090,7 @@ const ReviewAndPublishModal = ({
           <DialogClose asChild>
             <button
               type="button"
+              disabled={isPublishing}
               className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[#D9D9D9] text-[#888888] transition-colors hover:bg-sd-grey-2"
               aria-label="Close review and publish"
             >
@@ -1022,15 +1108,27 @@ const ReviewAndPublishModal = ({
               <span className="text-[14px] text-sd-reviewer-muted">No channels selected</span>
             ) : (
               activeChannelNames.map((channel) => {
-                // Hardcoded prices for demonstration matching the design
-                const price = channel === 'SoluDesk' ? '₦100' : channel === 'Udemy' ? '₦190' : '₦160';
-                
+                const price =
+                  channel === "SoluDesk"
+                    ? "₦100"
+                    : channel === "Udemy"
+                    ? "₦190"
+                    : "₦160";
+
                 return (
-                  <div key={channel} className="flex items-center justify-between border-b border-[#F0F0F0] py-[16px] last:border-b-0">
+                  <div
+                    key={channel}
+                    className="flex items-center justify-between border-b border-[#F0F0F0] py-[16px] last:border-b-0"
+                  >
                     <span className="text-[14px] font-normal text-[#4B5563]">{channel}</span>
                     <div className="flex items-center gap-[40px]">
                       <span className="text-[14px] font-normal text-sd-grey-12">{price}</span>
-                      <button type="button" onClick={onEdit} className="flex items-center gap-[8px] text-[14px] font-normal text-[#4B5563] hover:text-sd-blue">
+                      <button
+                        type="button"
+                        onClick={onEdit}
+                        disabled={isPublishing}
+                        className="flex items-center gap-[8px] text-[14px] font-normal text-[#4B5563] hover:text-sd-blue"
+                      >
                         <span>Edit</span>
                         <Edit size={16} variant="Linear" color="var(--sd-blue)" />
                       </button>
@@ -1048,6 +1146,7 @@ const ReviewAndPublishModal = ({
             type="button"
             variant="outline"
             size="app"
+            disabled={isPublishing}
             onClick={() => onOpenChange(false)}
             className="w-[116px] font-normal"
           >
@@ -1057,10 +1156,11 @@ const ReviewAndPublishModal = ({
             type="button"
             variant="app-primary"
             size="app"
-            onClick={onPublish}
+            disabled={isPublishing}
+            onClick={handlePublish}
             className="w-[132px] font-normal"
           >
-            Continue
+            {isPublishing ? "Publishing..." : "Continue"}
           </Button>
         </div>
       </DialogContent>

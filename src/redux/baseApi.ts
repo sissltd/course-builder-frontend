@@ -241,6 +241,8 @@ export const BaseAPI = createApi({
     "AdminWallet",
     "AdminTransaction",
     "AdminWithdrawal",
+    "AdminCourse",
+    "AdminCourseComment",
     "ActivityLog",
     "KycReview",
     "AdminOverview",

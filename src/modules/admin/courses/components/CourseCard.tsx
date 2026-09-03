@@ -12,16 +12,30 @@ import { cn } from "@/lib/utils";
 import { colorForCreator, initialsFor, type CourseRow, type CourseStatus } from "../data/mockData";
 import { paletteForCategory } from "../data/categoryColors";
 
-const STATUS_LABEL: Record<CourseStatus, string> = {
-  pending: "Pending review",
-  approved: "Approved",
-  rejected: "Rejected",
-};
-
-const STATUS_DOT: Record<CourseStatus, string> = {
-  pending: "bg-[#B77815]",
-  approved: "bg-[#008500]",
-  rejected: "bg-[#FF5025]",
+const getStatusBadge = (status: string) => {
+  const norm = (status || "").toUpperCase();
+  if (norm.includes("SUBMIT") || norm.includes("PENDING")) {
+    return { label: "Pending review", dot: "bg-[#B77815]" };
+  }
+  if (norm.includes("IN_REVIEW")) {
+    return { label: "In review", dot: "bg-[#0063EF]" };
+  }
+  if (norm.includes("QA")) {
+    return { label: "QA verification", dot: "bg-[#9333EA]" };
+  }
+  if (norm.includes("REJECT")) {
+    return { label: "Rejected", dot: "bg-[#FF5025]" };
+  }
+  if (norm.includes("APPROV")) {
+    return { label: "Approved", dot: "bg-[#008500]" };
+  }
+  if (norm.includes("PUBLISH")) {
+    return { label: "Published", dot: "bg-[#008500]" };
+  }
+  if (norm.includes("DRAFT")) {
+    return { label: "Draft", dot: "bg-[#606060]" };
+  }
+  return { label: status, dot: "bg-[#606060]" };
 };
 
 interface CourseCardProps {
@@ -42,6 +56,11 @@ export const CourseCard = ({
   onReject,
 }: CourseCardProps) => {
   const palette = paletteForCategory(course.category);
+  const statusBadge = getStatusBadge(course.status);
+  const isPending =
+    course.status.toLowerCase() === "pending" ||
+    course.status.toUpperCase() === "SUBMITTED" ||
+    course.status.toUpperCase() === "IN_REVIEW";
 
   // Only the card body opens the drawer — the controls stop the click bubbling.
   const stop = (event: React.MouseEvent) => event.stopPropagation();
@@ -71,8 +90,8 @@ export const CourseCard = ({
               palette.body,
             )}
           >
-            <span className={cn("size-[6px] shrink-0 rounded-full", STATUS_DOT[course.status])} />
-            {STATUS_LABEL[course.status]}
+            <span className={cn("size-[6px] shrink-0 rounded-full", statusBadge.dot)} />
+            {statusBadge.label}
           </span>
         </div>
 
@@ -94,7 +113,7 @@ export const CourseCard = ({
               align="end"
               className="w-[160px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[6px]"
             >
-              {course.status === "pending" && (
+              {isPending && (
                 <>
                   <DropdownMenuItem
                     onClick={onApprove}
