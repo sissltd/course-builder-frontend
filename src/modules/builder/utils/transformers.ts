@@ -1,5 +1,6 @@
 import type { Course, CourseModule } from "@/modules/creator/courses/types";
 import type { AssessmentQuestion, Assessment } from "@/modules/creator/courses/types/assessment";
+import type { QuizQuestionItem, QuizQuestionType, QuizOption } from "@/modules/creator/courses/types/quiz";
 import type { Module, Lesson, CourseInformationData, QuizQuestionData, QuizQuestion } from "@/redux/slices/courseBuilderSlice";
 
 interface ApiLessonLike {
@@ -200,4 +201,83 @@ export const reduxQuizQuestionsToAssessment = (
       } as AssessmentQuestion;
     }),
   };
+};
+
+export const apiQuizQuestionsToRedux = (
+  questions: QuizQuestionItem[],
+): QuizQuestionData[] => {
+  return questions.map((q) => {
+    if (q.question_type === "ESSAY") {
+      return {
+        question: q.question_text,
+        type: "essay",
+        points: q.points,
+        options: [],
+        explanation: q.model_response_guide || "",
+      };
+    }
+    const correctIdx = q.options.findIndex((opt) => opt.is_correct);
+    return {
+      question: q.question_text,
+      type: "single",
+      points: q.points,
+      options: q.options.map((opt, oi) => ({
+        id: opt.id || `${q.id || "q"}-${oi}`,
+        label: String.fromCharCode(65 + oi),
+        value: opt.option_text,
+      })),
+      correctOptionId:
+        correctIdx >= 0
+          ? q.options[correctIdx].id || `${q.id || "q"}-${correctIdx}`
+          : undefined,
+      explanation:
+        q.options.find((opt) => opt.is_correct)?.explanation || "",
+    };
+  });
+};
+
+export const reduxQuizQuestionsToApiQuestions = (
+  questions: QuizQuestionData[],
+): { question_text: string; question_type: QuizQuestionType; points: number; model_response_guide: string; order: number; options: QuizOption[] }[] => {
+  return questions.map((q, idx) => {
+    if (q.type === "essay") {
+      return {
+        question_text: q.question,
+        question_type: "ESSAY" as QuizQuestionType,
+        points: q.points || 0,
+        model_response_guide: q.explanation || "",
+        order: idx,
+        options: [],
+      };
+    }
+    return {
+      question_text: q.question,
+      question_type: "MULTIPLE_CHOICE" as QuizQuestionType,
+      points: q.points || 0,
+      model_response_guide: "",
+      order: idx,
+      options: q.options.map((opt, oi) => ({
+        option_text: opt.value,
+        is_correct: opt.id === q.correctOptionId,
+        explanation: opt.id === q.correctOptionId ? (q.explanation || "") : "",
+        order: oi,
+      })),
+    };
+  });
+};
+
+export const apiQuizQuestionsToModuleQuiz = (
+  questions: QuizQuestionItem[],
+): { question: string; options: string[]; correctAnswer: string }[] => {
+  return questions.map((q) => {
+    if (q.question_type === "ESSAY") {
+      return { question: q.question_text, options: [], correctAnswer: "" };
+    }
+    const correct = q.options.find((o) => o.is_correct);
+    return {
+      question: q.question_text,
+      options: q.options.map((o) => o.option_text),
+      correctAnswer: correct?.option_text || "",
+    };
+  });
 };

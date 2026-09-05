@@ -7,6 +7,7 @@ import {
   Video, 
   ArrowLeft2, 
   ArrowRight2,
+  Play,
 } from "iconsax-react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +22,7 @@ import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
 import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
 import { CategoryStatus } from "@/modules/creator/courses/types/category";
+import { VideoPlayerModal } from "@/modules/creator/courses/components/VideoPlayerModal";
 
 interface CourseInformationProps {
   onNext?: () => void;
@@ -79,6 +81,8 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [savedVideoName, setSavedVideoName] = useState<string | null>(info.coverVideo?.name || null);
   const [savedVideoSize, setSavedVideoSize] = useState<number | null>(info.coverVideo?.size || null);
+  const [showPlayerModal, setShowPlayerModal] = useState(false);
+  const [videoObjectUrl, setVideoObjectUrl] = useState<string | null>(null);
 
   // Objective Handlers
   const handleAddObjective = () => {
@@ -139,20 +143,38 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
       setVideoFile(file);
       setSavedVideoName(file.name);
       setSavedVideoSize(file.size);
+      setVideoObjectUrl(URL.createObjectURL(file));
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
       setVideoFile(file);
       setSavedVideoName(file.name);
       setSavedVideoSize(file.size);
+      setVideoObjectUrl(URL.createObjectURL(file));
     }
   };
+
+  const handleRemoveVideo = () => {
+    if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+    setVideoFile(null);
+    setSavedVideoName(null);
+    setSavedVideoSize(null);
+    setVideoObjectUrl(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+    };
+  }, []);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -582,18 +604,22 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
             className="h-[312px] bg-[#F0F0F0] rounded-[16px] p-[12px] w-[691px] max-w-full"
           >
             <div className="w-full h-full border border-dashed border-[#D9D9D9] bg-white rounded-[8px] flex flex-col items-center justify-center p-[20px]">
-              {(videoFile || savedVideoName) ? (
-                <div className="flex flex-col items-center gap-[20px] w-full max-w-[400px] text-center">
-                  <div className="size-[60px] rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#0A60E1]">
-                    <Video size={36} variant="Bold" color="#0A60E1" />
-                  </div>
-                  <div className="flex flex-col gap-[4px] w-full">
-                    <p className="text-[16px] text-[#202020] font-semibold truncate px-[10px]">
-                      {videoFile ? videoFile.name : savedVideoName}
-                    </p>
-                    <p className="text-[14px] text-[#606060]">
-                      {videoFile ? formatFileSize(videoFile.size) : formatFileSize(savedVideoSize || 0)}
-                    </p>
+              {(videoFile || savedVideoName || info.coverVideoUrl) ? (
+                <div className="flex flex-col items-center gap-[20px] w-full h-full">
+                  <div
+                    className="relative w-full flex-1 rounded-[8px] overflow-hidden bg-black cursor-pointer group"
+                    onClick={() => setShowPlayerModal(true)}
+                  >
+                    <video
+                      src={videoObjectUrl || info.coverVideoUrl}
+                      className="w-full h-full object-contain"
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
+                      <div className="size-[64px] rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+                        <Play size={32} variant="Bold" color="currentColor" />
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-[12px]">
                     <Button 
@@ -606,11 +632,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                     <Button 
                       variant="app-outline"
                       type="button"
-                      onClick={() => {
-                        setVideoFile(null);
-                        setSavedVideoName(null);
-                        setSavedVideoSize(null);
-                      }}
+                      onClick={handleRemoveVideo}
                     >
                       Remove
                     </Button>
@@ -672,6 +694,13 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
         </div>
 
       </form>
+
+      <VideoPlayerModal
+        isOpen={showPlayerModal}
+        onOpenChange={setShowPlayerModal}
+        title={info.courseTitle || "Cover Video"}
+        videoUrl={videoObjectUrl || info.coverVideoUrl}
+      />
     </FormProvider>
   );
 };

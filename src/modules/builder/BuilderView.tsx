@@ -7,6 +7,7 @@ import {
   setActiveStep,
   setActiveModuleIndex,
   setEditingLesson,
+  setEditingQuiz,
   addModule,
   updateModule,
   addLessonToModule,
@@ -23,8 +24,6 @@ import {
   syncDeleteModule,
   syncCreateLesson,
   syncDeleteLesson,
-  syncUpdateModule,
-  syncUpdateLesson,
   saveAllDirty,
 } from "@/redux/slices/builderSync";
 import { BuilderHeader } from "./components/BuilderHeader";
@@ -56,6 +55,7 @@ export default function BuilderView() {
   const courseLoadedRef = useRef(false);
 
   const stepsOrder: BuilderStep[] = ["information", "outline", "version", "modules", "thumbnail", "quality"];
+  const didRestoreRef = useRef(false);
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -65,6 +65,82 @@ export default function BuilderView() {
     }
   }, [searchParams, dispatch]);
 
+  // Restore step + editing state from URL params (once after course loads)
+  useEffect(() => {
+    if (didRestoreRef.current || isLoading) return;
+    if (!courseId) return;
+    didRestoreRef.current = true;
+
+    const stepParam = searchParams.get("step") as BuilderStep | null;
+    if (stepParam && stepsOrder.includes(stepParam)) {
+      dispatch(setActiveStep(stepParam));
+    }
+
+    const moduleParam = searchParams.get("moduleId");
+    const lessonParam = searchParams.get("lessonId");
+    const quizModuleParam = searchParams.get("quizModuleId");
+    const quizLessonParam = searchParams.get("quizLessonId");
+    if (moduleParam && modules.length > 0) {
+      const mod = modules.find((m) => m.id === moduleParam);
+      if (mod) {
+        const modIndex = modules.indexOf(mod);
+        dispatch(setActiveModuleIndex(modIndex));
+        if (lessonParam) {
+          const lesson = mod.lessons.find((l) => l.id === lessonParam);
+          if (lesson) {
+            dispatch(setEditingLesson({ moduleId: moduleParam, lessonId: lessonParam }));
+          }
+        }
+      }
+    }
+    // Restore quiz editing state
+    if (quizModuleParam && quizLessonParam && modules.length > 0) {
+      const qMod = modules.find((m) => m.id === quizModuleParam);
+      if (qMod) {
+        const qLesson = qMod.lessons.find((l) => l.id === quizLessonParam);
+        if (qLesson) {
+          dispatch(setEditingQuiz({ moduleId: quizModuleParam, lessonId: quizLessonParam }));
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, isLoading]);
+
+  // Sync URL params when editing state changes (no router.replace to avoid loops)
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (!id) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("id", id);
+
+    if (editingQuiz) {
+      params.set("quizModuleId", editingQuiz.moduleId);
+      params.set("quizLessonId", editingQuiz.lessonId);
+      // Clear lesson params when quiz is open
+      params.delete("moduleId");
+      params.delete("lessonId");
+    } else {
+      params.delete("quizModuleId");
+      params.delete("quizLessonId");
+      if (editingLesson) {
+        params.set("moduleId", editingLesson.moduleId);
+        params.set("lessonId", editingLesson.lessonId);
+      } else {
+        params.delete("moduleId");
+        params.delete("lessonId");
+      }
+    }
+
+    if (activeStep) {
+      params.set("step", activeStep);
+    }
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingLesson, editingQuiz, activeStep]);
+
   useEffect(() => {
     if (isDirty && courseId) {
       if (autoSaveTimerRef.current) {
@@ -72,7 +148,7 @@ export default function BuilderView() {
       }
       autoSaveTimerRef.current = setTimeout(() => {
         dispatch(saveAllDirty());
-      }, 3000);
+      }, 5000);
     }
     return () => {
       if (autoSaveTimerRef.current) {
@@ -113,15 +189,6 @@ export default function BuilderView() {
 
   const handleUpdateModule = (updated: Module) => {
     dispatch(updateModule(updated));
-    if (courseId && !/^\d+$/.test(updated.id)) {
-      dispatch(syncUpdateModule({
-        moduleId: updated.id,
-        title: updated.title,
-        order: modules.indexOf(updated) + 1,
-        description: updated.description,
-        learningObjectives: updated.objectives,
-      }));
-    }
   };
 
   const handleAddLessonForSidebar = (type: "video" | "quiz" | "text") => {
@@ -153,13 +220,6 @@ export default function BuilderView() {
         updatedLesson,
       })
     );
-    if (courseId && !/^\d+$/.test(editingLesson.lessonId)) {
-      dispatch(syncUpdateLesson({
-        moduleId: editingLesson.moduleId,
-        lessonId: editingLesson.lessonId,
-        lesson: updatedLesson,
-      }));
-    }
   };
 
   const currentModule = modules[activeModuleIndex] || null;
@@ -245,6 +305,7 @@ export default function BuilderView() {
                       <ModulesStep
                         key={currentModule.id}
                         module={currentModule}
+                        moduleIndex={activeModuleIndex}
                         onUpdateModule={handleUpdateModule}
                         onRemoveModule={handleRemoveModule}
                         onEditLesson={(lessonId) => dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId }))}

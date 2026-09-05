@@ -9,6 +9,9 @@ import {
   markSaved,
   replaceModuleId,
   replaceLessonId,
+  setQuizIdForLesson,
+  setQuizQuestionsForLesson,
+  setModuleQuizId,
   type Lesson,
 } from "./courseBuilderSlice";
 import { uploadFile } from "@/lib/uploads";
@@ -17,10 +20,14 @@ import {
   apiCourseToCourseInfo,
   reduxLessonToApiPayload,
   reduxQuizQuestionsToAssessment,
+  apiQuizQuestionsToRedux,
+  reduxQuizQuestionsToApiQuestions,
+  apiQuizQuestionsToModuleQuiz,
 } from "@/modules/builder/utils/transformers";
 import type { CreateModuleRequest, UpdateModuleRequest } from "@/modules/creator/courses/types/module";
 import type { CreateLessonRequest, UpdateLessonRequest, LessonContentType } from "@/modules/creator/courses/types/lesson";
 import type { UpsertAssessmentRequest } from "@/modules/creator/courses/types/assessment";
+import { CreateQuizRequest, QuizLevel, QuizQuestionType } from "@/modules/creator/courses/types/quiz";
 
 const fetchJson = async (url: string, token: string, init?: RequestInit) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${url}`, {
@@ -42,6 +49,32 @@ const fetchJson = async (url: string, token: string, init?: RequestInit) => {
 
 const getToken = (state: RootState): string => state.auth.accessToken || "";
 
+const syncQuestionsForQuiz = async (
+  token: string,
+  quizId: string,
+  apiQuestions: { question_text: string; question_type: QuizQuestionType; points: number; model_response_guide: string; order: number; options: { option_text: string; is_correct: boolean; explanation: string; order: number }[] }[],
+) => {
+  let existingQuestions: { id: string }[] = [];
+  try {
+    const qRes = await fetchJson(`/questions/?quiz=${quizId}`, token);
+    existingQuestions = qRes.data?.results || qRes.results || [];
+    if (!Array.isArray(existingQuestions)) existingQuestions = [];
+  } catch {
+    // ignore
+  }
+
+  for (const eq of existingQuestions) {
+    await fetchJson(`/questions/${eq.id}/`, token, { method: "DELETE" }).catch(() => {});
+  }
+
+  for (const apiQ of apiQuestions) {
+    await fetchJson("/questions/", token, {
+      method: "POST",
+      body: JSON.stringify({ ...apiQ, quiz: quizId }),
+    }).catch(() => {});
+  }
+};
+
 export const loadCourse = createAsyncThunk<
   void,
   string,
@@ -55,6 +88,75 @@ export const loadCourse = createAsyncThunk<
     const courseInfo = apiCourseToCourseInfo(course);
     dispatch(setCourseInformation(courseInfo));
     dispatch(setModules(apiCourseToReduxModules(course)));
+
+    const modules = getState().courseBuilder.modules;
+
+    let allQuizzes: { id: string; lesson: string | null; module: string | null; questions: unknown[] }[] = [];
+    try {
+      const quizRes = await fetchJson("/quizzes/?size=200", token);
+      allQuizzes = quizRes.data?.results?.flat?.() || quizRes.data?.results || [];
+      if (!Array.isArray(allQuizzes)) allQuizzes = [];
+    } catch {
+      // quizzes fetch failed silently
+    }
+
+    for (const mod of modules) {
+      const moduleQuiz = allQuizzes.find(
+        (q) => q.module === mod.id && !q.lesson,
+      );
+      if (moduleQuiz) {
+        dispatch(setModuleQuizId({ moduleId: mod.id, quizId: moduleQuiz.id }));
+        let quizQuestions = moduleQuiz.questions || [];
+        if (quizQuestions.length === 0) {
+          try {
+            const qRes = await fetchJson(`/questions/?quiz=${moduleQuiz.id}`, token);
+            quizQuestions = qRes.data?.results || qRes.results || [];
+            if (!Array.isArray(quizQuestions)) quizQuestions = [];
+          } catch {
+            // ignore
+          }
+        }
+        if (quizQuestions.length > 0) {
+          const typedQs = quizQuestions as Parameters<typeof apiQuizQuestionsToModuleQuiz>[0];
+          const mapped = apiQuizQuestionsToModuleQuiz(typedQs);
+          dispatch(setModules(
+            getState().courseBuilder.modules.map((m) =>
+              m.id === mod.id ? { ...m, quizQuestions: mapped } : m
+            )
+          ));
+        }
+      }
+
+      for (const lesson of mod.lessons) {
+        if (lesson.type === "quiz") {
+          const matched = allQuizzes.find((q) => q.lesson === lesson.id && q.module === mod.id);
+          if (matched) {
+            dispatch(setQuizIdForLesson({
+              moduleId: mod.id,
+              lessonId: lesson.id,
+              quizId: matched.id,
+            }));
+            let lessonQuestions = matched.questions || [];
+            if (lessonQuestions.length === 0) {
+              try {
+                const qRes = await fetchJson(`/questions/?quiz=${matched.id}`, token);
+                lessonQuestions = qRes.data?.results || qRes.results || [];
+                if (!Array.isArray(lessonQuestions)) lessonQuestions = [];
+              } catch {
+                // ignore
+              }
+            }
+            if (lessonQuestions.length > 0) {
+              dispatch(setQuizQuestionsForLesson({
+                moduleId: mod.id,
+                lessonId: lesson.id,
+                questions: apiQuizQuestionsToRedux(lessonQuestions as Parameters<typeof apiQuizQuestionsToRedux>[0]),
+              }));
+            }
+          }
+        }
+      }
+    }
   } finally {
     dispatch(setIsLoading(false));
   }
@@ -79,6 +181,7 @@ export const syncCreateModule = createAsyncThunk<
     const body: CreateModuleRequest = {
       title: newModule.title || "Untitled Module",
       order: modules.length,
+      learning_objectives: (newModule.objectives || []).filter((o) => o.trim() !== ""),
     };
     const result = await fetchJson(`/courses/${courseId}/modules/`, token, {
       method: "POST",
@@ -109,7 +212,7 @@ export const syncUpdateModule = createAsyncThunk<
       title,
       order,
       description: description || "",
-      learning_objectives: learningObjectives?.join(", ") || "",
+      learning_objectives: (learningObjectives || []).filter((o) => o.trim() !== ""),
     };
     await fetchJson(`/courses/${courseId}/modules/${moduleId}/`, token, {
       method: "PATCH",
@@ -248,29 +351,100 @@ export const syncSaveModuleAssessment = createAsyncThunk<
   const mod = state.courseBuilder.modules.find((m) => m.id === moduleId);
   if (!mod) return;
 
+  let quizId = mod.quizId;
+
   dispatch(setIsSaving(true));
   try {
     const token = getToken(state);
-    const payload: UpsertAssessmentRequest = reduxQuizQuestionsToAssessment(
-      mod.quizQuestions.map((q, qi) => ({
-        question: q.question,
-        type: "single" as const,
+    const apiQuestions = mod.quizQuestions.map((q, idx) => {
+      const correctIdx = q.options.indexOf(q.correctAnswer || "");
+      return {
+        question_text: q.question,
+        question_type: QuizQuestionType.MULTIPLE_CHOICE,
         points: 0,
+        model_response_guide: "",
+        order: idx,
         options: q.options.map((opt, oi) => ({
-          id: `${qi}-${String.fromCharCode(97 + oi)}`,
-          label: String.fromCharCode(65 + oi),
-          value: opt,
+          option_text: opt,
+          is_correct: oi === correctIdx,
+          explanation: oi === correctIdx ? "" : "",
+          order: oi,
         })),
-        correctOptionId: q.correctAnswer
-          ? `${qi}-${String.fromCharCode(97 + q.options.indexOf(q.correctAnswer))}`
-          : undefined,
-      })),
-      `${moduleTitle} Quiz`,
-    );
-    await fetchJson(`/courses/${courseId}/modules/${moduleId}/assessment/`, token, {
-      method: "PUT",
-      body: JSON.stringify(payload),
+      };
     });
+
+    if (!quizId) {
+      let existingQuizId: string | null = null;
+      try {
+        const quizRes = await fetchJson("/quizzes/?size=200", token);
+        const allQuizzes = quizRes.data?.results || [];
+        const existing = allQuizzes.find(
+          (q: { module: string | null }) => q.module === moduleId
+        );
+        if (existing) {
+          existingQuizId = existing.id;
+        }
+      } catch {
+        // ignore fetch error
+      }
+
+      if (existingQuizId) {
+        quizId = existingQuizId;
+        dispatch(setModuleQuizId({ moduleId, quizId: existingQuizId }));
+        await fetchJson(`/quizzes/${existingQuizId}/`, token, {
+          method: "PUT",
+          body: JSON.stringify({
+            level: QuizLevel.MODULE,
+            title: `${moduleTitle || "Untitled"} Quiz`,
+            description: "",
+            module: moduleId,
+            passing_score: 70,
+            time_limit_minutes: 0,
+            attempts_allowed: 3,
+            shuffle_questions: false,
+            randomize_options: false,
+          }),
+        });
+      } else {
+        const body: CreateQuizRequest = {
+          level: QuizLevel.MODULE,
+          title: `${moduleTitle || "Untitled"} Quiz`,
+          description: "",
+          module: moduleId,
+          passing_score: 70,
+          time_limit_minutes: 0,
+          attempts_allowed: 3,
+          shuffle_questions: false,
+          randomize_options: false,
+        };
+        const result = await fetchJson("/quizzes/", token, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        quizId = result.id;
+        dispatch(setModuleQuizId({ moduleId, quizId: result.id }));
+      }
+    } else {
+      await fetchJson(`/quizzes/${quizId}/`, token, {
+        method: "PUT",
+        body: JSON.stringify({
+          level: QuizLevel.MODULE,
+          title: `${moduleTitle || "Untitled"} Quiz`,
+          description: "",
+          module: moduleId,
+          passing_score: 70,
+          time_limit_minutes: 0,
+          attempts_allowed: 3,
+          shuffle_questions: false,
+          randomize_options: false,
+        }),
+      });
+    }
+
+    if (quizId) {
+      await syncQuestionsForQuiz(token, quizId, apiQuestions);
+    }
+
     dispatch(markSaved());
   } catch {
     dispatch(setIsSaving(false));
@@ -305,6 +479,184 @@ export const syncSaveLessonAssessment = createAsyncThunk<
         body: JSON.stringify(payload),
       },
     );
+    dispatch(markSaved());
+  } catch {
+    dispatch(setIsSaving(false));
+  }
+});
+
+export const syncCreateQuiz = createAsyncThunk<
+  string | null,
+  { moduleId: string; lessonId: string; lessonTitle: string },
+  { state: RootState; dispatch: AppDispatch }
+>("builderSync/syncCreateQuiz", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState }) => {
+  const state = getState();
+  const courseId = state.courseBuilder.courseId;
+  if (!courseId) return null;
+
+  dispatch(setIsSaving(true));
+  try {
+    const token = getToken(state);
+    const lesson = state.courseBuilder.modules
+      .find((m) => m.id === moduleId)
+      ?.lessons.find((l) => l.id === lessonId);
+    const questions = lesson?.quizQuestions || [];
+    const apiQuestions = reduxQuizQuestionsToApiQuestions(questions);
+
+    let existingQuizId: string | null = null;
+    try {
+      const quizRes = await fetchJson("/quizzes/?size=200", token);
+      const allQuizzes = quizRes.data?.results || [];
+      const existing = allQuizzes.find(
+        (q: { lesson: string | null; module: string | null }) => q.module === moduleId && (q.lesson === lessonId || !q.lesson)
+      );
+      if (existing) {
+        existingQuizId = existing.id;
+      }
+    } catch {
+      // ignore fetch error
+    }
+
+    if (existingQuizId) {
+      await fetchJson(`/quizzes/${existingQuizId}/`, token, {
+        method: "PUT",
+        body: JSON.stringify({
+          level: QuizLevel.LESSON,
+          title: `${lessonTitle || "Untitled"} Quiz`,
+          description: "",
+          lesson: lessonId,
+          passing_score: 70,
+          time_limit_minutes: 0,
+          attempts_allowed: 3,
+          shuffle_questions: false,
+          randomize_options: false,
+        }),
+      });
+      await syncQuestionsForQuiz(token, existingQuizId, apiQuestions);
+      dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: existingQuizId }));
+      dispatch(markSaved());
+      return existingQuizId;
+    }
+
+    const body: CreateQuizRequest = {
+      level: QuizLevel.LESSON,
+      title: `${lessonTitle || "Untitled"} Quiz`,
+      description: "",
+      lesson: lessonId,
+      passing_score: 70,
+      time_limit_minutes: 0,
+      attempts_allowed: 3,
+      shuffle_questions: false,
+      randomize_options: false,
+    };
+    const result = await fetchJson("/quizzes/", token, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    await syncQuestionsForQuiz(token, result.id, apiQuestions);
+    dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: result.id }));
+    dispatch(markSaved());
+    return result.id as string;
+  } catch {
+    dispatch(setIsSaving(false));
+    return null;
+  }
+});
+
+export const syncSaveQuizQuestions = createAsyncThunk<
+  void,
+  { moduleId: string; lessonId: string; lessonTitle: string },
+  { state: RootState; dispatch: AppDispatch }
+>("builderSync/syncSaveQuizQuestions", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState }) => {
+  const state = getState();
+  const courseId = state.courseBuilder.courseId;
+  if (!courseId) return;
+
+  const lesson = state.courseBuilder.modules
+    .find((m) => m.id === moduleId)
+    ?.lessons.find((l) => l.id === lessonId);
+  if (!lesson) return;
+
+  let quizId = lesson.quizId;
+
+  dispatch(setIsSaving(true));
+  try {
+    const token = getToken(state);
+    const questions = lesson.quizQuestions || [];
+    const apiQuestions = reduxQuizQuestionsToApiQuestions(questions);
+
+    if (!quizId) {
+      let existingQuizId: string | null = null;
+      try {
+        const quizRes = await fetchJson("/quizzes/?size=200", token);
+        const allQuizzes = quizRes.data?.results || [];
+        const existing = allQuizzes.find(
+          (q: { lesson: string | null; module: string | null }) => q.module === moduleId && (q.lesson === lessonId || !q.lesson)
+        );
+        if (existing) {
+          existingQuizId = existing.id;
+        }
+      } catch {
+        // ignore fetch error
+      }
+
+      if (existingQuizId) {
+        quizId = existingQuizId;
+        dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: existingQuizId }));
+        await fetchJson(`/quizzes/${existingQuizId}/`, token, {
+          method: "PUT",
+          body: JSON.stringify({
+            level: QuizLevel.LESSON,
+            title: `${lessonTitle || "Untitled"} Quiz`,
+            description: "",
+            lesson: lessonId,
+            passing_score: 70,
+            time_limit_minutes: 0,
+            attempts_allowed: 3,
+            shuffle_questions: false,
+            randomize_options: false,
+          }),
+        });
+      } else {
+        const body: CreateQuizRequest = {
+          level: QuizLevel.LESSON,
+          title: `${lessonTitle || "Untitled"} Quiz`,
+          description: "",
+          lesson: lessonId,
+          passing_score: 70,
+          time_limit_minutes: 0,
+          attempts_allowed: 3,
+          shuffle_questions: false,
+          randomize_options: false,
+        };
+        const result = await fetchJson("/quizzes/", token, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        quizId = result.id;
+        dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: result.id }));
+      }
+    } else {
+      await fetchJson(`/quizzes/${quizId}/`, token, {
+        method: "PUT",
+        body: JSON.stringify({
+          level: QuizLevel.LESSON,
+          title: `${lessonTitle || "Untitled"} Quiz`,
+          description: "",
+          lesson: lessonId,
+          passing_score: 70,
+          time_limit_minutes: 0,
+          attempts_allowed: 3,
+          shuffle_questions: false,
+          randomize_options: false,
+        }),
+      });
+    }
+
+    if (quizId) {
+      await syncQuestionsForQuiz(token, quizId, apiQuestions);
+    }
+
     dispatch(markSaved());
   } catch {
     dispatch(setIsSaving(false));
@@ -466,7 +818,7 @@ export const saveAllDirty = createAsyncThunk<
 
           if (lesson.quizQuestions && lesson.quizQuestions.length > 0) {
             await dispatch(
-              syncSaveLessonAssessment({
+              syncSaveQuizQuestions({
                 moduleId: mod.id,
                 lessonId: lesson.id,
                 lessonTitle: lesson.title,

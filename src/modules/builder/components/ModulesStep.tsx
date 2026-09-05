@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { 
   Trash, 
   Add, 
@@ -10,7 +10,10 @@ import {
   VideoPlay,
   DocumentText,
   DocumentCode2,
-  More
+  More,
+  Timer,
+  Book,
+  PlayCircle,
 } from "iconsax-react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +22,8 @@ import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { Button } from "@/components/shared/Button";
 import { moduleSchema, ModuleFormData } from "../utils/schemas";
+import { QuizBuilderView } from "./QuizBuilderView";
+import type { QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
 
 
 export interface Lesson {
@@ -48,10 +53,12 @@ export interface Module {
   objectives: string[];
   lessons: Lesson[];
   quizQuestions: QuizQuestion[];
+  quizId?: string;
 }
 
 interface ModulesStepProps {
   module: Module;
+  moduleIndex: number;
   onUpdateModule: (updated: Module) => void;
   onRemoveModule?: (moduleId: string) => void;
   onEditLesson: (lessonId: string) => void;
@@ -62,6 +69,7 @@ interface ModulesStepProps {
 
 export const ModulesStep = ({
   module,
+  moduleIndex,
   onUpdateModule,
   onRemoveModule,
   onEditLesson,
@@ -69,6 +77,9 @@ export const ModulesStep = ({
   onNext,
   onBack
 }: ModulesStepProps) => {
+  const [showLessonTypes, setShowLessonTypes] = useState(false);
+  const [isAddingObjective, setIsAddingObjective] = useState(false);
+  const [newObjective, setNewObjective] = useState("");
 
   const methods = useForm<ModuleFormData>({
     resolver: zodResolver(moduleSchema),
@@ -137,41 +148,36 @@ export const ModulesStep = ({
     onEditLesson(lessonId);
   };
 
-  const handleAddQuizQuestion = () => {
-    const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
-    const newQuestion: QuizQuestion = {
-      question: "",
-      options: ["", "", "", ""]
-    };
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: parsedObjectives,
-      quizQuestions: [...module.quizQuestions, newQuestion]
-    });
-  };
+  const builderQuestions = useMemo(() =>
+    module.quizQuestions.map((q, i) => {
+      const opts = q.options.map((opt, oi) => ({
+        id: `mod-q${i}-o${oi}`,
+        label: String.fromCharCode(65 + oi),
+        value: opt,
+      }));
+      const correctIdx = q.options.indexOf(q.correctAnswer || "");
+      return {
+        id: `mod-q${i}`,
+        question: q.question,
+        type: "single" as const,
+        points: 0,
+        options: opts,
+        correctOptionId: correctIdx >= 0 ? opts[correctIdx]?.id : undefined,
+        explanation: "",
+      };
+    }), [module.quizQuestions]);
 
-  const handleRemoveQuizQuestion = (idx: number) => {
-    const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: parsedObjectives,
-      quizQuestions: module.quizQuestions.filter((_, i) => i !== idx)
+  const fromBuilderQuestions = (qs: QuizBuilderQuestion[]): QuizQuestion[] =>
+    qs.map((q) => {
+      const correctOpt = q.options.find((o) => o.id === q.correctOptionId);
+      return {
+        question: q.question,
+        options: q.options.map((o) => o.value),
+        correctAnswer: correctOpt?.value || "",
+      };
     });
-  };
 
-  const handleSetCorrectAnswer = (qIdx: number, optionText: string) => {
-    const updated = [...module.quizQuestions];
-    updated[qIdx] = { ...updated[qIdx], correctAnswer: optionText };
+  const handleModuleQuizChange = (updated: QuizBuilderQuestion[]) => {
     const formValues = methods.getValues();
     const parsedObjectives = formValues.objectives
       ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
@@ -181,41 +187,7 @@ export const ModulesStep = ({
       title: formValues.title,
       description: formValues.description || "",
       objectives: parsedObjectives,
-      quizQuestions: updated
-    });
-  };
-
-  const handleUpdateQuizField = (qIdx: number, field: keyof QuizQuestion, value: any) => {
-    const updated = [...module.quizQuestions];
-    updated[qIdx] = { ...updated[qIdx], [field]: value };
-    const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: parsedObjectives,
-      quizQuestions: updated
-    });
-  };
-
-  const handleUpdateQuizOption = (qIdx: number, optIdx: number, value: string) => {
-    const updated = [...module.quizQuestions];
-    const updatedOptions = [...updated[qIdx].options];
-    updatedOptions[optIdx] = value;
-    updated[qIdx] = { ...updated[qIdx], options: updatedOptions };
-    const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: parsedObjectives,
-      quizQuestions: updated
+      quizQuestions: fromBuilderQuestions(updated),
     });
   };
 
@@ -265,9 +237,9 @@ export const ModulesStep = ({
           <div className="flex items-center justify-between w-full">
             <div className="flex flex-col gap-[2px]">
               <span className="text-[18px] font-semibold text-[#202020]">
-                Module {module.id}: {module.title || "Untitled Module"}
+                Module {moduleIndex + 1}: {module.title || "Untitled Module"}
               </span>
-              <div className="flex items-center gap-[12px] text-[12px] text-[#606060] font-normal mt-[4px]">
+              <div className="flex items-center gap-[14px] text-[12px] text-[#606060] font-normal mt-[4px]">
                 <span>Total lessons ({totalLessons})</span>
                 <span className="size-[4px] bg-[#606060] rounded-full" />
                 <span>Total Quiz ({totalQuiz})</span>
@@ -299,11 +271,127 @@ export const ModulesStep = ({
             rows={3}
           />
 
-          <FormInput 
-            name="objectives"
-            label="Module objectives"
-            placeholder="Enter the objectives of this module"
-          />
+          {/* Module objectives — one at a time adder */}
+          <div className="flex flex-col gap-[12px] mt-[4px]">
+            <span className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">
+              Module objectives
+            </span>
+            <div className="flex flex-col gap-[12px]">
+              {module.objectives.map((obj, objIdx) => {
+                const isEditing = false;
+                return (
+                  <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex items-center justify-between transition-all">
+                    <div className="flex items-center gap-[8px] flex-1 mr-[12px]">
+                      <span className="text-[14px] text-[#202020] font-medium min-w-[20px]">
+                        {objIdx + 1}.
+                      </span>
+                      <span className="text-[14px] text-[#202020] tracking-[-0.28px] break-words">
+                        {obj}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-[20px] shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = module.objectives.filter((_, i) => i !== objIdx);
+                          const formValues = methods.getValues();
+                          onUpdateModule({
+                            ...module,
+                            title: formValues.title,
+                            description: formValues.description || "",
+                            objectives: updated,
+                          });
+                        }}
+                        className="p-0 bg-transparent border-none cursor-pointer"
+                      >
+                        <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+                      </button>
+                      <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Inline Add Objective Input */}
+              {isAddingObjective ? (
+                <div className="flex items-center gap-[12px] h-[56px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
+                  <input
+                    type="text"
+                    value={newObjective}
+                    onChange={(e) => setNewObjective(e.target.value)}
+                    placeholder="Enter learning objective"
+                    className="flex-1 text-[14px] text-[#202020] border-none outline-none focus:ring-0 p-0 bg-transparent"
+                    autoFocus
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (e.key === "Enter" && newObjective.trim()) {
+                        const formValues = methods.getValues();
+                        const updated = [...module.objectives, newObjective.trim()];
+                        onUpdateModule({
+                          ...module,
+                          title: formValues.title,
+                          description: formValues.description || "",
+                          objectives: updated,
+                        });
+                        setNewObjective("");
+                        setIsAddingObjective(false);
+                      } else if (e.key === "Escape") {
+                        setIsAddingObjective(false);
+                        setNewObjective("");
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-[12px] shrink-0">
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      isGhost
+                      onClick={() => {
+                        if (newObjective.trim()) {
+                          const formValues = methods.getValues();
+                          const updated = [...module.objectives, newObjective.trim()];
+                          onUpdateModule({
+                            ...module,
+                            title: formValues.title,
+                            description: formValues.description || "",
+                            objectives: updated,
+                          });
+                          setNewObjective("");
+                          setIsAddingObjective(false);
+                        }
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      isGhost
+                      onClick={() => {
+                        setIsAddingObjective(false);
+                        setNewObjective("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Add Objective Trigger */}
+            {!isAddingObjective && (
+              <Button
+                type="button"
+                variant="app-outline"
+                isGhost
+                onClick={() => setIsAddingObjective(true)}
+                leftIcon={<Add size={20} variant="Linear" color="#0A60E1" />}
+                className="self-start mt-[4px]"
+              >
+                Add objective
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Lessons List Section */}
@@ -317,32 +405,37 @@ export const ModulesStep = ({
               <div 
                 key={lesson.id}
                 className={cn(
-                  "border border-[#E8E8E8] rounded-[8px] bg-white px-[20px] flex items-center justify-between hover:border-[#D9D9D9] transition-all",
-                  errors.lessons?.[idx] ? "h-[84px] border-[#FF5025]" : "h-[64px]"
+                  "border border-[#D9D9D9] rounded-[8px] bg-white px-[20px] py-[16px] flex items-center justify-between hover:border-[#0A60E1]/40 transition-all",
+                  errors.lessons?.[idx] && "border-[#FF5025]"
                 )}
               >
                 <div className="flex items-center gap-[12px]">
                   {lesson.type === "video" ? (
-                    <VideoPlay size={22} variant="Linear" color="#0A60E1" className="shrink-0" />
+                    <VideoPlay size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   ) : lesson.type === "quiz" ? (
-                    <DocumentCode2 size={22} variant="Linear" color="#0A60E1" className="shrink-0" />
+                    <DocumentCode2 size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   ) : (
-                    <DocumentText size={22} variant="Linear" color="#0A60E1" className="shrink-0" />
+                    <DocumentText size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   )}
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-[8px]">
                     <span className={cn(
-                      "text-[15px] font-semibold text-[#202020] leading-[22px]",
+                      "text-[16px] font-semibold text-[#202020] leading-[24px]",
                       errors.lessons?.[idx]?.title && "text-[#FF5025]"
                     )}>
                       {lesson.title || <span className="italic text-[#B6B6B6]">Untitled Lesson</span>}
                     </span>
-                    <div className="flex items-center gap-[8px] text-[12px] text-[#606060] font-normal leading-[16px]">
-                      <span>{lesson.duration}</span>
-                      <span className="size-[3px] bg-[#606060] rounded-full" />
-                      <span>{lesson.assessments}</span>
+                    <div className="flex items-center gap-[12px] text-[14px] text-[#606060] font-normal leading-[20px]">
+                      <div className="flex items-center gap-[6px]">
+                        <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
+                        <span>{lesson.duration}</span>
+                      </div>
+                      <div className="flex items-center gap-[6px]">
+                        <Book size={16} variant="Linear" color="#606060" className="shrink-0" />
+                        <span>{lesson.assessments}</span>
+                      </div>
                     </div>
                     {errors.lessons?.[idx]?.title && (
-                      <span className="text-[11px] text-[#FF5025] font-normal mt-[2px]">
+                      <span className="text-[11px] text-[#FF5025] font-normal">
                         {errors.lessons[idx].title.message}
                       </span>
                     )}
@@ -350,27 +443,21 @@ export const ModulesStep = ({
                 </div>
 
                 {/* Lesson Action Controls */}
-                <div className="flex items-center gap-[20px]">
-                  <Button 
-                    variant="app-outline"
-                    isGhost
+                <div className="flex items-center gap-[16px]">
+                  <span 
                     onClick={() => handleEditLesson(lesson.id)}
+                    className="text-[14px] text-[#0A60E1] font-medium leading-[20px] underline cursor-pointer hover:text-[#0A60E1]/80 transition-colors"
                   >
                     Edit
-                  </Button>
-                  <Button 
-                    variant="app-outline"
-                    isGhost
+                  </span>
+                  <button
+                    type="button"
                     onClick={() => handleRemoveLesson(lesson.id)}
+                    className="p-0 bg-transparent border-none cursor-pointer"
                   >
-                    <Trash size={18} variant="Linear" color="#FF6B00" />
-                  </Button>
-                  {/* Drag handle */}
-                  <div className="flex flex-col gap-[2px] opacity-35 cursor-grab">
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                  </div>
+                    <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+                  </button>
+                  <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
                 </div>
               </div>
             ))}
@@ -378,34 +465,38 @@ export const ModulesStep = ({
 
           {/* Add Lesson Actions */}
           <div className="flex items-center gap-[16px] text-[14px] text-[#202020] font-normal mt-[4px]">
-            <div className="flex items-center gap-[6px] text-[#202020]">
+            <div 
+              className="flex items-center gap-[8px] text-[#202020] cursor-pointer select-none"
+              onClick={() => setShowLessonTypes(!showLessonTypes)}
+            >
               <Add size={20} variant="Linear" color="#202020" />
-              <span>Add lesson</span>
+              <span className="text-[14px] font-normal leading-[22px]">Add lesson</span>
             </div>
-            <Button 
-              variant="app-outline"
-              isGhost
-              onClick={() => handleAddLesson("video")}
-              leftIcon={<VideoPlay size={18} variant="Linear" color="#0A60E1" />}
-            >
-              Video
-            </Button>
-            <Button 
-              variant="app-outline"
-              isGhost
-              onClick={() => handleAddLesson("quiz")}
-              leftIcon={<DocumentCode2 size={18} variant="Linear" color="#0A60E1" />}
-            >
-              Quiz
-            </Button>
-            <Button 
-              variant="app-outline"
-              isGhost
-              onClick={() => handleAddLesson("text")}
-              leftIcon={<DocumentText size={18} variant="Linear" color="#0A60E1" />}
-            >
-              Text
-            </Button>
+            {showLessonTypes && (
+              <div className="flex items-center gap-[16px]">
+                <div 
+                  className="flex items-center gap-[8px] cursor-pointer select-none"
+                  onClick={() => { handleAddLesson("video"); setShowLessonTypes(false); }}
+                >
+                  <PlayCircle size={20} variant="Linear" color="#0A60E1" />
+                  <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Video</span>
+                </div>
+                <div 
+                  className="flex items-center gap-[8px] cursor-pointer select-none"
+                  onClick={() => { handleAddLesson("quiz"); setShowLessonTypes(false); }}
+                >
+                  <DocumentCode2 size={20} variant="Linear" color="#0A60E1" />
+                  <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Quiz</span>
+                </div>
+                <div 
+                  className="flex items-center gap-[8px] cursor-pointer select-none"
+                  onClick={() => { handleAddLesson("text"); setShowLessonTypes(false); }}
+                >
+                  <DocumentText size={20} variant="Linear" color="#0A60E1" />
+                  <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Text</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -414,133 +505,31 @@ export const ModulesStep = ({
           <div className="flex items-start justify-between w-full">
             <div className="flex flex-col gap-[2px]">
               <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Quiz</h3>
-              <div className="flex items-center gap-[12px] text-[12px] text-[#606060] font-normal mt-[4px]">
+              <div className="flex items-center gap-[14px] text-[12px] text-[#606060] font-normal mt-[4px]">
                 <span>Total Quiz ({module.quizQuestions.length})</span>
                 <span className="size-[4px] bg-[#606060] rounded-full" />
                 <span>Time {moduleTime}</span>
               </div>
             </div>
             <div className="flex items-center gap-[20px]">
-              <Button 
-                variant="app-outline"
-                isGhost
+              <button
+                type="button"
+                className="p-0 bg-transparent border-none cursor-pointer"
               >
-                <Trash size={18} variant="Linear" color="#FF6B00" />
-              </Button>
-              <div className="flex flex-col gap-[2px] opacity-35 cursor-grab">
-                <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-              </div>
+                <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+              </button>
+              <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
             </div>
           </div>
 
           {/* Dynamic Quiz Questions */}
           <div className="flex flex-col gap-[16px]">
-            {module.quizQuestions.map((q, qIdx) => (
-              <div 
-                key={qIdx}
-                className={cn(
-                  "border border-[#E8E8E8] rounded-[12px] p-[20px] bg-white flex flex-col gap-[16px] relative",
-                  errors.quizQuestions?.[qIdx] && "border-[#FF5025]"
-                )}
-              >
-                {/* Question Header with Drag, Number, Input, and Menu */}
-                <div className="flex items-start gap-[12px]">
-                  {/* Drag indicator */}
-                  <div className="flex flex-col gap-[2px] opacity-35 cursor-grab shrink-0 mt-[6px]">
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                    <div className="flex gap-[2px]"><span className="size-[3px] bg-black rounded-full"/><span className="size-[3px] bg-black rounded-full"/></div>
-                  </div>
-
-                  {/* Question Content */}
-                  <div className="flex-1 border border-[#D9D9D9] rounded-[8px] p-[16px] bg-white">
-                    <div className="flex items-start gap-[12px] mb-[16px]">
-                      <span className="text-[16px] font-semibold text-[#202020] whitespace-nowrap leading-[24px]">
-                        Question {qIdx + 1}
-                      </span>
-                      <input
-                        type="text"
-                        value={q.question}
-                        onChange={(e) => handleUpdateQuizField(qIdx, "question", e.target.value)}
-                        placeholder="What are the different types of computer?"
-                        className={cn(
-                          "flex-1 text-[16px] text-[#606060] font-normal leading-[24px] border-none outline-none focus:ring-0 p-0 bg-transparent",
-                          errors.quizQuestions?.[qIdx]?.question && "text-[#FF5025]"
-                        )}
-                      />
-                    </div>
-
-                    {/* Option rows */}
-                    <div className="flex flex-col gap-[12px]">
-                      {q.options.map((opt, optIdx) => {
-                        const label = String.fromCharCode(65 + optIdx);
-                        const isCorrect = q.correctAnswer === opt || 
-                          (q.correctAnswer === label);
-                        return (
-                          <div key={optIdx} className="flex items-center gap-[12px]">
-                            <span className="text-[14px] text-[#606060] font-normal w-[14px] shrink-0">
-                              {label}
-                            </span>
-                            <div
-                              onClick={() => {
-                                const selectedValue = opt || label;
-                                handleSetCorrectAnswer(qIdx, selectedValue);
-                              }}
-                              className={cn(
-                                "size-[18px] rounded-full border flex items-center justify-center cursor-pointer shrink-0 transition-all",
-                                isCorrect
-                                  ? "border-[#0A60E1] bg-[#0A60E1]"
-                                  : "border-[#D9D9D9] hover:border-[#0A60E1]"
-                              )}
-                            >
-                              {isCorrect && (
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                  <path d="M2.5 5L4.5 7L7.5 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                            <input
-                              type="text"
-                              value={opt}
-                              onChange={(e) => handleUpdateQuizOption(qIdx, optIdx, e.target.value)}
-                              placeholder={`Option ${label}`}
-                              className="flex-1 text-[14px] text-[#606060] font-normal leading-[20px] border-none outline-none focus:ring-0 p-0 bg-transparent"
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Menu button */}
-                  <Button 
-                    variant="app-outline"
-                    isGhost
-                    onClick={() => handleRemoveQuizQuestion(qIdx)}
-                    className="mt-[6px] shrink-0"
-                  >
-                    <More size={20} variant="Linear" color="#606060" className="rotate-90" />
-                  </Button>
-                </div>
-
-                {errors.quizQuestions?.[qIdx]?.question && (
-                  <p className="text-[12px] text-[#FF5025] font-normal pl-[32px]">
-                    {errors.quizQuestions[qIdx].question.message}
-                  </p>
-                )}
-
-                {errors.quizQuestions?.[qIdx]?.options && (
-                  <p className="text-[12px] text-[#FF5025] font-normal pl-[32px]">
-                    At least 2 options are required and options cannot be empty.
-                  </p>
-                )}
-              </div>
-            ))}
+            <QuizBuilderView
+              questions={builderQuestions}
+              onChange={handleModuleQuizChange}
+              maxQuestions={10}
+            />
           </div>
-
-          {/* Quiz builder is now available through the lesson editor page */}
         </div>
 
         {/* Footer Navigation */}

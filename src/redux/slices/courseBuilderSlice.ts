@@ -29,6 +29,7 @@ export interface Lesson {
   videoScript?: string;
   embedLink?: string;
   quizQuestions?: QuizQuestionData[];
+  quizId?: string;
 }
 
 export interface QuizQuestion {
@@ -44,6 +45,7 @@ export interface Module {
   objectives: string[];
   lessons: Lesson[];
   quizQuestions: QuizQuestion[];
+  quizId?: string;
 }
 
 export interface CourseInformationData {
@@ -300,6 +302,42 @@ const courseBuilderSlice = createSlice({
         }
       }
     },
+    setQuizIdForLesson: (
+      state,
+      action: PayloadAction<{ moduleId: string; lessonId: string; quizId: string }>
+    ) => {
+      const { moduleId, lessonId, quizId } = action.payload;
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        const lesson = mod.lessons.find((l) => l.id === lessonId);
+        if (lesson) {
+          lesson.quizId = quizId;
+        }
+      }
+    },
+    setQuizQuestionsForLesson: (
+      state,
+      action: PayloadAction<{ moduleId: string; lessonId: string; questions: QuizQuestionData[] }>
+    ) => {
+      const { moduleId, lessonId, questions } = action.payload;
+      const mod = state.modules.find((m) => m.id === moduleId);
+      if (mod) {
+        const lesson = mod.lessons.find((l) => l.id === lessonId);
+        if (lesson) {
+          lesson.quizQuestions = questions;
+          state.isDirty = true;
+        }
+      }
+    },
+    setModuleQuizId: (
+      state,
+      action: PayloadAction<{ moduleId: string; quizId: string }>
+    ) => {
+      const mod = state.modules.find((m) => m.id === action.payload.moduleId);
+      if (mod) {
+        mod.quizId = action.payload.quizId;
+      }
+    },
     replaceLessonId: (
       state,
       action: PayloadAction<{ moduleId: string; oldLessonId: string; newLessonId: string }>
@@ -348,6 +386,9 @@ export const {
   setActiveModuleIndex,
   setEditingLesson,
   setEditingQuiz,
+  setQuizIdForLesson,
+  setQuizQuestionsForLesson,
+  setModuleQuizId,
   replaceModuleId,
   replaceLessonId,
   resetCourseBuilder,

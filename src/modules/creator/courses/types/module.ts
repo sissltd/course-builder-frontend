@@ -15,20 +15,21 @@ export interface Module {
 export interface CreateModuleRequest {
   title: string;
   order: number;
+  learning_objectives?: string[];
 }
 
 export interface ReplaceModuleRequest {
   title: string;
   order: number;
   description?: string;
-  learning_objectives?: string;
+  learning_objectives?: string[];
 }
 
 export interface UpdateModuleRequest {
   title?: string;
   order?: number;
   description?: string;
-  learning_objectives?: string;
+  learning_objectives?: string[];
 }
 
 export interface ModuleListParams {

@@ -247,6 +247,8 @@ export const BaseAPI = createApi({
     "UserProfile",
     "OnboardingProfile",
     "NotificationPreferences",
+    "Quiz",
+    "QuizQuestion",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

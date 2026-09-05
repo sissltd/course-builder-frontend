@@ -7,9 +7,8 @@ import {
   ArrowLeft,
   Note,
   Add,
-  Global,
-  Eye,
 } from "iconsax-react";
+import Image from "next/image";
 import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { saveAllDirty } from "@/redux/slices/builderSync";
@@ -157,7 +156,14 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
               variant="app-outline"
               isGhost
               className="h-[36px] text-[#606060]"
-              leftIcon={<Global size={18} variant="Linear" color="#606060" />}
+              leftIcon={
+                <Image
+                  src="/images/builder/publish-story.svg"
+                  alt="Publish"
+                  width={24}
+                  height={24}
+                />
+              }
             >
               <span className="text-[14px] font-medium tracking-[-0.28px]">Publish course</span>
             </Button>
@@ -166,15 +172,26 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
 
             <Button
               variant="app-outline"
-              className="h-[36px] px-[12px] rounded-[8px] text-[#0A60E1]"
-              leftIcon={<Eye size={18} variant="Linear" color="#0A60E1" />}
+              className="h-[36px] px-[12px] rounded-[8px] text-[#0063EF] border-[#0063EF]"
+              leftIcon={
+                <Image
+                  src="/images/builder/preview-play.svg"
+                  alt="Preview"
+                  width={24}
+                  height={24}
+                />
+              }
             >
               <span className="text-[14px] tracking-[-0.28px]">Preview</span>
             </Button>
 
             <Button
               variant="app-primary"
-              className="h-[36px] px-[16px] rounded-[8px] text-white text-[14px] font-medium"
+              className={`h-[36px] px-[16px] rounded-[8px] text-white text-[14px] font-medium transition-all ${
+                isDirty && !isSaving
+                  ? "bg-[#0063EF] shadow-[0_2px_8px_rgba(0,99,239,0.4)] hover:bg-[#0052CC]"
+                  : "bg-[#0063EF]"
+              }`}
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

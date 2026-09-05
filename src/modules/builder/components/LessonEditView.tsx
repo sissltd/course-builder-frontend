@@ -4,19 +4,19 @@ import React, { useState, useRef } from "react";
 import {
   Trash,
   Add,
-  Eye,
   ArrowLeft2,
   ArrowRight2,
   VideoPlay,
-  DocumentText,
-  DocumentCode2,
   Edit2,
   Timer1,
   Book,
+  More,
+  DocumentText,
+  DocumentCode2,
 } from "iconsax-react";
+import Image from "next/image";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { Button } from "@/components/shared/Button";
@@ -300,7 +300,9 @@ export const LessonEditView = ({
           <div className="flex items-start justify-between w-full">
             <div className="flex gap-[12px] items-start flex-1">
               <span className="mt-[2px] text-sd-grey-9 shrink-0">
-                <VideoPlay size={32} variant="Linear" color="#8C8C8C" />
+                {lesson.type === "video" && <VideoPlay size={32} variant="Linear" color="#8C8C8C" />}
+                {lesson.type === "quiz" && <DocumentCode2 size={32} variant="Linear" color="#8C8C8C" />}
+                {lesson.type === "text" && <DocumentText size={32} variant="Linear" color="#8C8C8C" />}
               </span>
               <div className="flex flex-col gap-[6px] flex-1">
                 <Controller
@@ -340,8 +342,15 @@ export const LessonEditView = ({
                 <Button
                   type="button"
                   variant="app-outline"
-                  className="h-[40px] px-[16px] text-[14px]"
-                  leftIcon={<Eye size={18} variant="Linear" color="#0A60E1" />}
+                  className="h-[40px] px-[16px] text-[14px] text-[#0063EF] border-[#0063EF]"
+                  leftIcon={
+                    <Image
+                      src="/images/builder/preview-play.svg"
+                      alt="Preview"
+                      width={24}
+                      height={24}
+                    />
+                  }
                 >
                   Preview
                 </Button>
@@ -482,28 +491,14 @@ export const LessonEditView = ({
                       </span>
                     </div>
                     <div className="flex items-center gap-[16px] ml-[24px] shrink-0">
-                      <Button
+                      <button
                         type="button"
-                        variant="app-outline"
-                        isGhost
                         onClick={() => handleRemoveObjective(oIdx)}
+                        className="p-0 bg-transparent border-none cursor-pointer"
                       >
-                        <Trash size={20} variant="Linear" color="#FF6B00" />
-                      </Button>
-                      <div className="flex flex-col gap-[2px] opacity-35 cursor-grab">
-                        <div className="flex gap-[2px]">
-                          <span className="size-[3px] bg-black rounded-full" />
-                          <span className="size-[3px] bg-black rounded-full" />
-                        </div>
-                        <div className="flex gap-[2px]">
-                          <span className="size-[3px] bg-black rounded-full" />
-                          <span className="size-[3px] bg-black rounded-full" />
-                        </div>
-                        <div className="flex gap-[2px]">
-                          <span className="size-[3px] bg-black rounded-full" />
-                          <span className="size-[3px] bg-black rounded-full" />
-                        </div>
-                      </div>
+                        <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+                      </button>
+                      <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
                     </div>
                   </div>
                 ))}
@@ -606,8 +601,8 @@ export const LessonEditView = ({
             </div>
           )}
 
-          {/* Quiz Section — only for text lessons */}
-          {lesson.type === "text" && (
+          {/* Quiz Section — shown for all lesson types */}
+          {lesson.type !== "quiz" && (
             <div className="flex flex-col gap-[18px] w-full">
               <div className="flex items-center justify-between w-full">
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">

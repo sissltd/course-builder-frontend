@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Trash, 
   Add, 
   ArrowLeft2, 
   ArrowRight2,
   ArrowDown2,
+  Timer,
+  Book,
+  PlayCircle,
+  DocumentCode2,
+  More,
 } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
@@ -20,8 +26,15 @@ import {
   addObjectiveToModule, 
   editObjectiveInModule, 
   removeObjectiveFromModule,
-  Module
+  addLessonToModule,
+  removeLessonFromModule,
 } from "@/redux/slices/courseBuilderSlice";
+import {
+  syncCreateModule,
+  syncDeleteModule,
+  syncCreateLesson,
+  syncDeleteLesson,
+} from "@/redux/slices/builderSync";
 import { courseOutlineSchema } from "../utils/schemas";
 
 interface CourseOutlineProps {
@@ -32,7 +45,10 @@ interface CourseOutlineProps {
 
 export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineProps) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const modules = useAppSelector((state) => state.courseBuilder.modules);
+  const courseId = useAppSelector((state) => state.courseBuilder.courseId);
 
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
 
@@ -46,12 +62,45 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   const [validationErrors, setValidationErrors] = useState<string | null>(null);
   const [moduleErrors, setModuleErrors] = useState<Record<string, { title?: string; description?: string; objectives?: string }> | null>(null);
 
+  // Lesson type dropdown state
+  const [showLessonTypesForModule, setShowLessonTypesForModule] = useState<string | null>(null);
+
   const toggleModule = (id: string) => {
     setExpandedModuleId(expandedModuleId === id ? null : id);
   };
 
+  const handleAddLesson = (moduleId: string, type: "video" | "quiz" | "text") => {
+    dispatch(addLessonToModule({ moduleId, type }));
+    if (courseId) {
+      dispatch(syncCreateLesson({ moduleId, type }));
+    }
+    setShowLessonTypesForModule(null);
+  };
+
+  const handleRemoveLesson = (moduleId: string, lessonId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(removeLessonFromModule({ moduleId, lessonId }));
+    if (courseId && !/^\d+$/.test(lessonId)) {
+      dispatch(syncDeleteLesson({ moduleId, lessonId }));
+    }
+  };
+
+  const handleEditLesson = (moduleId: string, lessonId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const id = searchParams.get("id");
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set("id", id);
+    params.set("step", "modules");
+    params.set("moduleId", moduleId);
+    params.set("lessonId", lessonId);
+    router.push(`${window.location.pathname}?${params.toString()}`);
+  };
+
   const handleAddModule = () => {
     dispatch(addModule());
+    if (courseId) {
+      dispatch(syncCreateModule());
+    }
     const newId = (modules.length + 1).toString();
     setExpandedModuleId(newId);
   };
@@ -62,6 +111,9 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
       onRemoveModule(id);
     } else {
       dispatch(removeModule(id));
+      if (courseId && !/^\d+$/.test(id)) {
+        dispatch(syncDeleteModule(id));
+      }
     }
     if (expandedModuleId === id) {
       setExpandedModuleId(null);
@@ -352,6 +404,99 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                           Add objective
                         </Button>
                       )}
+                    </div>
+
+                    {/* Lessons Section */}
+                    <div className="flex flex-col gap-[12px] mt-[4px]">
+                      <span className="text-[16px] font-normal text-[#202020] tracking-[-0.32px]">
+                        Lessons ({mod.lessons.length})
+                      </span>
+
+                      <div className="flex flex-col gap-[12px]">
+                        {mod.lessons.map((lesson) => (
+                          <div 
+                            key={lesson.id}
+                            className="border border-[#D9D9D9] rounded-[8px] bg-[#FDFDFD] px-[20px] py-[16px] flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-[12px]">
+                              {lesson.type === "video" ? (
+                                <PlayCircle size={24} variant="Linear" color="#202020" className="shrink-0" />
+                              ) : lesson.type === "quiz" ? (
+                                <DocumentCode2 size={24} variant="Linear" color="#202020" className="shrink-0" />
+                              ) : (
+                                <Book size={24} variant="Linear" color="#202020" className="shrink-0" />
+                              )}
+                              <div className="flex flex-col gap-[8px]">
+                                <span className="text-[16px] font-normal text-[#202020] tracking-[-0.32px]">
+                                  {lesson.title || <span className="italic text-[#B6B6B6]">Untitled Lesson</span>}
+                                </span>
+                                <div className="flex items-center gap-[12px]">
+                                  <div className="flex items-center gap-[8px]">
+                                    <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
+                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.duration}</span>
+                                  </div>
+                                  <div className="flex items-center gap-[8px]">
+                                    <Book size={16} variant="Linear" color="#606060" className="shrink-0" />
+                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.assessments}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-[16px]">
+                              <span 
+                                className="text-[14px] font-normal text-[#0A60E1] tracking-[-0.28px] underline cursor-pointer"
+                                onClick={(e) => handleEditLesson(mod.id, lesson.id, e)}
+                              >
+                                Edit
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleRemoveLesson(mod.id, lesson.id, e)}
+                                className="p-0 bg-transparent border-none cursor-pointer"
+                              >
+                                <Trash size={20} variant="Linear" color="#FF6B00" />
+                              </button>
+                              <More size={20} variant="Linear" color="#606060" className="cursor-grab" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add Lesson Row */}
+                      <div className="flex items-center gap-[16px] mt-[4px]">
+                        <div 
+                          className="flex items-center gap-[8px] cursor-pointer select-none"
+                          onClick={() => setShowLessonTypesForModule(showLessonTypesForModule === mod.id ? null : mod.id)}
+                        >
+                          <Add size={20} variant="Linear" color="#202020" />
+                          <span className="text-[14px] font-normal text-[#202020] tracking-[-0.28px]">Add lesson</span>
+                        </div>
+                        {showLessonTypesForModule === mod.id && (
+                          <div className="flex items-center gap-[16px]">
+                            <div 
+                              className="flex items-center gap-[8px] cursor-pointer select-none"
+                              onClick={() => handleAddLesson(mod.id, "video")}
+                            >
+                              <PlayCircle size={20} variant="Linear" color="#0A60E1" />
+                              <span className="text-[16px] font-medium text-[#0A60E1] tracking-[-0.32px]">Video</span>
+                            </div>
+                            <div 
+                              className="flex items-center gap-[8px] cursor-pointer select-none"
+                              onClick={() => handleAddLesson(mod.id, "quiz")}
+                            >
+                              <DocumentCode2 size={20} variant="Linear" color="#0A60E1" />
+                              <span className="text-[16px] font-medium text-[#0A60E1] tracking-[-0.32px]">Quiz</span>
+                            </div>
+                            <div 
+                              className="flex items-center gap-[8px] cursor-pointer select-none"
+                              onClick={() => handleAddLesson(mod.id, "text")}
+                            >
+                              <Book size={20} variant="Linear" color="#0A60E1" />
+                              <span className="text-[16px] font-medium text-[#0A60E1] tracking-[-0.32px]">Text</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

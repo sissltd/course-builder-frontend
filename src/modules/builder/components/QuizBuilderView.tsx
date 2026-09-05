@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/shared/Button";
+import React, { useState, useRef, useCallback, memo } from "react";
 import { cn } from "@/lib/utils";
 import { Trash, Add } from "iconsax-react";
-import { FormInput } from "@/components/form/FormInput";
+import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/form/FormSelect";
-import { FormTextarea } from "@/components/form/FormTextarea";
-import type { QuizBuilderOption, QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
+import type { QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
 
 interface QuizBuilderViewProps {
   questions: QuizBuilderQuestion[];
   onChange: (questions: QuizBuilderQuestion[]) => void;
+  maxQuestions?: number;
 }
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -40,18 +39,24 @@ const defaultQuestion = (id: string): QuizBuilderQuestion => ({
   explanation: "",
 });
 
-export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) => {
+export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: QuizBuilderViewProps) => {
   const [activeTab, setActiveTab] = useState<"builder" | "preview">("builder");
-  const [items, setItems] = useState<QuizBuilderQuestion[]>(
+  const itemsRef = useRef<QuizBuilderQuestion[]>(
     questions.length > 0
       ? questions.map(deepClone)
       : [defaultQuestion("1")]
   );
+  const [, forceRender] = useState(0);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-  const emitChange = (updated: QuizBuilderQuestion[]) => {
-    setItems(updated);
-    onChange(updated);
-  };
+  const items = itemsRef.current;
+
+  const emitChange = useCallback((updated: QuizBuilderQuestion[]) => {
+    itemsRef.current = updated;
+    forceRender(c => c + 1);
+    onChangeRef.current(updated);
+  }, []);
 
   const handleAddQuestion = () => {
     const newId = Date.now().toString();
@@ -187,7 +192,7 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
                     </div>
                   </div>
                   <FormSelect
-                    name={`q-type-${qIdx}`}
+                    name={`q-type-${q.id}`}
                     value={q.type}
                     onValueChange={(val) => handleUpdateQuestion(qIdx, "type", val)}
                     options={TYPE_OPTIONS}
@@ -205,13 +210,11 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
               <div className="flex items-start gap-[16px] mb-[16px]">
                 <span className="text-[14px] text-[#202020] font-medium w-[100px] shrink-0 mt-[10px]">Question</span>
                 <div className="flex-1">
-                  <FormInput
-                    name={`q-text-${qIdx}`}
+                  <Input
                     value={q.question}
                     onChange={(e) => handleUpdateQuestion(qIdx, "question", e.target.value)}
                     placeholder="Enter question"
-                    containerClassName="flex-1"
-                    className="text-[14px]"
+                    className="text-[14px] h-[44px]"
                   />
                 </div>
               </div>
@@ -222,7 +225,7 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
                   <span className="text-[14px] text-[#202020] font-medium w-[100px] shrink-0">Correct option</span>
                   <div className="flex-1">
                     <FormSelect
-                      name={`q-correct-${qIdx}`}
+                      name={`q-correct-${q.id}`}
                       value={q.correctOptionId || ""}
                       onValueChange={(val) => handleUpdateQuestion(qIdx, "correctOptionId", val || undefined)}
                       options={q.options.map(o => ({ label: `${o.label}. ${o.value || `Option ${o.label}`}`, value: o.id }))}
@@ -282,13 +285,11 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
                       <div className="bg-[#0A60E1] text-white text-[12px] font-semibold w-[28px] h-[28px] rounded-[6px] flex items-center justify-center shrink-0">
                         {opt.label}
                       </div>
-                      <FormInput
-                        name={`q-opt-${qIdx}-${optIdx}`}
+                      <Input
                         value={opt.value}
                         onChange={(e) => handleUpdateOption(qIdx, optIdx, e.target.value)}
                         placeholder={`Option ${opt.label}`}
-                        containerClassName="flex-1"
-                        className="text-[13px]"
+                        className="text-[13px] h-[40px] flex-1"
                       />
                       {q.options.length > 2 && (
                         <button type="button" onClick={() => handleRemoveOption(qIdx, optIdx)} className="text-[#606060] hover:text-[#FF5025] shrink-0">
@@ -313,12 +314,11 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
               {/* Essay: Answer textarea */}
               {q.type === "essay" && (
                 <div className="mb-[16px]">
-                  <FormTextarea
-                    name={`q-answer-${qIdx}`}
+                  <textarea
                     value={q.correctAnswer || ""}
                     onChange={(e) => handleUpdateQuestion(qIdx, "correctAnswer", e.target.value)}
                     placeholder="Enter the expected answer for this essay question"
-                    containerClassName="w-full"
+                    className="w-full rounded-lg border border-[#D9D9D9] bg-white px-[16px] py-[12px] text-[14px] text-[#202020] outline-none focus:border-[#0A60E1] resize-none"
                     rows={4}
                   />
                 </div>
@@ -328,13 +328,11 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
               <div className="flex items-start gap-[16px] mt-[16px]">
                 <span className="text-[14px] text-[#202020] font-medium w-[100px] shrink-0 mt-[10px]">Explanation:</span>
                 <div className="flex-1">
-                  <FormInput
-                    name={`q-explain-${qIdx}`}
+                  <Input
                     value={q.explanation || ""}
                     onChange={(e) => handleUpdateQuestion(qIdx, "explanation", e.target.value)}
                     placeholder="add explanation"
-                    containerClassName="flex-1"
-                    className="text-[14px]"
+                    className="text-[14px] h-[44px]"
                   />
                 </div>
               </div>
@@ -342,14 +340,21 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
           ))}
 
           {/* Add question button */}
-          <button
-            type="button"
-            onClick={handleAddQuestion}
-            className="border-2 border-dashed border-[#D9D9D9] rounded-[16px] h-[60px] flex items-center justify-center gap-[8px] text-[#0A60E1] text-[14px] font-medium hover:border-[#0A60E1] hover:bg-[#F5F9FF] transition-all"
-          >
-            <Add size={20} variant="Linear" color="#0A60E1" />
-            Add question
-          </button>
+          {items.length < maxQuestions && (
+            <button
+              type="button"
+              onClick={handleAddQuestion}
+              className="border-2 border-dashed border-[#D9D9D9] rounded-[16px] h-[60px] flex items-center justify-center gap-[8px] text-[#0A60E1] text-[14px] font-medium hover:border-[#0A60E1] hover:bg-[#F5F9FF] transition-all"
+            >
+              <Add size={20} variant="Linear" color="#0A60E1" />
+              Add question
+            </button>
+          )}
+          {items.length >= maxQuestions && (
+            <p className="text-[13px] text-[#606060] text-center py-[8px]">
+              Maximum of {maxQuestions} questions reached
+            </p>
+          )}
         </div>
       ) : (
         /* Preview tab */
@@ -396,4 +401,4 @@ export const QuizBuilderView = ({ questions, onChange }: QuizBuilderViewProps) =
       )}
     </div>
   );
-};
+});
