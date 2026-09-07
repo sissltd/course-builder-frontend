@@ -578,14 +578,9 @@ export const AdminCoursesView = () => {
     try {
       await approveCourseMutation({ id: course.id }).unwrap();
       toast.success(`Approved "${course.courseTitle}" successfully`);
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      toast.error(
-        message ||
-        err?.data?.message ||
-        err?.data?.errors?.[0]?.message ||
-        `Failed to approve "${course.courseTitle}"`
-      );
+      toast.error(message ?? `Failed to approve "${course.courseTitle}"`);
     }
   };
 
@@ -660,14 +655,9 @@ export const AdminCoursesView = () => {
         if (activeCourseId === courseToReject.id) {
           setActiveCourseId(null);
         }
-      } catch (err: any) {
+      } catch (err) {
         const { message } = normalizeApiError(err as never);
-        toast.error(
-          message ||
-          err?.data?.message ||
-          err?.data?.errors?.[0]?.message ||
-          `Failed to reject "${courseToReject.courseTitle}"`
-        );
+        toast.error(message ?? `Failed to reject "${courseToReject.courseTitle}"`);
       }
     }
     setRejectModalOpen(false);

@@ -85,9 +85,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         await claimCourseMutation(courseId).unwrap();
         toast.success("Course review claimed successfully");
       }
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not claim course");
+      toast.error(message ?? "Could not claim course");
     }
   };
 
@@ -106,9 +106,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         }).unwrap();
         toast.success("Course content approved and moved to QA verification");
       }
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not approve course");
+      toast.error(message ?? "Could not approve course");
     }
   };
 
@@ -128,9 +128,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         toast.success("Course rejected at content stage and reverted to Draft");
       }
       setRejectModalOpen(false);
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not reject course");
+      toast.error(message ?? "Could not reject course");
     }
   };
 
@@ -146,9 +146,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         },
       }).unwrap();
       toast.success("Comment added");
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not add comment");
+      toast.error(message ?? "Could not add comment");
     }
   };
 
@@ -169,8 +169,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         }).unwrap();
         setGeneralComment("");
         toast.success("Review note added");
-      } catch (err: any) {
-        toast.error(err?.data?.message || err?.data?.errors?.[0]?.message || "Could not add comment");
+      } catch (err) {
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Could not add comment");
       }
     }
   };
@@ -179,8 +180,9 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
     try {
       await navigator.clipboard.writeText(courseId);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 

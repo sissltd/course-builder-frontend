@@ -25,9 +25,9 @@ export const KycReviewView = () => {
     try {
       await approveKyc(id).unwrap();
       toast.success("KYC submission approved successfully.");
-    } catch (error: any) {
+    } catch (error) {
       const { message } = normalizeApiError(error as never);
-      toast.error(message || error?.data?.message || "Failed to approve KYC.");
+      toast.error(message ?? "Failed to approve KYC.");
     }
   };
 
@@ -35,9 +35,9 @@ export const KycReviewView = () => {
     try {
       await rejectKyc({ id, rejection_reason: reason }).unwrap();
       toast.success("KYC submission rejected.");
-    } catch (error: any) {
+    } catch (error) {
       const { message } = normalizeApiError(error as never);
-      toast.error(message || error?.data?.message || "Failed to reject KYC.");
+      toast.error(message ?? "Failed to reject KYC.");
     }
   };
 

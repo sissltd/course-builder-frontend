@@ -53,11 +53,10 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
       
       setShowConfirm(false);
       setTimeout(() => setShowSuccess(true), 300);
-    } catch (err: any) {
+    } catch (err) {
       setShowConfirm(false);
       const { message } = normalizeApiError(err as never);
-      const fallback = err.data?.detail || err.data?.message || err.data?.errors?.[0]?.message || "Failed to send invitation";
-      toast.error(message || fallback);
+      toast.error(message ?? "Failed to send invitation");
     }
   };
 

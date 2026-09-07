@@ -111,14 +111,9 @@ export const TeamsView = () => {
         role: (member.role as StaffRole) || StaffRole.STAFF_WRITER,
       }).unwrap();
       toast.success(`Invitation resent to ${member.email}`);
-    } catch (err: any) {
+    } catch (err) {
       const { message } = normalizeApiError(err as never);
-      const fallback =
-        err?.data?.detail ||
-        err?.data?.message ||
-        err?.data?.errors?.[0]?.message ||
-        "Failed to resend invitation";
-      toast.error(message || fallback);
+      toast.error(message ?? "Failed to resend invitation");
     }
   };
 
@@ -146,22 +141,17 @@ export const TeamsView = () => {
     } catch (err: any) {
       setConfirmAction(null);
       const { message } = normalizeApiError(err as never);
-      const detail =
-        message ||
-        err?.data?.detail ||
-        err?.data?.message ||
-        err?.data?.errors?.[0]?.message;
 
       if (
         confirmAction === "reactivate" &&
         err?.status === 400 &&
-        (!detail || detail.toLowerCase().includes("invitation"))
+        (!message || message.toLowerCase().includes("invitation"))
       ) {
         toast.error(
           "An invitation revoked before being accepted cannot be reactivated. Please re-invite this person instead."
         );
       } else {
-        toast.error(detail || "Action failed");
+        toast.error(message ?? "Action failed");
       }
     }
   };

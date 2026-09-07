@@ -133,9 +133,9 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
         toast.success("Content approved successfully");
       }
       void refetch();
-    } catch (err: unknown) {
-      const apiErr = err as { data?: { message?: string } };
-      toast.error(apiErr?.data?.message || "Failed to approve course");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to approve course");
     }
   };
 
@@ -156,9 +156,9 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
       }
       setIsRejectModalOpen(false);
       void refetch();
-    } catch (err: unknown) {
-      const apiErr = err as { data?: { message?: string } };
-      toast.error(apiErr?.data?.message || "Failed to reject course");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to reject course");
     }
   };
 

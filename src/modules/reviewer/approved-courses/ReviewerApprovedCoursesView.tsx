@@ -768,8 +768,9 @@ const ReviewPricesModal = ({
         });
         await savePricesMutation({ id: courseId, body: { distribution_channels: payloadChannels } }).unwrap();
         toast.success("Pricing saved successfully");
-      } catch (err: any) {
-        toast.error(err?.data?.message || "Could not save prices");
+      } catch (err) {
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Could not save prices");
       }
     }
     onContinue();
@@ -1067,8 +1068,9 @@ const ReviewAndPublishModal = ({
           body: { distribution_channels: payloadChannels },
         }).unwrap();
         toast.success("Course published successfully!");
-      } catch (err: any) {
-        toast.error(err?.data?.message || "Failed to publish course");
+      } catch (err) {
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Failed to publish course");
       }
     }
     onPublish();
