@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Copy, Timer1, ArrowRight2 } from "iconsax-react";
 import { XIcon } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/ReviewerPendingFilters";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { cn } from "@/lib/utils";
@@ -61,8 +62,9 @@ export const ReviewerPublishedCoursesView = () => {
     try {
       await navigator.clipboard.writeText(courseId);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 
@@ -277,8 +279,9 @@ const PublishedCourseInfoDrawer = ({
     try {
       await navigator.clipboard.writeText(value);
       toast.success("Copied");
-    } catch {
-      toast.error("Could not copy");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy");
     }
   };
 

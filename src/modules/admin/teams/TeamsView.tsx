@@ -10,6 +10,7 @@ import { TeamActionMenu, TeamRow } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { useAppSelector } from "@/redux";
 import {
   useGetStaffQuery,
@@ -111,12 +112,13 @@ export const TeamsView = () => {
       }).unwrap();
       toast.success(`Invitation resent to ${member.email}`);
     } catch (err: any) {
-      const message =
+      const { message } = normalizeApiError(err as never);
+      const fallback =
         err?.data?.detail ||
         err?.data?.message ||
         err?.data?.errors?.[0]?.message ||
         "Failed to resend invitation";
-      toast.error(message);
+      toast.error(message || fallback);
     }
   };
 
@@ -143,7 +145,9 @@ export const TeamsView = () => {
       }
     } catch (err: any) {
       setConfirmAction(null);
+      const { message } = normalizeApiError(err as never);
       const detail =
+        message ||
         err?.data?.detail ||
         err?.data?.message ||
         err?.data?.errors?.[0]?.message;

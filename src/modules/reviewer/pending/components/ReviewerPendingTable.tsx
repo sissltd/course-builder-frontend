@@ -3,6 +3,7 @@
 import React from "react";
 import { Copy } from "iconsax-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { Checkbox } from "@/components/shared/Checkbox";
 import { cn } from "@/lib/utils";
 import { pendingCourses } from "../data";
@@ -40,8 +41,9 @@ export const ReviewerPendingTable = ({ courses, startIndex, onOpenCourse }: Revi
     try {
       await navigator.clipboard.writeText(courseId);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 

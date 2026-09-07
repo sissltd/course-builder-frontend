@@ -12,6 +12,7 @@ import {
   useConfirmWithdrawalMutation,
 } from "@/modules/creator/hooks";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { SetupAccountModal } from "./SetupAccountModal";
 
 interface WithdrawalFlowProps {
@@ -54,8 +55,9 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
         }).unwrap();
         setWithdrawalRequestId(result.id);
         setStep("confirm");
-      } catch {
-        toast.error("Failed to request withdrawal. Please try again.");
+      } catch (err) {
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Failed to request withdrawal. Please try again.");
       }
     } else if (step === "confirm" && withdrawalRequestId) {
       try {
@@ -64,8 +66,9 @@ export const WithdrawalFlow = ({ isOpen, onOpenChange }: WithdrawalFlowProps) =>
           body: { code: (document.querySelector<HTMLInputElement>('[name="otp"]')?.value ?? "") as string },
         }).unwrap();
         setStep("success");
-      } catch {
-        toast.error("Invalid OTP code. Please try again.");
+      } catch (err) {
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Invalid OTP code. Please try again.");
       }
     }
   };

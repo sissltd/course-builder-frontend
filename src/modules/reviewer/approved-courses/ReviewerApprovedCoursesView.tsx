@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CloseCircle, Copy, More, Edit } from "iconsax-react";
 import { XIcon, Check } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -152,8 +153,9 @@ export const ReviewerApprovedCoursesView = () => {
     try {
       await navigator.clipboard.writeText(courseId);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 
@@ -416,8 +418,9 @@ const ApprovedCourseInfoDrawer = ({
     try {
       await navigator.clipboard.writeText(value);
       toast.success("Copied");
-    } catch {
-      toast.error("Could not copy");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy");
     }
   };
 

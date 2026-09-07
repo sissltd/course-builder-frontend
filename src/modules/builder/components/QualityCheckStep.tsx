@@ -6,6 +6,7 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { syncSubmitCourse } from "@/redux/slices/builderSync";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CreatorRoute } from "@/lib/routes";
 import { useGetQualityChecksQuery, useRefreshQualityChecksMutation } from "@/modules/creator/hooks";
@@ -87,8 +88,9 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
     try {
       await refreshQualityChecks(courseId).unwrap();
       toast.success("Quality checks refreshed");
-    } catch {
-      toast.error("Failed to refresh quality checks");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to refresh quality checks");
     }
   };
 
@@ -175,8 +177,9 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
               } else {
                 toast.error("Failed to submit course. Please try again.");
               }
-            } catch {
-              toast.error("Failed to submit course. Please try again.");
+            } catch (err) {
+              const { message } = normalizeApiError(err as never);
+              toast.error(message ?? "Failed to submit course. Please try again.");
             } finally {
               setIsSubmitting(false);
             }

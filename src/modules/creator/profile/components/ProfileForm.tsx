@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { Button } from "@/components/shared/Button";
 import { FormSelect } from "@/components/form/FormSelect";
 import { FormPhoneInput } from "@/components/form/FormPhoneInput";
@@ -129,8 +130,9 @@ export const ProfileForm = ({ profile }: ProfileFormProps) => {
         category: categoryId || undefined,
       }).unwrap();
       toast.success("Profile updated successfully.");
-    } catch {
-      toast.error("Failed to update profile. Please try again.");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to update profile. Please try again.");
     }
   };
 

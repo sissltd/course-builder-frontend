@@ -15,6 +15,7 @@ import { serverLogout } from "@/modules/auth/actions/logout";
 import { useGetMyProfileQuery, useUpdateMyProfileMutation } from "@/modules/creator/profile/api/profileApi";
 import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 
 export const AccountSettingsTab = () => {
   const router = useRouter();
@@ -67,8 +68,9 @@ export const AccountSettingsTab = () => {
       const result = await upload(file);
       await updateProfile({ avatar_url: result.file_url }).unwrap();
       toast.success("Avatar updated.");
-    } catch {
-      toast.error("Failed to upload avatar.");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to upload avatar.");
     }
 
     if (fileRef.current) fileRef.current.value = "";
@@ -78,8 +80,9 @@ export const AccountSettingsTab = () => {
     try {
       await updateProfile({ avatar_url: "" }).unwrap();
       toast.success("Avatar removed.");
-    } catch {
-      toast.error("Failed to remove avatar.");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to remove avatar.");
     }
   };
 

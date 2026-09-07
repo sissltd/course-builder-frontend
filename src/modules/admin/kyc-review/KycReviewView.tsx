@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import {
   useGetKycReviewListQuery,
@@ -25,7 +26,8 @@ export const KycReviewView = () => {
       await approveKyc(id).unwrap();
       toast.success("KYC submission approved successfully.");
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to approve KYC.");
+      const { message } = normalizeApiError(error as never);
+      toast.error(message || error?.data?.message || "Failed to approve KYC.");
     }
   };
 
@@ -34,7 +36,8 @@ export const KycReviewView = () => {
       await rejectKyc({ id, rejection_reason: reason }).unwrap();
       toast.success("KYC submission rejected.");
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to reject KYC.");
+      const { message } = normalizeApiError(error as never);
+      toast.error(message || error?.data?.message || "Failed to reject KYC.");
     }
   };
 

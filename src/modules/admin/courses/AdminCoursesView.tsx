@@ -11,6 +11,7 @@ import {
   TickCircle,
 } from "iconsax-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminRoute } from "@/lib/routes";
@@ -179,8 +180,9 @@ const AdminCourseInfoDrawer = ({
     try {
       await navigator.clipboard.writeText(value);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 
@@ -558,8 +560,9 @@ export const AdminCoursesView = () => {
     try {
       await navigator.clipboard.writeText(value);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 
@@ -576,7 +579,9 @@ export const AdminCoursesView = () => {
       await approveCourseMutation({ id: course.id }).unwrap();
       toast.success(`Approved "${course.courseTitle}" successfully`);
     } catch (err: any) {
+      const { message } = normalizeApiError(err as never);
       toast.error(
+        message ||
         err?.data?.message ||
         err?.data?.errors?.[0]?.message ||
         `Failed to approve "${course.courseTitle}"`
@@ -656,7 +661,9 @@ export const AdminCoursesView = () => {
           setActiveCourseId(null);
         }
       } catch (err: any) {
+        const { message } = normalizeApiError(err as never);
         toast.error(
+          message ||
           err?.data?.message ||
           err?.data?.errors?.[0]?.message ||
           `Failed to reject "${courseToReject.courseTitle}"`

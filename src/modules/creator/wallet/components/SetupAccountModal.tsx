@@ -12,6 +12,7 @@ import {
   useCreatePayoutAccountMutation,
 } from "@/modules/creator/hooks";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 
 interface SetupAccountModalProps {
   isOpen: boolean;
@@ -50,10 +51,11 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
         }).unwrap();
         verifiedKeyRef.current = `${bankCode}-${accNumber}`;
         setVerifiedName(result.account_name);
-      } catch {
+      } catch (err) {
         verifiedKeyRef.current = "";
         setVerifiedName("");
-        toast.error("Could not verify account. Check bank and account number.");
+        const { message } = normalizeApiError(err as never);
+        toast.error(message ?? "Could not verify account. Check bank and account number.");
       }
     },
     [verifyAccount],
@@ -85,8 +87,9 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
       }).unwrap();
       setStep("success");
       onSuccess?.();
-    } catch {
-      toast.error("Failed to add account. Please try again.");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to add account. Please try again.");
     }
   };
 

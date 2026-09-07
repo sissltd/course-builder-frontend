@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Copy, CloseCircle } from "iconsax-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { ReviewerInReviewFilters } from "./components/ReviewerInReviewFilters";
@@ -124,8 +125,9 @@ const InReviewCourseInfoDrawer = ({
     try {
       await navigator.clipboard.writeText(value);
       toast.success("Copied");
-    } catch {
-      toast.error("Could not copy");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy");
     }
   };
 
@@ -240,8 +242,9 @@ export const ReviewerInReviewView = () => {
     try {
       await navigator.clipboard.writeText(id);
       toast.success("Course ID copied");
-    } catch {
-      toast.error("Could not copy course ID");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not copy course ID");
     }
   };
 

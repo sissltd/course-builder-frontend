@@ -10,6 +10,7 @@ import {
   useSetDefaultPayoutAccountMutation,
 } from "@/modules/creator/hooks";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 
 export const PaymentTab = () => {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
@@ -22,8 +23,9 @@ export const PaymentTab = () => {
       await deleteAccount(id).unwrap();
       toast.success("Account removed");
       refetch();
-    } catch {
-      toast.error("Failed to remove account");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to remove account");
     }
   };
 
@@ -32,8 +34,9 @@ export const PaymentTab = () => {
       await setDefaultAccount(id).unwrap();
       toast.success("Default account updated");
       refetch();
-    } catch {
-      toast.error("Failed to update default account");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to update default account");
     }
   };
 

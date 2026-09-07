@@ -3,6 +3,7 @@ import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { KycSubmission } from "@/redux/slices/adminApi";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
 

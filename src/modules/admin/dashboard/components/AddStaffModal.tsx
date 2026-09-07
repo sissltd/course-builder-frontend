@@ -11,6 +11,7 @@ import { StaffRole } from "@/modules/admin/teams/types";
 import { useInviteStaffMutation } from "@/modules/admin/teams/api/staffApi";
 import type { InviteStaffRequest as InviteStaffPayload } from "@/modules/admin/teams/types";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 
 interface AddStaffModalProps {
   isOpen: boolean;
@@ -54,8 +55,9 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
       setTimeout(() => setShowSuccess(true), 300);
     } catch (err: any) {
       setShowConfirm(false);
-      const message = err.data?.detail || err.data?.message || err.data?.errors?.[0]?.message || "Failed to send invitation";
-      toast.error(message);
+      const { message } = normalizeApiError(err as never);
+      const fallback = err.data?.detail || err.data?.message || err.data?.errors?.[0]?.message || "Failed to send invitation";
+      toast.error(message || fallback);
     }
   };
 

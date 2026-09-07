@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft2, Copy, More } from "iconsax-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
@@ -96,8 +97,9 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
 
       toast.success("Review note added");
       void refetchComments();
-    } catch {
-      toast.error("Failed to add comment");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to add comment");
     }
   };
 

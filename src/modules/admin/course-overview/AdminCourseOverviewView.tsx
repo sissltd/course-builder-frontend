@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft2, Copy, More } from "iconsax-react";
 import { toast } from "sonner";
+import { normalizeApiError } from "@/lib/api/errors";
 import { format } from "date-fns";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,8 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         toast.success("Course review claimed successfully");
       }
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.data?.errors?.[0]?.message || "Could not claim course");
+      const { message } = normalizeApiError(err as never);
+      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not claim course");
     }
   };
 
@@ -105,7 +107,8 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
         toast.success("Course content approved and moved to QA verification");
       }
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.data?.errors?.[0]?.message || "Could not approve course");
+      const { message } = normalizeApiError(err as never);
+      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not approve course");
     }
   };
 
@@ -126,7 +129,8 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
       }
       setRejectModalOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.data?.errors?.[0]?.message || "Could not reject course");
+      const { message } = normalizeApiError(err as never);
+      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not reject course");
     }
   };
 
@@ -143,7 +147,8 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
       }).unwrap();
       toast.success("Comment added");
     } catch (err: any) {
-      toast.error(err?.data?.message || err?.data?.errors?.[0]?.message || "Could not add comment");
+      const { message } = normalizeApiError(err as never);
+      toast.error(message || err?.data?.message || err?.data?.errors?.[0]?.message || "Could not add comment");
     }
   };
 
