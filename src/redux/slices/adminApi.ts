@@ -11,9 +11,12 @@ export interface AdminOverviewResponse {
     DRAFT: number;
     SUBMITTED: number;
     IN_REVIEW: number;
+    NEEDS_REVISION?: number;
+    QA_VERIFICATION?: number;
     APPROVED: number;
-    REJECTED: number;
     PUBLISHED: number;
+    ARCHIVED?: number;
+    REJECTED: number;
   };
   kyc: {
     PENDING: number;
@@ -30,13 +33,141 @@ export interface AdminOverviewResponse {
     total_credited: string;
     awaiting_payout: string;
   };
+  period?: string;
+  today?: {
+    courses_created_today: number;
+    courses_created_change_percent: number | null;
+    published_last_24h: number;
+    published_total: number;
+    daily_cost: string | number | null;
+    daily_cost_change_percent: number | null;
+    avg_cost_per_course: string | number | null;
+  };
+  production_trend?: Array<{
+    date: string;
+    count: number;
+  }>;
+  cost_trend?: Array<{
+    date: string;
+    amount: string;
+  }>;
 }
 
-export interface InviteStaffPayload {
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: "STAFF_WRITER" | "STAFF_VERIFIER" | "STAFF_APPROVER";
+export interface AdminAnalyticsParams {
+  period?: string;
+}
+
+export interface AdminAnalyticsResponse {
+  period: string;
+  since: string;
+  catalog: {
+    total_catalog: number;
+    published: number;
+    created_in_period: number;
+  };
+  enrollment: {
+    total_enrollment: number;
+    enrolled_in_period: number;
+    completed: number;
+    avg_completion_rate: number | null;
+  };
+  cost: {
+    overall_cost: string | number | null;
+    cost_in_period: string | number | null;
+    cost_per_course: string | number | null;
+    daily: Array<{
+      date?: string;
+      day?: string;
+      cost?: string | number;
+      amount?: string | number;
+      [key: string]: any;
+    }>;
+    by_category: Array<{
+      category?: string;
+      name?: string;
+      cost?: string | number;
+      amount?: string | number;
+      [key: string]: any;
+    }>;
+  };
+  earnings: {
+    total_earnings: string;
+  };
+  distribution: Array<{
+    channel: string;
+    label: string;
+    count: number;
+  }>;
+  production_vs_approval: {
+    produced: number;
+    approved: number;
+    rejected: number;
+  };
+  kpis: {
+    daily_output: number | null;
+    first_pass_approval_percent: number | null;
+    avg_pipeline_time_minutes: number | null;
+    cost_per_course: string | number | null;
+    review_turnaround_hours: number | null;
+    system_uptime_percent: number | null;
+    targets: {
+      daily_output: string;
+      first_pass_approval_percent: string;
+      avg_pipeline_time_minutes: string;
+      cost_per_course: string;
+      review_turnaround_hours: string;
+      system_uptime_percent: string;
+    };
+  };
+}
+
+export interface SystemServiceItem {
+  id: string;
+  name: string;
+  priority: "HIGH" | "MEDIUM" | "NORMAL" | "LOW" | string;
+  status: "OPERATIONAL" | "DEGRADED" | "DOWN" | null;
+  uptime_percent: number | null;
+  avg_latency_ms: number | null;
+  sample_count: number;
+  last_recovery_seconds: number | null;
+}
+
+export interface AdminSystemHealthResponse {
+  window_days: number;
+  overall_uptime_percent: number | null;
+  avg_api_latency_ms: number | null;
+  avg_recovery_seconds: number | null;
+  degraded_count: number;
+  down_count: number;
+  services: SystemServiceItem[];
+}
+
+export interface PipelineStageItem {
+  stage: string;
+  label: string;
+  total: number;
+  active: number;
+  completed: number;
+  failed: number;
+}
+
+export interface PipelineProviderItem {
+  id: string;
+  name: string;
+  kind: string;
+  load_percent: number | null;
+  queue_depth: number | null;
+  readings_updated_at: string | null;
+}
+
+export interface AdminPipelineResponse {
+  active_jobs: number;
+  queue_depth: number;
+  completed_today: number;
+  failed_or_retrying: number;
+  avg_pipeline_seconds: number | null;
+  stages: PipelineStageItem[];
+  providers: PipelineProviderItem[];
 }
 
 export interface ActivityLogItemApi {
@@ -125,21 +256,615 @@ export interface KycListParams {
   size?: number;
 }
 
+// ─── Wallet Types ─────────────────────────────────────────────────────────────
+
+export interface WalletUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface WalletItem {
+  id: string;
+  user: WalletUser;
+  balance: string;
+  currency: string;
+  updated_datetime: string;
+}
+
+export interface WalletListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: WalletItem[][];
+  };
+}
+
+export interface WalletListParams {
+  page?: number;
+  size?: number;
+  user?: string;
+}
+
+// ─── Transaction Types ─────────────────────────────────────────────────────────
+
+export interface TransactionCourse {
+  id: string;
+  title: string;
+}
+
+export interface TransactionItem {
+  id: string;
+  user: WalletUser;
+  reference: string;
+  course: TransactionCourse | null;
+  amount: string;
+  fee: string;
+  type: "CREDIT" | "DEBIT";
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  description: string;
+  recipient_account_name: string;
+  recipient_account_number: string;
+  recipient_provider_name: string;
+  created_datetime: string;
+}
+
+export interface TransactionListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: TransactionItem[][];
+  };
+}
+
+export interface TransactionListParams {
+  page?: number;
+  size?: number;
+  user?: string;
+  type?: "CREDIT" | "DEBIT";
+  status?: "PENDING" | "COMPLETED" | "FAILED";
+}
+
+// ─── Withdrawal Types ──────────────────────────────────────────────────────────
+
+export interface WithdrawalPayoutAccount {
+  id: string;
+  account_type: string;
+  provider_name: string;
+  account_number: string;
+  account_name: string;
+  is_default: boolean;
+  created_datetime: string;
+}
+
+export interface WithdrawalItem {
+  id: string;
+  user: WalletUser;
+  amount: string;
+  status: "PENDING_CONFIRMATION" | "CONFIRMED" | "EXPIRED";
+  payout_account: WithdrawalPayoutAccount | null;
+  transaction_reference: string;
+  confirmed_at: string | null;
+  created_datetime: string;
+}
+
+export interface WithdrawalListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: WithdrawalItem[][];
+  };
+}
+
+export interface WithdrawalListParams {
+  page?: number;
+  size?: number;
+  user?: string;
+  status?: "PENDING_CONFIRMATION" | "CONFIRMED" | "EXPIRED";
+}
+
+// ─── Course Types ─────────────────────────────────────────────────────────────
+
+export interface AdminCourseCategory {
+  id: string;
+  name: string;
+}
+
+export interface AdminCourseTopic {
+  id: string;
+  name: string;
+}
+
+export interface AdminCourseCreator {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  name?: string;
+}
+
+export interface AdminCourseItem {
+  id: string;
+  title: string;
+  category: AdminCourseCategory | null;
+  topic: AdminCourseTopic | null;
+  source: string;
+  status: string;
+  creator_price_snapshot: string | null;
+  submitted_at: string | null;
+  created_datetime: string;
+  updated_datetime: string;
+  creator?: AdminCourseCreator | string | null;
+  difficulty_level?: string | null;
+  modules_count?: number | null;
+  lessons_count?: number | null;
+  has_video?: boolean | null;
+  date_approved?: string | null;
+}
+
+export type CourseSourceType = "CREATOR_UPLOADED" | "AI_GENERATED" | "DEVELOPER_API";
+
+export interface AdminCoursesListParams {
+  category?: string;
+  topic?: string;
+  status?: string;
+  source_type?: CourseSourceType | string;
+  difficulty_level?: "ADVANCED" | "BEGINNER" | "INTERMEDIATE" | string;
+  creator?: string;
+  course_id?: string;
+  search?: string;
+  creator_type?: string;
+  quality_score?: number;
+  date_from?: string;
+  date_to?: string;
+  reviewer?: string;
+  review_stage?: "CONTENT" | "QA" | string;
+  ordering?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface AdminCoursesData {
+  paginator: {
+    count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    next_page_number: number | null;
+    next: string | null;
+    previous: string | null;
+    previous_page_number: number | null;
+  };
+  results: AdminCourseItem[];
+}
+
+export interface AdminCoursesResponse {
+  status: boolean;
+  message: string;
+  data: AdminCoursesData;
+}
+
+export interface AdminCourseVersion {
+  id: string;
+  label: string;
+}
+
+export interface AdminCourseModuleLesson {
+  id: string;
+  title: string;
+  type: "video" | "text" | "quiz" | string;
+  duration_seconds: number | null;
+  content: string | null;
+  order: number;
+}
+
+export interface AdminCourseModule {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  lessons: AdminCourseModuleLesson[];
+}
+
+export interface AdminCourseDetail {
+  id: string;
+  title: string;
+  category: AdminCourseCategory | null;
+  topic: AdminCourseTopic | null;
+  source: string;
+  status: string;
+  creator_price_snapshot: string | null;
+  submitted_at: string | null;
+  created_datetime: string;
+  updated_datetime: string;
+  description: string;
+  difficulty_level: string;
+  learning_objectives: string[];
+  tags: string[];
+  planned_duration_seconds: number;
+  preview_video_url: string;
+  thumbnail_url: string;
+  terms_accepted_at: string | null;
+  approved_at: string | null;
+  published_at: string | null;
+  rejected_at: string | null;
+  modules: AdminCourseModule[];
+  final_assessment: unknown | null;
+  duration_estimate_minutes: number;
+  version: AdminCourseVersion | string | null;
+}
+
+export interface ApproveCourseRequest {
+  feedback?: {
+    summary?: string;
+  };
+}
+
+export interface CourseReviewCommentAuthor {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
+
+export interface CourseReviewComment {
+  id: string;
+  stage: "CONTENT" | "QA" | string;
+  lesson?: string | null;
+  severity: "ERROR" | "WARNING" | "INFO" | string;
+  reason_code: string;
+  comment: string;
+  created_datetime?: string;
+  author?: CourseReviewCommentAuthor | string | null;
+}
+
+export interface AddCourseCommentRequest {
+  stage: "CONTENT" | "QA" | string;
+  lesson?: string | null;
+  severity: "ERROR" | "WARNING" | "INFO" | string;
+  reason_code: string;
+  comment: string;
+}
+
+export interface CourseCommentsParams {
+  courseId: string;
+  page?: number;
+  size?: number;
+}
+
+export interface CourseCommentsResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: CourseReviewComment[];
+  };
+}
+
+export interface ReviewActionResponse {
+  id: string;
+  course: string;
+  reviewer: {
+    id: string;
+    email: string;
+  };
+  action: "APPROVE" | "REJECT" | string;
+  stage: "CONTENT" | "QA" | string;
+  feedback: Record<string, any>;
+  created_datetime: string;
+}
+
+export interface ContentApproveRequest {
+  feedback?: {
+    summary?: string;
+  };
+}
+
+export interface ContentRejectRequest {
+  feedback: {
+    summary: string;
+  };
+}
+
+export interface QaApproveRequest {
+  feedback?: {
+    summary?: string;
+  };
+}
+
+export interface QaRejectRequest {
+  feedback: {
+    summary: string;
+  };
+}
+
+export interface RejectCourseRequestItem {
+  module_id?: string;
+  comment: string;
+}
+
+export interface RejectCourseRequest {
+  feedback: {
+    summary: string;
+    items?: RejectCourseRequestItem[];
+  };
+}
+
+export interface DistributionChannelPayload {
+  channel: "SOLUDESK" | "COURSERA" | "UDEMY" | string;
+  approval_rate?: string;
+  learner_price: string;
+  mie_suggestion?: string;
+  model?: "ONE_TIME" | "SUBSCRIPTION" | "PROMOTIONAL" | "B2B_ONLY" | string;
+  platform_revenue_per_enrollment?: string;
+  mie_explanation?: string;
+  course_fee_percent?: string | null;
+  promotional_pricing?: string | null;
+  comparable_courses?: Array<{
+    course_title: string;
+    difficulty_level: string;
+    learner_price: string;
+  }>;
+}
+
+export interface CoursePriceReviewItem {
+  id: string;
+  channel: "SOLUDESK" | "COURSERA" | "UDEMY" | string;
+  approval_rate: string;
+  learner_price: string;
+  mie_suggestion: string;
+  model: string;
+  learner_fee?: string;
+  creator_payout_fixed?: string;
+  course_fee_percent?: string | null;
+  promotional_pricing?: string | null;
+  platform_revenue_per_enrollment?: string;
+  mie_explanation?: string;
+  comparable_courses?: Array<{
+    course_title: string;
+    difficulty_level: string;
+    learner_price: string;
+  }>;
+  status?: string;
+  external_course_id?: string;
+  failure_reason?: string;
+  published_at?: string | null;
+}
+
+export interface CourseReviewPricesResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: CoursePriceReviewItem[];
+  };
+}
+
+export interface PublishCourseRequest {
+  distribution_channels: DistributionChannelPayload[];
+}
+
+export interface SaveCoursePricesRequest {
+  distribution_channels: DistributionChannelPayload[];
+}
+
+export interface AdminReservationUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+export interface AdminReservationCategory {
+  id: string;
+  name: string;
+}
+
+export interface AdminActiveReservation {
+  id: string;
+  name: string;
+  category: AdminReservationCategory;
+  status: "ACTIVE" | string;
+  creator_price: string;
+  reserved_by: AdminReservationUser;
+  reserved_until: string;
+  is_currently_reserved: boolean;
+  created_datetime: string;
+  updated_datetime: string;
+}
+
+export interface AdminActiveReservationsParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  category?: string;
+  ordering?: string;
+}
+
+export interface AdminActiveReservationsResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: AdminActiveReservation[];
+  };
+}
+
+export interface AdminReservationRequestTopic {
+  id: string;
+  category: AdminReservationCategory;
+  name: string;
+  creator_price: string;
+  status: string;
+  reserved_by: string;
+  reserved_until: string;
+  is_currently_reserved: boolean;
+  created_datetime: string;
+  updated_datetime: string;
+}
+
+export interface AdminReservationRequestItem {
+  id: string;
+  name: string;
+  category: AdminReservationCategory;
+  topic?: AdminReservationRequestTopic | null;
+  status: "PENDING" | "APPROVED" | "REJECTED" | string;
+  rejection_reason?: string | null;
+  reviewed_at?: string | null;
+  created_datetime: string;
+  requested_by: AdminReservationUser;
+  reviewed_by?: AdminReservationUser | null;
+}
+
+export interface AdminReservationRequestsParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  category?: string;
+  status?: string;
+  ordering?: string;
+}
+
+export interface AdminReservationRequestsResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous: string | null;
+      previous_page_number: number | null;
+    };
+    results: AdminReservationRequestItem[];
+  };
+}
+
+export interface RejectReservationRequestPayload {
+  rejection_reason?: string;
+}
+
 export const adminApi = BaseAPI.injectEndpoints({
   endpoints: (builder) => ({
+    getAdminCourses: builder.query<AdminCoursesResponse, AdminCoursesListParams | void>({
+      query: (params) => ({
+        url: "/admin/courses/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: AdminCoursesData["paginator"];
+          results: AdminCourseItem[][] | AdminCourseItem[];
+        };
+      }): AdminCoursesResponse => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
+        },
+      }),
+      providesTags: ["AdminCourse"] as any,
+    }),
     getAdminOverview: builder.query<AdminOverviewResponse, void>({
       query: () => ({
         url: "/admin/overview/",
         method: "GET",
       }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminOverviewResponse,
       providesTags: ["AdminOverview"] as any,
     }),
-    inviteStaff: builder.mutation<void, InviteStaffPayload>({
-      query: (payload) => ({
-        url: "/auth/staff/invitations/",
-        method: "POST",
-        body: payload,
+    getAdminAnalytics: builder.query<AdminAnalyticsResponse, AdminAnalyticsParams | void>({
+      query: (params) => ({
+        url: "/admin/analytics/",
+        method: "GET",
+        params: params?.period ? { period: params.period } : undefined,
       }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminAnalyticsResponse,
+      providesTags: ["AdminAnalytics"] as any,
+    }),
+    getAdminSystemHealth: builder.query<AdminSystemHealthResponse, void>({
+      query: () => ({
+        url: "/admin/system-health/",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminSystemHealthResponse,
+      providesTags: ["AdminSystemHealth"] as any,
+    }),
+    getAdminPipeline: builder.query<AdminPipelineResponse, void>({
+      query: () => ({
+        url: "/admin/pipeline/",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminPipelineResponse,
+      providesTags: ["AdminPipeline"] as any,
     }),
     getActivityLog: builder.query<ActivityLogResponse, ActivityLogParams | void>({
       query: (params) => ({
@@ -179,15 +904,346 @@ export const adminApi = BaseAPI.injectEndpoints({
       }),
       invalidatesTags: ["KycReview"] as any,
     }),
+    getAdminWallets: builder.query<WalletListResponse, WalletListParams | void>({
+      query: (params) => ({
+        url: "/admin/wallets/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["AdminWallet"] as any,
+    }),
+    getAdminTransactions: builder.query<TransactionListResponse, TransactionListParams | void>({
+      query: (params) => ({
+        url: "/admin/transactions/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["AdminTransaction"] as any,
+    }),
+    getAdminWithdrawals: builder.query<WithdrawalListResponse, WithdrawalListParams | void>({
+      query: (params) => ({
+        url: "/admin/withdrawals/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["AdminWithdrawal"] as any,
+    }),
+    getAdminCourseDetail: builder.query<AdminCourseDetail, string>({
+      query: (id) => ({
+        url: `/admin/courses/${id}/`,
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        return (response && typeof response === "object" && "data" in response && response.data)
+          ? response.data
+          : response;
+      },
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+    }),
+    approveAdminCourse: builder.mutation<void, { id: string; feedback?: { summary?: string } }>({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/approve/`,
+        method: "POST",
+        body: feedback ? { feedback } : {},
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    claimAdminCourse: builder.mutation<AdminCourseDetail, string>({
+      query: (id) => ({
+        url: `/admin/courses/${id}/claim/`,
+        method: "POST",
+      }),
+      transformResponse: (response: any) => {
+        return (response && typeof response === "object" && "data" in response && response.data)
+          ? response.data
+          : response;
+      },
+      invalidatesTags: (result, error, id) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    getAdminCourseComments: builder.query<CourseCommentsResponse, CourseCommentsParams>({
+      query: ({ courseId, page, size }) => ({
+        url: `/admin/courses/${courseId}/comments/`,
+        method: "GET",
+        params: {
+          ...(page ? { page } : {}),
+          ...(size ? { size } : {}),
+        },
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: CourseCommentsResponse["data"]["paginator"];
+          results: CourseReviewComment[][] | CourseReviewComment[];
+        };
+      }): CourseCommentsResponse => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: (response?.data?.results ?? []).flat() as CourseReviewComment[],
+        },
+      }),
+      providesTags: (result, error, { courseId }) => [
+        { type: "AdminCourseComment", id: courseId },
+      ] as any,
+    }),
+    addAdminCourseComment: builder.mutation<
+      CourseReviewComment,
+      { courseId: string; body: AddCourseCommentRequest }
+    >({
+      query: ({ courseId, body }) => ({
+        url: `/admin/courses/${courseId}/comments/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, error, { courseId }) => [
+        { type: "AdminCourseComment", id: courseId },
+        { type: "AdminCourse", id: courseId },
+      ] as any,
+    }),
+    contentApproveAdminCourse: builder.mutation<
+      ReviewActionResponse,
+      { id: string; feedback?: { summary?: string } }
+    >({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/content-approve/`,
+        method: "POST",
+        body: feedback ? { feedback } : {},
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    contentRejectAdminCourse: builder.mutation<
+      ReviewActionResponse,
+      { id: string; feedback: { summary: string } }
+    >({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/content-reject/`,
+        method: "POST",
+        body: { feedback },
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    qaApproveAdminCourse: builder.mutation<
+      ReviewActionResponse,
+      { id: string; feedback?: { summary?: string } }
+    >({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/qa-approve/`,
+        method: "POST",
+        body: feedback ? { feedback } : {},
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    qaClaimAdminCourse: builder.mutation<AdminCourseDetail, string>({
+      query: (id) => ({
+        url: `/admin/courses/${id}/qa-claim/`,
+        method: "POST",
+      }),
+      transformResponse: (response: any) => {
+        return response && typeof response === "object" && "data" in response && response.data
+          ? response.data
+          : response;
+      },
+      invalidatesTags: (result, error, id) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    qaRejectAdminCourse: builder.mutation<
+      ReviewActionResponse,
+      { id: string; feedback: { summary: string } }
+    >({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/qa-reject/`,
+        method: "POST",
+        body: { feedback },
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    rejectAdminCourse: builder.mutation<
+      ReviewActionResponse,
+      { id: string; feedback: RejectCourseRequest["feedback"] }
+    >({
+      query: ({ id, feedback }) => ({
+        url: `/admin/courses/${id}/reject/`,
+        method: "POST",
+        body: { feedback },
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    publishCourse: builder.mutation<any, { id: string; body: PublishCourseRequest }>({
+      query: ({ id, body }) => ({
+        url: `/courses/${id}/publish/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
+    getCourseReviewPrices: builder.query<CourseReviewPricesResponse, string>({
+      query: (id) => ({
+        url: `/courses/${id}/review-prices/`,
+        method: "GET",
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: CourseReviewPricesResponse["data"]["paginator"];
+          results: CoursePriceReviewItem[][] | CoursePriceReviewItem[];
+        };
+      }): CourseReviewPricesResponse => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: (response?.data?.results ?? []).flat() as CoursePriceReviewItem[],
+        },
+      }),
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+    }),
+    saveCoursePrices: builder.mutation<
+      CourseReviewPricesResponse,
+      { id: string; body: SaveCoursePricesRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `/courses/${id}/review-prices/`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: "AdminCourse", id }] as any,
+    }),
+    getActiveReservations: builder.query<
+      AdminActiveReservationsResponse,
+      AdminActiveReservationsParams | void
+    >({
+      query: (params) => ({
+        url: "/admin/reservations/active/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["TopicReservation"] as any,
+    }),
+    getActiveReservationDetail: builder.query<AdminActiveReservation, string>({
+      query: (id) => ({
+        url: `/admin/reservations/active/${id}/`,
+        method: "GET",
+      }),
+      transformResponse: (response: any) => (response?.data ? response.data : response),
+      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }] as any,
+    }),
+    releaseActiveReservation: builder.mutation<any, { id: string }>({
+      query: ({ id }) => ({
+        url: `/admin/reservations/active/${id}/release/`,
+        method: "POST",
+      }),
+      invalidatesTags: ["TopicReservation"] as any,
+    }),
+    getReservationRequests: builder.query<
+      AdminReservationRequestsResponse,
+      AdminReservationRequestsParams | void
+    >({
+      query: (params) => ({
+        url: "/admin/reservations/requests/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["TopicReservation"] as any,
+    }),
+    getReservationRequestDetail: builder.query<AdminReservationRequestItem, string>({
+      query: (id) => ({
+        url: `/admin/reservations/requests/${id}/`,
+        method: "GET",
+      }),
+      transformResponse: (response: any) => (response?.data ? response.data : response),
+      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }] as any,
+    }),
+    approveReservationRequest: builder.mutation<any, { id: string }>({
+      query: ({ id }) => ({
+        url: `/admin/reservations/requests/${id}/approve/`,
+        method: "POST",
+      }),
+      invalidatesTags: ["TopicReservation"] as any,
+    }),
+    rejectReservationRequest: builder.mutation<
+      any,
+      { id: string; body?: RejectReservationRequestPayload }
+    >({
+      query: ({ id, body }) => ({
+        url: `/admin/reservations/requests/${id}/reject/`,
+        method: "POST",
+        body: body || {},
+      }),
+      invalidatesTags: ["TopicReservation"] as any,
+    }),
   }),
 });
 
 export const {
+  useGetAdminCoursesQuery,
+  useGetAdminCourseDetailQuery,
+  useApproveAdminCourseMutation,
+  useClaimAdminCourseMutation,
+  useGetAdminCourseCommentsQuery,
+  useAddAdminCourseCommentMutation,
+  useContentApproveAdminCourseMutation,
+  useContentRejectAdminCourseMutation,
+  useQaApproveAdminCourseMutation,
+  useQaClaimAdminCourseMutation,
+  useQaRejectAdminCourseMutation,
+  useRejectAdminCourseMutation,
+  usePublishCourseMutation,
+  useGetCourseReviewPricesQuery,
+  useSaveCoursePricesMutation,
   useGetAdminOverviewQuery,
-  useInviteStaffMutation,
+  useGetAdminAnalyticsQuery,
+  useGetAdminSystemHealthQuery,
+  useGetAdminPipelineQuery,
   useGetActivityLogQuery,
   useGetKycReviewListQuery,
   useGetKycReviewDetailQuery,
   useApproveKycMutation,
   useRejectKycMutation,
+  useGetAdminWalletsQuery,
+  useGetAdminTransactionsQuery,
+  useGetAdminWithdrawalsQuery,
+  useGetActiveReservationsQuery,
+  useGetActiveReservationDetailQuery,
+  useReleaseActiveReservationMutation,
+  useGetReservationRequestsQuery,
+  useGetReservationRequestDetailQuery,
+  useApproveReservationRequestMutation,
+  useRejectReservationRequestMutation,
 } = adminApi;
+
+export {
+  useGetUsersQuery,
+  useGetUserQuery,
+  useSuspendUserMutation,
+  useDeactivateUserMutation,
+  useReinstateUserMutation,
+} from "@/modules/admin/teams/api/usersApi";
+export type { AdminUser, UsersListParams } from "@/modules/admin/teams/types";
+

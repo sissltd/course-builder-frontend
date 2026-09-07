@@ -22,6 +22,7 @@ const pageTitles: Record<string, string> = {
   "/admin/activity-log": "Activity Log",
   "/admin/settings": "Settings",
   "/admin/kyc-review": "KYC Review",
+  "/admin/wallets": "Wallets",
 };
 
 interface AdminDashboardLayoutProps {

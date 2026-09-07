@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CourseViewToggle, type CourseViewMode } from "./CourseViewToggle";
+import { useGetCategoriesQuery } from "@/modules/creator/courses/api/categoriesApi";
 
 interface TriggerProps {
   icon: React.ReactNode;
@@ -68,9 +69,11 @@ function DropdownShell({ children, className }: { children: React.ReactNode; cla
   );
 }
 
+export type AdminCoursesTab = "creators" | "ai" | "developer";
+
 interface AdminCoursesFiltersProps {
-  activeTab: "creators" | "ai";
-  setActiveTab: (tab: "creators" | "ai") => void;
+  activeTab: AdminCoursesTab;
+  setActiveTab: (tab: AdminCoursesTab) => void;
   videoFilter: "with" | "without" | null;
   setVideoFilter: (filter: "with" | "without" | null) => void;
   searchQuery: string;
@@ -105,14 +108,25 @@ export const AdminCoursesFilters = ({
   viewMode,
   setViewMode,
 }: AdminCoursesFiltersProps) => {
-  const categoryOptions = [
-    "All",
-    "Software Engineering",
-    "Artificial Intelligence",
-    "Leadership",
-    "Finance",
-    "Robotics",
-  ];
+  const { data: categoriesData } = useGetCategoriesQuery();
+  const categories = React.useMemo(() => {
+    return categoriesData?.data?.results ?? [];
+  }, [categoriesData]);
+
+  const [categorySearch, setCategorySearch] = React.useState("");
+
+  const filteredCategories = React.useMemo(() => {
+    if (!categorySearch.trim()) return categories;
+    return categories.filter((c) =>
+      c.name.toLowerCase().includes(categorySearch.toLowerCase()),
+    );
+  }, [categories, categorySearch]);
+
+  const selectedCategoryLabel = React.useMemo(() => {
+    if (!category || category === "Category" || category === "All") return "Category";
+    const match = categories.find((c) => c.id === category || c.name === category);
+    return match ? match.name : category;
+  }, [category, categories]);
 
   const difficultyOptions = [
     "All",
@@ -130,20 +144,20 @@ export const AdminCoursesFilters = ({
     date ? format(date, "MM/dd/yyyy") : "Date";
 
   return (
-    <div className="flex flex-col gap-[20px] w-full">
-      {/* Tabs Row */}
-      <div className="flex items-center border-b border-sd-grey-3 w-full">
+    <div className="flex flex-col gap-[16px] sm:gap-[20px] w-full">
+      {/* Tabs Row — smooth horizontal scroll on mobile, no text wrapping */}
+      <div className="flex items-center border-b border-sd-grey-3 w-full overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap">
         <button
           type="button"
           onClick={() => setActiveTab("creators")}
           className={cn(
-            "h-[40px] px-[24px] text-[16px] font-medium transition-colors cursor-pointer relative",
+            "h-[44px] px-[16px] sm:px-[24px] text-[14px] sm:text-[16px] font-medium transition-colors cursor-pointer relative shrink-0 whitespace-nowrap flex items-center justify-center",
             activeTab === "creators"
               ? "text-sd-blue font-semibold"
               : "text-sd-grey-11 hover:text-sd-grey-12",
           )}
         >
-          <span>Creators</span>
+          <span>Creator Uploaded</span>
           {activeTab === "creators" && (
             <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-sd-blue" />
           )}
@@ -152,26 +166,41 @@ export const AdminCoursesFilters = ({
           type="button"
           onClick={() => setActiveTab("ai")}
           className={cn(
-            "h-[40px] px-[24px] text-[16px] font-medium transition-colors cursor-pointer relative",
+            "h-[44px] px-[16px] sm:px-[24px] text-[14px] sm:text-[16px] font-medium transition-colors cursor-pointer relative shrink-0 whitespace-nowrap flex items-center justify-center",
             activeTab === "ai"
               ? "text-sd-blue font-semibold"
               : "text-sd-grey-11 hover:text-sd-grey-12",
           )}
         >
-          <span>Created with AI</span>
+          <span>AI Generated</span>
           {activeTab === "ai" && (
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-sd-blue" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("developer")}
+          className={cn(
+            "h-[44px] px-[16px] sm:px-[24px] text-[14px] sm:text-[16px] font-medium transition-colors cursor-pointer relative shrink-0 whitespace-nowrap flex items-center justify-center",
+            activeTab === "developer"
+              ? "text-sd-blue font-semibold"
+              : "text-sd-grey-11 hover:text-sd-grey-12",
+          )}
+        >
+          <span>Developer API</span>
+          {activeTab === "developer" && (
             <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-sd-blue" />
           )}
         </button>
       </div>
 
-      {/* Video Filter Buttons Row */}
-      <div className="flex items-center gap-[12px] w-full">
+      {/* Video Filter Buttons Row — horizontal scrolling chips on mobile */}
+      <div className="flex items-center gap-[8px] sm:gap-[12px] w-full overflow-x-auto no-scrollbar whitespace-nowrap py-[2px]">
         <button
           type="button"
           onClick={() => setVideoFilter(videoFilter === "with" ? null : "with")}
           className={cn(
-            "flex h-[36px] items-center gap-[8px] rounded-full border px-[16px] py-[8px] text-[14px] font-normal transition-all cursor-pointer",
+            "flex h-[34px] sm:h-[36px] items-center gap-[6px] sm:gap-[8px] rounded-full border px-[12px] sm:px-[16px] text-[13px] sm:text-[14px] font-normal transition-all cursor-pointer shrink-0 whitespace-nowrap",
             videoFilter === "with"
               ? "bg-[#0063EF1A] border-sd-blue text-sd-blue font-medium"
               : "bg-sd-grey-1 border-sd-grey-3 text-sd-grey-11 hover:bg-sd-grey-2",
@@ -185,7 +214,7 @@ export const AdminCoursesFilters = ({
           type="button"
           onClick={() => setVideoFilter(videoFilter === "without" ? null : "without")}
           className={cn(
-            "flex h-[36px] items-center gap-[8px] rounded-full border px-[16px] py-[8px] text-[14px] font-normal transition-all cursor-pointer",
+            "flex h-[34px] sm:h-[36px] items-center gap-[6px] sm:gap-[8px] rounded-full border px-[12px] sm:px-[16px] text-[13px] sm:text-[14px] font-normal transition-all cursor-pointer shrink-0 whitespace-nowrap",
             videoFilter === "without"
               ? "bg-[#0063EF1A] border-sd-blue text-sd-blue font-medium"
               : "bg-sd-grey-1 border-sd-grey-3 text-sd-grey-11 hover:bg-sd-grey-2",
@@ -197,10 +226,10 @@ export const AdminCoursesFilters = ({
       </div>
 
       {/* Filters & Inputs Row */}
-      <div className="flex flex-wrap items-center gap-[12px] w-full">
+      <div className="flex flex-col gap-[10px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-[12px] w-full">
         {/* Search Field */}
-        <label className="flex h-[40px] w-full max-w-[320px] sm:max-w-[400px] items-center gap-[12px] rounded-[10px] border border-sd-grey-6 bg-sd-grey-1 px-[16px]">
-          <SearchNormal1 size={20} variant="Linear" color="var(--sd-grey-11)" />
+        <label className="flex h-[40px] w-full sm:w-[260px] md:w-[320px] items-center gap-[12px] rounded-[10px] border border-sd-grey-6 bg-sd-grey-1 px-[14px] shrink-0">
+          <SearchNormal1 size={18} variant="Linear" color="var(--sd-grey-11)" />
           <input
             type="text"
             value={searchQuery}
@@ -210,39 +239,69 @@ export const AdminCoursesFilters = ({
           />
         </label>
 
-        {/* Category Dropdown */}
-        <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-          <PopoverTrigger asChild>
-            <FilterTrigger
-              icon={<Filter size={20} variant="Linear" color="var(--sd-grey-11)" />}
-              label={category}
-              className="w-[150px]"
-            />
-          </PopoverTrigger>
+        {/* Controls Container: 2-column grid on mobile, inline flex on tablet/desktop */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-[8px] sm:gap-[10px] w-full sm:w-auto sm:flex-1">
+          {/* Category Dropdown */}
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <PopoverTrigger asChild>
+              <FilterTrigger
+                icon={<Filter size={18} variant="Linear" color="var(--sd-grey-11)" />}
+                label={selectedCategoryLabel}
+                className="w-full sm:w-[150px] md:w-[170px]"
+              />
+            </PopoverTrigger>
           <DropdownShell className="w-[280px] px-[8px] py-[10px]">
             <label className="flex h-[36px] items-center gap-[10px] rounded-[8px] border border-sd-grey-6 bg-sd-grey-1 px-[12px]">
               <SearchNormal1 size={18} variant="Linear" color="var(--sd-grey-11)" />
               <input
                 type="text"
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
                 placeholder="Search category"
                 className="w-full bg-transparent text-[14px] font-normal text-sd-grey-12 placeholder:text-sd-muted-text outline-none"
               />
             </label>
-            <div className="mt-[8px] flex flex-col">
-              {categoryOptions.map((option) => (
+            <div className="mt-[8px] flex max-h-[220px] flex-col overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory("All");
+                  setCategoryOpen(false);
+                }}
+                aria-pressed={category === "All" || category === "Category"}
+                className={cn(
+                  "flex h-[34px] items-center rounded-[8px] px-[12px] text-left text-[14px] font-normal cursor-pointer hover:bg-sd-grey-2",
+                  category === "All" || category === "Category"
+                    ? "font-medium text-sd-blue bg-sd-blue/5"
+                    : "text-sd-grey-11",
+                )}
+              >
+                All Categories
+              </button>
+              {filteredCategories.map((cat) => (
                 <button
-                  key={option}
+                  key={cat.id}
                   type="button"
                   onClick={() => {
-                    setCategory(option);
+                    setCategory(cat.id);
                     setCategoryOpen(false);
                   }}
-                  aria-pressed={category === option}
-                  className="flex h-[34px] items-center rounded-[8px] px-[12px] text-left text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 cursor-pointer"
+                  aria-pressed={category === cat.id}
+                  className={cn(
+                    "flex h-[34px] items-center rounded-[8px] px-[12px] text-left text-[14px] font-normal truncate cursor-pointer hover:bg-sd-grey-2",
+                    category === cat.id
+                      ? "font-medium text-sd-blue bg-sd-blue/5"
+                      : "text-sd-grey-11",
+                  )}
                 >
-                  {option}
+                  <span className="truncate">{cat.name}</span>
                 </button>
               ))}
+              {filteredCategories.length === 0 && (
+                <div className="py-2 text-center text-[12px] text-sd-grey-11">
+                  No categories found
+                </div>
+              )}
             </div>
           </DropdownShell>
         </Popover>
@@ -251,9 +310,9 @@ export const AdminCoursesFilters = ({
         <Popover open={difficultyOpen} onOpenChange={setDifficultyOpen}>
           <PopoverTrigger asChild>
             <FilterTrigger
-              icon={<Sort size={20} variant="Linear" color="var(--sd-grey-11)" />}
+              icon={<Sort size={18} variant="Linear" color="var(--sd-grey-11)" />}
               label={difficulty}
-              className="w-[170px]"
+              className="w-full sm:w-[150px] md:w-[170px]"
             />
           </PopoverTrigger>
           <DropdownShell className="w-[220px] px-[8px] py-[10px]">
@@ -288,9 +347,9 @@ export const AdminCoursesFilters = ({
         >
           <PopoverTrigger asChild>
             <FilterTrigger
-              icon={<Calendar2 size={20} variant="Linear" color="var(--sd-grey-11)" />}
-              label="Date"
-              className="w-[122px]"
+              icon={<Calendar2 size={18} variant="Linear" color="var(--sd-grey-11)" />}
+              label={fromDate ? dateLabel(fromDate) : "Date"}
+              className="w-full sm:w-[120px] md:w-[140px]"
               onClick={() => {
                 setDateOpen(true);
                 setActiveDateField(null);
@@ -374,11 +433,12 @@ export const AdminCoursesFilters = ({
           </DropdownShell>
         </Popover>
 
-        {/* Table / Grid switch — pushed to the end of the toolbar */}
-        <div className="ml-auto">
+        {/* Table / Grid switch */}
+        <div className="flex items-center justify-end sm:ml-auto w-full sm:w-auto">
           <CourseViewToggle value={viewMode} onChange={setViewMode} />
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };

@@ -53,10 +53,12 @@ export interface UsersListParams {
   ordering?: string;
   page?: number;
   size?: number;
+  page_size?: number;
 }
 
 export interface SuspendUserRequest {
   reason: string;
+  assigned_track?: string;
 }
 
 export interface DeactivateUserRequest {

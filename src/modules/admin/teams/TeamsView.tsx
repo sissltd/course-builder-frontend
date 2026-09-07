@@ -1,35 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, UserTick, Designtools, UserOctagon, More, Copy, Filter, Sort, TickCircle } from "iconsax-react";
+import { User, UserTick, Designtools, UserOctagon, Copy, Filter, Sort, TickCircle } from "iconsax-react";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { Modal } from "@/components/shared/Modal";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
-import { Button } from "@/components/shared/Button";
 import { AddStaffModal } from "@/modules/admin/dashboard/components/AddStaffModal";
-import { TeamActionMenu, ActionType } from "./components/TeamActionMenu";
+import { TeamActionMenu, TeamRow } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { useAppSelector } from "@/redux";
 import {
   useGetStaffQuery,
-  useSuspendUserMutation,
-  useDeactivateUserMutation,
-  useReinstateUserMutation,
+  useInviteStaffMutation,
+  useReactivateStaffMutation,
   useRevokeStaffMutation,
 } from "./hooks";
-import type { StaffMember } from "./types";
-
-interface TeamRow {
-  id: string;
-  name: string;
-  initials: string;
-  email: string;
-  role: string;
-  date: string;
-  invitationStatus: string;
-  userId: string;
-}
+import { StaffMember, StaffRole } from "./types";
 
 function toInitials(first: string, last: string): string {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
@@ -49,9 +37,12 @@ function staffToRow(s: StaffMember): TeamRow {
   return {
     id: s.id,
     name: `${s.first_name} ${s.last_name}`,
+    firstName: s.first_name,
+    lastName: s.last_name,
     initials: toInitials(s.first_name, s.last_name),
     email: s.email,
-    role: s.role_label,
+    role: s.role,
+    roleLabel: s.role_label,
     date: formatDateTime(s.created_datetime),
     invitationStatus: s.invitation_status,
     userId: s.id,
@@ -67,29 +58,31 @@ const roleOptions = [
 ];
 
 const successLabels: Record<string, { title: string; description: string }> = {
-  suspend: { title: "Account suspended!", description: "The account has been suspended. They will not be able to access the platform." },
-  delete: { title: "Account deleted!", description: "The account has been permanently deleted." },
-  "change-role": { title: "Role changed!", description: "The user's role has been updated successfully." },
-  reinstate: { title: "Account reinstated!", description: "The account has been reinstated and can access the platform again." },
-  revoke: { title: "Access revoked!", description: "The staff member's access has been revoked." },
+  reactivate: {
+    title: "Access restored!",
+    description: "The staff member's access has been reactivated. They keep their original role and password, and can sign in immediately without a new invitation.",
+  },
+  revoke: {
+    title: "Access revoked!",
+    description: "The staff member's access has been revoked. Account records and course authorship references remain intact and can be restored anytime.",
+  },
 };
 
 export const TeamsView = () => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [openMenuRow, setOpenMenuRow] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<TeamRow | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [actionMember, setActionMember] = useState<TeamRow | null>(null);
-  const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"reactivate" | "revoke" | null>(null);
   const [successAction, setSuccessAction] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const currentUser = useAppSelector((state) => state.auth.user);
 
   const { data: staffData, isLoading } = useGetStaffQuery();
-  const [suspendUser] = useSuspendUserMutation();
-  const [deactivateUser] = useDeactivateUserMutation();
-  const [reinstateUser] = useReinstateUserMutation();
-  const [revokeStaff] = useRevokeStaffMutation();
+  const [inviteStaff] = useInviteStaffMutation();
+  const [reactivateStaff, { isLoading: isReactivating }] = useReactivateStaffMutation();
+  const [revokeStaff, { isLoading: isRevoking }] = useRevokeStaffMutation();
 
   const rows: TeamRow[] = (staffData ?? []).map(staffToRow);
 
@@ -98,56 +91,74 @@ export const TeamsView = () => {
   const totalPending = rows.filter((r) => r.invitationStatus === "PENDING").length;
   const totalRevoked = rows.filter((r) => r.invitationStatus === "REVOKED").length;
 
-  const handleAction = (member: TeamRow, action: ActionType) => {
+  const handleReactivate = (member: TeamRow) => {
     setActionMember(member);
-    if (action === "copy-id") {
-      navigator.clipboard.writeText(member.userId);
-      toast.success("User ID copied to clipboard");
-      return;
-    }
-    if (action === "suspend" || action === "delete") {
-      setReason("");
-      setShowReasonModal(true);
-      setConfirmAction(action);
-      return;
-    }
-    if (action === "change-role") {
-      // For now treat like a confirmation + success flow
-    }
-    setConfirmAction(action);
-    setReason("");
+    setConfirmAction("reactivate");
   };
 
-  const handleReasonConfirm = () => {
-    setShowReasonModal(false);
-    // The confirmAction is already set, just show the confirmation modal
+  const handleRevoke = (member: TeamRow) => {
+    setActionMember(member);
+    setConfirmAction("revoke");
+  };
+
+  const handleResend = async (member: TeamRow) => {
+    try {
+      await inviteStaff({
+        email: member.email,
+        first_name: member.firstName,
+        last_name: member.lastName,
+        role: (member.role as StaffRole) || StaffRole.STAFF_WRITER,
+      }).unwrap();
+      toast.success(`Invitation resent to ${member.email}`);
+    } catch (err: any) {
+      const message =
+        err?.data?.detail ||
+        err?.data?.message ||
+        err?.data?.errors?.[0]?.message ||
+        "Failed to resend invitation";
+      toast.error(message);
+    }
   };
 
   const handleConfirm = async () => {
     if (!confirmAction || !actionMember) return;
 
     try {
-      switch (confirmAction) {
-        case "suspend":
-          await suspendUser({ id: actionMember.id, body: { reason: reason || "Suspended by admin" } }).unwrap();
-          break;
-        case "delete":
-          await deactivateUser({ id: actionMember.id, body: { reason: reason || "Deactivated by admin" } }).unwrap();
-          break;
-        case "reinstate":
-          await reinstateUser(actionMember.id).unwrap();
-          break;
-        case "revoke":
-          await revokeStaff(actionMember.id).unwrap();
-          break;
+      if (confirmAction === "reactivate") {
+        const res = await reactivateStaff(actionMember.id).unwrap();
+        toast.success(res?.detail || `Staff access restored for ${actionMember.name}`);
+        setConfirmAction(null);
+        setTimeout(() => setSuccessAction("reactivate"), 300);
+      } else if (confirmAction === "revoke") {
+        const res = await revokeStaff(actionMember.id).unwrap();
+        const isPending = actionMember.invitationStatus === "PENDING";
+        toast.success(
+          res?.detail ||
+            (isPending
+              ? `Invitation revoked for ${actionMember.name}`
+              : `Staff access revoked for ${actionMember.name}`)
+        );
+        setConfirmAction(null);
+        setTimeout(() => setSuccessAction("revoke"), 300);
       }
+    } catch (err: any) {
       setConfirmAction(null);
-      setTimeout(() => setSuccessAction(confirmAction), 300);
-    } catch (err) {
-      setConfirmAction(null);
-      const data = err as { data?: { errors?: { message: string }[] } };
-      const message = data?.data?.errors?.[0]?.message ?? "Action failed";
-      toast.error(message);
+      const detail =
+        err?.data?.detail ||
+        err?.data?.message ||
+        err?.data?.errors?.[0]?.message;
+
+      if (
+        confirmAction === "reactivate" &&
+        err?.status === 400 &&
+        (!detail || detail.toLowerCase().includes("invitation"))
+      ) {
+        toast.error(
+          "An invitation revoked before being accepted cannot be reactivated. Please re-invite this person instead."
+        );
+      } else {
+        toast.error(detail || "Action failed");
+      }
     }
   };
 
@@ -188,7 +199,9 @@ export const TeamsView = () => {
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => (
-        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">{row.original.role}</span>
+        <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">
+          {row.original.roleLabel || row.original.role}
+        </span>
       ),
       size: 172,
     },
@@ -208,11 +221,15 @@ export const TeamsView = () => {
         const isActive = status === "ACTIVE";
         const isPending = status === "PENDING";
         return (
-          <div className={`inline-flex items-center px-[8px] py-[4px] rounded-[6px] ${
-            isActive ? "bg-[#F1F8F2] text-[#3C7E44]"
-              : isPending ? "bg-[#FFF5ED] text-[#B54708]"
+          <div
+            className={`inline-flex items-center px-[8px] py-[4px] rounded-[6px] ${
+              isActive
+                ? "bg-[#F1F8F2] text-[#3C7E44]"
+                : isPending
+                ? "bg-[#FFF5ED] text-[#B54708]"
                 : "bg-[#FEF3F2] text-[#B42318]"
-          }`}>
+            }`}
+          >
             <span className="text-[12px] font-normal leading-[16px]">{status}</span>
           </div>
         );
@@ -222,39 +239,72 @@ export const TeamsView = () => {
     {
       accessorKey: "userId",
       header: "User ID",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-[10px]">
-          <span className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px] overflow-hidden text-ellipsis">
-            {row.original.userId}
-          </span>
-          <Copy variant="Linear" size={14} color="#606060" className="cursor-pointer shrink-0 hover:text-[#0063EF]" />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isCopied = copiedId === row.original.userId;
+        return (
+          <div className="flex items-center gap-[8px]">
+            <span className="text-[14px] text-[#606060] font-mono tracking-[-0.28px] leading-[20px] max-w-[140px] truncate">
+              {row.original.userId}
+            </span>
+            <button
+              type="button"
+              className="p-[4px] rounded hover:bg-sd-grey-2 transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(row.original.userId);
+                setCopiedId(row.original.userId);
+                toast.success("User ID copied to clipboard");
+                setTimeout(() => setCopiedId(null), 2000);
+              }}
+              title="Copy User ID"
+            >
+              {isCopied ? (
+                <TickCircle variant="Bold" size={14} color="#008500" />
+              ) : (
+                <Copy variant="Linear" size={14} color="#606060" className="hover:text-[#0063EF]" />
+              )}
+            </button>
+          </div>
+        );
+      },
       size: 202,
     },
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="relative flex justify-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenMenuRow(openMenuRow === row.original.userId ? null : row.original.userId);
-            }}
-            className="p-[6px] rounded-full hover:bg-sd-grey-1 transition-colors cursor-pointer"
-          >
-            <More variant="Linear" size={24} color="#606060" />
-          </button>
-          {openMenuRow === row.original.userId && (
+      cell: ({ row }) => {
+        const isSelf =
+          currentUser?.id === row.original.userId ||
+          currentUser?.email?.toLowerCase() === row.original.email.toLowerCase();
+        const isSuperAdmin =
+          row.original.role === "SUPER_ADMIN" ||
+          row.original.roleLabel === "Super Admin";
+
+        return (
+          <div className="relative flex justify-center">
             <TeamActionMenu
-              onClose={() => setOpenMenuRow(null)}
-              onAction={(action) => handleAction(row.original, action)}
-              invitationStatus={row.original.invitationStatus}
+              member={row.original}
+              isSelf={isSelf}
+              isSuperAdmin={isSuperAdmin}
+              onViewDetails={(m) => {
+                setSelectedMember(m);
+                setIsDrawerOpen(true);
+              }}
+              onCopyId={(id) => {
+                navigator.clipboard.writeText(id);
+                toast.success("User ID copied to clipboard");
+              }}
+              onCopyEmail={(email) => {
+                navigator.clipboard.writeText(email);
+                toast.success("Email copied to clipboard");
+              }}
+              onReactivate={(m) => handleReactivate(m)}
+              onRevoke={(m) => handleRevoke(m)}
+              onResend={(m) => handleResend(m)}
             />
-          )}
-        </div>
-      ),
+          </div>
+        );
+      },
       size: 41,
     },
   ];
@@ -273,6 +323,17 @@ export const TeamsView = () => {
         isOpen={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
         member={selectedMember}
+        isSelf={
+          currentUser?.id === selectedMember?.userId ||
+          currentUser?.email?.toLowerCase() === selectedMember?.email.toLowerCase()
+        }
+        isSuperAdmin={
+          selectedMember?.role === "SUPER_ADMIN" ||
+          selectedMember?.roleLabel === "Super Admin"
+        }
+        onReactivate={(member) => handleReactivate(member)}
+        onRevoke={(member) => handleRevoke(member)}
+        onResend={(member) => handleResend(member)}
       />
       <div className="flex flex-col gap-[24px]">
         <div className="flex items-start justify-between">
@@ -346,107 +407,48 @@ export const TeamsView = () => {
         )}
       </div>
 
-      {/* Reason Input Modal */}
-      <Modal
-        isOpen={showReasonModal}
+      {/* Reactivate Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmAction === "reactivate"}
         onOpenChange={(open) => {
-          if (!open) {
-            setShowReasonModal(false);
-            setConfirmAction(null);
-          }
+          if (!open) setConfirmAction(null);
         }}
-        title={confirmAction === "suspend" ? "Suspend account?" : "Deactivate account?"}
-        className="sm:max-w-[500px]"
-      >
-        <div className="flex flex-col gap-[16px]">
-          <p className="text-[14px] text-[#606060] leading-[20px]">
-            {confirmAction === "suspend"
-              ? `Are you sure you want to suspend ${actionMember?.name || "this user"}?`
-              : `Are you sure you want to deactivate ${actionMember?.name || "this user"}? This action is permanent.`}
-          </p>
-          <div className="flex flex-col gap-[8px]">
-            <label className="text-[14px] font-medium text-[#202020]">Reason</label>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder={confirmAction === "suspend" ? "Enter reason for suspension..." : "Enter reason for deactivation..."}
-              className="w-full h-[80px] border border-[#E8E8E8] rounded-[8px] p-[12px] text-[14px] text-[#202020] resize-none focus:outline-none focus:border-[#0063EF]"
-            />
-          </div>
-          <div className="flex gap-[12px]">
-            <Button
-              variant="outline"
-              className="flex-1 h-[44px] text-[14px]"
-              onClick={() => {
-                setShowReasonModal(false);
-                setConfirmAction(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={confirmAction === "suspend" ? "destructive" : "destructive"}
-              className="flex-1 h-[44px] text-[14px]"
-              onClick={handleReasonConfirm}
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        title="Reactivate staff member?"
+        description={`Are you sure you want to restore access for ${actionMember?.name || "this staff member"}? They will keep their original role and can sign in immediately.`}
+        confirmLabel="Reactivate"
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isReactivating}
+        onConfirm={handleConfirm}
+        icon={<TickCircle variant="Bold" size={48} color="#008500" />}
+      />
 
-      {/* Confirmation Modals */}
-      <ConfirmModal
-        isOpen={confirmAction === "suspend" && !showReasonModal}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Suspend account?"
-        description={`Are you sure you want to suspend ${actionMember?.name || "this user"}? They will lose access to the platform.`}
-        confirmLabel="Yes, suspend"
-        variant="danger"
-        onConfirm={handleConfirm}
-      />
-      <ConfirmModal
-        isOpen={confirmAction === "delete" && !showReasonModal}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Deactivate account?"
-        description={`This action is permanent and cannot be undone. ${actionMember?.name || "This user"} will lose all access.`}
-        confirmLabel="Yes, deactivate"
-        variant="danger"
-        onConfirm={handleConfirm}
-      />
-      <ConfirmModal
-        isOpen={confirmAction === "change-role"}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Change role?"
-        description={`Are you sure you want to change the role for ${actionMember?.name || "this user"}?`}
-        confirmLabel="Yes, change"
-        variant="primary"
-        onConfirm={handleConfirm}
-      />
-      <ConfirmModal
-        isOpen={confirmAction === "reinstate"}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Reinstate account?"
-        description={`Are you sure you want to reinstate ${actionMember?.name || "this user"}? They will regain access to the platform.`}
-        confirmLabel="Yes, reinstate"
-        variant="primary"
-        onConfirm={handleConfirm}
-      />
+      {/* Revoke Confirmation Modal */}
       <ConfirmModal
         isOpen={confirmAction === "revoke"}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Revoke access?"
-        description={`Are you sure you want to revoke access for ${actionMember?.name || "this user"}? They will no longer be able to sign in.`}
-        confirmLabel="Yes, revoke"
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={actionMember?.invitationStatus === "PENDING" ? "Revoke invitation?" : "Revoke staff access?"}
+        description={
+          actionMember?.invitationStatus === "PENDING"
+            ? `Are you sure you want to revoke the invitation for ${actionMember?.name || "this person"}? The emailed invitation link will stop working immediately.`
+            : `Are you sure you want to revoke access for ${actionMember?.name || "this staff member"}? Their account will be deactivated and they can no longer sign in. Their account records and course authorship references will be kept intact.`
+        }
+        confirmLabel={actionMember?.invitationStatus === "PENDING" ? "Revoke invitation" : "Revoke access"}
+        cancelLabel="Cancel"
         variant="danger"
+        isLoading={isRevoking}
         onConfirm={handleConfirm}
       />
 
-      {/* Success Modals */}
+      {/* Success Modal */}
       {currentSuccess && (
         <Modal
           isOpen={!!successAction}
-          onOpenChange={(open) => { if (!open) setSuccessAction(null); }}
+          onOpenChange={(open) => {
+            if (!open) setSuccessAction(null);
+          }}
         >
           <div className="flex flex-col items-center gap-[16px] text-center">
             <div className="size-[80px] rounded-full bg-[#EBF7EE] flex items-center justify-center">
