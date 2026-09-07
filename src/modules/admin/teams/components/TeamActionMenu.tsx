@@ -1,89 +1,172 @@
 "use client";
 
 import React from "react";
-import { Briefcase, Copy, UserMinus, Trash, ArrowRight2, Refresh, UserTick } from "iconsax-react";
+import { Eye, Copy, UserMinus, Refresh, DirectInbox } from "iconsax-react";
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export type ActionType = "change-role" | "copy-id" | "suspend" | "delete" | "reinstate" | "revoke";
+export type ActionType =
+  | "view"
+  | "copy-id"
+  | "copy-email"
+  | "reactivate"
+  | "revoke"
+  | "resend";
 
-interface ActionItem {
-  icon: React.ReactNode;
-  label: string;
-  action: ActionType;
-  hasArrow: boolean;
-  color: string;
-  hoverBg: string;
+export interface TeamRow {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  initials: string;
+  email: string;
+  role: string;
+  roleLabel: string;
+  date: string;
+  invitationStatus: string;
+  userId: string;
 }
-
-const baseItems: ActionItem[] = [
-  { icon: <Briefcase variant="Linear" size={16} color="#606060" />, label: "Change role", action: "change-role", hasArrow: true, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
-  { icon: <Copy variant="Linear" size={16} color="#606060" />, label: "Copy user ID", action: "copy-id", hasArrow: false, color: "#606060", hoverBg: "hover:bg-sd-grey-1" },
-  { icon: <UserMinus variant="Linear" size={16} color="#F2994A" />, label: "Suspend account", action: "suspend", hasArrow: false, color: "#F2994A", hoverBg: "hover:bg-[#FFF5ED]" },
-  { icon: <Trash variant="Linear" size={16} color="#D54800" />, label: "Delete account", action: "delete", hasArrow: false, color: "#D54800", hoverBg: "hover:bg-[#FFF0ED]" },
-];
-
-const reinstateItem: ActionItem = {
-  icon: <Refresh variant="Linear" size={16} color="#008500" />,
-  label: "Reinstate account",
-  action: "reinstate",
-  hasArrow: false,
-  color: "#008500",
-  hoverBg: "hover:bg-[#EBF7EE]",
-};
-
-const revokeItem: ActionItem = {
-  icon: <UserTick variant="Linear" size={16} color="#D54800" />,
-  label: "Revoke access",
-  action: "revoke",
-  hasArrow: false,
-  color: "#D54800",
-  hoverBg: "hover:bg-[#FFF0ED]",
-};
 
 interface TeamActionMenuProps {
-  onClose: () => void;
-  onAction: (action: ActionType) => void;
-  invitationStatus?: string;
+  member: TeamRow;
+  isSelf?: boolean;
+  isSuperAdmin?: boolean;
+  onViewDetails: (member: TeamRow) => void;
+  onCopyId: (id: string) => void;
+  onCopyEmail: (email: string) => void;
+  onReactivate: (member: TeamRow) => void;
+  onRevoke: (member: TeamRow) => void;
+  onResend?: (member: TeamRow) => void;
 }
 
-export const TeamActionMenu = ({ onClose, onAction, invitationStatus }: TeamActionMenuProps) => {
-  const items = React.useMemo(() => {
-    if (invitationStatus === "PENDING") {
-      return baseItems.filter((item) => item.action !== "suspend");
-    }
-    if (invitationStatus === "REVOKED") {
-      return [reinstateItem];
-    }
-    if (invitationStatus === "ACTIVE") {
-      return [...baseItems, revokeItem];
-    }
-    return baseItems;
-  }, [invitationStatus]);
+export const TeamActionMenu: React.FC<TeamActionMenuProps> = ({
+  member,
+  isSelf = false,
+  isSuperAdmin = false,
+  onViewDetails,
+  onCopyId,
+  onCopyEmail,
+  onReactivate,
+  onRevoke,
+  onResend,
+}) => {
+  const isRevoked = member.invitationStatus === "REVOKED";
+  const isPending = member.invitationStatus === "PENDING";
+  const isActive = member.invitationStatus === "ACTIVE";
 
   return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute top-[40px] right-0 z-50 bg-[#FDFDFD] border-[0.7px] border-[#F0F0F0] rounded-[10px] p-[8px] shadow-[0px_6px_12px_0px_rgba(0,0,0,0.1)] w-[227px]">
-        <div className="flex flex-col">
-          {items.map((item) => (
-            <button
-              key={item.label}
-              className={`flex items-center justify-between h-[32px] px-[8px] py-[8px] rounded-[8px] transition-colors cursor-pointer w-full ${item.hoverBg}`}
-              onClick={() => {
-                onAction(item.action);
-                onClose();
-              }}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="size-[32px] rounded-[6px] border border-sd-grey-4 bg-white flex items-center justify-center text-[#606060] hover:text-[#202020] hover:bg-sd-grey-2 transition-colors cursor-pointer"
+          aria-label="Staff actions"
+        >
+          <MoreVertical size={18} className="text-[#606060] shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-[200px] p-[6px] bg-white rounded-[10px] border border-sd-grey-4 shadow-lg z-50"
+      >
+        <DropdownMenuItem
+          onClick={() => onViewDetails(member)}
+          className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-sd-grey-12 hover:bg-sd-grey-2 rounded-[6px] cursor-pointer"
+        >
+          <Eye size={16} variant="Linear" color="#606060" />
+          <span>View details</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => onCopyId(member.userId)}
+          className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-sd-grey-12 hover:bg-sd-grey-2 rounded-[6px] cursor-pointer"
+        >
+          <Copy size={16} variant="Linear" color="#606060" />
+          <span>Copy user ID</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => onCopyEmail(member.email)}
+          className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-sd-grey-12 hover:bg-sd-grey-2 rounded-[6px] cursor-pointer"
+        >
+          <Copy size={16} variant="Linear" color="#606060" />
+          <span>Copy email</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="my-[4px] bg-sd-grey-3" />
+
+        {/* Status-specific action items */}
+        {isRevoked && (
+          <>
+            <DropdownMenuItem
+              onClick={() => onReactivate(member)}
+              className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#008500] hover:bg-[#EBF7EE] rounded-[6px] cursor-pointer font-medium"
             >
-              <div className="flex items-center gap-[8px]">
-                {item.icon}
-                <span className="text-[12px] font-normal leading-[16px]" style={{ color: item.color }}>
-                  {item.label}
-                </span>
+              <Refresh size={16} variant="Linear" color="#008500" />
+              <span>Reactivate access</span>
+            </DropdownMenuItem>
+            {onResend && (
+              <DropdownMenuItem
+                onClick={() => onResend(member)}
+                className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#0063EF] hover:bg-[#EBF3FF] rounded-[6px] cursor-pointer"
+              >
+                <DirectInbox size={16} variant="Linear" color="#0063EF" />
+                <span>Re-invite staff</span>
+              </DropdownMenuItem>
+            )}
+          </>
+        )}
+
+        {isPending && (
+          <>
+            {onResend && (
+              <DropdownMenuItem
+                onClick={() => onResend(member)}
+                className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#0063EF] hover:bg-[#EBF3FF] rounded-[6px] cursor-pointer"
+              >
+                <Refresh size={16} variant="Linear" color="#0063EF" />
+                <span>Resend invitation</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onClick={() => onRevoke(member)}
+              className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#D54800] hover:bg-[#FFF0ED] rounded-[6px] cursor-pointer"
+            >
+              <UserMinus size={16} variant="Linear" color="#D54800" />
+              <span>Revoke invitation</span>
+            </DropdownMenuItem>
+          </>
+        )}
+
+        {isActive && (
+          <>
+            {isSelf ? (
+              <div className="px-[10px] py-[6px] text-[12px] text-sd-grey-7 italic">
+                Your account (Protected)
               </div>
-              {item.hasArrow && <ArrowRight2 variant="Linear" size={16} color="#606060" />}
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
+            ) : isSuperAdmin ? (
+              <div className="px-[10px] py-[6px] text-[12px] text-sd-grey-7 italic">
+                Super Admin (Protected)
+              </div>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => onRevoke(member)}
+                className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#D54800] hover:bg-[#FFF0ED] rounded-[6px] cursor-pointer"
+              >
+                <UserMinus size={16} variant="Linear" color="#D54800" />
+                <span>Revoke access</span>
+              </DropdownMenuItem>
+            )}
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

@@ -28,6 +28,7 @@ export enum AdminRoute {
   MIE_REJECTION_REASONS = "/admin/mie-recommendation/rejection-reasons",
   SYSTEM_HEALTH = "/admin/system-health",
   APE_PIPELINE = "/admin/ape-pipeline",
+  USERS = "/admin/users",
   TEAMS = "/admin/teams",
   COURSES = "/admin/courses",
   PRODUCTION = "/admin/production",

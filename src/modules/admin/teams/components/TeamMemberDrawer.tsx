@@ -20,22 +20,23 @@ import {
   ShieldSecurity,
   UserMinus,
   Setting2,
+  Refresh,
 } from "iconsax-react";
 import { FormSelect } from "@/components/form/FormSelect";
+import { toast } from "sonner";
+import type { TeamRow } from "./TeamActionMenu";
+
+export type DrawerMember = TeamRow;
 
 interface TeamMemberDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  member: {
-    id: string;
-    name: string;
-    initials: string;
-    email: string;
-    role: string;
-    date: string;
-    invitationStatus: string;
-    userId: string;
-  } | null;
+  member: DrawerMember | null;
+  isSelf?: boolean;
+  isSuperAdmin?: boolean;
+  onReactivate?: (member: DrawerMember) => void;
+  onRevoke?: (member: DrawerMember) => void;
+  onResend?: (member: DrawerMember) => void;
 }
 
 type Tab = "overview" | "activities" | "analytics" | "ip-log" | "settings";
@@ -56,9 +57,28 @@ const InfoRow = ({ icon, children }: { icon: React.ReactNode; children: React.Re
   </div>
 );
 
-const CopyButton = () => (
-  <Copy variant="Linear" size={14} color="#606060" className="cursor-pointer shrink-0 hover:text-[#0063EF]" />
-);
+const CopyButton = ({ text, label }: { text: string; label?: string }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="p-[2px] rounded hover:bg-[#F5F5F5] transition-colors cursor-pointer"
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        toast.success(`${label || "Text"} copied to clipboard`);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      title={`Copy ${label || "text"}`}
+    >
+      {copied ? (
+        <TickCircle variant="Bold" size={14} color="#008500" />
+      ) : (
+        <Copy variant="Linear" size={14} color="#606060" className="hover:text-[#0063EF]" />
+      )}
+    </button>
+  );
+};
 
 const ActivityItem = ({ icon, title, desc, time }: { icon: React.ReactNode; title: string; desc: string; time: string }) => (
   <div className="flex items-center gap-[12px]">
@@ -98,7 +118,16 @@ const roleOptions = [
   { label: "Contributor", value: "Contributor" },
 ];
 
-export const TeamMemberDrawer = ({ isOpen, onOpenChange, member }: TeamMemberDrawerProps) => {
+export const TeamMemberDrawer = ({
+  isOpen,
+  onOpenChange,
+  member,
+  isSelf = false,
+  isSuperAdmin = false,
+  onReactivate,
+  onRevoke,
+  onResend,
+}: TeamMemberDrawerProps) => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [confirmAction, setConfirmAction] = useState<ModalAction>(null);
   const [successAction, setSuccessAction] = useState<ModalAction>(null);
@@ -122,21 +151,80 @@ export const TeamMemberDrawer = ({ isOpen, onOpenChange, member }: TeamMemberDra
         onOpenChange={onOpenChange}
         title="Team member information"
         footer={
-          <div className="flex gap-[16px] w-full">
-            <button
-              onClick={() => setConfirmAction("reset-password")}
-              className="flex-1 h-[48px] bg-[#0063EF] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
-            >
-              <ShieldSecurity variant="Linear" size={20} color="#FDFDFD" />
-              <span className="text-[16px] font-medium text-[#FDFDFD] leading-[24px]">Reset Password</span>
-            </button>
-            <button
-              onClick={() => setConfirmAction("delete-account")}
-              className="flex-1 h-[48px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
-            >
-              <UserMinus variant="Linear" size={20} color="#D54800" />
-              <span className="text-[16px] font-medium text-[#D54800] leading-[24px]">Delete Account</span>
-            </button>
+          <div className="flex gap-[12px] w-full">
+            {member.invitationStatus === "REVOKED" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onReactivate?.(member);
+                  }}
+                  className="flex-1 h-[44px] bg-[#0063EF] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
+                >
+                  <Refresh variant="Linear" size={18} color="#FDFDFD" />
+                  <span className="text-[14px] font-medium text-[#FDFDFD]">Reactivate Access</span>
+                </button>
+                {onResend && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onResend?.(member);
+                    }}
+                    className="h-[44px] px-[16px] border border-sd-grey-4 flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-sd-grey-2 transition-colors cursor-pointer"
+                  >
+                    <DirectInbox variant="Linear" size={18} color="#606060" />
+                    <span className="text-[14px] font-medium text-[#606060]">Re-invite</span>
+                  </button>
+                )}
+              </>
+            ) : member.invitationStatus === "PENDING" ? (
+              <>
+                {onResend && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onResend?.(member);
+                    }}
+                    className="flex-1 h-[44px] bg-[#0063EF] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
+                  >
+                    <Refresh variant="Linear" size={18} color="#FDFDFD" />
+                    <span className="text-[14px] font-medium text-[#FDFDFD]">Resend Invitation</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onRevoke?.(member);
+                  }}
+                  className="h-[44px] px-[16px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
+                >
+                  <UserMinus variant="Linear" size={18} color="#D54800" />
+                  <span className="text-[14px] font-medium text-[#D54800]">Revoke</span>
+                </button>
+              </>
+            ) : isSelf || isSuperAdmin ? (
+              <div className="w-full py-[10px] px-[14px] bg-[#F5F5F5] rounded-[8px] text-center text-[13px] text-[#606060]">
+                {isSelf
+                  ? "You cannot revoke your own account."
+                  : "The Super Admin seat is protected and cannot be revoked."}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  onRevoke?.(member);
+                }}
+                className="flex-1 h-[44px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
+              >
+                <UserMinus variant="Linear" size={18} color="#D54800" />
+                <span className="text-[14px] font-medium text-[#D54800]">Revoke Access</span>
+              </button>
+            )}
           </div>
         }
       >
@@ -149,9 +237,19 @@ export const TeamMemberDrawer = ({ isOpen, onOpenChange, member }: TeamMemberDra
             <div className="flex flex-col gap-[4px]">
               <div className="flex items-center gap-[8px]">
                 <span className="text-[20px] font-semibold text-[#202020] leading-[28px]">{member.name}</span>
-                <span className="inline-flex items-center px-[8px] py-[2px] rounded-[6px] bg-[#F1F8F2] text-[#3C7E44] text-[12px] font-normal leading-[16px]">
-                  Active
-                </span>
+                {member.invitationStatus === "ACTIVE" ? (
+                  <span className="inline-flex items-center px-[8px] py-[2px] rounded-[6px] bg-[#F1F8F2] text-[#3C7E44] text-[12px] font-normal leading-[16px]">
+                    Active
+                  </span>
+                ) : member.invitationStatus === "PENDING" ? (
+                  <span className="inline-flex items-center px-[8px] py-[2px] rounded-[6px] bg-[#FFF5ED] text-[#B54708] text-[12px] font-normal leading-[16px]">
+                    Pending
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-[8px] py-[2px] rounded-[6px] bg-[#FEF3F2] text-[#B42318] text-[12px] font-normal leading-[16px]">
+                    Revoked
+                  </span>
+                )}
               </div>
               <span className="text-[14px] text-[#606060] leading-[20px]">{member.email}</span>
             </div>
@@ -164,22 +262,22 @@ export const TeamMemberDrawer = ({ isOpen, onOpenChange, member }: TeamMemberDra
         {activeTab === "overview" && (
           <div className="flex flex-col gap-[20px] pt-[24px]">
             <InfoRow icon={<Briefcase variant="Linear" size={20} color="#606060" />}>
-              <span className="text-[14px] text-[#202020] leading-[20px]">{member.role}</span>
+              <span className="text-[14px] text-[#202020] leading-[20px]">{member.roleLabel || member.role}</span>
             </InfoRow>
             <InfoRow icon={<Global variant="Linear" size={20} color="#606060" />}>
               <span className="text-[14px] text-[#202020] leading-[20px]">Nigerian</span>
             </InfoRow>
             <InfoRow icon={<Mobile variant="Linear" size={20} color="#606060" />}>
               <span className="text-[14px] text-[#202020] leading-[20px]">+234 901234567</span>
-              <CopyButton />
+              <CopyButton text="+234 901234567" label="Phone number" />
             </InfoRow>
             <InfoRow icon={<DirectInbox variant="Linear" size={20} color="#606060" />}>
               <span className="text-[14px] text-[#202020] leading-[20px]">{member.email}</span>
-              <CopyButton />
+              <CopyButton text={member.email} label="Email" />
             </InfoRow>
             <InfoRow icon={<UserOctagon variant="Linear" size={20} color="#606060" />}>
-              <span className="text-[14px] text-[#202020] leading-[20px]">{member.userId}</span>
-              <CopyButton />
+              <span className="text-[14px] text-[#202020] leading-[20px] font-mono">{member.userId}</span>
+              <CopyButton text={member.userId} label="User ID" />
             </InfoRow>
             <InfoRow icon={<Calendar2 variant="Linear" size={20} color="#606060" />}>
               <span className="text-[14px] text-[#202020] leading-[20px]">{member.date}</span>

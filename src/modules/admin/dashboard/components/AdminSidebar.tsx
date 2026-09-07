@@ -26,11 +26,13 @@ import {
   CloseCircle,
   SecurityUser,
   Wallet,
+  People,
 } from "iconsax-react";
 
 const adminLinks = [
   { name: "Overview", href: AdminRoute.OVERVIEW, icon: Home2 },
   { name: "Analytics", href: AdminRoute.ANALYTICS, icon: Graph },
+  { name: "Users", href: AdminRoute.USERS, icon: People },
   { name: "MIE Recommendation", href: AdminRoute.MIE_RECOMMENDATION, icon: TickCircle },
   { name: "System Health", href: AdminRoute.SYSTEM_HEALTH, icon: Global },
   { name: "APE Pipeline", href: AdminRoute.APE_PIPELINE, icon: Box },

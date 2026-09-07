@@ -11,9 +11,12 @@ export interface AdminOverviewResponse {
     DRAFT: number;
     SUBMITTED: number;
     IN_REVIEW: number;
+    NEEDS_REVISION?: number;
+    QA_VERIFICATION?: number;
     APPROVED: number;
-    REJECTED: number;
     PUBLISHED: number;
+    ARCHIVED?: number;
+    REJECTED: number;
   };
   kyc: {
     PENDING: number;
@@ -30,6 +33,141 @@ export interface AdminOverviewResponse {
     total_credited: string;
     awaiting_payout: string;
   };
+  period?: string;
+  today?: {
+    courses_created_today: number;
+    courses_created_change_percent: number | null;
+    published_last_24h: number;
+    published_total: number;
+    daily_cost: string | number | null;
+    daily_cost_change_percent: number | null;
+    avg_cost_per_course: string | number | null;
+  };
+  production_trend?: Array<{
+    date: string;
+    count: number;
+  }>;
+  cost_trend?: Array<{
+    date: string;
+    amount: string;
+  }>;
+}
+
+export interface AdminAnalyticsParams {
+  period?: string;
+}
+
+export interface AdminAnalyticsResponse {
+  period: string;
+  since: string;
+  catalog: {
+    total_catalog: number;
+    published: number;
+    created_in_period: number;
+  };
+  enrollment: {
+    total_enrollment: number;
+    enrolled_in_period: number;
+    completed: number;
+    avg_completion_rate: number | null;
+  };
+  cost: {
+    overall_cost: string | number | null;
+    cost_in_period: string | number | null;
+    cost_per_course: string | number | null;
+    daily: Array<{
+      date?: string;
+      day?: string;
+      cost?: string | number;
+      amount?: string | number;
+      [key: string]: any;
+    }>;
+    by_category: Array<{
+      category?: string;
+      name?: string;
+      cost?: string | number;
+      amount?: string | number;
+      [key: string]: any;
+    }>;
+  };
+  earnings: {
+    total_earnings: string;
+  };
+  distribution: Array<{
+    channel: string;
+    label: string;
+    count: number;
+  }>;
+  production_vs_approval: {
+    produced: number;
+    approved: number;
+    rejected: number;
+  };
+  kpis: {
+    daily_output: number | null;
+    first_pass_approval_percent: number | null;
+    avg_pipeline_time_minutes: number | null;
+    cost_per_course: string | number | null;
+    review_turnaround_hours: number | null;
+    system_uptime_percent: number | null;
+    targets: {
+      daily_output: string;
+      first_pass_approval_percent: string;
+      avg_pipeline_time_minutes: string;
+      cost_per_course: string;
+      review_turnaround_hours: string;
+      system_uptime_percent: string;
+    };
+  };
+}
+
+export interface SystemServiceItem {
+  id: string;
+  name: string;
+  priority: "HIGH" | "MEDIUM" | "NORMAL" | "LOW" | string;
+  status: "OPERATIONAL" | "DEGRADED" | "DOWN" | null;
+  uptime_percent: number | null;
+  avg_latency_ms: number | null;
+  sample_count: number;
+  last_recovery_seconds: number | null;
+}
+
+export interface AdminSystemHealthResponse {
+  window_days: number;
+  overall_uptime_percent: number | null;
+  avg_api_latency_ms: number | null;
+  avg_recovery_seconds: number | null;
+  degraded_count: number;
+  down_count: number;
+  services: SystemServiceItem[];
+}
+
+export interface PipelineStageItem {
+  stage: string;
+  label: string;
+  total: number;
+  active: number;
+  completed: number;
+  failed: number;
+}
+
+export interface PipelineProviderItem {
+  id: string;
+  name: string;
+  kind: string;
+  load_percent: number | null;
+  queue_depth: number | null;
+  readings_updated_at: string | null;
+}
+
+export interface AdminPipelineResponse {
+  active_jobs: number;
+  queue_depth: number;
+  completed_today: number;
+  failed_or_retrying: number;
+  avg_pipeline_seconds: number | null;
+  stages: PipelineStageItem[];
+  providers: PipelineProviderItem[];
 }
 
 export interface ActivityLogItemApi {
@@ -696,7 +834,37 @@ export const adminApi = BaseAPI.injectEndpoints({
         url: "/admin/overview/",
         method: "GET",
       }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminOverviewResponse,
       providesTags: ["AdminOverview"] as any,
+    }),
+    getAdminAnalytics: builder.query<AdminAnalyticsResponse, AdminAnalyticsParams | void>({
+      query: (params) => ({
+        url: "/admin/analytics/",
+        method: "GET",
+        params: params?.period ? { period: params.period } : undefined,
+      }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminAnalyticsResponse,
+      providesTags: ["AdminAnalytics"] as any,
+    }),
+    getAdminSystemHealth: builder.query<AdminSystemHealthResponse, void>({
+      query: () => ({
+        url: "/admin/system-health/",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminSystemHealthResponse,
+      providesTags: ["AdminSystemHealth"] as any,
+    }),
+    getAdminPipeline: builder.query<AdminPipelineResponse, void>({
+      query: () => ({
+        url: "/admin/pipeline/",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data !== undefined ? response.data : response) as AdminPipelineResponse,
+      providesTags: ["AdminPipeline"] as any,
     }),
     getActivityLog: builder.query<ActivityLogResponse, ActivityLogParams | void>({
       query: (params) => ({
@@ -1050,6 +1218,9 @@ export const {
   useGetCourseReviewPricesQuery,
   useSaveCoursePricesMutation,
   useGetAdminOverviewQuery,
+  useGetAdminAnalyticsQuery,
+  useGetAdminSystemHealthQuery,
+  useGetAdminPipelineQuery,
   useGetActivityLogQuery,
   useGetKycReviewListQuery,
   useGetKycReviewDetailQuery,
@@ -1066,3 +1237,13 @@ export const {
   useApproveReservationRequestMutation,
   useRejectReservationRequestMutation,
 } = adminApi;
+
+export {
+  useGetUsersQuery,
+  useGetUserQuery,
+  useSuspendUserMutation,
+  useDeactivateUserMutation,
+  useReinstateUserMutation,
+} from "@/modules/admin/teams/api/usersApi";
+export type { AdminUser, UsersListParams } from "@/modules/admin/teams/types";
+
