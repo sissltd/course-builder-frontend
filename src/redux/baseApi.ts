@@ -249,6 +249,7 @@ export const BaseAPI = createApi({
     "NotificationPreferences",
     "Quiz",
     "QuizQuestion",
+    "KycSubmission",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

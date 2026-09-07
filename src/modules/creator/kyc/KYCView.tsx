@@ -13,7 +13,12 @@ import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
 import { FormSelect } from "@/components/form/FormSelect";
 import { Country } from "country-state-city";
+import { toast } from "sonner";
 import { kycSchema, KYCFormData } from "./utils/validation";
+import {
+  useSubmitKycMutation,
+  DOCUMENT_TYPE_MAP,
+} from "./api/kycApi";
 
 type Step = "personal" | "id-selection" | "id-input" | "success";
 
@@ -53,6 +58,8 @@ export default function KYCView() {
     },
   });
 
+  const [submitKyc, { isLoading: isSubmitting }] = useSubmitKycMutation();
+
   const {
     handleSubmit,
     trigger,
@@ -75,9 +82,24 @@ export default function KYCView() {
     }
   };
 
-  const onSubmit = (data: KYCFormData) => {
-    console.log("KYC Submitted Data:", data);
-    setStep("success");
+  const onSubmit = async (data: KYCFormData) => {
+    try {
+      await submitKyc({
+        first_name: data.firstName,
+        last_name: data.lastName,
+        address: data.address,
+        country_of_issue: data.countryOfIssue,
+        document_type: DOCUMENT_TYPE_MAP[data.selectedId],
+        id_number: data.idNumber,
+        date_of_birth: data.dateOfBirth,
+      }).unwrap();
+      setStep("success");
+    } catch (err) {
+      const error = err as { data?: { errors?: { message?: string }[] } };
+      const message =
+        error?.data?.errors?.[0]?.message ?? "Failed to submit KYC. Please try again.";
+      toast.error(message);
+    }
   };
 
   const handleClose = () => {
@@ -238,8 +260,9 @@ export default function KYCView() {
                   type="submit" 
                   variant="app-primary" 
                   className="w-full h-[44px]"
+                  disabled={isSubmitting}
                 >
-                  Continue
+                  {isSubmitting ? "Submitting..." : "Continue"}
                 </Button>
               </div>
             </div>

@@ -25,6 +25,7 @@ import {
   Logout,
 } from "iconsax-react";
 import { DoubleArrowIcon } from "./icons/DoubleArrowIcon";
+import { useGetMyKycQuery } from "@/modules/creator/kyc/api/kycApi";
 
 const sidebarLinks = [
   { name: "Dashboard", href: CreatorRoute.DASHBOARD, icon: Home2 },
@@ -52,6 +53,8 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
+  const { data: kycSubmission } = useGetMyKycQuery();
+  const isKycApproved = kycSubmission?.status === "APPROVED";
 
   const displayName =
     user?.first_name || user?.last_name
@@ -161,7 +164,8 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
             </nav>
           </div>
 
-          {/* KYC Card */}
+          {/* KYC Card — hidden when KYC is already approved */}
+          {!isKycApproved && (
           <div className="bg-gradient-to-br from-[#FAF6FC] via-white to-[#F0F6FE] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-full  shrink-0 flex flex-col justify-center items-center mt-[24px]">
             {/* Illustrations */}
             <div className="absolute top-[-50px] left-[-30px] w-[140px] h-[140px] pointer-events-none opacity-80">
@@ -195,6 +199,7 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
               </Link>
             </div>
           </div>
+          )}
         </div>
 
         {/* Fixed Bottom Section (Profile, Settings, Help) */}
