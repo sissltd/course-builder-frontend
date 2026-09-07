@@ -55,6 +55,7 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
   const user = session?.user;
   const { data: kycSubmission } = useGetMyKycQuery();
   const isKycApproved = kycSubmission?.status === "APPROVED";
+  const isKycPending = kycSubmission?.status === "PENDING";
 
   const displayName =
     user?.first_name || user?.last_name
@@ -164,8 +165,23 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
             </nav>
           </div>
 
-          {/* KYC Card — hidden when KYC is already approved */}
-          {!isKycApproved && (
+          {/* KYC Card — hidden when approved, shows pending state when under review */}
+          {isKycPending && (
+          <div className="bg-gradient-to-br from-[#FFF8E1] via-white to-[#FFF3CD] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#FFE082] mx-auto w-full shrink-0 flex flex-col justify-center items-center mt-[24px]">
+            <div className="relative z-10 flex flex-col gap-[15px] w-full">
+              <div className="flex flex-col gap-[8px]">
+                <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px]">KYC Under Review</p>
+                <p className="text-[12px] text-[#606060] leading-[16px]">
+                  Your verification is being reviewed. This may take a few moments.
+                </p>
+              </div>
+              <div className="w-full h-[32px] border border-[#F59E0B] text-[#F59E0B] rounded-[8px] text-[12px] font-medium flex items-center justify-center bg-[#F59E0B]/5">
+                Pending
+              </div>
+            </div>
+          </div>
+          )}
+          {!isKycApproved && !isKycPending && (
           <div className="bg-gradient-to-br from-[#FAF6FC] via-white to-[#F0F6FE] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-full  shrink-0 flex flex-col justify-center items-center mt-[24px]">
             {/* Illustrations */}
             <div className="absolute top-[-50px] left-[-30px] w-[140px] h-[140px] pointer-events-none opacity-80">
