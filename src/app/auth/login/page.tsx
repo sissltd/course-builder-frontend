@@ -12,9 +12,9 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/modules/auth/utils/schemas";
 import { useLoginMutation } from "@/modules/auth/api/sessionApi";
-import { useResendVerificationMutation } from "@/modules/auth/api/accountApi";
-import { TokenPurpose } from "@/modules/auth/types/auth";
-import { normalizeApiError } from "@/lib/api/errors";
+
+
+import { normalizeApiError, getErrorEnvelope } from "@/lib/api/errors";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const [step, setStep] = useState<"email" | "password">("email");
   const [login, { isLoading }] = useLoginMutation();
-  const [resendVerification] = useResendVerificationMutation();
+
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -86,18 +86,18 @@ export default function LoginPage() {
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(error as never);
 
-      if (message && message.toLowerCase().includes("not been verified")) {
+      const envelope = getErrorEnvelope(error as never);
+      const isEmailNotVerified =
+        (message && message.toLowerCase().includes("not been verified")) ||
+        (envelope &&
+          envelope.errors.some(
+            (e) =>
+              e.code === "EMAIL_NOT_VERIFIED" ||
+              e.message.toLowerCase().includes("not been verified"),
+          ));
+      if (isEmailNotVerified) {
         const emailValue = methods.getValues("email");
         if (emailValue) {
-          try {
-            await resendVerification({
-              email: emailValue,
-              purpose: TokenPurpose.SIGNUP_VERIFICATION,
-            }).unwrap();
-            toast.success("A new verification link has been sent to your email.");
-          } catch {
-            toast.info("Please check your email for a verification link.");
-          }
           router.push(`${AuthRoute.VERIFY_EMAIL}?email=${encodeURIComponent(emailValue)}&fromLogin=true`);
           return;
         }

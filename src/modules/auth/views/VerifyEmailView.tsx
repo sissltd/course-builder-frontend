@@ -52,6 +52,23 @@ export default function VerifyEmailView({ email, token, fromLogin }: VerifyEmail
   );
   const [resent, setResent] = useState(false);
 
+  const getVerificationErrorMessage = (message: string | null): string => {
+    if (!message) {
+      return "This link is invalid or has already been used. You can request a new one.";
+    }
+    const lower = message.toLowerCase();
+    if (lower.includes("expired")) {
+      return "This verification link has expired. Please request a new one.";
+    }
+    if (lower.includes("already been used") || lower.includes("already used")) {
+      return "This verification link has already been used. Please request a new one.";
+    }
+    if (lower.includes("invalid")) {
+      return "This verification link is invalid. Please request a new one.";
+    }
+    return message;
+  };
+
   useEffect(() => {
     if (!email || !token) {
       return;
@@ -100,11 +117,10 @@ export default function VerifyEmailView({ email, token, fromLogin }: VerifyEmail
           return;
         }
         const { message } = normalizeApiError(error as never);
+        const errorMessage = getVerificationErrorMessage(message);
         setState({
           status: "failed",
-          message:
-            message ??
-            "This link is invalid or has already been used. You can request a new one.",
+          message: errorMessage,
         });
       }
     })();
@@ -138,8 +154,8 @@ export default function VerifyEmailView({ email, token, fromLogin }: VerifyEmail
             ? "Verifying your email, please wait..."
             : state.status === "signed-in"
               ? "Email verified. Taking you to your dashboard..."
-              : fromLogin
-                ? "A verification link has been sent to your email address."
+              : state.status === "failed" && fromLogin && !token
+                ? "Check your email for a verification link."
                 : "We couldn't verify your email with this link."
         }
       />
