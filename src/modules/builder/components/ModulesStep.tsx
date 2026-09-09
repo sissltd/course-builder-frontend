@@ -43,6 +43,7 @@ export interface Lesson {
 export interface QuizQuestion {
   question: string;
   options: string[];
+  points: number;
   correctAnswer?: string;
 }
 
@@ -160,7 +161,7 @@ export const ModulesStep = ({
         id: `mod-q${i}`,
         question: q.question,
         type: "single" as const,
-        points: 0,
+        points: q.points ?? 0,
         options: opts,
         correctOptionId: correctIdx >= 0 ? opts[correctIdx]?.id : undefined,
         explanation: "",
@@ -173,6 +174,7 @@ export const ModulesStep = ({
       return {
         question: q.question,
         options: q.options.map((o) => o.value),
+        points: q.points ?? 0,
         correctAnswer: correctOpt?.value || "",
       };
     });

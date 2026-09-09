@@ -35,6 +35,7 @@ export interface Lesson {
 export interface QuizQuestion {
   question: string;
   options: string[];
+  points: number;
   correctAnswer?: string;
 }
 
@@ -261,6 +262,7 @@ const courseBuilderSlice = createSlice({
         mod.quizQuestions.push({
           question: "",
           options: ["", "", "", ""],
+          points: 0,
         });
         state.isDirty = true;
       }

@@ -101,6 +101,7 @@ export const quizQuestionSchema = z.object({
   options: z
     .array(z.string().min(1, "Option cannot be empty"))
     .min(2, "At least 2 options required"),
+  points: z.number(),
   correctAnswer: z.string().optional(),
 });
 

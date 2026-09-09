@@ -21,6 +21,7 @@ export const QuizEditorPageView = () => {
     if (rawQuestions.length === questionsRef.current.length &&
         rawQuestions.every((q, i) => q.question === questionsRef.current[i]?.question &&
           q.type === questionsRef.current[i]?.type &&
+          q.points === questionsRef.current[i]?.points &&
           q.options.length === questionsRef.current[i]?.options.length)) {
       return questionsRef.current;
     }

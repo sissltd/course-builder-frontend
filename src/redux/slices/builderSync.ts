@@ -361,7 +361,7 @@ export const syncSaveModuleAssessment = createAsyncThunk<
       return {
         question_text: q.question,
         question_type: QuizQuestionType.MULTIPLE_CHOICE,
-        points: 0,
+        points: q.points ?? 0,
         model_response_guide: "",
         order: idx,
         options: q.options.map((opt, oi) => ({

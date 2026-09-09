@@ -70,6 +70,7 @@ const mapAssessmentToQuizQuestions = (
       return {
         question: q.question,
         options: [],
+        points: q.points ?? 0,
         correctAnswer: "",
       };
     }
@@ -77,6 +78,7 @@ const mapAssessmentToQuizQuestions = (
     return {
       question: q.question,
       options: q.options.map((opt) => opt.text),
+      points: q.points ?? 0,
       correctAnswer: correctText,
     };
   });
@@ -268,15 +270,16 @@ export const reduxQuizQuestionsToApiQuestions = (
 
 export const apiQuizQuestionsToModuleQuiz = (
   questions: QuizQuestionItem[],
-): { question: string; options: string[]; correctAnswer: string }[] => {
+): { question: string; options: string[]; points: number; correctAnswer: string }[] => {
   return questions.map((q) => {
     if (q.question_type === "ESSAY") {
-      return { question: q.question_text, options: [], correctAnswer: "" };
+      return { question: q.question_text, options: [], points: q.points ?? 0, correctAnswer: "" };
     }
     const correct = q.options.find((o) => o.is_correct);
     return {
       question: q.question_text,
       options: q.options.map((o) => o.option_text),
+      points: q.points ?? 0,
       correctAnswer: correct?.option_text || "",
     };
   });
