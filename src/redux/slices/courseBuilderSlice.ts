@@ -37,6 +37,7 @@ export interface QuizQuestion {
   options: string[];
   points: number;
   correctAnswer?: string;
+  explanation?: string;
 }
 
 export interface Module {

@@ -270,10 +270,10 @@ export const reduxQuizQuestionsToApiQuestions = (
 
 export const apiQuizQuestionsToModuleQuiz = (
   questions: QuizQuestionItem[],
-): { question: string; options: string[]; points: number; correctAnswer: string }[] => {
+): { question: string; options: string[]; points: number; correctAnswer: string; explanation: string }[] => {
   return questions.map((q) => {
     if (q.question_type === "ESSAY") {
-      return { question: q.question_text, options: [], points: q.points ?? 0, correctAnswer: "" };
+      return { question: q.question_text, options: [], points: q.points ?? 0, correctAnswer: "", explanation: q.model_response_guide || "" };
     }
     const correct = q.options.find((o) => o.is_correct);
     return {
@@ -281,6 +281,7 @@ export const apiQuizQuestionsToModuleQuiz = (
       options: q.options.map((o) => o.option_text),
       points: q.points ?? 0,
       correctAnswer: correct?.option_text || "",
+      explanation: correct?.explanation || "",
     };
   });
 };

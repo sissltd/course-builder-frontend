@@ -45,6 +45,7 @@ export interface QuizQuestion {
   options: string[];
   points: number;
   correctAnswer?: string;
+  explanation?: string;
 }
 
 export interface Module {
@@ -164,7 +165,7 @@ export const ModulesStep = ({
         points: q.points ?? 0,
         options: opts,
         correctOptionId: correctIdx >= 0 ? opts[correctIdx]?.id : undefined,
-        explanation: "",
+        explanation: q.explanation || "",
       };
     }), [module.quizQuestions]);
 
@@ -176,6 +177,7 @@ export const ModulesStep = ({
         options: q.options.map((o) => o.value),
         points: q.points ?? 0,
         correctAnswer: correctOpt?.value || "",
+        explanation: q.explanation || "",
       };
     });
 

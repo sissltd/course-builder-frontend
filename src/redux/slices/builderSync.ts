@@ -367,7 +367,7 @@ export const syncSaveModuleAssessment = createAsyncThunk<
         options: q.options.map((opt, oi) => ({
           option_text: opt,
           is_correct: oi === correctIdx,
-          explanation: oi === correctIdx ? "" : "",
+          explanation: oi === correctIdx ? (q.explanation || "") : "",
           order: oi,
         })),
       };
