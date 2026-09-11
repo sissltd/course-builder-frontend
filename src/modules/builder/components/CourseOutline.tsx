@@ -99,7 +99,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   const handleAddModule = () => {
     dispatch(addModule());
     if (courseId) {
-      dispatch(syncCreateModule());
+      dispatch(syncCreateModule({}));
     }
     const newId = (modules.length + 1).toString();
     setExpandedModuleId(newId);
@@ -433,7 +433,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                                 <div className="flex items-center gap-[12px]">
                                   <div className="flex items-center gap-[8px]">
                                     <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
-                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.duration}</span>
+                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.type === "text" ? (lesson.estimatedDuration || lesson.duration) : lesson.duration}</span>
                                   </div>
                                   <div className="flex items-center gap-[8px]">
                                     <Book size={16} variant="Linear" color="#606060" className="shrink-0" />

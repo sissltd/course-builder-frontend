@@ -176,7 +176,7 @@ export default function BuilderView() {
   const handleAddModule = () => {
     dispatch(addModule());
     if (courseId) {
-      dispatch(syncCreateModule());
+      dispatch(syncCreateModule({}));
     }
   };
 
@@ -191,17 +191,16 @@ export default function BuilderView() {
     dispatch(updateModule(updated));
   };
 
-  const handleAddLessonForSidebar = (type: "video" | "quiz" | "text") => {
+  const handleAddLessonForSidebar = (type: "video" | "text") => {
     if (modules.length === 0) return;
     const currentModule = modules[activeModuleIndex];
     const newLessonId = Date.now().toString();
     dispatch(addLessonToModule({ moduleId: currentModule.id, type, lessonId: newLessonId }));
-    if (courseId) {
+    // Only create immediately if module already has an API ID (not a temp numeric ID)
+    if (courseId && !/^\d+$/.test(currentModule.id)) {
       dispatch(syncCreateLesson({ moduleId: currentModule.id, type }));
     }
-    if (editingLesson) {
-      dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId: newLessonId }));
-    }
+    dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId: newLessonId }));
   };
 
   const handleRemoveLesson = (moduleId: string, lessonId: string) => {

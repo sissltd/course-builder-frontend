@@ -5,12 +5,10 @@ import { getDashboardRoute } from "@/modules/auth/utils/workspace";
 const PUBLIC_PATHS = [
   "/",
   "/about",
-  "/company",
   "/contact",
   "/cookies",
   "/creators",
   "/privacy",
-  "/product",
   "/terms",
   "/auth/login",
   "/auth/register",

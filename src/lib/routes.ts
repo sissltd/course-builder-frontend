@@ -14,9 +14,7 @@ export enum WebsiteRoute {
   PRIVACY = "/privacy",
   ABOUT = "/about",
   CONTACT = "/contact",
-  COMPANY = "/company",
   CREATORS = "/creators",
-  PRODUCT = "/product",
   COOKIES = "/cookies",
 }
 
