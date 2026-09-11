@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
 import { DashboardSidebar } from "../components/DashboardSidebar";
@@ -14,10 +14,18 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const isKyc = pathname === CreatorRoute.KYC;
   const isBuilder = pathname.startsWith(CreatorRoute.COURSES_BUILDER);
   const isCreateCourse = pathname === CreatorRoute.COURSES_CREATE;
-  const hideSidebarAndHeader = isKyc || isBuilder || isCreateCourse;
+  const isHelpSubPage =
+    pathname === CreatorRoute.HELP &&
+    (searchParams.has("category") ||
+      searchParams.has("article") ||
+      searchParams.get("view") === "appeal" ||
+      searchParams.get("view") === "appeal-success");
+  const hideSidebarAndHeader = isKyc || isBuilder || isCreateCourse || isHelpSubPage;
 
   useEffect(() => {
     setSidebarOpen(false);

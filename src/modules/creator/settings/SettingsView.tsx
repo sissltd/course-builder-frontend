@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { SettingsLayout } from "@/components/shared/SettingsLayout";
 import { SettingsTabNav, SettingsTab } from "./components/SettingsTabNav";
 import { AccountSettingsTab } from "./components/AccountSettingsTab";
 import { PaymentTab } from "./components/PaymentTab";
@@ -20,18 +21,15 @@ export const SettingsView = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
 
   return (
-    <div className="w-full bg-[#FDFDFD] border border-[#F0F0F0] rounded-[20px] flex overflow-hidden min-h-[600px]">
-      {/* Left nav */}
-      <div className="w-full md:w-[300px] shrink-0 border-r border-[#F0F0F0] px-[16px] py-[24px]">
-        <SettingsTabNav active={activeTab} onChange={setActiveTab} />
+    <SettingsLayout
+      heading="Settings"
+      nav={<SettingsTabNav active={activeTab} onChange={setActiveTab} />}
+      navClassName="w-full md:w-[300px] px-[16px] py-[24px]"
+      contentClassName="px-[40px] py-[32px]"
+    >
+      <div className="max-w-[800px] w-full">
+        {TAB_CONTENT[activeTab]}
       </div>
-
-      {/* Right content */}
-      <div className="flex-1 px-[40px] py-[32px] overflow-auto">
-        <div className="max-w-[800px] w-full">
-          {TAB_CONTENT[activeTab]}
-        </div>
-      </div>
-    </div>
+    </SettingsLayout>
   );
 };
