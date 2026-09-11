@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ArrowLeft2, ArrowRight2 } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
-import { AddMediaModal } from "./AddMediaModal";
+import { FormInput } from "@/components/form/FormInput";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
 import { syncSetThumbnail } from "@/redux/slices/builderSync";
+import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 
 interface ThumbnailStepProps {
   onNext?: () => void;
@@ -17,12 +18,23 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
   const dispatch = useAppDispatch();
   const savedThumbnail = useAppSelector((state) => state.courseBuilder.courseInformation.thumbnail);
   const [thumbnail, setThumbnail] = useState<string | null>(savedThumbnail ?? null);
-  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [externalUrl, setExternalUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, isUploading, progress, error: uploadError, reset: resetUpload } = useUploadFile();
 
-  const handleMediaConfirm = (url: string, source: string) => {
-    setThumbnail(url);
-    dispatch(updateCourseInformation({ thumbnail: url }));
-    setShowMediaModal(false);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await upload(file, { folder: "general" });
+      setThumbnail(res.file_url);
+      dispatch(updateCourseInformation({ thumbnail: res.file_url }));
+      dispatch(syncSetThumbnail({ source: "UPLOAD", file: res.file_url }));
+      resetUpload();
+    } catch {
+      // error handled by useUploadFile
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemove = () => {
@@ -31,16 +43,16 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
   };
 
   const handleSave = () => {
-    if (thumbnail) {
-      dispatch(updateCourseInformation({ thumbnail }));
-      const isExternalUrl = thumbnail.startsWith("http");
-      if (isExternalUrl) {
-        dispatch(syncSetThumbnail({ source: "LINK", externalUrl: thumbnail }));
-      } else {
-        dispatch(syncSetThumbnail({ source: "UPLOAD", file: thumbnail }));
-      }
-    }
     onNext?.();
+  };
+
+  const handleExternalUrlSave = () => {
+    if (externalUrl.trim()) {
+      setThumbnail(externalUrl);
+      dispatch(updateCourseInformation({ thumbnail: externalUrl }));
+      dispatch(syncSetThumbnail({ source: "LINK", externalUrl: externalUrl }));
+      setExternalUrl("");
+    }
   };
 
   return (
@@ -55,28 +67,60 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
         </p>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* Upload Area */}
       <div className="bg-[rgba(240,240,240,0.8)] rounded-[16px] p-[16px] w-full">
-        <div
-          onClick={() => setShowMediaModal(true)}
-          className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed rounded-[8px] h-[289px] flex flex-col items-center justify-center p-[24px] w-full cursor-pointer hover:border-[#0A60E1] transition-colors"
-        >
-          {thumbnail ? (
-            <div className="relative w-full h-full flex flex-col items-center justify-center">
-              <img
-                src={thumbnail}
-                alt="Thumbnail preview"
-                className="max-h-[200px] max-w-full rounded-[8px] object-contain"
+        {isUploading ? (
+          <div className="bg-[#FCFDFF] border-2 border-[#0A60E1] border-dashed rounded-[8px] h-[289px] flex flex-col items-center justify-center p-[24px] w-full gap-[16px]">
+            <div className="w-[48px] h-[48px] border-4 border-[#E8E8E8] border-t-[#0A60E1] rounded-full animate-spin" />
+            <p className="text-[16px] font-medium text-[#202020]">Uploading... {progress}%</p>
+            <div className="w-[280px] h-[6px] bg-[#E8E8E8] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0A60E1] rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleRemove(); }}
-                className="mt-[12px] text-[14px] text-[#FF5025] underline hover:text-[#d9441f] transition-colors"
-              >
-                Remove image
-              </button>
             </div>
-          ) : (
+            <p className="text-[14px] text-[#636363]">Please do not close this page</p>
+          </div>
+        ) : thumbnail ? (
+          <div className="bg-[#FCFDFF] border-2 border-[#D9D9D9] rounded-[8px] flex flex-col items-center justify-center p-[24px] w-full gap-[12px]">
+            <img
+              src={thumbnail}
+              alt="Thumbnail preview"
+              className="max-h-[200px] max-w-full rounded-[8px] object-contain"
+            />
+            <div className="flex items-center gap-[12px]">
+              <Button
+                type="button"
+                variant="app-outline"
+                className="h-[36px] px-[16px] text-[13px] text-[#0A60E1] border-[#0A60E1]"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Replace
+              </Button>
+              <Button
+                type="button"
+                variant="app-outline"
+                isGhost
+                className="h-[36px] px-[16px] text-[13px] text-[#FF6B00]"
+                onClick={handleRemove}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed rounded-[8px] h-[289px] flex flex-col items-center justify-center p-[24px] w-full cursor-pointer hover:border-[#0A60E1] transition-colors"
+          >
             <div className="flex flex-col items-center gap-[8px] text-center w-full">
               <p className="text-[20px] font-medium text-[#202020] leading-[28px]">
                 Add Media
@@ -88,26 +132,35 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
                 (Jpeg, png minimum size: 1280 × 720 pixels (16:9 aspect ratio))
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Learn more link */}
-      <button
-        type="button"
-        onClick={() => setShowMediaModal(true)}
-        className="text-[16px] text-[#606060] leading-[24px] font-normal text-left hover:text-[#0A60E1] transition-colors cursor-pointer"
-      >
-        Learn more about updating your cover image
-      </button>
+      {uploadError && (
+        <p className="text-[13px] text-[#FF5025] w-full">{uploadError}</p>
+      )}
 
-      {/* Add Media Modal */}
-      <AddMediaModal
-        isOpen={showMediaModal}
-        onOpenChange={setShowMediaModal}
-        mediaType="image"
-        onConfirm={handleMediaConfirm}
-      />
+      {/* External URL */}
+      <div className="flex gap-[12px] items-end w-full">
+        <div className="flex-1">
+          <FormInput
+            name="externalUrl"
+            label="Or paste an image URL"
+            placeholder="https://example.com/image.jpg"
+            value={externalUrl}
+            onChange={(e) => setExternalUrl(e.target.value)}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="app-primary"
+          className="h-[44px] px-[24px] text-[14px] shrink-0 rounded-[8px]"
+          onClick={handleExternalUrlSave}
+          disabled={!externalUrl.trim()}
+        >
+          Add
+        </Button>
+      </div>
 
       {/* Footer Navigation */}
       <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">

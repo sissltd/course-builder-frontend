@@ -52,12 +52,15 @@ async function getPresignedUrl(
 async function putFile(
   uploadUrl: string,
   file: File,
+  headers: Record<string, string>,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl);
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
+    }
 
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable && onProgress) {
@@ -95,7 +98,8 @@ export async function uploadFile(
   const folder = options.folder ?? "general";
 
   const presigned = await getPresignedUrl(file, folder, token);
-  await putFile(presigned.upload_url, file, options.onProgress);
+  const headers = presigned.upload_headers || { "Content-Type": file.type || "application/octet-stream" };
+  await putFile(presigned.upload_url, file, headers, options.onProgress);
 
   return presigned;
 }

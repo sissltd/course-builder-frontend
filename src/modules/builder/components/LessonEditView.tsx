@@ -29,6 +29,7 @@ import { QuizSummaryDisplay } from "./QuizSummaryDisplay";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setQuestions } from "@/redux/slices/quizBuilderSlice";
 import { setEditingQuiz } from "@/redux/slices/courseBuilderSlice";
+import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 
 interface LessonEditViewProps {
   lesson: Lesson;
@@ -52,6 +53,8 @@ export const LessonEditView = ({
     "image" | "video" | "embed"
   >("image");
   const pendingMediaCallbackRef = useRef<((url: string) => void) | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, isUploading, progress, result, error: uploadError, reset: resetUpload } = useUploadFile();
 
   const openMediaModal = (
     type: "image" | "video" | "embed",
@@ -67,6 +70,23 @@ export const LessonEditView = ({
     pendingMediaCallbackRef.current = null;
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await upload(file, { folder: "general" });
+      onUpdateLesson({
+        ...lesson,
+        videoUrl: res.file_url,
+        mediaFileName: file.name,
+      });
+      resetUpload();
+    } catch {
+      // error handled by useUploadFile
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const methods = useForm<LessonFormData>({
     resolver: zodResolver(lessonSchema),
     mode: "onBlur",
@@ -74,6 +94,7 @@ export const LessonEditView = ({
       id: lesson.id,
       title: lesson.title,
       duration: lesson.duration,
+      estimatedDuration: lesson.estimatedDuration,
       assessments: lesson.assessments,
       type: lesson.type,
       objectives: lesson.objectives,
@@ -126,6 +147,7 @@ export const LessonEditView = ({
       videoScript: data.videoScript || "",
       objectives: data.objectives || [],
       quizQuestions: data.quizQuestions || [],
+      estimatedDuration: data.estimatedDuration,
     });
     onBack();
   };
@@ -311,16 +333,33 @@ export const LessonEditView = ({
                   render={({ field }) => (
                     <input
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleUpdateField("title", e.target.value);
+                      }}
                       placeholder="Add lesson title..."
                       className="w-full text-[28px] font-semibold text-[#202020] border-none outline-none focus:ring-0 placeholder-[#B6B6B6] bg-transparent p-0 leading-tight"
                     />
                   )}
                 />
                 <div className="flex items-center gap-[12px] mt-[4px]">
-                  <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
-                    <Timer1 size={16} variant="Linear" color="#8C8C8C" />
-                    <span>{lesson.duration}</span>
-                  </div>
+                  {lesson.type === "text" ? (
+                    <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
+                      <Timer1 size={16} variant="Linear" color="#8C8C8C" />
+                      <input
+                        type="text"
+                        value={lesson.estimatedDuration || lesson.duration || "0 mins"}
+                        onChange={(e) => handleUpdateField("estimatedDuration", e.target.value)}
+                        placeholder="Estimated duration"
+                        className="text-[12px] text-[#8C8C8C] bg-transparent border-none outline-none focus:ring-0 w-[120px] placeholder-[#B6B6B6]"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
+                      <Timer1 size={16} variant="Linear" color="#8C8C8C" />
+                      <span>{lesson.duration}</span>
+                    </div>
+                  )}
                   <span className="size-[3px] bg-[#B6B6B6] rounded-full" />
                   <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
                     <Book size={16} variant="Linear" color="#8C8C8C" />
@@ -368,29 +407,83 @@ export const LessonEditView = ({
           {/* Media Block Upload Container — only for video lessons */}
           {lesson.type === "video" && (
             <div className="bg-[rgba(240,240,240,0.8)] px-[16px] py-[20px] rounded-[16px] flex flex-col gap-[16px] items-start w-full">
-              <div className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full">
-                <div className="flex flex-col gap-[24px] items-center text-center w-full">
-                  <div className="flex flex-col gap-[8px] items-center text-center w-full">
-                    <p className="text-[20px] font-medium text-[#202020] leading-[28px]">
-                      Add Media
-                    </p>
-                    <p className="text-[14px] text-[#636363] tracking-[-0.28px] leading-[20px]">
-                      Drag your video/Image file or embed from Vimeo, YouTube,
-                      Wistia, Typeform and more.
-                    </p>
-                    <p className="text-[14px] text-[#202020] tracking-[-0.28px] leading-[20px]">
-                      (Media size 1280x720px, (1080p) Max 500mb)
-                    </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*,image/*"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+
+              {isUploading ? (
+                <div className="bg-[#FCFDFF] border-2 border-[#0A60E1] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full gap-[16px]">
+                  <div className="w-[48px] h-[48px] border-4 border-[#E8E8E8] border-t-[#0A60E1] rounded-full animate-spin" />
+                  <p className="text-[16px] font-medium text-[#202020]">Uploading... {progress}%</p>
+                  <div className="w-[280px] h-[6px] bg-[#E8E8E8] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#0A60E1] rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
-              <Button
-                  type="button"
-                  variant="app-outline"
-                  className="h-[40px] px-[24px] py-[12px] text-[14px] font-normal text-sd-blue border-sd-blue hover:bg-sd-blue/5 bg-transparent"
-                >
-                  Upload media
-                </Button>
+                  <p className="text-[14px] text-[#636363]">Please do not close this page</p>
                 </div>
-              </div>
+              ) : lesson.videoUrl ? (
+                <div className="flex flex-col items-center w-full gap-[12px]">
+                  <video
+                    src={lesson.videoUrl}
+                    controls
+                    className="w-full h-[400px] rounded-[8px] bg-black object-contain"
+                  />
+                  <div className="flex items-center gap-[12px]">
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      className="h-[36px] px-[16px] text-[13px] text-[#0A60E1] border-[#0A60E1]"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      isGhost
+                      className="h-[36px] px-[16px] text-[13px] text-[#FF6B00]"
+                      onClick={() => onUpdateLesson({ ...lesson, videoUrl: "", mediaFileName: "" })}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full">
+                  <div className="flex flex-col gap-[24px] items-center text-center w-full">
+                    <div className="flex flex-col gap-[8px] items-center text-center w-full">
+                      <p className="text-[20px] font-medium text-[#202020] leading-[28px]">
+                        Add Media
+                      </p>
+                      <p className="text-[14px] text-[#636363] tracking-[-0.28px] leading-[20px]">
+                        Drag your video/Image file or embed from Vimeo, YouTube,
+                        Wistia, Typeform and more.
+                      </p>
+                      <p className="text-[14px] text-[#202020] tracking-[-0.28px] leading-[20px]">
+                        (Media size 1280x720px, (1080p) Max 500mb)
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      className="h-[40px] px-[24px] py-[12px] text-[14px] font-normal text-sd-blue border-sd-blue hover:bg-sd-blue/5 bg-transparent"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload media
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {uploadError && (
+                <p className="text-[13px] text-[#FF5025] w-full">{uploadError}</p>
+              )}
 
               {/* Embedded link */}
               <div className="w-full">
@@ -399,7 +492,10 @@ export const LessonEditView = ({
                   label="Embedded link"
                   placeholder="Paste link here"
                   value={embedLink}
-                  onChange={(e) => setEmbedLink(e.target.value)}
+                  onChange={(e) => {
+                    setEmbedLink(e.target.value);
+                    handleUpdateField("embedLink", e.target.value);
+                  }}
                 />
               </div>
 

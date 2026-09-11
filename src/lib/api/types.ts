@@ -24,6 +24,7 @@ export interface PresignRequest {
 
 export interface PresignResponse {
   upload_url: string;
+  upload_headers: Record<string, string>;
   file_url: string;
   file_key: string;
   expires_in: number;
