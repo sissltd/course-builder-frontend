@@ -54,8 +54,13 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
   const { data: session } = useSession();
   const user = session?.user;
   const { data: kycSubmission } = useGetMyKycQuery();
-  const isKycApproved = kycSubmission?.status === "APPROVED";
-  const isKycPending = kycSubmission?.status === "PENDING";
+  const kycStatus = kycSubmission?.status as string | undefined;
+  const kycRequestStatus = kycSubmission?.kyc_request_status;
+  const isKycSubmitted = !!kycStatus && kycStatus !== "";
+  const isKycApproved = kycStatus === "APPROVED";
+  const isKycPending = isKycSubmitted && !isKycApproved && kycStatus !== "REJECTED";
+  const isKycRejected = kycStatus === "REJECTED";
+  const isKycUnderReview = isKycPending && (kycRequestStatus === "UNDER_REVIEW" || kycRequestStatus === "");
 
   const displayName =
     user?.first_name || user?.last_name
@@ -165,8 +170,8 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
             </nav>
           </div>
 
-          {/* KYC Card — hidden when approved, shows pending state when under review */}
-          {isKycPending && (
+          {/* KYC Card — hidden when approved */}
+          {isKycUnderReview && (
           <div className="bg-gradient-to-br from-[#FFF8E1] via-white to-[#FFF3CD] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#FFE082] mx-auto w-full shrink-0 flex flex-col justify-center items-center mt-[24px]">
             <div className="relative z-10 flex flex-col gap-[15px] w-full">
               <div className="flex flex-col gap-[8px]">
@@ -181,7 +186,24 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
             </div>
           </div>
           )}
-          {!isKycApproved && !isKycPending && (
+          {isKycRejected && (
+          <div className="bg-gradient-to-br from-[#FFF5F5] via-white to-[#FEF2F2] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#FECACA] mx-auto w-full shrink-0 flex flex-col justify-center items-center mt-[24px]">
+            <div className="relative z-10 flex flex-col gap-[15px] w-full">
+              <div className="flex flex-col gap-[8px]">
+                <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px]">KYC Rejected</p>
+                <p className="text-[12px] text-[#606060] leading-[16px]">
+                  {kycSubmission?.rejection_reason || "Your verification was rejected. Please try again."}
+                </p>
+              </div>
+              <Link href={CreatorRoute.KYC} className="w-full block">
+                <button className="w-full h-[32px] border border-[#FF5025] text-[#FF5025] rounded-[8px] text-[12px] font-medium hover:bg-[#FF5025]/5 transition-colors">
+                  Retry
+                </button>
+              </Link>
+            </div>
+          </div>
+          )}
+          {!isKycApproved && !isKycUnderReview && !isKycRejected && (
           <div className="bg-gradient-to-br from-[#FAF6FC] via-white to-[#F0F6FE] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-full  shrink-0 flex flex-col justify-center items-center mt-[24px]">
             {/* Illustrations */}
             <div className="absolute top-[-50px] left-[-30px] w-[140px] h-[140px] pointer-events-none opacity-80">
