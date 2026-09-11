@@ -111,6 +111,7 @@ export const lessonSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Lesson title is required"),
   duration: z.string().optional(),
+  estimatedDuration: z.string().optional(),
   assessments: z.string().optional(),
   type: z.enum(["video", "quiz", "text"]),
   objectives: z.array(z.string()).optional(),

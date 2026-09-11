@@ -21,6 +21,7 @@ export interface Lesson {
   id: string;
   title: string;
   duration?: string;
+  estimatedDuration?: string;
   assessments?: string;
   type: "video" | "quiz" | "text";
   objectives?: string[];
@@ -28,6 +29,8 @@ export interface Lesson {
   content?: string;
   videoScript?: string;
   embedLink?: string;
+  videoUrl?: string;
+  mediaFileName?: string;
   quizQuestions?: QuizQuestionData[];
   quizId?: string;
 }
@@ -223,6 +226,7 @@ const courseBuilderSlice = createSlice({
           id: lessonId || Date.now().toString(),
           title: "",
           duration: "0 mins",
+          estimatedDuration: "0 mins",
           assessments: "0 Assessment",
           type,
           objectives: [],

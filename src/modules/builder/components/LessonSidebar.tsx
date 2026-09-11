@@ -1,31 +1,43 @@
 "use client";
 
-import React from "react";
-import { Add } from "iconsax-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Add, VideoPlay, DocumentText } from "iconsax-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/shared/Button";
 import { Lesson } from "./ModulesStep";
 
 interface LessonSidebarProps {
   lessons: Lesson[];
   activeLessonId: string;
   onSelectLesson: (id: string) => void;
-  onAddLesson: (type: "video" | "quiz" | "text") => void;
+  onAddLesson: (type: "video" | "text") => void;
   onBack: () => void;
 }
 
-export const LessonSidebar = ({ 
-  lessons, 
-  activeLessonId, 
-  onSelectLesson, 
+export const LessonSidebar = ({
+  lessons,
+  activeLessonId,
+  onSelectLesson,
   onAddLesson,
-  onBack 
+  onBack
 }: LessonSidebarProps) => {
+  const [showLessonTypes, setShowLessonTypes] = useState(false);
+  const listEndRef = useRef<HTMLDivElement>(null);
+  const prevLessonCount = useRef(lessons.length);
+
+  useEffect(() => {
+    if (lessons.length > prevLessonCount.current) {
+      setTimeout(() => {
+        listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100);
+    }
+    prevLessonCount.current = lessons.length;
+  }, [lessons.length]);
+
   return (
-    <div className="w-[234px] h-full bg-[#FDFDFD] border-r border-[#F0F0F0] px-[16px] py-[32px] flex flex-col justify-between shrink-0">
+    <div className="w-[234px] h-full bg-[#FDFDFD] border-r border-[#F0F0F0] px-[16px] py-[32px] flex flex-col shrink-0">
       
-      {/* Lessons List */}
-      <div className="flex flex-col gap-[12px] overflow-y-auto max-h-[calc(100vh-200px)]">
+      {/* Lessons List (scrollable) */}
+      <div className="flex flex-col gap-[12px] overflow-y-auto flex-1">
         {lessons.map((lesson, idx) => {
           const isActive = lesson.id === activeLessonId;
           return (
@@ -50,26 +62,44 @@ export const LessonSidebar = ({
                 {lesson.title || "Untitled Lesson"}
               </span>
               <span className="text-[11px] text-[#606060] font-normal leading-[14px]">
-                {lesson.duration}
+                {lesson.type === "text" ? (lesson.estimatedDuration || lesson.duration) : lesson.duration}
               </span>
             </button>
           );
         })}
-      </div>
 
-      {/* Add Lesson Action */}
-      <div className="flex flex-col gap-[10px] border-t border-[#F0F0F0] pt-[16px] mt-auto">
-        <Button
-          variant="app-outline"
-          isGhost
-          onClick={() => onAddLesson("video")}
-          className="h-[32px] text-[14px] text-[#606060] justify-start"
-          leftIcon={<Add size={18} variant="Linear" color="#606060" />}
-        >
-          Add lesson
-        </Button>
-      </div>
+        {/* Add Lesson — inside scrollable list, below last lesson */}
+        <div className="flex flex-col gap-[8px] pt-[4px]">
+          <button
+            type="button"
+            onClick={() => setShowLessonTypes(!showLessonTypes)}
+            className="flex items-center gap-[8px] text-[14px] text-[#606060] hover:text-[#202020] transition-colors cursor-pointer py-[4px]"
+          >
+            <Add size={18} variant="Linear" color="currentColor" />
+            <span>Add lesson</span>
+          </button>
+          {showLessonTypes && (
+            <div className="flex items-center gap-[12px] pl-[26px]">
+              <div
+                className="flex items-center gap-[6px] cursor-pointer select-none"
+                onClick={() => { onAddLesson("video"); setShowLessonTypes(false); }}
+              >
+                <VideoPlay size={16} variant="Linear" color="#0A60E1" />
+                <span className="text-[13px] font-medium text-[#0A60E1]">Video</span>
+              </div>
+              <div
+                className="flex items-center gap-[6px] cursor-pointer select-none"
+                onClick={() => { onAddLesson("text"); setShowLessonTypes(false); }}
+              >
+                <DocumentText size={16} variant="Linear" color="#0A60E1" />
+                <span className="text-[13px] font-medium text-[#0A60E1]">Text</span>
+              </div>
+            </div>
+          )}
+        </div>
 
+        <div ref={listEndRef} />
+      </div>
     </div>
   );
 };

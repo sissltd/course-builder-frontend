@@ -30,6 +30,7 @@ export interface Lesson {
   id: string;
   title: string;
   duration?: string;
+  estimatedDuration?: string;
   assessments?: string;
   type: "video" | "quiz" | "text";
   objectives?: string[];
@@ -37,6 +38,8 @@ export interface Lesson {
   content?: string;
   videoScript?: string;
   embedLink?: string;
+  videoUrl?: string;
+  mediaFileName?: string;
   quizQuestions?: any[];
 }
 
@@ -106,6 +109,7 @@ export const ModulesStep = ({
       id: Date.now().toString(),
       title: "",
       duration: "0 mins",
+      estimatedDuration: "0 mins",
       assessments: "0 Assessment",
       type: type,
       objectives: [],
@@ -431,7 +435,7 @@ export const ModulesStep = ({
                     <div className="flex items-center gap-[12px] text-[14px] text-[#606060] font-normal leading-[20px]">
                       <div className="flex items-center gap-[6px]">
                         <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
-                        <span>{lesson.duration}</span>
+                        <span>{lesson.type === "text" ? (lesson.estimatedDuration || lesson.duration) : lesson.duration}</span>
                       </div>
                       <div className="flex items-center gap-[6px]">
                         <Book size={16} variant="Linear" color="#606060" className="shrink-0" />
@@ -484,13 +488,6 @@ export const ModulesStep = ({
                 >
                   <PlayCircle size={20} variant="Linear" color="#0A60E1" />
                   <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Video</span>
-                </div>
-                <div 
-                  className="flex items-center gap-[8px] cursor-pointer select-none"
-                  onClick={() => { handleAddLesson("quiz"); setShowLessonTypes(false); }}
-                >
-                  <DocumentCode2 size={20} variant="Linear" color="#0A60E1" />
-                  <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Quiz</span>
                 </div>
                 <div 
                   className="flex items-center gap-[8px] cursor-pointer select-none"

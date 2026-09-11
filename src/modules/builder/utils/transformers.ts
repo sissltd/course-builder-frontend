@@ -1,6 +1,6 @@
 import type { Course, CourseModule } from "@/modules/creator/courses/types";
 import type { AssessmentQuestion, Assessment } from "@/modules/creator/courses/types/assessment";
-import type { QuizQuestionItem, QuizQuestionType, QuizOption } from "@/modules/creator/courses/types/quiz";
+import type { QuizQuestionItem, QuizQuestionType, QuizOption, CreateQuestionRequest } from "@/modules/creator/courses/types/quiz";
 import type { Module, Lesson, CourseInformationData, QuizQuestionData, QuizQuestion } from "@/redux/slices/courseBuilderSlice";
 
 interface ApiLessonLike {
@@ -13,6 +13,8 @@ interface ApiLessonLike {
   duration_minutes?: number;
   learning_objectives?: string[];
   assessment?: Assessment | null;
+  content_type?: string;
+  requirements?: { id: string; text: string; order: number }[];
 }
 
 interface ApiModuleLike {
@@ -25,8 +27,9 @@ interface ApiModuleLike {
 }
 
 const mapContentType = (lesson: ApiLessonLike): Lesson["type"] => {
-  if (lesson.video_url || lesson.embedded_link) return "video";
-  if (lesson.assessment) return "quiz";
+  if (lesson.content_type === "VIDEO" || lesson.video_url || lesson.embedded_link) return "video";
+  if (lesson.content_type === "QUIZ" || lesson.assessment) return "quiz";
+  if (lesson.content_type === "TEXT") return "text";
   return "text";
 };
 
@@ -91,6 +94,9 @@ export const apiModuleToRedux = (apiModule: CourseModule): Module => {
     const lessonQuizQuestions = l.assessment?.questions
       ? mapAssessmentQuestions(l.assessment.questions)
       : [];
+    const requirementsText = l.requirements
+      ? l.requirements.sort((a, b) => a.order - b.order).map((r) => r.text).join("\n\n")
+      : "";
     return {
       id: l.id,
       title: l.title,
@@ -100,10 +106,11 @@ export const apiModuleToRedux = (apiModule: CourseModule): Module => {
         : "0 Assessment",
       type,
       objectives: l.learning_objectives || [],
-      requirements: "",
+      requirements: requirementsText,
       content: l.script || "",
       videoScript: l.video_script_file || "",
-      embedLink: l.embedded_link || l.video_url || "",
+      videoUrl: l.video_url || "",
+      embedLink: l.embedded_link || "",
       quizQuestions: lessonQuizQuestions,
     };
   });
@@ -158,18 +165,30 @@ export const apiCourseToCourseInfo = (
 };
 
 export const reduxLessonToApiPayload = (lesson: Lesson) => {
-  const durationParts = (lesson.duration || "0 mins").match(/(\d+)/);
+  const durationSource = lesson.type === "text"
+    ? (lesson.estimatedDuration || lesson.duration || "0 mins")
+    : (lesson.duration || "0 mins");
+  const durationParts = durationSource.match(/(\d+)/);
   const durationMinutes = durationParts
     ? parseInt(durationParts[1], 10)
     : 0;
 
+  const contentTypeMap: Record<string, string> = {
+    video: "VIDEO",
+    quiz: "QUIZ",
+    text: "TEXT",
+  };
+
   return {
     title: lesson.title,
     script: lesson.content || "",
+    video_url: lesson.type === "video" ? (lesson.videoUrl || "") : "",
     embedded_link: lesson.embedLink || "",
     video_script_file: lesson.videoScript || "",
     learning_objectives: lesson.objectives || [],
     duration_minutes: durationMinutes,
+    lesson_requirement: lesson.requirements || "",
+    content_type: contentTypeMap[lesson.type] || "TEXT",
   };
 };
 
@@ -215,6 +234,7 @@ export const apiQuizQuestionsToRedux = (
         type: "essay",
         points: q.points,
         options: [],
+        correctAnswer: q.model_response_guide || "",
         explanation: q.model_response_guide || "",
       };
     }
@@ -240,14 +260,14 @@ export const apiQuizQuestionsToRedux = (
 
 export const reduxQuizQuestionsToApiQuestions = (
   questions: QuizQuestionData[],
-): { question_text: string; question_type: QuizQuestionType; points: number; model_response_guide: string; order: number; options: QuizOption[] }[] => {
+): Omit<CreateQuestionRequest, "quiz">[] => {
   return questions.map((q, idx) => {
     if (q.type === "essay") {
       return {
         question_text: q.question,
         question_type: "ESSAY" as QuizQuestionType,
         points: q.points || 0,
-        model_response_guide: q.explanation || "",
+        model_response_guide: q.correctAnswer || q.explanation || "",
         order: idx,
         options: [],
       };

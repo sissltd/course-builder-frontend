@@ -42,8 +42,11 @@ export interface CreateLessonRequest {
   content_type?: LessonContentType;
   script?: string;
   video_url?: string;
+  embedded_link?: string;
+  video_script_file?: string;
   learning_objectives?: string[];
   duration_minutes?: number;
+  lesson_requirement?: string;
 }
 
 export interface ReplaceLessonRequest {
@@ -68,6 +71,7 @@ export interface UpdateLessonRequest {
   video_script_file?: string;
   learning_objectives?: string | string[];
   duration_minutes?: number;
+  lesson_requirement?: string;
 }
 
 export interface ContentBlock {

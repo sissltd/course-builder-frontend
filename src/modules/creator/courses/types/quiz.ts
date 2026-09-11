@@ -109,3 +109,21 @@ export interface QuestionListParams {
   page?: number;
   size?: number;
 }
+
+export interface QuestionListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous_page_number: number | null;
+      previous: string | null;
+    };
+    results: QuizQuestionItem[];
+  };
+}

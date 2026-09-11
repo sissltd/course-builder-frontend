@@ -52,7 +52,7 @@ export const CoursePreviewView = () => {
             {modules.map((mod, modIdx) => {
               const isActive = modIdx === activeModuleIndex;
               const totalMinutes = mod.lessons.reduce((acc, l) => {
-                const dur = l.duration || "0 mins";
+                const dur = l.type === "text" ? (l.estimatedDuration || l.duration || "0 mins") : (l.duration || "0 mins");
                 const mins = parseInt(dur.match(/(\d+)/)?.[0] || "0", 10);
                 return acc + mins;
               }, 0);
