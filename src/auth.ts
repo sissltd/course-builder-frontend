@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import type { User as AuthUser } from "next-auth";
 import type {
   LoginResponse,
@@ -11,6 +12,27 @@ import { getAccessTokenExpiresAt } from "@/modules/auth/utils/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
+
+async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE_URL}/auth/login/google/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    const error = new Error("Google login failed") as Error & {
+      status: number;
+      body: unknown;
+    };
+    error.status = response.status;
+    error.body = errorBody;
+    throw error;
+  }
+
+  return response.json() as Promise<LoginResponse>;
+}
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -58,9 +80,13 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.user = {
           id: user.id,
@@ -91,6 +117,52 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      if (account?.provider === "google" && account.id_token) {
+        try {
+          const result = await exchangeGoogleToken(account.id_token);
+          token.user = {
+            id: result.user.id,
+            email: result.user.email,
+            first_name: result.user.first_name,
+            last_name: result.user.last_name,
+            country: result.user.country,
+            state: result.user.state ?? "",
+            address: result.user.address ?? "",
+            phone_number: result.user.phone_number ?? "",
+            timezone: result.user.timezone,
+            avatar_url: result.user.avatar_url,
+            terms_accepted_at: result.user.terms_accepted_at ?? "",
+            role: result.user.role,
+            is_active: result.user.is_active,
+            status: result.user.status,
+            created_datetime: result.user.created_datetime,
+            updated_datetime: result.user.updated_datetime,
+            has_completed_onboarding: result.user.has_completed_onboarding,
+            category: result.user.category ?? null,
+            workspace: result.workspace,
+          };
+          token.accessToken = result.access;
+          token.refreshToken = result.refresh;
+          token.accessTokenExpiresAt = getAccessTokenExpiresAt(result.access);
+          token.role = result.role;
+          token.mfaEnrollmentOverdue = result.mfa_enrollment_overdue;
+          token.googleSignupRequired = undefined;
+          return token;
+        } catch (err) {
+          const googleError = err as { status?: number; body?: { errors?: Array<{ message?: string }> } };
+          if (googleError.status === 400) {
+            const errorMsg =
+              googleError.body?.errors?.[0]?.message ?? "";
+            if (errorMsg.includes("No account is linked")) {
+              token.googleSignupRequired = true;
+              token.googleIdToken = account.id_token;
+              return token;
+            }
+          }
+          throw err;
+        }
+      }
+
       if (
         token.accessTokenExpiresAt &&
         Date.now() < token.accessTokenExpiresAt - REFRESH_BEFORE_EXPIRY_MS
@@ -109,6 +181,10 @@ export const authOptions: NextAuthOptions = {
       session.role = token.role;
       session.mfaEnrollmentOverdue = token.mfaEnrollmentOverdue;
       session.error = token.error;
+      session.googleSignupRequired = token.googleSignupRequired as
+        | boolean
+        | undefined;
+      session.googleIdToken = token.googleIdToken as string | undefined;
       return session;
     },
   },

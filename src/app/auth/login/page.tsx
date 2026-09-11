@@ -43,6 +43,13 @@ export default function LoginPage() {
 
   const { handleSubmit, trigger, setError } = methods;
 
+  const handleGoogleLogin = async () => {
+    const result = await signIn("google", { redirect: false });
+    if (result?.error) {
+      toast.error("Google sign in failed. Please try again.");
+    }
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isEmailValid = await trigger("email");
@@ -129,7 +136,7 @@ export default function LoginPage() {
         <div className="flex flex-col gap-[32px] w-full items-center">
           {step === "email" && (
             <>
-              <SocialLogin label="Continue with Google" />
+              <SocialLogin label="Continue with Google" onClick={handleGoogleLogin} />
               
               <div className="relative flex items-center justify-center w-full">
                 <div className="absolute inset-0 flex items-center">
@@ -163,7 +170,7 @@ export default function LoginPage() {
 
           {step === "password" && (
             <div className="w-full flex flex-col gap-[32px]">
-              <SocialLogin label="Continue with Google" />
+              <SocialLogin label="Continue with Google" onClick={handleGoogleLogin} />
               
               <div className="relative flex items-center justify-center w-full">
                 <div className="absolute inset-0 flex items-center">

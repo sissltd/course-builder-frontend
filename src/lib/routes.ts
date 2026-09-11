@@ -6,6 +6,7 @@ export enum AuthRoute {
   RESET_PASSWORD = "/auth/reset-password",
   VERIFY_EMAIL = "/auth/verify-email",
   ONBOARDING = "/auth/onboarding",
+  SIGNUP_GOOGLE = "/auth/signup-google",
 }
 
 export enum WebsiteRoute {

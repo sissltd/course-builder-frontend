@@ -60,3 +60,12 @@ export const onboardingSchema = z.object({
 });
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
+
+export const googleSignupSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  country: z.string().min(1, "Please select a country"),
+  agreeToTerms: z.boolean().refine((val) => val === true, "You must agree to the terms"),
+});
+
+export type GoogleSignupFormData = z.infer<typeof googleSignupSchema>;

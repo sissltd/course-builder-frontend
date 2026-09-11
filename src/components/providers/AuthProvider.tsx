@@ -4,11 +4,14 @@ import React, { useEffect, useRef } from "react";
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth, setCredentials } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
+import { AuthRoute } from "@/lib/routes";
 
 const SESSION_REFRESH_INTERVAL_MS = 25 * 60 * 1000;
 
 function AuthSessionSync() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const hasRedirected = useRef(false);
 
@@ -23,6 +26,12 @@ function AuthSessionSync() {
         return;
       }
 
+      if (session.googleSignupRequired) {
+        hasRedirected.current = true;
+        router.push(AuthRoute.SIGNUP_GOOGLE);
+        return;
+      }
+
       dispatch(
         setCredentials({
           user: session.user,
@@ -32,7 +41,7 @@ function AuthSessionSync() {
     } else if (status === "unauthenticated") {
       dispatch(clearAuth());
     }
-  }, [status, session, dispatch]);
+  }, [status, session, dispatch, router]);
 
   useEffect(() => {
     const intervalId = setInterval(async () => {

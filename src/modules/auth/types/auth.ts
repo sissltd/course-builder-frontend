@@ -80,6 +80,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  id_token: string;
+}
+
+export interface GoogleSignupRequest {
+  id_token: string;
+  first_name: string;
+  last_name: string;
+  country: string;
+  terms_accepted: boolean;
+}
+
 export interface LoginResponse extends AuthTokens {
   user: User;
   role: UserRole;

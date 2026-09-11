@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Country, isSupportedCountry } from "react-phone-number-input";
 import { Country as CountryMeta } from "country-state-city";
 import { AuthRoute, WebsiteRoute } from "@/lib/routes";
+import { signIn } from "next-auth/react";
 
 type Step = "email" | "details" | "password";
 
@@ -79,6 +80,13 @@ export default function RegisterPage() {
     e.preventDefault();
     const isEmailValid = await trigger("email");
     if (isEmailValid) setStep("details");
+  };
+
+  const handleGoogleLogin = async () => {
+    const result = await signIn("google", { redirect: false });
+    if (result?.error) {
+      toast.error("Google sign in failed. Please try again.");
+    }
   };
 
   const handleDetailsSubmit = async (e: React.FormEvent) => {
@@ -145,7 +153,7 @@ export default function RegisterPage() {
         <div className="flex flex-col gap-[32px] w-full">
           {step === "email" && (
             <>
-              <SocialLogin label="Sign up using Google" />
+              <SocialLogin label="Sign up using Google" onClick={handleGoogleLogin} />
               
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 flex items-center">

@@ -23,6 +23,8 @@ const PUBLIC_ENDPOINTS = [
   "/auth/reset-password",
   "/auth/token/refresh",
   "/auth/reviewer/login",
+  "/auth/login/google",
+  "/auth/signup/google",
 ];
 
 const isPublicEndpoint = (url: string): boolean =>
