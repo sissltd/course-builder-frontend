@@ -10,7 +10,16 @@ export default function ReviewerRootLayout({
 }) {
   return (
     <ProtectedRoute
-      allowedRoles={[UserRole.REVIEWER]}
+      allowedRoles={[
+        UserRole.REVIEWER,
+        "REVIEWER",
+        "STAFF_WRITER",
+        "STAFF_VERIFIER",
+        "STAFF_APPROVER",
+        "CREATOR_REVIEWER",
+        "AI_REVIEWER",
+        "QA_REVIEWER",
+      ]}
     >
       <ReviewerDashboardLayout>{children}</ReviewerDashboardLayout>
     </ProtectedRoute>

@@ -3,14 +3,16 @@ import Image from "next/image";
 
 interface ReviewerMetricCardProps {
   iconSrc: string;
-  value: string;
+  value: string | number;
   label: string;
+  isLoading?: boolean;
 }
 
 export const ReviewerMetricCard = ({
   iconSrc,
   value,
   label,
+  isLoading,
 }: ReviewerMetricCardProps) => {
   return (
     <div className="relative flex min-h-[86px] w-full items-center gap-[12px] rounded-[10px] border border-sd-grey-4 bg-sd-grey-1 px-[16px] py-[12px] overflow-hidden">
@@ -18,9 +20,13 @@ export const ReviewerMetricCard = ({
         <Image src={iconSrc} alt="" width={28} height={28} className="size-[28px]" />
       </div>
       <div className="flex min-w-0 flex-col gap-[8px]">
-        <span className="text-[24px] font-medium text-sd-grey-12 tracking-[-0.48px] leading-[32px] truncate">
-          {value}
-        </span>
+        {isLoading ? (
+          <div className="h-[32px] w-[70px] animate-pulse rounded bg-sd-grey-4" />
+        ) : (
+          <span className="text-[24px] font-medium text-sd-grey-12 tracking-[-0.48px] leading-[32px] truncate">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </span>
+        )}
         <span className="text-[16px] font-normal text-sd-reviewer-muted tracking-[-0.32px] leading-[24px] truncate">
           {label}
         </span>

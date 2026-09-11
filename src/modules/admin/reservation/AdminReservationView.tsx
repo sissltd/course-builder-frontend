@@ -634,7 +634,7 @@ export const AdminReservationView = () => {
           selectable
           ignoreRowClickColumns={["actions"]}
           onRowClick={(row) => handleOpenDrawerForRequest(row)}
-          onSelectionChange={(rows) => setSelectedRequestRows(rows)}
+          onSelectionChange={setSelectedRequestRows}
           selectionAction={(selectedCount: number) => (
             <>
               <button

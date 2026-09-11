@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { AdminStatCard } from "@/modules/admin/dashboard/components/AdminStatCard";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CourseViewToggle, type CourseViewMode } from "@/modules/admin/courses/components/CourseViewToggle";
+import { cn } from "@/lib/utils";
 import { MieWorkspaceHeader } from "./components/MieWorkspaceNav";
 import { SubmissionDetailsDrawer } from "./components/SubmissionDetailsDrawer";
 import { RejectSubmissionModal } from "./components/RejectSubmissionModal";
@@ -31,6 +32,8 @@ import { MieSubmissionsGrid } from "./components/MieSubmissionsGrid";
 import { submissionColumns } from "./columns/submissions";
 import {
   useApproveMieSubmissionMutation,
+  useRejectMieSubmissionMutation,
+  useGetMieRejectionReasonsQuery,
   useDebouncedValue,
   useGetMieDevelopersQuery,
   useGetMieSubmissionsQuery,
@@ -68,12 +71,19 @@ export const MieSubmissionsView = () => {
   const [developerFilter, setDeveloperFilter] = React.useState("");
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
 
+  const [selectedRows, setSelectedRows] = React.useState<MieSubmission[]>([]);
+  const [showBulkApproveModal, setShowBulkApproveModal] = React.useState(false);
+  const [showBulkRejectModal, setShowBulkRejectModal] = React.useState(false);
+  const [isBulkApproving, setIsBulkApproving] = React.useState(false);
+  const [isBulkRejecting, setIsBulkRejecting] = React.useState(false);
+
   const search = useDebouncedValue(searchInput);
 
   // Any filter change re-slices the result set, so page 2 of the old set is
   // meaningless — go back to the first page before the next request goes out.
   React.useEffect(() => {
     resetPage();
+    setSelectedRows([]);
   }, [activeStatus, search, payoutFilter, developerFilter, selectedDate, resetPage]);
 
   const queryParams: MieSubmissionsListParams = {
@@ -109,8 +119,14 @@ export const MieSubmissionsView = () => {
     ordering: "email",
   });
 
+  const { data: reasonsResponse } = useGetMieRejectionReasonsQuery({
+    is_active: true,
+    size: 100,
+  });
+
   const [approveSubmission, { isLoading: isApproving }] =
     useApproveMieSubmissionMutation();
+  const [rejectSubmission] = useRejectMieSubmissionMutation();
 
   // Memoised because the drawer's lookup below depends on it — a fresh `[]`
   // fallback on every render would defeat that memo.
@@ -131,9 +147,6 @@ export const MieSubmissionsView = () => {
     null,
   );
 
-  // The drawer edits signals and payout in place, so it must read the refetched
-  // row. The row clicked on is only the fallback, for when the active filters no
-  // longer include it.
   const selected = React.useMemo(
     () =>
       selectedRow
@@ -142,6 +155,24 @@ export const MieSubmissionsView = () => {
     [submissions, selectedRow],
   );
 
+  const selectedIndex = selected
+    ? submissions.findIndex((row) => row.id === selected.id)
+    : -1;
+  const hasPrevious = selectedIndex > 0;
+  const hasNext = selectedIndex >= 0 && selectedIndex < submissions.length - 1;
+
+  const onPrevious = () => {
+    if (hasPrevious) {
+      setSelectedRow(submissions[selectedIndex - 1]);
+    }
+  };
+
+  const onNext = () => {
+    if (hasNext) {
+      setSelectedRow(submissions[selectedIndex + 1]);
+    }
+  };
+
   const confirmApprove = async () => {
     if (!approveTarget) return;
 
@@ -149,14 +180,73 @@ export const MieSubmissionsView = () => {
       const result = await approveSubmission({ id: approveTarget.id }).unwrap();
       toast.success(result.detail || "Submission approved");
       setApproveTarget(null);
-      // The decision is made — close the drawer instead of leaving it showing a
-      // row that the active tab may no longer contain.
       setSelectedRow(null);
     } catch (err) {
       const { message } = normalizeApiError(
         err as Parameters<typeof normalizeApiError>[0],
       );
       toast.error(message ?? "Failed to approve submission");
+    }
+  };
+
+  const handleConfirmBulkApprove = async () => {
+    if (selectedRows.length === 0) return;
+    setIsBulkApproving(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedRows.map((row) => approveSubmission({ id: row.id }).unwrap()),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed === 0) {
+        toast.success(
+          `Successfully approved ${succeeded} ${succeeded === 1 ? "topic" : "topics"}`,
+        );
+      } else {
+        toast.warning(
+          `Approved ${succeeded} ${succeeded === 1 ? "topic" : "topics"}, ${failed} failed`,
+        );
+      }
+      setSelectedRows([]);
+      setShowBulkApproveModal(false);
+    } catch {
+      toast.error("Failed to approve selected topics");
+    } finally {
+      setIsBulkApproving(false);
+    }
+  };
+
+  const handleConfirmBulkReject = async () => {
+    if (selectedRows.length === 0) return;
+    setIsBulkRejecting(true);
+    const defaultReason =
+      reasonsResponse?.data?.results?.[0]?.label ?? "Does not meet quality guidelines";
+    try {
+      const results = await Promise.allSettled(
+        selectedRows.map((row) =>
+          rejectSubmission({
+            id: row.id,
+            body: { rejection_reason: defaultReason },
+          }).unwrap(),
+        ),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed === 0) {
+        toast.success(
+          `Successfully rejected ${succeeded} ${succeeded === 1 ? "topic" : "topics"}`,
+        );
+      } else {
+        toast.warning(
+          `Rejected ${succeeded} ${succeeded === 1 ? "topic" : "topics"}, ${failed} failed`,
+        );
+      }
+      setSelectedRows([]);
+      setShowBulkRejectModal(false);
+    } catch {
+      toast.error("Failed to reject selected topics");
+    } finally {
+      setIsBulkRejecting(false);
     }
   };
 
@@ -290,8 +380,9 @@ export const MieSubmissionsView = () => {
             searchPlaceholder="Search title, reference, developer"
             onSearchChange={setSearchInput}
             onRowClick={setSelectedRow}
-            ignoreRowClickColumns={["actions"]}
-            selectable={false}
+            ignoreRowClickColumns={["select", "actions"]}
+            selectable
+            onSelectionChange={setSelectedRows}
             emptyText={emptyText}
             filters={[
               {
@@ -319,14 +410,31 @@ export const MieSubmissionsView = () => {
               },
             ]}
             showDateFilter
+            dateFilterInline
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
-            toolbarAction={
-              <CourseViewToggle value={viewMode} onChange={setViewMode} />
-            }
+            toolbarAction={(selectedCount) => (
+              <div className="flex items-center gap-[12px]">
+                <button
+                  type="button"
+                  disabled={selectedCount === 0 || isBulkApproving}
+                  onClick={() => setShowBulkApproveModal(true)}
+                  className={cn(
+                    "flex h-[40px] items-center justify-center rounded-[8px] px-[20px] py-[10px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] transition-colors",
+                    selectedCount > 0
+                      ? "cursor-pointer bg-sd-blue text-white hover:bg-sd-blue-hover"
+                      : "cursor-not-allowed bg-[#D9D9D9] text-sd-muted-text",
+                  )}
+                >
+                  Approve
+                </button>
+                <CourseViewToggle value={viewMode} onChange={setViewMode} />
+              </div>
+            )}
             showPagination
             showHeader={false}
             tableOptions={{
+              getRowId: (row) => row.id,
               manualPagination: true,
               manualFiltering: true,
               pageCount: paginator?.total_pages ?? 1,
@@ -416,8 +524,21 @@ export const MieSubmissionsView = () => {
               </Popover>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="shrink-0">
+            {/* View Mode Toggle & Approve */}
+            <div className="flex items-center gap-[12px] shrink-0">
+              <button
+                type="button"
+                disabled={selectedRows.length === 0 || isBulkApproving}
+                onClick={() => setShowBulkApproveModal(true)}
+                className={cn(
+                  "flex h-[40px] items-center justify-center rounded-[8px] px-[20px] py-[10px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] transition-colors",
+                  selectedRows.length > 0
+                    ? "cursor-pointer bg-sd-blue text-white hover:bg-sd-blue-hover"
+                    : "cursor-not-allowed bg-[#D9D9D9] text-sd-muted-text",
+                )}
+              >
+                Approve
+              </button>
               <CourseViewToggle value={viewMode} onChange={setViewMode} />
             </div>
           </div>
@@ -465,17 +586,43 @@ export const MieSubmissionsView = () => {
         </div>
       )}
 
+      {/* Floating Bottom Bulk Action Pill (matches Image 3) */}
+      {selectedRows.length > 0 && (
+        <div className="fixed bottom-[32px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-[20px] rounded-full border border-sd-grey-3 bg-white px-[20px] py-[10px] shadow-[0px_4px_24px_0px_rgba(0,0,0,0.14)]">
+          <button
+            type="button"
+            onClick={() => setShowBulkApproveModal(true)}
+            className="flex items-center gap-[8px] text-[14px] font-normal text-sd-blue hover:text-sd-blue-hover transition-colors cursor-pointer"
+          >
+            <TickCircle size={18} variant="Linear" color="var(--sd-blue)" />
+            <span>Approve topics</span>
+          </button>
+          <div className="h-[16px] w-[1px] bg-sd-grey-3" />
+          <button
+            type="button"
+            onClick={() => setShowBulkRejectModal(true)}
+            className="flex items-center gap-[8px] text-[14px] font-normal text-[#D54800] hover:opacity-80 transition-colors cursor-pointer"
+          >
+            <CloseCircle size={18} variant="Linear" color="#D54800" />
+            <span>Reject topics</span>
+          </button>
+        </div>
+      )}
+
+      {/* Topic Details Slide Drawer */}
       <SubmissionDetailsDrawer
         isOpen={!!selected}
         onOpenChange={(open) => {
           if (!open) setSelectedRow(null);
         }}
         submission={selected}
-        onApprove={setApproveTarget}
-        onReject={setRejectTarget}
-        isApproving={isApproving}
+        onPrevious={onPrevious}
+        onNext={onNext}
+        hasPrevious={hasPrevious}
+        hasNext={hasNext}
       />
 
+      {/* Reject Modal for Single Submission */}
       <RejectSubmissionModal
         isOpen={!!rejectTarget}
         onOpenChange={(open) => {
@@ -485,6 +632,7 @@ export const MieSubmissionsView = () => {
         onRejected={() => setSelectedRow(null)}
       />
 
+      {/* Single Approve Modal */}
       <ConfirmModal
         isOpen={!!approveTarget}
         onOpenChange={(open) => {
@@ -500,6 +648,36 @@ export const MieSubmissionsView = () => {
         onConfirm={confirmApprove}
         isLoading={isApproving}
         icon={<TickCircle variant="Bold" size={24} color="#008500" />}
+      />
+
+      {/* Bulk Approve Modal */}
+      <ConfirmModal
+        isOpen={showBulkApproveModal}
+        onOpenChange={setShowBulkApproveModal}
+        title="Approve topics?"
+        description={`Are you sure you want to approve ${selectedRows.length} selected ${
+          selectedRows.length === 1 ? "topic" : "topics"
+        }?`}
+        confirmLabel={isBulkApproving ? "Approving..." : "Yes, approve"}
+        onConfirm={handleConfirmBulkApprove}
+        isLoading={isBulkApproving}
+        variant="primary"
+        icon={<TickCircle variant="Bold" size={24} color="#008500" />}
+      />
+
+      {/* Bulk Reject Modal */}
+      <ConfirmModal
+        isOpen={showBulkRejectModal}
+        onOpenChange={setShowBulkRejectModal}
+        title="Reject topics?"
+        description={`Are you sure you want to reject ${selectedRows.length} selected ${
+          selectedRows.length === 1 ? "topic" : "topics"
+        }?`}
+        confirmLabel={isBulkRejecting ? "Rejecting..." : "Yes, reject"}
+        variant="danger"
+        onConfirm={handleConfirmBulkReject}
+        isLoading={isBulkRejecting}
+        icon={<CloseCircle variant="Bold" size={24} color="#D54800" />}
       />
     </div>
   );

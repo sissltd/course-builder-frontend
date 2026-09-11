@@ -829,6 +829,50 @@ export const adminApi = BaseAPI.injectEndpoints({
       }),
       providesTags: ["AdminCourse"] as any,
     }),
+    getPendingCourses: builder.query<AdminCoursesResponse, AdminCoursesListParams | void>({
+      query: (params) => ({
+        url: "/admin/courses/pending/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: AdminCoursesData["paginator"];
+          results: AdminCourseItem[][] | AdminCourseItem[];
+        };
+      }): AdminCoursesResponse => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
+        },
+      }),
+      providesTags: ["AdminCourse"] as any,
+    }),
+    getApprovedCourses: builder.query<AdminCoursesResponse, AdminCoursesListParams | void>({
+      query: (params) => ({
+        url: "/admin/courses/approved/",
+        method: "GET",
+        params: params || undefined,
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: {
+          paginator: AdminCoursesData["paginator"];
+          results: AdminCourseItem[][] | AdminCourseItem[];
+        };
+      }): AdminCoursesResponse => ({
+        ...response,
+        data: {
+          ...response.data,
+          results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
+        },
+      }),
+      providesTags: ["AdminCourse"] as any,
+    }),
     getAdminOverview: builder.query<AdminOverviewResponse, void>({
       query: () => ({
         url: "/admin/overview/",
@@ -1094,7 +1138,7 @@ export const adminApi = BaseAPI.injectEndpoints({
     }),
     publishCourse: builder.mutation<any, { id: string; body: PublishCourseRequest }>({
       query: ({ id, body }) => ({
-        url: `/courses/${id}/publish/`,
+        url: `/admin/courses/${id}/publish/`,
         method: "POST",
         body,
       }),
@@ -1105,7 +1149,7 @@ export const adminApi = BaseAPI.injectEndpoints({
     }),
     getCourseReviewPrices: builder.query<CourseReviewPricesResponse, string>({
       query: (id) => ({
-        url: `/courses/${id}/review-prices/`,
+        url: `/admin/courses/${id}/review-prices/`,
         method: "GET",
       }),
       transformResponse: (response: {
@@ -1129,7 +1173,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       { id: string; body: SaveCoursePricesRequest }
     >({
       query: ({ id, body }) => ({
-        url: `/courses/${id}/review-prices/`,
+        url: `/admin/courses/${id}/review-prices/`,
         method: "PUT",
         body,
       }),
@@ -1203,6 +1247,8 @@ export const adminApi = BaseAPI.injectEndpoints({
 
 export const {
   useGetAdminCoursesQuery,
+  useGetPendingCoursesQuery,
+  useGetApprovedCoursesQuery,
   useGetAdminCourseDetailQuery,
   useApproveAdminCourseMutation,
   useClaimAdminCourseMutation,

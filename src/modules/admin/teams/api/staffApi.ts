@@ -3,6 +3,8 @@ import type {
   StaffMember,
   InviteStaffRequest,
   StaffActionResponse,
+  AcceptStaffInvitationRequest,
+  AcceptStaffInvitationResponse,
 } from "../types";
 
 export const staffApi = BaseAPI.injectEndpoints({
@@ -41,6 +43,17 @@ export const staffApi = BaseAPI.injectEndpoints({
       }),
       invalidatesTags: ["AdminStaff"],
     }),
+
+    acceptStaffInvitation: builder.mutation<
+      AcceptStaffInvitationResponse,
+      AcceptStaffInvitationRequest
+    >({
+      query: (body) => ({
+        url: "/auth/staff/invitations/accept/",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -49,4 +62,6 @@ export const {
   useInviteStaffMutation,
   useReactivateStaffMutation,
   useRevokeStaffMutation,
+  useAcceptStaffInvitationMutation,
 } = staffApi;
+

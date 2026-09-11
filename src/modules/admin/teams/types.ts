@@ -89,6 +89,34 @@ export interface StaffActionResponse {
   staff: StaffMember;
 }
 
+export interface AcceptStaffInvitationRequest {
+  email: string;
+  token: string;
+  password: string;
+}
+
+export interface AcceptStaffInvitationResponse {
+  access: string;
+  refresh: string;
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    is_active: boolean;
+    created_datetime: string;
+    has_completed_onboarding?: boolean;
+    country?: string;
+    state?: string;
+    address?: string;
+    phone_number?: string;
+    timezone?: string;
+    avatar_url?: string;
+    status?: string;
+  };
+}
+
 export interface PaginatedPaginator {
   count: number;
   page: number;

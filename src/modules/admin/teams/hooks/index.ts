@@ -11,4 +11,5 @@ export {
   useInviteStaffMutation,
   useReactivateStaffMutation,
   useRevokeStaffMutation,
+  useAcceptStaffInvitationMutation,
 } from "../api/staffApi";

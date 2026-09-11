@@ -51,6 +51,9 @@ export const resetPasswordSchema = z.object({
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
+export const acceptInvitationSchema = resetPasswordSchema;
+export type AcceptInvitationFormData = ResetPasswordFormData;
+
 export const onboardingSchema = z.object({
   expertise: z.string().min(1, "Please select an area of expertise"),
   otherExpertise: z.string().optional(),

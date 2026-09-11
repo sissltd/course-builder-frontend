@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { CloseCircle, Copy, More, Edit } from "iconsax-react";
 import { XIcon, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -21,11 +22,17 @@ import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/Re
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
 import {
+  useGetApprovedCoursesQuery,
   useGetCourseReviewPricesQuery,
   useSaveCoursePricesMutation,
   usePublishCourseMutation,
 } from "@/redux/slices/adminApi";
-import type { DistributionChannelPayload } from "@/redux/slices/adminApi";
+import type {
+  DistributionChannelPayload,
+  CoursePriceReviewItem,
+  AdminCourseItem,
+} from "@/redux/slices/adminApi";
+import { useGetStaffQuery } from "@/modules/admin/teams/api/staffApi";
 
 interface ApprovedCourse {
   creator: string;
@@ -39,21 +46,8 @@ interface ApprovedCourse {
   dateReviewed: string;
   drawerDateReviewed: string;
   reviewNote: string;
+  raw?: AdminCourseItem;
 }
-
-const approvedCourses: ApprovedCourse[] = Array.from({ length: 15 }, () => ({
-  creator: "Osaite Emmanuel",
-  courseTitle: "Machine Learning and Design",
-  courseId: "SLD-e4...3d5",
-  fullCourseId: "Td4fJcvnJ88-04924945",
-  category: "Software Engineering",
-  difficultyLevel: "Advanced",
-  reviewer: "Osaite Emmanuel",
-  reviewerId: "Td4fJcvnJ88-04924945",
-  dateReviewed: "15 May 2026, 03:40PM",
-  drawerDateReviewed: "17 May 2026, 08:45PM",
-  reviewNote: "Extend the lesson script to resolve this issue",
-}));
 
 const columns = [
   "Creator",
@@ -65,7 +59,6 @@ const columns = [
   "Action",
 ];
 
-const pages = [1, 2, 3, 4, 5];
 const tableGridClassName =
   "grid grid-cols-[40px_minmax(150px,1fr)_minmax(230px,1.45fr)_minmax(138px,0.8fr)_minmax(170px,1.1fr)_minmax(155px,1fr)_minmax(205px,1.2fr)_73px]";
 const selectionCheckboxClassName =
@@ -123,28 +116,152 @@ const TableCheckbox = ({
   />
 );
 
-export const ReviewerApprovedCoursesView = () => {
-  const [selected, setSelected] = React.useState<Record<number, boolean>>({});
-  const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
+function formatDisplayDate(dateStr?: string | null): string {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return format(d, "dd MMM yyyy, hh:mma");
+  } catch {
+    return dateStr;
+  }
+}
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 8;
-  const totalPages = Math.ceil(approvedCourses.length / itemsPerPage) || 1;
-  const paginatedCourses = approvedCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+function mapToApprovedCourse(item: AdminCourseItem): ApprovedCourse {
+  let creatorName = "—";
+  if (typeof item.creator === "object" && item.creator !== null) {
+    creatorName =
+      `${item.creator.first_name || ""} ${item.creator.last_name || ""}`.trim() ||
+      item.creator.name ||
+      item.creator.email ||
+      "—";
+  } else if (typeof item.creator === "string" && item.creator.trim()) {
+    creatorName = item.creator;
+  }
+
+  let reviewerName = "—";
+  let reviewerId = item.id;
+  const anyItem = item as any;
+  if (anyItem.reviewer && typeof anyItem.reviewer === "object") {
+    const r = anyItem.reviewer;
+    reviewerName = `${r.first_name || ""} ${r.last_name || ""}`.trim() || r.name || r.email || "—";
+    reviewerId = r.id || item.id;
+  } else if (typeof anyItem.reviewer === "string" && anyItem.reviewer.trim()) {
+    reviewerName = anyItem.reviewer;
+    reviewerId = anyItem.reviewer_id || item.id;
+  }
+
+  const shortId =
+    item.id.length > 14 ? `SLD-${item.id.slice(0, 6)}...` : item.id;
+
+  const dateReviewedFormatted = formatDisplayDate(
+    anyItem.date_reviewed || item.date_approved || item.updated_datetime
   );
 
-  const activeCourse = activeCourseIndex !== null ? approvedCourses[activeCourseIndex] : null;
+  return {
+    creator: creatorName,
+    courseTitle: item.title || "Untitled Course",
+    courseId: shortId,
+    fullCourseId: item.id,
+    category: item.category?.name || "General",
+    difficultyLevel: item.difficulty_level
+      ? item.difficulty_level.charAt(0).toUpperCase() + item.difficulty_level.slice(1).toLowerCase()
+      : "Intermediate",
+    reviewer: reviewerName,
+    reviewerId,
+    dateReviewed: dateReviewedFormatted,
+    drawerDateReviewed: dateReviewedFormatted,
+    reviewNote: anyItem.review_note || anyItem.reviewer_note || "Approved without notes",
+    raw: item,
+  };
+}
+
+function getVisiblePages(currentPage: number, totalPages: number): (number | string)[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "...", totalPages];
+  }
+  if (currentPage >= totalPages - 3) {
+    return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+}
+
+export const ReviewerApprovedCoursesView = () => {
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [activeCourseIndex, setActiveCourseIndex] = useState<number | null>(null);
+
+  // Filter state
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [reviewer, setReviewer] = useState("");
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Search debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch Staff for Verifier dropdown
+  const { data: staffData } = useGetStaffQuery();
+  const staffList = staffData ?? [];
+
+  const verifierList = useMemo(() => {
+    return staffList.map((s) => ({
+      id: s.id,
+      name: `${s.first_name || ""} ${s.last_name || ""}`.trim() || s.email,
+    }));
+  }, [staffList]);
+
+  const verifierNames = useMemo(() => {
+    return verifierList.map((v) => v.name);
+  }, [verifierList]);
+
+  // Query Approved Courses
+  const { data: approvedData, isLoading, isFetching } = useGetApprovedCoursesQuery({
+    search: debouncedSearch.trim() || undefined,
+    category: category || undefined,
+    reviewer: reviewer || undefined,
+    date_from: fromDate ? format(fromDate, "yyyy-MM-dd") : undefined,
+    date_to: toDate ? format(toDate, "yyyy-MM-dd") : undefined,
+    page: currentPage,
+    size: itemsPerPage,
+  });
+
+  const rawCourses = approvedData?.data?.results ?? [];
+  const paginator = approvedData?.data?.paginator;
+
+  const courses: ApprovedCourse[] = useMemo(() => {
+    return rawCourses.map(mapToApprovedCourse);
+  }, [rawCourses]);
+
+  const totalCount = paginator?.count ?? courses.length;
+  const totalPages = paginator?.total_pages ?? Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
+  const activeCourse =
+    activeCourseIndex !== null && activeCourseIndex < courses.length
+      ? courses[activeCourseIndex]
+      : null;
 
   const allSelected =
-    paginatedCourses.length > 0 && paginatedCourses.every((_, index) => selected[(currentPage - 1) * itemsPerPage + index]);
+    courses.length > 0 && courses.every((c) => selected[c.fullCourseId]);
 
   const toggleAll = (checked: boolean) => {
     const next = { ...selected };
-    paginatedCourses.forEach((_, index) => {
-      next[(currentPage - 1) * itemsPerPage + index] = checked;
+    courses.forEach((c) => {
+      next[c.fullCourseId] = checked;
     });
     setSelected(next);
   };
@@ -177,23 +294,54 @@ export const ReviewerApprovedCoursesView = () => {
   const goToNextCourse = () => {
     setActiveCourseIndex((current) => {
       if (current === null) return current;
-      return Math.min(approvedCourses.length - 1, current + 1);
+      return Math.min(courses.length - 1, current + 1);
     });
   };
+
+  const startEntry = totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endEntry = Math.min(currentPage * itemsPerPage, totalCount);
+  const visiblePages = getVisiblePages(currentPage, Math.max(1, totalPages));
 
   return (
     <>
       <div className="flex w-full flex-col gap-[16px]">
         <ReviewerPendingFilters
+          search={search}
+          onSearchChange={setSearch}
+          category={category}
+          onCategoryChange={(catId) => {
+            setCategory(catId);
+            setCurrentPage(1);
+          }}
           secondaryLabel="Verifier"
-          secondaryOptions={["Osaite Emmanuel", "Ada Johnson", "Micheal Chen"]}
+          secondaryOptions={verifierNames}
+          onSecondaryChange={(verifierName) => {
+            if (!verifierName || verifierName === "All") {
+              setReviewer("");
+            } else {
+              const matched = verifierList.find((v) => v.name === verifierName);
+              setReviewer(matched ? matched.id : verifierName);
+            }
+            setCurrentPage(1);
+          }}
+          fromDate={fromDate}
+          onFromDateChange={(d) => {
+            setFromDate(d);
+            setCurrentPage(1);
+          }}
+          toDate={toDate}
+          onToDateChange={(d) => {
+            setToDate(d);
+            setCurrentPage(1);
+          }}
         />
 
         <div className="flex flex-col gap-[24px]">
-          <div className="w-full overflow-x-auto">
+          <div className="w-full overflow-x-auto rounded-[10px] border border-sd-grey-3 bg-sd-grey-1">
             <div className="w-full min-w-[1163px]">
-              <div className={cn(tableGridClassName, "items-center")}>
-                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-l-[4px] border-b border-sd-grey-3 bg-[#F0F0F0CC]">
+              {/* Table Header */}
+              <div className={cn(tableGridClassName, "items-center border-b border-sd-grey-3 bg-[#F0F0F0CC]")}>
+                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-l-[4px]">
                   <TableCheckbox
                     checked={allSelected}
                     onCheckedChange={toggleAll}
@@ -204,7 +352,7 @@ export const ReviewerApprovedCoursesView = () => {
                   <div
                     key={column}
                     className={cn(
-                      "flex h-[40px] items-center border-b border-sd-grey-3 bg-[#F0F0F0CC] p-[10px]",
+                      "flex h-[40px] items-center p-[10px]",
                       index === columns.length - 1 && "rounded-r-[4px]",
                     )}
                   >
@@ -215,122 +363,172 @@ export const ReviewerApprovedCoursesView = () => {
                 ))}
               </div>
 
-              <div>
-                {paginatedCourses.map((course, index) => {
-                  const globalIdx = (currentPage - 1) * itemsPerPage + index;
-                  return (
+              {/* Table Body */}
+              {isLoading || isFetching ? (
+                <div className="divide-y divide-sd-grey-3">
+                  {Array.from({ length: 6 }).map((_, idx) => (
                     <div
-                      key={`${course.courseId}-${globalIdx}`}
-                      className={cn(
-                        tableGridClassName,
-                        "items-center transition-colors hover:bg-sd-grey-2",
-                      )}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openCourse(globalIdx)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          openCourse(globalIdx);
-                        }
-                      }}
+                      key={`skeleton-${idx}`}
+                      className={cn(tableGridClassName, "items-center px-[12px] py-[14px] animate-pulse")}
                     >
-                      <div className="flex h-[44px] w-[40px] items-center justify-center border-b border-sd-grey-3">
-                        <div onClick={(event) => event.stopPropagation()}>
-                          <TableCheckbox
-                            checked={Boolean(selected[globalIdx])}
-                            onCheckedChange={(checked) =>
-                              setSelected((current) => ({ ...current, [globalIdx]: checked }))
-                            }
-                            label={`Select approved course row ${globalIdx + 1}`}
-                          />
+                      <div className="size-[16px] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[80%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[85%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[70%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[75%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[70%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[75%] rounded bg-sd-grey-3" />
+                      <div className="h-[16px] w-[40%] rounded bg-sd-grey-3" />
+                    </div>
+                  ))}
+                </div>
+              ) : courses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-[64px] text-center">
+                  <p className="text-[16px] font-medium text-sd-grey-12">
+                    No approved courses found
+                  </p>
+                  <p className="mt-[6px] text-[14px] text-sd-muted-text">
+                    There are no courses matching your selected filters.
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-sd-grey-3">
+                  {courses.map((course, index) => {
+                    return (
+                      <div
+                        key={`${course.fullCourseId}-${index}`}
+                        className={cn(
+                          tableGridClassName,
+                          "items-center transition-colors hover:bg-sd-grey-2 cursor-pointer",
+                        )}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openCourse(index)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openCourse(index);
+                          }
+                        }}
+                      >
+                        <div className="flex h-[44px] w-[40px] items-center justify-center">
+                          <div onClick={(event) => event.stopPropagation()}>
+                            <TableCheckbox
+                              checked={Boolean(selected[course.fullCourseId])}
+                              onCheckedChange={(checked) =>
+                                setSelected((current) => ({
+                                  ...current,
+                                  [course.fullCourseId]: checked,
+                                }))
+                              }
+                              label={`Select approved course row ${course.courseTitle}`}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <TableCell>{course.creator}</TableCell>
-                      <TableCell>{course.courseTitle}</TableCell>
-                      <TableCell>
-                        <div className="flex min-w-0 items-center gap-[10px]">
-                          <span className="truncate">{course.courseId}</span>
+                        <TableCell>{course.creator}</TableCell>
+                        <TableCell className="font-medium text-sd-grey-12">
+                          {course.courseTitle}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex min-w-0 items-center gap-[10px]">
+                            <span className="truncate">{course.courseId}</span>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void copyCourseId(course.fullCourseId || course.courseId);
+                              }}
+                              className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12 cursor-pointer"
+                              aria-label={`Copy ${course.courseId}`}
+                            >
+                              <Copy size={14} variant="Linear" color="currentColor" />
+                            </button>
+                          </div>
+                        </TableCell>
+                        <TableCell>{course.category}</TableCell>
+                        <TableCell>{course.reviewer}</TableCell>
+                        <TableCell allowWrap>{course.dateReviewed}</TableCell>
+                        <div className="flex h-[44px] items-center justify-center p-[10px]">
                           <button
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
-                              void copyCourseId(course.courseId);
+                              openCourse(index);
                             }}
-                            className="flex size-[14px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
-                            aria-label={`Copy ${course.courseId}`}
+                            className="flex size-[24px] items-center justify-center text-sd-grey-12 cursor-pointer"
+                            aria-label={`Open actions for ${course.courseTitle}`}
                           >
-                            <Copy size={14} variant="Linear" color="currentColor" />
+                            <More size={24} variant="Linear" color="currentColor" />
                           </button>
                         </div>
-                      </TableCell>
-                      <TableCell>{course.category}</TableCell>
-                      <TableCell>{course.reviewer}</TableCell>
-                      <TableCell allowWrap>{course.dateReviewed}</TableCell>
-                      <div className="flex h-[44px] items-center justify-center border-b border-sd-grey-3 p-[10px]">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openCourse(globalIdx);
-                          }}
-                          className="flex size-[24px] items-center justify-center text-sd-grey-12"
-                          aria-label={`Open actions for ${course.courseTitle}`}
-                        >
-                          <More size={24} variant="Linear" color="currentColor" />
-                        </button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Pagination Controls */}
           <div className="flex min-h-[40px] flex-col gap-[16px] md:flex-row md:items-center md:justify-between">
             <div className="flex h-[40px] w-fit items-center justify-center rounded-full border border-sd-grey-4 px-[20px] py-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-              Showing {approvedCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, approvedCourses.length)} of {approvedCourses.length} entries
+              Showing {startEntry} to {endEntry} of {totalCount} entries
             </div>
 
-            <div className="flex items-center gap-[15px]">
+            <div className="flex items-center gap-[6px]">
               <button
                 type="button"
-                disabled={currentPage === 1}
+                disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 className={cn(
-                  "flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] cursor-pointer border-0 bg-transparent",
-                  currentPage === 1 ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
+                  "flex h-[32px] items-center justify-center px-[12px] py-[6px] text-[14px] font-normal transition-colors cursor-pointer border-0 bg-transparent",
+                  currentPage <= 1
+                    ? "text-sd-grey-11/40 cursor-not-allowed"
+                    : "text-sd-grey-11 hover:text-sd-grey-12",
                 )}
               >
                 Previous
               </button>
-              <div className="flex items-center gap-[7px]">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  const active = page === currentPage;
+              <div className="flex items-center gap-[4px]">
+                {visiblePages.map((p, idx) => {
+                  if (p === "...") {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="flex size-[32px] items-center justify-center text-[14px] text-sd-grey-11"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(p);
+                  const active = pageNum === currentPage;
                   return (
                     <button
-                      key={page}
+                      key={pageNum}
                       type="button"
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "flex size-[32px] items-center justify-center rounded-[6px] border px-[8px] py-[2px] text-center text-[14px] font-normal leading-[20px] cursor-pointer",
+                        "flex size-[32px] items-center justify-center rounded-[6px] border text-[14px] font-normal transition-colors cursor-pointer",
                         active
                           ? "border-sd-blue bg-sd-blue text-sd-grey-1"
                           : "border-sd-grey-6 bg-sd-grey-1 text-sd-grey-11 hover:bg-sd-grey-2",
                       )}
                     >
-                      {page}
+                      {pageNum}
                     </button>
                   );
                 })}
               </div>
               <button
                 type="button"
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 className={cn(
-                  "flex h-[32px] items-center justify-center p-[10px] text-[14px] font-normal leading-[20px] cursor-pointer border-0 bg-transparent",
-                  currentPage === totalPages ? "text-sd-grey-11/40 cursor-not-allowed" : "text-sd-grey-11 hover:text-sd-grey-12"
+                  "flex h-[32px] items-center justify-center px-[12px] py-[6px] text-[14px] font-normal transition-colors cursor-pointer border-0 bg-transparent",
+                  currentPage >= totalPages
+                    ? "text-sd-grey-11/40 cursor-not-allowed"
+                    : "text-sd-grey-11 hover:text-sd-grey-12",
                 )}
               >
                 Next
@@ -349,7 +547,7 @@ export const ReviewerApprovedCoursesView = () => {
         onPrevious={goToPreviousCourse}
         onNext={goToNextCourse}
         canPrevious={activeCourseIndex !== null && activeCourseIndex > 0}
-        canNext={activeCourseIndex !== null && activeCourseIndex < approvedCourses.length - 1}
+        canNext={activeCourseIndex !== null && activeCourseIndex < courses.length - 1}
       />
     </>
   );
@@ -378,7 +576,7 @@ const DrawerDetailRow = ({
         <button
           type="button"
           onClick={onCopy}
-          className="flex size-[20px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12"
+          className="flex size-[20px] shrink-0 items-center justify-center text-sd-grey-11 transition-colors hover:text-sd-grey-12 cursor-pointer"
           aria-label={`Copy ${label}`}
         >
           <Copy size={20} variant="Linear" color="currentColor" />
@@ -406,11 +604,21 @@ const ApprovedCourseInfoDrawer = ({
   canNext: boolean;
 }) => {
   const router = useRouter();
-  const [publishModalOpen, setPublishModalOpen] = React.useState(false);
-  const [reviewPricesModalOpen, setReviewPricesModalOpen] = React.useState(false);
-  const [reviewAndPublishModalOpen, setReviewAndPublishModalOpen] = React.useState(false);
-  const [successModalOpen, setSuccessModalOpen] = React.useState(false);
-  const [selectedPublishChannels, setSelectedPublishChannels] = React.useState<Record<string, boolean>>({});
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [reviewPricesModalOpen, setReviewPricesModalOpen] = useState(false);
+  const [reviewAndPublishModalOpen, setReviewAndPublishModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [selectedPublishChannels, setSelectedPublishChannels] = useState<Record<string, boolean>>({});
+  const [savedPrices, setSavedPrices] = useState<Record<string, string>>({
+    SoluDesk: "149.00",
+    Coursera: "160.00",
+    Udemy: "190.00",
+  });
+  const [savedModels, setSavedModels] = useState<Record<string, string>>({
+    SoluDesk: "ONE_TIME",
+    Coursera: "ONE_TIME",
+    Udemy: "ONE_TIME",
+  });
 
   if (!course) return null;
 
@@ -446,7 +654,7 @@ const ApprovedCourseInfoDrawer = ({
                 onClick={onPrevious}
                 disabled={!canPrevious}
                 className={cn(
-                  "flex size-[31px] items-center justify-center text-sd-grey-11",
+                  "flex size-[31px] items-center justify-center text-sd-grey-11 cursor-pointer",
                   !canPrevious && "cursor-not-allowed opacity-40",
                 )}
                 aria-label="Previous approved course"
@@ -459,7 +667,7 @@ const ApprovedCourseInfoDrawer = ({
                 onClick={onNext}
                 disabled={!canNext}
                 className={cn(
-                  "flex size-[31px] items-center justify-center text-sd-grey-11",
+                  "flex size-[31px] items-center justify-center text-sd-grey-11 cursor-pointer",
                   !canNext && "cursor-not-allowed opacity-40",
                 )}
                 aria-label="Next approved course"
@@ -470,7 +678,7 @@ const ApprovedCourseInfoDrawer = ({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-[32px] items-center justify-center rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 text-sd-grey-11 transition-colors hover:bg-sd-grey-2"
+              className="flex size-[32px] items-center justify-center rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 text-sd-grey-11 transition-colors hover:bg-sd-grey-2 cursor-pointer"
               aria-label="Close course information"
             >
               <CloseCircle size={20} variant="Linear" color="currentColor" />
@@ -484,9 +692,9 @@ const ApprovedCourseInfoDrawer = ({
           <button
             type="button"
             onClick={() =>
-              router.push(`${ReviewerRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.courseId)}`)
+              router.push(`${ReviewerRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.fullCourseId || course.courseId)}`)
             }
-            className="flex h-[44px] w-fit items-center justify-center gap-[8px] rounded-[8px] border border-sd-grey-6 bg-sd-grey-1 px-[24px] py-[12px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2"
+            className="flex h-[44px] w-fit items-center justify-center gap-[8px] rounded-[8px] border border-sd-grey-6 bg-sd-grey-1 px-[24px] py-[12px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-12 transition-colors hover:bg-sd-grey-2 cursor-pointer"
           >
             <span>Preview course</span>
             <ArrowRight3Icon size={24} />
@@ -538,7 +746,7 @@ const ApprovedCourseInfoDrawer = ({
         <button
           type="button"
           onClick={() => setPublishModalOpen(true)}
-          className="flex h-[44px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-sd-blue bg-sd-grey-1 px-[24px] py-[12px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-blue transition-colors hover:bg-sd-blue-hover"
+          className="flex h-[44px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-sd-blue bg-sd-grey-1 px-[24px] py-[12px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-blue transition-colors hover:bg-sd-blue-hover hover:text-white cursor-pointer"
         >
           <span>Review Prices</span>
           <ArrowRight3Icon size={24} />
@@ -559,7 +767,9 @@ const ApprovedCourseInfoDrawer = ({
         onOpenChange={setReviewPricesModalOpen}
         selectedChannels={selectedPublishChannels}
         courseId={course.fullCourseId || course.courseId}
-        onContinue={() => {
+        onContinue={(prices, models) => {
+          setSavedPrices(prices);
+          setSavedModels(models);
           setReviewPricesModalOpen(false);
           setReviewAndPublishModalOpen(true);
         }}
@@ -568,6 +778,8 @@ const ApprovedCourseInfoDrawer = ({
         isOpen={reviewAndPublishModalOpen}
         onOpenChange={setReviewAndPublishModalOpen}
         selectedChannels={selectedPublishChannels}
+        learnerPrices={savedPrices}
+        channelModels={savedModels}
         courseId={course.fullCourseId || course.courseId}
         onEdit={() => {
           setReviewAndPublishModalOpen(false);
@@ -580,7 +792,12 @@ const ApprovedCourseInfoDrawer = ({
       />
       <PublishSuccessModal
         isOpen={successModalOpen}
-        onOpenChange={setSuccessModalOpen}
+        onOpenChange={(open) => {
+          setSuccessModalOpen(open);
+          if (!open) {
+            onOpenChange(false);
+          }
+        }}
       />
     </SideDrawer>
   );
@@ -610,7 +827,9 @@ const PublishChannelModal = ({
   onOpenChange: (open: boolean) => void;
   onContinue: (channels: Record<string, boolean>) => void;
 }) => {
-  const [selectedChannels, setSelectedChannels] = React.useState<Record<string, boolean>>({});
+  const [selectedChannels, setSelectedChannels] = useState<Record<string, boolean>>({
+    SoluDesk: true,
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -631,7 +850,7 @@ const PublishChannelModal = ({
           <DialogClose asChild>
             <button
               type="button"
-              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-sd-grey-3 text-sd-grey-9 transition-colors hover:bg-sd-grey-2"
+              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-sd-grey-3 text-sd-grey-9 transition-colors hover:bg-sd-grey-2 cursor-pointer"
               aria-label="Close publish channel"
             >
               <XIcon size={20} />
@@ -665,13 +884,13 @@ const PublishChannelModal = ({
           ))}
         </div>
 
-        <div className="mt-[40px] flex items-center gap-[12px]">
+        <div className="mt-[48px] flex items-center justify-end gap-[12px]">
           <Button
             type="button"
             variant="outline"
             size="app"
             onClick={() => onOpenChange(false)}
-            className="w-[132px] font-normal"
+            className="w-[116px] font-normal cursor-pointer"
           >
             Cancel
           </Button>
@@ -680,7 +899,7 @@ const PublishChannelModal = ({
             variant="app-primary"
             size="app"
             onClick={() => onContinue(selectedChannels)}
-            className="w-[133px] font-normal"
+            className="w-[116px] font-normal cursor-pointer"
           >
             Continue
           </Button>
@@ -690,26 +909,12 @@ const PublishChannelModal = ({
   );
 };
 
-const TableCell = ({
-  children,
-  className,
-  allowWrap = false,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  allowWrap?: boolean;
-}) => (
-  <div className={cn("flex h-[44px] items-center border-b border-sd-grey-3 p-[10px]", className)}>
-    <span
-      className={cn(
-        "min-w-0 text-[14px] font-normal leading-[20px] text-sd-grey-11",
-        allowWrap ? "whitespace-nowrap" : "truncate",
-      )}
-    >
-      {children}
-    </span>
-  </div>
-);
+const PRICING_MODELS = [
+  { label: "One-time", value: "ONE_TIME" },
+  { label: "Subscription", value: "SUBSCRIPTION" },
+  { label: "Promotional", value: "PROMOTIONAL" },
+  { label: "B2B only", value: "B2B_ONLY" },
+];
 
 const ReviewPricesModal = ({
   isOpen,
@@ -722,32 +927,90 @@ const ReviewPricesModal = ({
   onOpenChange: (open: boolean) => void;
   selectedChannels: Record<string, boolean>;
   courseId?: string;
-  onContinue: () => void;
+  onContinue: (prices: Record<string, string>, models: Record<string, string>) => void;
 }) => {
-  const activeChannelNames = Object.entries(selectedChannels)
-    .filter(([_, isSelected]) => isSelected)
-    .map(([name]) => name);
+  const activeChannelNames = useMemo(
+    () =>
+      Object.entries(selectedChannels)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([name]) => name),
+    [selectedChannels],
+  );
 
-  const [activeTab, setActiveTab] = React.useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("SoluDesk");
 
-  React.useEffect(() => {
-    if (isOpen && activeChannelNames.length > 0 && !activeChannelNames.includes(activeTab)) {
+  useEffect(() => {
+    if (activeChannelNames.length > 0 && !activeChannelNames.includes(activeTab)) {
       setActiveTab(activeChannelNames[0]);
     }
-  }, [isOpen, activeChannelNames, activeTab]);
+  }, [activeChannelNames, activeTab]);
 
-  const [pricingModel, setPricingModel] = React.useState("One-time");
-  const [learnerPrices, setLearnerPrices] = React.useState<Record<string, string>>({
+  const [learnerPrices, setLearnerPrices] = useState<Record<string, string>>({
     SoluDesk: "149.00",
     Coursera: "160.00",
     Udemy: "190.00",
   });
 
-  const { data: serverPricesData } = useGetCourseReviewPricesQuery(courseId!, {
+  const [channelModels, setChannelModels] = useState<Record<string, string>>({
+    SoluDesk: "ONE_TIME",
+    Coursera: "ONE_TIME",
+    Udemy: "ONE_TIME",
+  });
+
+  const { data: serverPricesData, isLoading: isLoadingPrices } = useGetCourseReviewPricesQuery(courseId!, {
     skip: !isOpen || !courseId,
   });
 
   const [savePricesMutation, { isLoading: isSaving }] = useSaveCoursePricesMutation();
+
+  const serverResults: CoursePriceReviewItem[] = useMemo(() => {
+    if (!serverPricesData?.data?.results) return [];
+    return Array.isArray(serverPricesData.data.results)
+      ? (serverPricesData.data.results as any[]).flat()
+      : [];
+  }, [serverPricesData]);
+
+  useEffect(() => {
+    if (serverResults.length > 0) {
+      const newPrices: Record<string, string> = { ...learnerPrices };
+      const newModels: Record<string, string> = { ...channelModels };
+      serverResults.forEach((item: CoursePriceReviewItem) => {
+        const chKey = (item.channel || "").toUpperCase();
+        const channelName = chKey.includes("SOLU")
+          ? "SoluDesk"
+          : chKey.includes("COUR")
+          ? "Coursera"
+          : "Udemy";
+        if (item.learner_price) {
+          newPrices[channelName] = item.learner_price;
+        }
+        if (item.model) {
+          const m = item.model.toUpperCase().replace(/[\s-]/g, "_");
+          if (m.includes("SUBSCRIPTION")) newModels[channelName] = "SUBSCRIPTION";
+          else if (m.includes("PROMOTIONAL")) newModels[channelName] = "PROMOTIONAL";
+          else if (m.includes("B2B")) newModels[channelName] = "B2B_ONLY";
+          else newModels[channelName] = "ONE_TIME";
+        }
+      });
+      setLearnerPrices(newPrices);
+      setChannelModels(newModels);
+    }
+  }, [serverResults]);
+
+  const currentServerItem = useMemo(() => {
+    const chKey = activeTab.toUpperCase();
+    return serverResults.find((r: CoursePriceReviewItem) =>
+      r.channel?.toUpperCase().includes(chKey.includes("SOLU") ? "SOLU" : chKey.includes("COUR") ? "COUR" : "UDEM")
+    );
+  }, [serverResults, activeTab]);
+
+  const getModelLabel = (modelVal?: string) => {
+    const m = (modelVal || "").toUpperCase().replace(/[\s-]/g, "_");
+    if (m.includes("SUBSCRIPTION")) return "Subscription";
+    if (m.includes("PROMOTIONAL")) return "Promotional";
+    if (m.includes("B2B")) return "B2B only";
+    return "One-time purchase";
+  };
 
   const handleSaveAndContinue = async () => {
     if (courseId) {
@@ -759,11 +1022,25 @@ const ReviewPricesModal = ({
             : chKey.includes("COUR")
             ? "COURSERA"
             : "UDEMY";
+          const match = serverResults.find(
+            (r) => r.channel?.toUpperCase() === channelUpper,
+          );
           return {
             channel: channelUpper,
             learner_price: learnerPrices[ch] || "149.00",
-            model: "ONE_TIME",
-            approval_rate: ch === "SoluDesk" ? "Published within 60 seconds" : "Published within 10 - 15 minutes",
+            approval_rate:
+              match?.approval_rate ||
+              (ch === "SoluDesk" ? "Published within 60 seconds" : "Published within 10 - 15 minutes"),
+            mie_suggestion: match?.mie_suggestion || (ch === "SoluDesk" ? "140.00" : "100.00"),
+            model: channelModels[ch] || match?.model || "ONE_TIME",
+            platform_revenue_per_enrollment:
+              match?.platform_revenue_per_enrollment || learnerPrices[ch] || "149.00",
+            mie_explanation:
+              match?.mie_explanation ||
+              `$${learnerPrices[ch] || "149"} is the MIE-suggested price based on competitor analysis.`,
+            course_fee_percent: match?.course_fee_percent,
+            promotional_pricing: match?.promotional_pricing,
+            comparable_courses: match?.comparable_courses || [],
           };
         });
         await savePricesMutation({ id: courseId, body: { distribution_channels: payloadChannels } }).unwrap();
@@ -773,73 +1050,100 @@ const ReviewPricesModal = ({
         toast.error(message ?? "Could not save prices");
       }
     }
-    onContinue();
+    onContinue(learnerPrices, channelModels);
   };
 
   const channelData = {
     SoluDesk: {
       channelTitle: "Channel A (SoluDesks LMS)",
-      approvalRate: "Approval Rate: Published within 60 seconds",
-      inputDefault: "₦149.00",
-      suggestionText: "MIE Suggestion: ₦140",
+      approvalRate: currentServerItem?.approval_rate
+        ? `Approval Rate: ${currentServerItem.approval_rate}`
+        : "Approval Rate: Published within 60 seconds",
+      mieSuggestion: currentServerItem?.mie_suggestion
+        ? `MIE Suggestion: ₦${currentServerItem.mie_suggestion}`
+        : "MIE Suggestion: ₦140",
       showInfoBox: true,
       feesTitle: "COURSE FEES",
       fees: [
-        { label: "Learner fee", value: "₦149.00" },
-        { label: "Creator payout (Fixed)", value: "₦150.00" },
-        { label: "Platform revenue per enrolment", value: "₦149.00" },
-        { label: "Model", value: "One-time purchase" }
+        { label: "Learner fee", value: `₦${currentServerItem?.learner_fee || learnerPrices.SoluDesk || "149.00"}` },
+        { label: "Creator payout (Fixed)", value: `₦${currentServerItem?.creator_payout_fixed || "150.00"}` },
+        { label: "Platform revenue per enrolment", value: `₦${currentServerItem?.platform_revenue_per_enrollment || learnerPrices.SoluDesk || "149.00"}` },
+        { label: "Model", value: getModelLabel(channelModels.SoluDesk || currentServerItem?.model) },
       ],
       comparableTitle: "RELATED COURSES",
-      relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "₦150" },
-        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
-      ]
+      relatedCourses: currentServerItem?.comparable_courses?.length
+        ? currentServerItem.comparable_courses.map((c) => ({
+            name: c.course_title,
+            level: c.difficulty_level,
+            price: `₦${c.learner_price}`,
+          }))
+        : [
+            { name: "Modern computing language", level: "Beginner", price: "₦150" },
+            { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+            { name: "Computer Essentials", level: "Intermediate", price: "₦160" },
+          ],
     },
     Coursera: {
       channelTitle: "Channel C (Coursera Marketplace)",
-      approvalRate: "Approval Rate: Published within 10 - 15 minuites",
-      inputDefault: "₦0.00",
-      suggestionText: "MIE Suggestion: ₦100",
+      approvalRate: currentServerItem?.approval_rate
+        ? `Approval Rate: ${currentServerItem.approval_rate}`
+        : "Approval Rate: Published within 10 - 15 minuites",
+      mieSuggestion: currentServerItem?.mie_suggestion
+        ? `MIE Suggestion: ₦${currentServerItem.mie_suggestion}`
+        : "MIE Suggestion: ₦100",
       showInfoBox: false,
       feesTitle: "COURSE FEES ON COURSERA",
       fees: [
-        { label: "Course fee", value: "32% of net revenue" },
-        { label: "Promotional pricing", value: "₦150.00" },
-        { label: "Platform revenue per enrolment", value: "₦149.00" },
-        { label: "Model", value: "One-time purchase" }
+        { label: "Course fee", value: currentServerItem?.course_fee_percent ? `${currentServerItem.course_fee_percent}% of net revenue` : "32% of net revenue" },
+        { label: "Promotional pricing", value: `₦${currentServerItem?.promotional_pricing || "150.00"}` },
+        { label: "Platform revenue per enrolment", value: `₦${currentServerItem?.platform_revenue_per_enrollment || learnerPrices.Coursera || "149.00"}` },
+        { label: "Model", value: getModelLabel(channelModels.Coursera || currentServerItem?.model) },
       ],
       comparableTitle: "COMPARABLE COURSES ON COURSERA",
-      relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "₦100" },
-        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
-      ]
+      relatedCourses: currentServerItem?.comparable_courses?.length
+        ? currentServerItem.comparable_courses.map((c) => ({
+            name: c.course_title,
+            level: c.difficulty_level,
+            price: `₦${c.learner_price}`,
+          }))
+        : [
+            { name: "Modern computing language", level: "Beginner", price: "₦100" },
+            { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+            { name: "Computer Essentials", level: "Intermediate", price: "₦160" },
+          ],
     },
     Udemy: {
       channelTitle: "Channel B (Udemy Marketplace)",
-      approvalRate: "Approval Rate: Published within 10 - 15 minuites",
-      inputDefault: "₦0.00",
-      suggestionText: "MIE Suggestion: ₦100",
+      approvalRate: currentServerItem?.approval_rate
+        ? `Approval Rate: ${currentServerItem.approval_rate}`
+        : "Approval Rate: Published within 10 - 15 minuites",
+      mieSuggestion: currentServerItem?.mie_suggestion
+        ? `MIE Suggestion: ₦${currentServerItem.mie_suggestion}`
+        : "MIE Suggestion: ₦100",
       showInfoBox: false,
       feesTitle: "COURSE FEES ON UDEMY",
       fees: [
-        { label: "Course fee", value: "32% of net revenue" },
-        { label: "Promotional pricing", value: "₦150.00" },
-        { label: "Platform revenue per enrolment", value: "₦149.00" },
-        { label: "Model", value: "One-time purchase" }
+        { label: "Course fee", value: currentServerItem?.course_fee_percent ? `${currentServerItem.course_fee_percent}% of net revenue` : "32% of net revenue" },
+        { label: "Promotional pricing", value: `₦${currentServerItem?.promotional_pricing || "150.00"}` },
+        { label: "Platform revenue per enrolment", value: `₦${currentServerItem?.platform_revenue_per_enrollment || learnerPrices.Udemy || "149.00"}` },
+        { label: "Model", value: getModelLabel(channelModels.Udemy || currentServerItem?.model) },
       ],
       comparableTitle: "COMPARABLE COURSES ON UDEMY",
-      relatedCourses: [
-        { name: "Modern computing language", level: "Beginner", price: "₦100" },
-        { name: "Introduction to computing", level: "Advanced", price: "₦190" },
-        { name: "Computer Essentials", level: "Intermediate", price: "₦160" }
-      ]
-    }
+      relatedCourses: currentServerItem?.comparable_courses?.length
+        ? currentServerItem.comparable_courses.map((c) => ({
+            name: c.course_title,
+            level: c.difficulty_level,
+            price: `₦${c.learner_price}`,
+          }))
+        : [
+            { name: "Modern computing language", level: "Beginner", price: "₦100" },
+            { name: "Introduction to computing", level: "Advanced", price: "₦190" },
+            { name: "Computer Essentials", level: "Intermediate", price: "₦160" },
+          ],
+    },
   };
 
-  const currentData = channelData[activeTab as keyof typeof channelData] || channelData.Coursera;
+  const currentData = channelData[activeTab as keyof typeof channelData] || channelData.SoluDesk;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -860,7 +1164,7 @@ const ReviewPricesModal = ({
           <DialogClose asChild>
             <button
               type="button"
-              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[#D9D9D9] text-[#888888] transition-colors hover:bg-sd-grey-2"
+              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[#D9D9D9] text-[#888888] transition-colors hover:bg-sd-grey-2 cursor-pointer"
               aria-label="Close review prices"
             >
               <XIcon size={20} />
@@ -883,7 +1187,7 @@ const ReviewPricesModal = ({
                   type="button"
                   onClick={() => setActiveTab(name)}
                   className={cn(
-                    "border-b-[2px] pb-[12px] pt-[8px] text-[14px] font-medium leading-[20px] transition-colors",
+                    "border-b-[2px] pb-[12px] pt-[8px] text-[14px] font-medium leading-[20px] transition-colors cursor-pointer",
                     isActive
                       ? "border-sd-grey-12 text-sd-grey-12"
                       : "border-transparent text-sd-reviewer-muted hover:text-sd-grey-11",
@@ -898,111 +1202,133 @@ const ReviewPricesModal = ({
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-[24px] py-[24px]">
-          {/* Header context */}
-          <div className="flex flex-col gap-[8px]">
-            <span className="text-[14px] font-medium leading-[20px] text-sd-grey-12">
-              {currentData.channelTitle}
-            </span>
-            <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
-              {currentData.approvalRate}
-            </span>
-          </div>
-
-          {/* Form */}
-          <div className="mt-[24px] flex flex-col">
-            <label className="mb-[8px] text-[14px] font-normal leading-[20px] text-sd-grey-12">
-              Learner price
-            </label>
-            <input
-              type="text"
-              key={activeTab} // re-mount to reset default value
-              defaultValue={currentData.inputDefault}
-              className="flex h-[44px] w-full rounded-[8px] border border-[#D9D9D9] bg-white px-[12px] text-[14px] font-normal leading-[20px] text-sd-grey-12 outline-none focus:border-sd-blue"
-            />
-            <div className="mt-[12px] inline-flex w-fit items-center rounded-[4px] bg-[#EBF3FF] px-[8px] py-[4px] text-[12px] font-medium leading-[16px] text-sd-blue">
-              {currentData.suggestionText}
+          {isLoadingPrices ? (
+            <div className="flex flex-col gap-[16px] py-[32px] animate-pulse">
+              <div className="h-[20px] w-[200px] rounded bg-sd-grey-3" />
+              <div className="h-[44px] w-full rounded bg-sd-grey-3" />
             </div>
-          </div>
-
-          <div className="mt-[24px] flex flex-wrap gap-[12px]">
-            {["One-time", "Subscription", "Promotional", "B2B only"].map((model) => {
-              const isActive = pricingModel === model;
-              return (
-                <button
-                  key={model}
-                  type="button"
-                  onClick={() => setPricingModel(model)}
-                  className={cn(
-                    "flex h-[36px] items-center justify-center rounded-[8px] px-[16px] text-[14px] font-normal leading-[20px] transition-colors",
-                    isActive
-                      ? "bg-sd-blue text-white"
-                      : "border border-[#D9D9D9] bg-white text-sd-grey-11 hover:bg-sd-grey-2",
-                  )}
-                >
-                  {model}
-                </button>
-              );
-            })}
-          </div>
-
-          {currentData.showInfoBox && (
-            <div className="mt-[24px] flex items-start gap-[12px] rounded-[8px] border border-[#D1E0FF] bg-[#F0F5FF] p-[16px]">
-              <div className="flex size-[20px] shrink-0 items-center justify-center rounded-full bg-sd-blue text-white">
-                <span className="text-[12px] font-bold">!</span>
+          ) : (
+            <>
+              {/* Header context */}
+              <div className="flex flex-col gap-[8px]">
+                <span className="text-[14px] font-medium leading-[20px] text-sd-grey-12">
+                  {currentData.channelTitle}
+                </span>
+                <span className="text-[12px] font-normal leading-[16px] text-sd-reviewer-muted">
+                  {currentData.approvalRate}
+                </span>
               </div>
-              <p className="text-[12px] font-normal leading-[16px] text-[#4B5563]">
-                <span className="font-bold text-sd-grey-12">₦149</span> is the MIE-suggested
-                price based on competitor analysis across Udemy and Coursera. Advanced
-                leadership courses in this price range average 890 enrollments on the SoluDesks
-                LMS. Pricing above ₦159 is associated with a measurable drop in conversion rate
-                for this category.
-              </p>
-            </div>
-          )}
 
-          {/* COURSE FEES */}
-          <div className="mt-[32px]">
-            <h3 className="mb-[16px] text-[12px] font-normal uppercase leading-[16px] text-sd-grey-12">
-              {currentData.feesTitle}
-            </h3>
-            <div className="flex flex-col gap-[16px] text-[14px] font-normal leading-[20px]">
-              {currentData.fees.map((fee, idx) => (
-                <div key={idx} className="flex justify-between gap-[16px]">
-                  <span className="text-[#888888]">{fee.label}</span>
-                  <span className="text-right text-sd-grey-12">{fee.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RELATED COURSES */}
-          <div className="mt-[32px] border-t border-[#D9D9D9] pt-[32px]">
-            <h3 className="mb-[16px] text-[12px] font-normal uppercase leading-[16px] text-sd-grey-12">
-              {currentData.comparableTitle}
-            </h3>
-            <div className="flex flex-col gap-[16px] text-[14px] font-normal leading-[20px]">
-              {currentData.relatedCourses.map((course, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_120px_auto] items-center gap-[24px]">
-                  <span className="min-w-0 truncate text-[#888888]">
-                    {course.name}
+              {/* Form */}
+              <div className="mt-[24px] flex flex-col">
+                <label className="mb-[8px] text-[14px] font-normal leading-[20px] text-sd-grey-12">
+                  Learner price
+                </label>
+                <div className="relative">
+                  <span className="absolute left-[12px] top-1/2 -translate-y-1/2 text-[14px] text-sd-grey-12">
+                    ₦
                   </span>
-                  <span className="text-[#888888]">{course.level}</span>
-                  <span className="w-[60px] text-right text-sd-grey-12">{course.price}</span>
+                  <input
+                    type="text"
+                    value={learnerPrices[activeTab] ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.]/g, "");
+                      setLearnerPrices((prev) => ({ ...prev, [activeTab]: val }));
+                    }}
+                    placeholder="0.00"
+                    className="flex h-[44px] w-full rounded-[8px] border border-[#D9D9D9] bg-white pl-[28px] pr-[12px] text-[14px] font-normal leading-[20px] text-sd-grey-12 outline-none focus:border-sd-blue"
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
+                <span className="mt-[8px] text-[12px] font-normal leading-[16px] text-[#888888]">
+                  {currentData.mieSuggestion}
+                </span>
+              </div>
+
+              {/* Pricing Model Pills */}
+              <div className="mt-[24px] flex flex-wrap gap-[12px]">
+                {PRICING_MODELS.map((model) => {
+                  const currentModel = channelModels[activeTab] || "ONE_TIME";
+                  const isActive = currentModel === model.value;
+                  return (
+                    <button
+                      key={model.value}
+                      type="button"
+                      onClick={() =>
+                        setChannelModels((prev) => ({ ...prev, [activeTab]: model.value }))
+                      }
+                      className={cn(
+                        "flex h-[36px] items-center justify-center rounded-[8px] px-[16px] text-[14px] font-normal leading-[20px] transition-colors cursor-pointer",
+                        isActive
+                          ? "bg-sd-blue text-white"
+                          : "border border-[#D9D9D9] bg-white text-sd-grey-11 hover:bg-sd-grey-2",
+                      )}
+                    >
+                      {model.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Info Box */}
+              {currentData.showInfoBox && (
+                <div className="mt-[24px] flex items-start gap-[12px] rounded-[8px] bg-sd-blue-light p-[12px]">
+                  <span className="text-[14px] font-normal leading-[20px] text-sd-blue">
+                    This course is being reviewed by a human reviewer. Once approved, it will be published to the SoluDesk learning hub within 60 seconds.
+                  </span>
+                </div>
+              )}
+
+              {/* Course Fees Section */}
+              <div className="mt-[32px] flex flex-col">
+                <h3 className="mb-[16px] text-[14px] font-semibold leading-[20px] text-sd-grey-12">
+                  {currentData.feesTitle}
+                </h3>
+                <div className="flex flex-col">
+                  {currentData.fees.map((fee, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between border-b border-[#F0F0F0] py-[16px] last:border-b-0"
+                    >
+                      <span className="text-[14px] font-normal text-[#4B5563]">{fee.label}</span>
+                      <span className="text-[14px] font-normal text-sd-grey-12">{fee.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comparable / Related Courses */}
+              <div className="mt-[32px] flex flex-col">
+                <h3 className="mb-[16px] text-[14px] font-semibold leading-[20px] text-sd-grey-12">
+                  {currentData.comparableTitle}
+                </h3>
+                <div className="flex flex-col">
+                  {currentData.relatedCourses.map((courseItem, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between border-b border-[#F0F0F0] py-[16px] last:border-b-0"
+                    >
+                      <div className="flex flex-col gap-[4px]">
+                        <span className="text-[14px] font-normal text-sd-grey-12">{courseItem.name}</span>
+                        <span className="text-[12px] font-normal text-[#888888]">{courseItem.level}</span>
+                      </div>
+                      <span className="text-[14px] font-normal text-sd-grey-12">{courseItem.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer Buttons */}
-        <div className="flex shrink-0 items-center gap-[12px] p-[24px] pt-[0px]">
+        <div className="flex shrink-0 items-center gap-[12px] border-t border-[#D9D9D9] p-[24px] pt-[16px]">
           <Button
             type="button"
             variant="outline"
             size="app"
             disabled={isSaving}
             onClick={() => onOpenChange(false)}
-            className="w-[132px] font-normal"
+            className="w-[116px] font-normal cursor-pointer"
           >
             Cancel
           </Button>
@@ -1012,7 +1338,7 @@ const ReviewPricesModal = ({
             size="app"
             disabled={isSaving}
             onClick={handleSaveAndContinue}
-            className="w-[132px] font-normal"
+            className="w-[132px] font-normal cursor-pointer"
           >
             {isSaving ? "Saving..." : "Continue"}
           </Button>
@@ -1026,6 +1352,8 @@ const ReviewAndPublishModal = ({
   isOpen,
   onOpenChange,
   selectedChannels,
+  learnerPrices,
+  channelModels,
   courseId,
   onEdit,
   onPublish,
@@ -1033,13 +1361,19 @@ const ReviewAndPublishModal = ({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedChannels: Record<string, boolean>;
+  learnerPrices?: Record<string, string>;
+  channelModels?: Record<string, string>;
   courseId?: string;
   onEdit: () => void;
   onPublish: () => void;
 }) => {
-  const activeChannelNames = Object.entries(selectedChannels)
-    .filter(([_, isSelected]) => isSelected)
-    .map(([name]) => name);
+  const activeChannelNames = useMemo(
+    () =>
+      Object.entries(selectedChannels)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([name]) => name),
+    [selectedChannels],
+  );
 
   const [publishMutation, { isLoading: isPublishing }] = usePublishCourseMutation();
 
@@ -1055,8 +1389,8 @@ const ReviewAndPublishModal = ({
             : "UDEMY";
           return {
             channel: channelUpper,
-            learner_price: ch === "SoluDesk" ? "149.00" : ch === "Udemy" ? "190.00" : "160.00",
-            model: "ONE_TIME",
+            learner_price: learnerPrices?.[ch] || (ch === "SoluDesk" ? "149.00" : ch === "Udemy" ? "190.00" : "160.00"),
+            model: channelModels?.[ch] || "ONE_TIME",
             approval_rate:
               ch === "SoluDesk"
                 ? "Published within 60 seconds"
@@ -1096,7 +1430,7 @@ const ReviewAndPublishModal = ({
             <button
               type="button"
               disabled={isPublishing}
-              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[#D9D9D9] text-[#888888] transition-colors hover:bg-sd-grey-2"
+              className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[#D9D9D9] text-[#888888] transition-colors hover:bg-sd-grey-2 cursor-pointer"
               aria-label="Close review and publish"
             >
               <XIcon size={20} />
@@ -1113,12 +1447,13 @@ const ReviewAndPublishModal = ({
               <span className="text-[14px] text-sd-reviewer-muted">No channels selected</span>
             ) : (
               activeChannelNames.map((channel) => {
-                const price =
-                  channel === "SoluDesk"
-                    ? "₦100"
-                    : channel === "Udemy"
-                    ? "₦190"
-                    : "₦160";
+                const price = learnerPrices?.[channel]
+                  ? `₦${learnerPrices[channel]}`
+                  : channel === "SoluDesk"
+                  ? "₦149.00"
+                  : channel === "Udemy"
+                  ? "₦190.00"
+                  : "₦160.00";
 
                 return (
                   <div
@@ -1132,7 +1467,7 @@ const ReviewAndPublishModal = ({
                         type="button"
                         onClick={onEdit}
                         disabled={isPublishing}
-                        className="flex items-center gap-[8px] text-[14px] font-normal text-[#4B5563] hover:text-sd-blue"
+                        className="flex items-center gap-[8px] text-[14px] font-normal text-[#4B5563] hover:text-sd-blue cursor-pointer"
                       >
                         <span>Edit</span>
                         <Edit size={16} variant="Linear" color="var(--sd-blue)" />
@@ -1153,7 +1488,7 @@ const ReviewAndPublishModal = ({
             size="app"
             disabled={isPublishing}
             onClick={() => onOpenChange(false)}
-            className="w-[116px] font-normal"
+            className="w-[116px] font-normal cursor-pointer"
           >
             Cancel
           </Button>
@@ -1163,7 +1498,7 @@ const ReviewAndPublishModal = ({
             size="app"
             disabled={isPublishing}
             onClick={handlePublish}
-            className="w-[132px] font-normal"
+            className="w-[132px] font-normal cursor-pointer"
           >
             {isPublishing ? "Publishing..." : "Continue"}
           </Button>
@@ -1201,7 +1536,7 @@ const PublishSuccessModal = ({
             variant="app-primary"
             size="app"
             onClick={() => onOpenChange(false)}
-            className="mt-[24px] w-full font-normal"
+            className="mt-[24px] w-full font-normal cursor-pointer"
           >
             Dismiss
           </Button>
@@ -1210,5 +1545,24 @@ const PublishSuccessModal = ({
     </Dialog>
   );
 };
+
+const TableCell = ({
+  children,
+  className,
+  allowWrap = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  allowWrap?: boolean;
+}) => (
+  <div
+    className={cn(
+      "flex h-[44px] items-center p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11",
+      className,
+    )}
+  >
+    <span className={cn(!allowWrap && "truncate")}>{children}</span>
+  </div>
+);
 
 export default ReviewerApprovedCoursesView;

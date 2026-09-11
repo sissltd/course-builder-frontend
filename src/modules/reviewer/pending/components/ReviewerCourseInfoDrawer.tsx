@@ -52,7 +52,7 @@ export const ReviewerCourseInfoDrawer = ({
 
   const copyCourseId = async () => {
     try {
-      await navigator.clipboard.writeText(course.courseId);
+      await navigator.clipboard.writeText(course.id || course.courseId);
     } catch {
       // clipboard errors are non-blocking here
     }
@@ -112,7 +112,7 @@ export const ReviewerCourseInfoDrawer = ({
         <button
           type="button"
           onClick={() =>
-            router.push(`${ReviewerRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.courseId)}`)
+            router.push(`${ReviewerRoute.COURSE_OVERVIEW}/${encodeURIComponent(course.id || course.courseId)}`)
           }
           className="flex h-[46px] w-fit items-center gap-[12px] rounded-[8px] border border-sd-blue bg-sd-grey-1 px-[20px] text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-12 transition-colors hover:bg-sd-blue-light"
         >

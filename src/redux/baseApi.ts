@@ -23,6 +23,7 @@ const PUBLIC_ENDPOINTS = [
   "/auth/reset-password",
   "/auth/token/refresh",
   "/auth/reviewer/login",
+  "/auth/staff/invitations/accept",
 ];
 
 const isPublicEndpoint = (url: string): boolean =>
@@ -261,6 +262,8 @@ export const BaseAPI = createApi({
     "Quiz",
     "QuizQuestion",
     "KycSubmission",
+    "ReviewerOverview",
+    "ReviewerActivity",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

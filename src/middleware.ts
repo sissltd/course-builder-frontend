@@ -18,6 +18,8 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/accept-invitation",
+  "/auth/accept-invitation",
   "/api/auth",
 ];
 

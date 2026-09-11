@@ -10,7 +10,13 @@ export default function AdminRootLayout({
 }) {
   return (
     <ProtectedRoute
-      allowedRoles={[UserRole.SUPER_ADMIN, UserRole.STAFF]}
+      allowedRoles={[
+        UserRole.SUPER_ADMIN,
+        UserRole.STAFF,
+        "ADMIN",
+        "SUPER_ADMIN",
+        "STAFF",
+      ]}
     >
       <AdminDashboardLayout>{children}</AdminDashboardLayout>
     </ProtectedRoute>

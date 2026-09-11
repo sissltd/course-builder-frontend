@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
@@ -15,7 +15,7 @@ import { useLoginMutation } from "@/modules/auth/api/sessionApi";
 import { useResendVerificationMutation } from "@/modules/auth/api/accountApi";
 import { TokenPurpose } from "@/modules/auth/types/auth";
 import { normalizeApiError } from "@/lib/api/errors";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/redux";
@@ -25,12 +25,26 @@ import {
   getWorkspaceForRole,
 } from "@/modules/auth/utils/workspace";
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const [step, setStep] = useState<"email" | "password">("email");
   const [login, { isLoading }] = useLoginMutation();
   const [resendVerification] = useResendVerificationMutation();
+
+  useEffect(() => {
+    const callbackUrl = searchParams.get("callbackUrl");
+    if (callbackUrl && callbackUrl.includes("accept-invitation")) {
+      let target = callbackUrl;
+      try {
+        target = decodeURIComponent(callbackUrl);
+      } catch {
+        // ignore
+      }
+      router.replace(target);
+    }
+  }, [searchParams, router]);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -207,5 +221,19 @@ export default function LoginPage() {
         </div>
       </FormProvider>
     </AuthLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="size-6 animate-spin rounded-full border-2 border-[#0063EF] border-t-transparent" />
+        </div>
+      }
+    >
+      <LoginFormContent />
+    </Suspense>
   );
 }
