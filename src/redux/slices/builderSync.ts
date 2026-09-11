@@ -27,7 +27,7 @@ import {
 import type { CreateModuleRequest, UpdateModuleRequest } from "@/modules/creator/courses/types/module";
 import type { CreateLessonRequest, UpdateLessonRequest, LessonContentType } from "@/modules/creator/courses/types/lesson";
 import type { UpsertAssessmentRequest } from "@/modules/creator/courses/types/assessment";
-import { CreateQuizRequest, QuizLevel, QuizQuestionType } from "@/modules/creator/courses/types/quiz";
+import { CreateQuizRequest, QuizLevel, QuizQuestionType, CreateQuestionRequest } from "@/modules/creator/courses/types/quiz";
 
 const fetchJson = async (url: string, token: string, init?: RequestInit) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${url}`, {
@@ -52,11 +52,11 @@ const getToken = (state: RootState): string => state.auth.accessToken || "";
 const syncQuestionsForQuiz = async (
   token: string,
   quizId: string,
-  apiQuestions: { question_text: string; question_type: QuizQuestionType; points: number; model_response_guide: string; order: number; options: { option_text: string; is_correct: boolean; explanation: string; order: number }[] }[],
+  apiQuestions: Omit<CreateQuestionRequest, "quiz">[],
 ) => {
   let existingQuestions: { id: string }[] = [];
   try {
-    const qRes = await fetchJson(`/questions/?quiz=${quizId}`, token);
+    const qRes = await fetchJson(`/questions/?quiz=${quizId}&ordering=order`, token);
     existingQuestions = qRes.data?.results || qRes.results || [];
     if (!Array.isArray(existingQuestions)) existingQuestions = [];
   } catch {
@@ -109,7 +109,7 @@ export const loadCourse = createAsyncThunk<
         let quizQuestions = moduleQuiz.questions || [];
         if (quizQuestions.length === 0) {
           try {
-            const qRes = await fetchJson(`/questions/?quiz=${moduleQuiz.id}`, token);
+            const qRes = await fetchJson(`/questions/?quiz=${moduleQuiz.id}&ordering=order`, token);
             quizQuestions = qRes.data?.results || qRes.results || [];
             if (!Array.isArray(quizQuestions)) quizQuestions = [];
           } catch {
@@ -139,7 +139,7 @@ export const loadCourse = createAsyncThunk<
             let lessonQuestions = matched.questions || [];
             if (lessonQuestions.length === 0) {
               try {
-                const qRes = await fetchJson(`/questions/?quiz=${matched.id}`, token);
+                const qRes = await fetchJson(`/questions/?quiz=${matched.id}&ordering=order`, token);
                 lessonQuestions = qRes.data?.results || qRes.results || [];
                 if (!Array.isArray(lessonQuestions)) lessonQuestions = [];
               } catch {
@@ -164,15 +164,17 @@ export const loadCourse = createAsyncThunk<
 
 export const syncCreateModule = createAsyncThunk<
   { tempId: string; apiId: string } | null,
-  void,
+  { moduleId?: string },
   { state: RootState; dispatch: AppDispatch }
->("builderSync/syncCreateModule", async (_, { dispatch, getState }) => {
+>("builderSync/syncCreateModule", async ({ moduleId }, { dispatch, getState }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return null;
 
   const modules = state.courseBuilder.modules;
-  const newModule = modules[modules.length - 1];
+  const newModule = moduleId
+    ? modules.find((m) => m.id === moduleId)
+    : modules.find((m) => /^\d+$/.test(m.id));
   if (!newModule) return null;
 
   dispatch(setIsSaving(true));
@@ -247,16 +249,20 @@ export const syncDeleteModule = createAsyncThunk<
 
 export const syncCreateLesson = createAsyncThunk<
   { moduleId: string; tempId: string; apiId: string } | null,
-  { moduleId: string; type: "video" | "quiz" | "text" },
+  { moduleId: string; type: "video" | "quiz" | "text"; lessonId?: string },
   { state: RootState; dispatch: AppDispatch }
->("builderSync/syncCreateLesson", async ({ moduleId, type }, { dispatch, getState }) => {
+>("builderSync/syncCreateLesson", async ({ moduleId, type, lessonId }, { dispatch, getState }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return null;
 
   const mod = state.courseBuilder.modules.find((m) => m.id === moduleId);
   if (!mod) return null;
-  const newLesson = mod.lessons[mod.lessons.length - 1];
+
+  // If lessonId provided, find that specific lesson; otherwise find the last temp lesson
+  const newLesson = lessonId
+    ? mod.lessons.find((l) => l.id === lessonId)
+    : mod.lessons.find((l) => /^\d+$/.test(l.id));
   if (!newLesson) return null;
 
   dispatch(setIsSaving(true));
@@ -269,8 +275,14 @@ export const syncCreateLesson = createAsyncThunk<
     };
     const body = {
       title: newLesson.title || "Untitled Lesson",
-      order: mod.lessons.length,
+      order: mod.lessons.indexOf(newLesson) + 1,
       content_type: contentTypeMap[type],
+      learning_objectives: newLesson.objectives || [],
+      lesson_requirement: newLesson.requirements || "",
+      ...(type === "video" ? { video_url: newLesson.videoUrl || "" } : {}),
+      ...(newLesson.duration && newLesson.duration !== "0 mins"
+        ? { duration_minutes: parseInt(newLesson.duration.match(/(\d+)/)?.[1] || "0", 10) }
+        : {}),
     } satisfies CreateLessonRequest;
     const result = await fetchJson(
       `/courses/${courseId}/modules/${moduleId}/lessons/`,
@@ -792,7 +804,16 @@ export const saveAllDirty = createAsyncThunk<
     }
 
     for (const mod of state.courseBuilder.modules) {
-      if (mod.id && !/^\d+$/.test(mod.id)) {
+      const isTempModule = /^\d+$/.test(mod.id);
+
+      // 1. Create temp modules first so lessons can reference a real API ID
+      if (isTempModule && courseId) {
+        const created = await dispatch(syncCreateModule({ moduleId: mod.id })).unwrap();
+        if (!created) continue;
+      }
+
+      // 2. Update existing (non-temp) modules
+      if (!isTempModule && courseId) {
         await dispatch(
           syncUpdateModule({
             moduleId: mod.id,
@@ -802,16 +823,24 @@ export const saveAllDirty = createAsyncThunk<
             learningObjectives: mod.objectives,
           }),
         ).unwrap();
-
-        if (mod.quizQuestions.length > 0) {
-          await dispatch(
-            syncSaveModuleAssessment({ moduleId: mod.id, moduleTitle: mod.title }),
-          ).unwrap();
-        }
       }
 
+      // 3. Module assessment (existing modules only)
+      if (!isTempModule && mod.quizQuestions.length > 0) {
+        await dispatch(
+          syncSaveModuleAssessment({ moduleId: mod.id, moduleTitle: mod.title }),
+        ).unwrap();
+      }
+
+      // 4. Create temp lessons, then update existing lessons
       for (const lesson of mod.lessons) {
-        if (lesson.id && !/^\d+$/.test(lesson.id)) {
+        const isTempLesson = /^\d+$/.test(lesson.id);
+
+        if (isTempLesson && courseId) {
+          await dispatch(
+            syncCreateLesson({ moduleId: mod.id, type: lesson.type, lessonId: lesson.id }),
+          ).unwrap();
+        } else if (!isTempLesson && courseId) {
           await dispatch(
             syncUpdateLesson({ moduleId: mod.id, lessonId: lesson.id, lesson }),
           ).unwrap();

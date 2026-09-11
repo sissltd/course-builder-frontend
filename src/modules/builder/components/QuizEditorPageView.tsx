@@ -36,7 +36,7 @@ export const QuizEditorPageView = () => {
     dispatch(setQuestions(updated));
   }, [dispatch]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingQuiz || !currentLesson) return;
     const updatedLesson = { ...currentLesson, quizQuestions: questions };
     dispatch(
@@ -46,7 +46,7 @@ export const QuizEditorPageView = () => {
         updatedLesson,
       })
     );
-    dispatch(syncSaveQuizQuestions({
+    await dispatch(syncSaveQuizQuestions({
       moduleId: editingQuiz.moduleId,
       lessonId: editingQuiz.lessonId,
       lessonTitle: currentLesson.title || "Lesson",
