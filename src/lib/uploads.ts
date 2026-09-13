@@ -95,7 +95,7 @@ export async function uploadFile(
   options: UploadOptions = {},
   token: string,
 ): Promise<PresignResponse> {
-  const folder = options.folder ?? "general";
+  const folder = "general";
 
   const presigned = await getPresignedUrl(file, folder, token);
   const headers = presigned.upload_headers || { "Content-Type": file.type || "application/octet-stream" };

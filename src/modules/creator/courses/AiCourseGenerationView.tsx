@@ -380,7 +380,7 @@ export default function AiCourseGenerationView() {
               searchable
               placeholder="Select category"
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
-              onValueChange={(val) => {
+              onValueChange={() => {
                 if (selectedTopic) {
                   setValue("topic", "", { shouldValidate: true });
                 }

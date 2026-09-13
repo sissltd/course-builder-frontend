@@ -11,14 +11,12 @@ import {
   CloseCircle,
   InfoCircle,
   Magicpen,
-  Document,
 } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { FormCheckbox } from "@/components/form/FormCheckbox";
 import { FormSelect } from "@/components/form/FormSelect";
-import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 import {
   useCreateCourseFromImportMutation,
   useCreateModuleForImportMutation,
@@ -55,7 +53,7 @@ const importSchema = z.object({
 
 type ImportFormData = z.infer<typeof importSchema>;
 
-type ImportStep = "form" | "upload" | "parsing" | "review" | "creating" | "done";
+type ImportStep = "form" | "file" | "parsing" | "review" | "creating" | "done";
 
 export default function DocumentImportView() {
   const router = useRouter();
@@ -64,10 +62,8 @@ export default function DocumentImportView() {
   const [step, setStep] = useState<ImportStep>("form");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedModules, setParsedModules] = useState<ParsedModule[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [parsingError, setParsingError] = useState<string | null>(null);
 
-  const { upload, isUploading } = useUploadFile();
   const [createCourse, { isLoading: isCreatingCourse }] =
     useCreateCourseFromImportMutation();
   const [createModule, { isLoading: isCreatingModule }] =
@@ -130,16 +126,10 @@ export default function DocumentImportView() {
       }
 
       setSelectedFile(file);
-      setStep("upload");
+      setStep("parsing");
       setParsingError(null);
 
       try {
-        await upload(file, {
-          folder: "document-imports",
-          onProgress: setUploadProgress,
-        });
-
-        setStep("parsing");
         const modules = await parseDocument(file);
 
         if (modules.length === 0) {
@@ -159,7 +149,7 @@ export default function DocumentImportView() {
         toast.error(message);
       }
     },
-    [upload],
+    [],
   );
 
   const handleFileSelect = useCallback(
@@ -288,7 +278,6 @@ export default function DocumentImportView() {
     setSelectedFile(null);
     setParsedModules([]);
     setParsingError(null);
-    setUploadProgress(0);
   };
 
   const renderFormStep = () => (
@@ -304,7 +293,7 @@ export default function DocumentImportView() {
 
       <FormProvider {...methods}>
         <form
-          onSubmit={handleSubmit(() => setStep("upload"))}
+          onSubmit={handleSubmit(() => setStep("file"))}
           className="w-full max-w-[500px] flex flex-col gap-[32px]"
         >
           <div className="flex flex-col gap-[20px]">
@@ -329,7 +318,7 @@ export default function DocumentImportView() {
               searchable
               placeholder="Select category"
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
-              onValueChange={(val) => {
+              onValueChange={() => {
                 if (selectedTopic) {
                   setValue("topic", "", { shouldValidate: true });
                 }
@@ -373,11 +362,11 @@ export default function DocumentImportView() {
     </div>
   );
 
-  const renderUploadStep = () => (
+  const renderFileStep = () => (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-in fade-in duration-500">
       <div className="text-center mb-[40px]">
         <h1 className="text-[32px] font-bold text-[#202020] tracking-[-0.64px] font-quicksand mb-[12px]">
-          Upload your document
+          Select your document
         </h1>
         <p className="text-[16px] text-[#606060] max-w-[440px] mx-auto leading-[24px]">
           Supported formats: PDF, DOCX, TXT (max {MAX_FILE_SIZE_MB}MB)
@@ -407,7 +396,7 @@ export default function DocumentImportView() {
           {selectedFile ? (
             <>
               <div className="size-[48px] rounded-full bg-sd-blue/10 flex items-center justify-center">
-                <Document size={24} variant="Bold" color="#0063EF" />
+                <InfoCircle size={24} variant="Bold" color="#0063EF" />
               </div>
               <div className="text-center">
                 <p className="text-[14px] font-semibold text-[#202020]">
@@ -421,7 +410,7 @@ export default function DocumentImportView() {
           ) : (
             <>
               <div className="size-[48px] rounded-full bg-sd-grey-1 flex items-center justify-center">
-                <Document size={24} variant="Outline" color="#636363" />
+                <InfoCircle size={24} variant="Outline" color="#636363" />
               </div>
               <div className="text-center">
                 <p className="text-[14px] font-semibold text-[#202020]">
@@ -434,21 +423,6 @@ export default function DocumentImportView() {
             </>
           )}
         </div>
-
-        {selectedFile && isUploading && (
-          <div className="flex flex-col gap-[8px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[14px] text-[#202020]">Uploading...</span>
-              <span className="text-[14px] text-sd-grey-11">{uploadProgress}%</span>
-            </div>
-            <div className="w-full h-[8px] bg-sd-grey-2 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sd-blue rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
 
         {parsingError && (
           <div className="p-[16px] rounded-[12px] bg-[#FFF0ED] border border-[#FF5025]/20 flex items-start gap-[12px]">
@@ -470,15 +444,14 @@ export default function DocumentImportView() {
             type="button"
             variant="app-primary"
             className="flex-1 h-[44px]"
-            disabled={!selectedFile || isUploading}
-            isLoading={isUploading}
+            disabled={!selectedFile}
             onClick={() => {
-              if (selectedFile && !isUploading) {
+              if (selectedFile) {
                 processFile(selectedFile);
               }
             }}
           >
-            {isUploading ? "Uploading..." : "Upload & Parse"}
+            Parse Document
           </Button>
         </div>
       </div>
@@ -649,7 +622,7 @@ export default function DocumentImportView() {
   return (
     <div className="w-full max-w-[1200px] mx-auto px-[20px] py-[40px]">
       {step === "form" && renderFormStep()}
-      {step === "upload" && renderUploadStep()}
+      {step === "file" && renderFileStep()}
       {step === "parsing" && renderParsingStep()}
       {step === "review" && renderReviewStep()}
       {step === "creating" && renderCreatingStep()}
