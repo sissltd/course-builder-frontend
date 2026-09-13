@@ -76,3 +76,9 @@ export {
   useGetGenerationJobQuery,
   useCancelGenerationMutation,
 } from "../api/aiGenerationApi";
+
+export {
+  useCreateCourseFromImportMutation,
+  useCreateModuleForImportMutation,
+  useCreateLessonForImportMutation,
+} from "../api/documentImportApi";
