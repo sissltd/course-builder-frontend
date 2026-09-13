@@ -149,11 +149,13 @@ export default function CreateCourseView() {
   const handleMethodNext = async () => {
     const isValid = await trigger(["creationMethod"]);
     if (isValid) {
-      if (method === "import") {
+      if (method === "ai") {
+        router.push(CreatorRoute.COURSES_AI_CREATE);
+      } else if (method === "import") {
         router.push(CreatorRoute.COURSES_IMPORT);
-        return;
+      } else {
+        nextStep();
       }
-      nextStep();
     }
   };
 
