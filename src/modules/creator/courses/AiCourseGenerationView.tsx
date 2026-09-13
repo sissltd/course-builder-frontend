@@ -10,6 +10,7 @@ import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { FormCheckbox } from "@/components/form/FormCheckbox";
+import { FormSelect } from "@/components/form/FormSelect";
 import {
   useCreateGenerationMutation,
   useGetGenerationJobQuery,
@@ -194,11 +195,11 @@ export default function AiCourseGenerationView() {
   const [cancelGeneration, { isLoading: isCancelling }] =
     useCancelGenerationMutation();
 
-  const { data: categoriesResponse, isLoading: isLoadingCategories } =
+  const { data: categoriesResponse } =
     useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
   const categories = categoriesResponse?.data?.results || [];
 
-  const { data: topicsResponse, isLoading: isLoadingTopics } = useGetTopicsQuery(
+  const { data: topicsResponse } = useGetTopicsQuery(
     { status: TopicStatus.ACTIVE },
   );
   const allTopics = topicsResponse?.data?.results || [];
@@ -224,7 +225,6 @@ export default function AiCourseGenerationView() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
   } = methods;
 
   const selectedCategory = watch("category");
@@ -373,66 +373,29 @@ export default function AiCourseGenerationView() {
               required
             />
 
-            <div className="flex flex-col gap-[8px]">
-              <span className="text-[14px] font-medium text-sd-grey-12">
-                Course category <span className="text-[#FF5025]">*</span>
-              </span>
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setValue("category", e.target.value, { shouldValidate: true });
-                  if (selectedTopic) {
-                    setValue("topic", "", { shouldValidate: true });
-                  }
-                }}
-                className={cn(
-                  "w-full h-[44px] px-[16px] border rounded-[8px] bg-white text-[14px] outline-none transition-colors",
-                  errors.category
-                    ? "border-[#FF5025]"
-                    : "border-sd-grey-6 focus:border-sd-blue focus:ring-1 focus:ring-sd-blue/20",
-                )}
-              >
-                <option value="">Select category</option>
-                {isLoadingCategories ? (
-                  <option disabled>Loading...</option>
-                ) : (
-                  categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))
-                )}
-              </select>
-              {errors.category && (
-                <p className="text-caption-xs text-[#FF5025]">
-                  {errors.category.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-[8px]">
-              <span className="text-[14px] font-medium text-sd-grey-12">
-                Topic (optional)
-              </span>
-              <select
-                value={selectedTopic}
-                onChange={(e) =>
-                  setValue("topic", e.target.value, { shouldValidate: true })
+            <FormSelect
+              name="category"
+              label="Course category"
+              required
+              searchable
+              placeholder="Select category"
+              options={categories.map((c) => ({ label: c.name, value: c.id }))}
+              onValueChange={(val) => {
+                if (selectedTopic) {
+                  setValue("topic", "", { shouldValidate: true });
                 }
-                className="w-full h-[44px] px-[16px] border border-sd-grey-6 rounded-[8px] bg-white text-[14px] outline-none focus:border-sd-blue focus:ring-1 focus:ring-sd-blue/20 transition-colors"
-              >
-                <option value="">Select topic</option>
-                {isLoadingTopics ? (
-                  <option disabled>Loading...</option>
-                ) : (
-                  filteredTopics.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+              }}
+            />
+
+            <FormSelect
+              name="topic"
+              label="Topic"
+              searchable
+              clearable
+              clearLabel="No topic"
+              placeholder="Select topic"
+              options={filteredTopics.map((t) => ({ label: t.name, value: t.id }))}
+            />
 
             <FormCheckbox
               name="terms_accepted"
