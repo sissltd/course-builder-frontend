@@ -263,6 +263,7 @@ export const BaseAPI = createApi({
     "Quiz",
     "QuizQuestion",
     "KycSubmission",
+    "GenerationJob",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

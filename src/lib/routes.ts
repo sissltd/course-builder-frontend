@@ -46,6 +46,7 @@ export enum CreatorRoute {
   DASHBOARD = "/creator/dashboard",
   COURSES = "/creator/courses",
   COURSES_CREATE = "/creator/courses/create",
+  COURSES_AI_CREATE = "/creator/courses/create-with-ai",
   COURSES_BUILDER = "/creator/courses/builder",
   DRAFTS = "/creator/drafts",
   COLLABORATORS = "/creator/collaborators",

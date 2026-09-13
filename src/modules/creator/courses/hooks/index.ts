@@ -70,3 +70,9 @@ export {
   useGetCategoryRequestsQuery,
   useCreateCategoryRequestMutation,
 } from "../api/categoryRequestsApi";
+
+export {
+  useCreateGenerationMutation,
+  useGetGenerationJobQuery,
+  useCancelGenerationMutation,
+} from "../api/aiGenerationApi";
