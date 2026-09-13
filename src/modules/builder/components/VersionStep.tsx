@@ -22,7 +22,7 @@ export const VersionStep = ({ onNext, onBack }: VersionStepProps) => {
   const { data: versions, isLoading } = useGetCourseVersionsQuery();
 
   const versionOptions = (versions ?? [])
-    .filter((v) => v.is_active)
+    .filter((v) => v.is_active !== false)
     .map((v) => ({
       label: `v${v.label}`,
       value: v.id,

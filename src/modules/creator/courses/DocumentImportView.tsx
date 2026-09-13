@@ -24,7 +24,7 @@ import {
   useGetCategoriesQuery,
   useGetTopicsQuery,
 } from "./hooks";
-import { parseDocument } from "./utils/documentParser";
+import { parseDocument, extractDocumentTitle } from "./utils/documentParser";
 import {
   CategoryStatus,
 } from "./types/category";
@@ -139,6 +139,16 @@ export default function DocumentImportView() {
         }
 
         setParsedModules(modules);
+
+        // Auto-fill course title from document if field is empty
+        const currentTitle = methods.getValues("courseTitle");
+        if (!currentTitle) {
+          const detectedTitle = extractDocumentTitle(modules);
+          if (detectedTitle) {
+            methods.setValue("courseTitle", detectedTitle, { shouldValidate: true });
+          }
+        }
+
         setStep("review");
       } catch (err) {
         const message =
@@ -149,6 +159,7 @@ export default function DocumentImportView() {
         toast.error(message);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
