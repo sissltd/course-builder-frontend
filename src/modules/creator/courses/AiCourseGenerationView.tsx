@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,14 @@ import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { FormCheckbox } from "@/components/form/FormCheckbox";
 import { FormSelect } from "@/components/form/FormSelect";
+import { useAppSelector, useAppDispatch } from "@/redux";
+import {
+  selectActiveJobId,
+  selectIsMinimized,
+  startPolling,
+  stopPolling,
+  toggleMinimize,
+} from "@/redux/slices/aiGenerationPollingSlice";
 import {
   useCreateGenerationMutation,
   useGetGenerationJobQuery,
@@ -30,7 +38,6 @@ import {
 import { CategoryStatus } from "./types/category";
 import { TopicStatus } from "./types/topic";
 import { normalizeApiError } from "@/lib/api/errors";
-import { CreatorRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import {
   TickCircle,
@@ -38,20 +45,18 @@ import {
   InfoCircle,
 } from "iconsax-react";
 
-const POLL_INTERVAL_MS = 2_000;
-
-type ViewMode = "form" | "loading" | "error";
-
 interface GenerationProgressProps {
   job: GenerationJob;
   onCancel: () => void;
   isCancelling: boolean;
+  onMinimize: () => void;
 }
 
 function GenerationProgress({
   job,
   onCancel,
   isCancelling,
+  onMinimize,
 }: GenerationProgressProps) {
   const currentItems = job.items
     .filter((item) => item.phase === job.current_phase)
@@ -125,7 +130,21 @@ function GenerationProgress({
         ))}
       </div>
 
-      <div className="mt-[40px]">
+      <div className="mt-[40px] flex items-center gap-[12px]">
+        <Button
+          type="button"
+          variant="app-outline"
+          className="h-[44px] px-[24px] text-sd-grey-11 border-sd-grey-6 hover:bg-sd-grey-2"
+          onClick={onMinimize}
+        >
+          <svg className="mr-[8px]" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 11L1 11L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M11 5L15 5L15 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 11L11 11L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 5L5 5L5 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Minimize
+        </Button>
         <Button
           type="button"
           variant="app-outline"
@@ -185,10 +204,11 @@ function GenerationError({ job, onRetry, onBack }: GenerationErrorProps) {
 
 export default function AiCourseGenerationView() {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>("form");
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const activeJobId = useAppSelector(selectActiveJobId);
+  const isMinimized = useAppSelector(selectIsMinimized);
   const [idempotencyKey, setIdempotencyKey] = useState<string>("");
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [viewMode, setViewMode] = useState<"form" | "error">("form");
 
   const [createGeneration, { isLoading: isCreating }] =
     useCreateGenerationMutation();
@@ -206,7 +226,7 @@ export default function AiCourseGenerationView() {
 
   const { data: jobData } = useGetGenerationJobQuery(activeJobId!, {
     skip: !activeJobId,
-    pollingInterval: viewMode === "loading" ? POLL_INTERVAL_MS : 0,
+    pollingInterval: activeJobId ? 10_000 : 0,
   });
 
   const methods = useForm<AiGenerationFormData>({
@@ -237,38 +257,18 @@ export default function AiCourseGenerationView() {
   useEffect(() => {
     const storedJobId = localStorage.getItem(GENERATION_JOB_STORAGE_KEY);
     if (storedJobId) {
-      setActiveJobId(storedJobId);
-      setViewMode("loading");
+      dispatch(startPolling(storedJobId));
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!jobData) return;
 
-    if (jobData.status === "COMPLETED") {
-      localStorage.removeItem(GENERATION_JOB_STORAGE_KEY);
-      const courseId = jobData.course ?? jobData.result?.course_id;
-      if (courseId) {
-        router.push(`${CreatorRoute.COURSES_BUILDER}?id=${courseId}`);
-      }
-    } else if (jobData.status === "FAILED") {
+    if (jobData.status === "FAILED") {
       setViewMode("error");
-    } else if (jobData.status === "CANCELLED") {
-      localStorage.removeItem(GENERATION_JOB_STORAGE_KEY);
-      setActiveJobId(null);
-      setViewMode("form");
-      toast.info("Course generation was cancelled");
+      dispatch(stopPolling());
     }
-  }, [jobData, router]);
-
-  useEffect(() => {
-    const currentRef = pollingRef.current;
-    return () => {
-      if (currentRef) {
-        clearInterval(currentRef);
-      }
-    };
-  }, []);
+  }, [jobData, dispatch]);
 
   const generateIdempotencyKey = useCallback(() => {
     const key = `ai-course-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -289,8 +289,7 @@ export default function AiCourseGenerationView() {
       }).unwrap();
 
       localStorage.setItem(GENERATION_JOB_STORAGE_KEY, result.id);
-      setActiveJobId(result.id);
-      setViewMode("loading");
+      dispatch(startPolling(result.id));
     } catch (err) {
       const { message } = normalizeApiError(
         err as Parameters<typeof normalizeApiError>[0],
@@ -313,24 +312,25 @@ export default function AiCourseGenerationView() {
 
   const handleRetry = () => {
     localStorage.removeItem(GENERATION_JOB_STORAGE_KEY);
-    setActiveJobId(null);
+    dispatch(stopPolling());
     setIdempotencyKey("");
     setViewMode("form");
   };
 
   const handleBack = () => {
     localStorage.removeItem(GENERATION_JOB_STORAGE_KEY);
-    setActiveJobId(null);
+    dispatch(stopPolling());
     setIdempotencyKey("");
     setViewMode("form");
   };
 
-  if (viewMode === "loading" && jobData) {
+  if (activeJobId && !isMinimized && jobData && viewMode !== "error") {
     return (
       <GenerationProgress
         job={jobData}
         onCancel={handleCancel}
         isCancelling={isCancelling}
+        onMinimize={() => dispatch(toggleMinimize())}
       />
     );
   }
