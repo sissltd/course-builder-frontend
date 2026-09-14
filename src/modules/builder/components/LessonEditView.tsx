@@ -69,15 +69,40 @@ export const LessonEditView = ({
     pendingMediaCallbackRef.current = null;
   };
 
+  const getVideoDuration = (file: File): Promise<number | null> =>
+    new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        resolve(video.duration && isFinite(video.duration) ? video.duration : null);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      video.src = url;
+    });
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.max(1, Math.round(seconds / 60));
+    return `${mins} mins`;
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const res = await upload(file, { folder: "general" });
+      const [res, duration] = await Promise.all([
+        upload(file, { folder: "general" }),
+        getVideoDuration(file),
+      ]);
       onUpdateLesson({
         ...lesson,
         videoUrl: res.file_url,
         mediaFileName: file.name,
+        ...(duration !== null ? { duration: formatDuration(duration) } : {}),
       });
       resetUpload();
     } catch {
