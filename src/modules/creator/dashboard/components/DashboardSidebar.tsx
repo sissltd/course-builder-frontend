@@ -58,9 +58,9 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
   const kycRequestStatus = kycSubmission?.kyc_request_status;
   const isKycSubmitted = !!kycStatus && kycStatus !== "";
   const isKycApproved = kycStatus === "APPROVED";
-  const isKycPending = isKycSubmitted && !isKycApproved && kycStatus !== "REJECTED";
   const isKycRejected = kycStatus === "REJECTED";
-  const isKycUnderReview = isKycPending && (kycRequestStatus === "UNDER_REVIEW" || kycRequestStatus === "");
+  const isKycPending = isKycSubmitted && kycStatus === "PENDING";
+  const isKycUnderReview = isKycPending && kycRequestStatus === "UNDER_REVIEW";
 
   const displayName =
     user?.first_name || user?.last_name
@@ -171,6 +171,21 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
           </div>
 
           {/* KYC Card — hidden when approved */}
+          {isKycPending && !isKycUnderReview && (
+          <div className="bg-gradient-to-br from-[#FFF8E1] via-white to-[#FFF3CD] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#FFE082] mx-auto w-full shrink-0 flex flex-col justify-center items-center mt-[24px]">
+            <div className="relative z-10 flex flex-col gap-[15px] w-full">
+              <div className="flex flex-col gap-[8px]">
+                <p className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px] leading-[20px]">KYC Pending</p>
+                <p className="text-[12px] text-[#606060] leading-[16px]">
+                  Your verification has been submitted and is awaiting review.
+                </p>
+              </div>
+              <div className="w-full h-[32px] border border-[#F59E0B] text-[#F59E0B] rounded-[8px] text-[12px] font-medium flex items-center justify-center bg-[#F59E0B]/5">
+                Pending
+              </div>
+            </div>
+          </div>
+          )}
           {isKycUnderReview && (
           <div className="bg-gradient-to-br from-[#FFF8E1] via-white to-[#FFF3CD] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#FFE082] mx-auto w-full shrink-0 flex flex-col justify-center items-center mt-[24px]">
             <div className="relative z-10 flex flex-col gap-[15px] w-full">
@@ -203,7 +218,7 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
             </div>
           </div>
           )}
-          {!isKycApproved && !isKycUnderReview && !isKycRejected && (
+          {!isKycApproved && !isKycPending && !isKycUnderReview && !isKycRejected && (
           <div className="bg-gradient-to-br from-[#FAF6FC] via-white to-[#F0F6FE] rounded-[16px] p-[20px] shadow-[0px_5px_11px_0px_rgba(0,0,0,0.1)] relative overflow-hidden border border-[#F0F0F0] mx-auto w-full  shrink-0 flex flex-col justify-center items-center mt-[24px]">
             {/* Illustrations */}
             <div className="absolute top-[-50px] left-[-30px] w-[140px] h-[140px] pointer-events-none opacity-80">

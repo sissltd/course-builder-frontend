@@ -54,6 +54,8 @@ export const kycApi = BaseAPI.injectEndpoints({
         url: "/users/me/kyc/",
         method: "GET",
       }),
+      transformResponse: (response: { success: boolean; status: number; message: string; data: KycSubmission | null }) =>
+        response.data,
       providesTags: ["KycSubmission" as const],
     }),
 
