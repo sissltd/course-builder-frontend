@@ -58,15 +58,14 @@ export const mapAssessmentQuestions = (
   return questions.map((q, idx) => {
     const id = `q-${idx}`;
     if (q.type === QuestionType.ESSAY) {
-      const answer = q.expected_answer ?? q.explanation ?? "";
       return {
         id,
         question: q.question,
         type: "essay",
         points: q.points ?? 0,
         options: [],
-        correctAnswer: answer,
-        explanation: q.explanation ?? "",
+        correctAnswer: q.expected_answer || "",
+        explanation: q.explanation || "",
       };
     }
 
@@ -76,10 +75,7 @@ export const mapAssessmentQuestions = (
       value: opt.text,
     }));
     const correctIndices = correctIndicesForQuestion(q);
-    const explanation =
-      correctIndices.length > 0
-        ? q.options[correctIndices[0]]?.explanation || ""
-        : "";
+    const explanation = q.explanation || "";
 
     if (q.type === QuestionType.MULTIPLE_CHOICE) {
       return {
@@ -225,7 +221,8 @@ export const reduxQuizQuestionsToAssessment = (
           type: QuestionType.ESSAY,
           question: q.question,
           points: q.points || 0,
-          expected_answer: q.correctAnswer || q.explanation || "",
+          expected_answer: q.correctAnswer || "",
+          explanation: q.explanation || "",
         };
       }
 
@@ -235,15 +232,14 @@ export const reduxQuizQuestionsToAssessment = (
         q.options.forEach((opt, oi) => {
           if (correctIds.has(opt.id)) indices.push(oi);
         });
-        const firstCorrect = indices[0] ?? 0;
         return {
           type: QuestionType.MULTIPLE_CHOICE,
           question: q.question,
           points: q.points || 0,
-          options: q.options.map((opt, oi) => ({
+          options: q.options.map((opt) => ({
             text: opt.value,
-            explanation: oi === firstCorrect ? (q.explanation || "") : "",
           })),
+          explanation: q.explanation || "",
           correct_indices: indices.length > 0 ? indices : [0],
         };
       }
@@ -254,10 +250,10 @@ export const reduxQuizQuestionsToAssessment = (
         type: QuestionType.SINGLE_CHOICE,
         question: q.question,
         points: q.points || 0,
-        options: q.options.map((opt, oi) => ({
+        options: q.options.map((opt) => ({
           text: opt.value,
-          explanation: oi === resolvedCorrect ? (q.explanation || "") : "",
         })),
+        explanation: q.explanation || "",
         correct_index: resolvedCorrect,
       };
     }),
