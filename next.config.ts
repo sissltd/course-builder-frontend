@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         hostname: "api.dicebear.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "lon1.digitaloceanspaces.com",
+        pathname: "/**",
+      },
     ],
   },
 };
