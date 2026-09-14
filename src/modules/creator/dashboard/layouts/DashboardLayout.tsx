@@ -32,11 +32,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [pathname]);
 
   return (
-    <div className={cn("min-h-screen bg-sd-grey-3/80", isBuilder && "h-screen overflow-hidden")}>
+    <div className={cn("min-h-screen bg-sd-grey-3/80", isBuilder && "h-dvh overflow-hidden")}>
       {!hideSidebarAndHeader && (
         <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       )}
-      <div className={cn("flex flex-col min-h-screen", isBuilder && "h-screen overflow-hidden")}>
+      <div className={cn("flex flex-col min-h-screen", isBuilder && "h-dvh overflow-hidden")}>
         {!hideSidebarAndHeader && (
           <DashboardHeader onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
         )}

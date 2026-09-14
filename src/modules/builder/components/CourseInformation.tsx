@@ -209,7 +209,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[24px] py-[40px] flex flex-col gap-[60px] mx-auto pb-[100px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[40px] md:gap-[60px] mx-auto pb-[100px]">
         
         {/* Course Info Section */}
         <div className="flex flex-col gap-[24px]">
@@ -275,12 +275,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
         {/* Learning Objectives Section */}
         <div className="flex flex-col gap-[24px]">
-          <div className="flex items-end justify-between w-full">
+          <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
             <div className="flex flex-col gap-[8px] max-w-[486px]">
               <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Learning Objectives</h3>
               <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Add what you expect your student to gain at the end of this course.</p>
             </div>
-            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
+            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px] shrink-0">
               Minimum of 5 required
             </span>
           </div>
@@ -477,12 +477,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
         {/* Tags Section */}
         <div className="flex flex-col gap-[24px]">
-          <div className="flex items-end justify-between w-full">
+          <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
             <div className="flex flex-col gap-[8px] max-w-[486px]">
               <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Tags</h3>
               <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Add relevant tag to your course. For easy searching</p>
             </div>
-            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
+            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px] shrink-0">
               Minimum of 3 required
             </span>
           </div>

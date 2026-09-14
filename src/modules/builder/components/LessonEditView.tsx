@@ -27,7 +27,6 @@ import { RichTextEditor, RichTextEditorHandle } from "./RichTextEditor";
 import { AddMediaModal } from "./AddMediaModal";
 import { QuizSummaryDisplay } from "./QuizSummaryDisplay";
 import { useAppDispatch, useAppSelector } from "@/redux";
-import { setQuestions } from "@/redux/slices/quizBuilderSlice";
 import { setEditingQuiz } from "@/redux/slices/courseBuilderSlice";
 import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 
@@ -102,7 +101,6 @@ export const LessonEditView = ({
       content: lesson.content || "",
       embedLink: lesson.embedLink || "",
       videoScript: lesson.videoScript || "",
-      quizQuestions: lesson.quizQuestions,
     },
   });
 
@@ -146,7 +144,6 @@ export const LessonEditView = ({
       embedLink: data.embedLink || "",
       videoScript: data.videoScript || "",
       objectives: data.objectives || [],
-      quizQuestions: data.quizQuestions || [],
       estimatedDuration: data.estimatedDuration,
     });
     onBack();
@@ -314,12 +311,12 @@ export const LessonEditView = ({
     <FormProvider {...methods}>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex h-full w-full bg-white overflow-hidden"
+        className="flex flex-col md:flex-row h-full w-full bg-white overflow-hidden"
       >
         {/* Main Content Workspace Panel */}
-        <div className="flex-1 overflow-y-auto px-[40px] py-[40px] flex flex-col gap-[36px]">
+        <div className="flex-1 overflow-y-auto px-[16px] py-[24px] md:px-[40px] md:py-[40px] flex flex-col gap-[24px] md:gap-[36px] min-w-0">
           {/* Workspace Title & Toolbar Header Row */}
-          <div className="flex items-start justify-between w-full">
+          <div className="flex flex-col gap-[16px] md:flex-row md:items-start md:justify-between w-full">
             <div className="flex gap-[12px] items-start flex-1">
               <span className="mt-[2px] text-sd-grey-9 shrink-0">
                 {lesson.type === "video" && <VideoPlay size={32} variant="Linear" color="#8C8C8C" />}
@@ -338,7 +335,7 @@ export const LessonEditView = ({
                         handleUpdateField("title", e.target.value);
                       }}
                       placeholder="Add lesson title..."
-                      className="w-full text-[28px] font-semibold text-[#202020] border-none outline-none focus:ring-0 placeholder-[#B6B6B6] bg-transparent p-0 leading-tight"
+                      className="w-full text-[22px] md:text-[28px] font-semibold text-[#202020] border-none outline-none focus:ring-0 placeholder-[#B6B6B6] bg-transparent p-0 leading-tight"
                     />
                   )}
                 />
@@ -704,17 +701,6 @@ export const LessonEditView = ({
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">
                   Quiz
                 </h3>
-                <Button
-                  type="button"
-                  variant="app-outline"
-                  isGhost
-                  className="text-[14px] text-[#636363]"
-                >
-                  <span>More</span>
-                  <div className="rotate-90 ml-[4px]">
-                    <span className="text-[16px] font-bold">...</span>
-                  </div>
-                </Button>
               </div>
 
               <div className="border border-[#E8E8E8] rounded-[16px] p-[24px] bg-white flex flex-col gap-[16px] w-full">
@@ -736,28 +722,6 @@ export const LessonEditView = ({
                   isGhost
                   onClick={() => {
                     if (editingLesson) {
-                      dispatch(setQuestions(
-                        (lesson.quizQuestions || []).map((q: any, i) => ({
-                          id: q.id || `${i}`,
-                          question: q.question,
-                          type: q.type || "single",
-                          points: q.points || 0,
-                          options: (q.options || []).map((opt: any, oi: number) => {
-                            if (typeof opt === "string") {
-                              return {
-                                id: `${i}-${String.fromCharCode(97 + oi)}`,
-                                label: String.fromCharCode(65 + oi),
-                                value: opt,
-                              };
-                            }
-                            return { ...opt };
-                          }),
-                          correctOptionId: q.correctOptionId || undefined,
-                          correctOptionIds: q.correctOptionIds || undefined,
-                          correctAnswer: q.correctAnswer || undefined,
-                          explanation: (q as any).explanation || "",
-                        }))
-                      ));
                       dispatch(setEditingQuiz({ moduleId: editingLesson.moduleId, lessonId: editingLesson.lessonId }));
                     }
                   }}
@@ -773,7 +737,7 @@ export const LessonEditView = ({
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
+          <div className="flex flex-col-reverse gap-[12px] sm:flex-row sm:items-center sm:justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
             <Button
               type="button"
               variant="app-outline"
@@ -798,17 +762,17 @@ export const LessonEditView = ({
 
         {/* Right Sidebar - Component layout blocks — only for text lessons */}
         {lesson.type === "text" && (
-          <div className="w-[337px] h-full bg-[#FDFDFD] border-l border-[#F0F0F0] px-[20px] py-[32px] flex flex-col gap-[20px] shrink-0 overflow-y-auto">
+          <div className="w-full md:w-[337px] shrink-0 bg-[#FDFDFD] border-t md:border-t-0 md:border-l border-[#F0F0F0] px-[16px] py-[16px] md:px-[20px] md:py-[32px] flex flex-col gap-[12px] md:gap-[20px] overflow-x-auto md:overflow-x-visible md:overflow-y-auto order-first md:order-none">
             <span className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">
               General
             </span>
-            <div className="grid grid-cols-3 gap-[10px] w-full">
+            <div className="flex md:grid md:grid-cols-3 gap-[10px] w-full overflow-x-auto md:overflow-x-visible">
               {GENERAL_BLOCKS.map((block, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={block.action}
-                  className="h-[78px] w-[92px] border border-[#F0F0F0] rounded-[8px] hover:border-[#D9D9D9] hover:shadow-sm bg-white cursor-pointer flex flex-col items-center justify-center gap-[8px] transition-all shrink-0"
+                  className="h-[78px] w-[92px] shrink-0 border border-[#F0F0F0] rounded-[8px] hover:border-[#D9D9D9] hover:shadow-sm bg-white cursor-pointer flex flex-col items-center justify-center gap-[8px] transition-all"
                 >
                   <span className="flex items-center justify-center size-[24px] text-[#0A60E1]">
                     {block.icon}

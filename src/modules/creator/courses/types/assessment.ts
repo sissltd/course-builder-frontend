@@ -5,13 +5,22 @@ export enum AssessmentLevel {
 }
 
 export enum QuestionType {
+  SINGLE_CHOICE = "SINGLE_CHOICE",
   MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
   ESSAY = "ESSAY",
 }
 
 export interface AssessmentOption {
   text: string;
-  explanation: string;
+  explanation?: string;
+}
+
+export interface SingleChoiceQuestion {
+  type: QuestionType.SINGLE_CHOICE;
+  question: string;
+  points: number;
+  options: AssessmentOption[];
+  correct_index: number;
 }
 
 export interface MultipleChoiceQuestion {
@@ -19,17 +28,22 @@ export interface MultipleChoiceQuestion {
   question: string;
   points: number;
   options: AssessmentOption[];
-  correct_index: number;
+  correct_indices?: number[];
+  correct_index?: number;
 }
 
 export interface EssayQuestion {
   type: QuestionType.ESSAY;
   question: string;
   points: number;
-  explanation: string;
+  expected_answer?: string;
+  explanation?: string;
 }
 
-export type AssessmentQuestion = MultipleChoiceQuestion | EssayQuestion;
+export type AssessmentQuestion =
+  | SingleChoiceQuestion
+  | MultipleChoiceQuestion
+  | EssayQuestion;
 
 export interface AssessmentSummary {
   total_questions: number;

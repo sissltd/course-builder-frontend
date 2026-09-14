@@ -1,19 +1,21 @@
 "use client";
 
-import React, { useState, useRef, useCallback, memo } from "react";
+import React, { useMemo, memo } from "react";
 import { cn } from "@/lib/utils";
 import { Trash, Add } from "iconsax-react";
 import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/form/FormSelect";
-import type { QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
+import {
+  createDefaultQuizQuestion,
+  OPTION_LETTERS,
+  type QuizBuilderQuestion,
+} from "@/redux/slices/quizBuilderSlice";
 
 interface QuizBuilderViewProps {
   questions: QuizBuilderQuestion[];
   onChange: (questions: QuizBuilderQuestion[]) => void;
   maxQuestions?: number;
 }
-
-const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 const TYPE_OPTIONS = [
   { label: "Single choice", value: "single" },
@@ -23,53 +25,32 @@ const TYPE_OPTIONS = [
 
 const deepClone = (q: QuizBuilderQuestion): QuizBuilderQuestion => ({
   ...q,
-  options: q.options.map(o => ({ ...o })),
+  options: q.options.map((o) => ({ ...o })),
 });
 
-const defaultQuestion = (id: string): QuizBuilderQuestion => ({
-  id,
-  question: "",
-  type: "single",
-  points: 0,
-  options: [
-    { id: `${id}-a`, label: "A", value: "" },
-    { id: `${id}-b`, label: "B", value: "" },
-  ],
-  correctOptionId: undefined,
-  explanation: "",
-});
+const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: QuizBuilderViewProps) => {
+  const [activeTab, setActiveTab] = React.useState<"builder" | "preview">("builder");
 
-export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: QuizBuilderViewProps) => {
-  const [activeTab, setActiveTab] = useState<"builder" | "preview">("builder");
-  const itemsRef = useRef<QuizBuilderQuestion[]>(
-    questions.length > 0
-      ? questions.map(deepClone)
-      : [defaultQuestion("1")]
+  const items = useMemo(
+    () => (questions.length > 0 ? questions : [createDefaultQuizQuestion()]),
+    [questions],
   );
-  const [, forceRender] = useState(0);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
-  const items = itemsRef.current;
-
-  const emitChange = useCallback((updated: QuizBuilderQuestion[]) => {
-    itemsRef.current = updated;
-    forceRender(c => c + 1);
-    onChangeRef.current(updated);
-  }, []);
+  const emitChange = (updated: QuizBuilderQuestion[]) => {
+    onChange(updated);
+  };
 
   const handleAddQuestion = () => {
-    const newId = Date.now().toString();
-    emitChange([...items, defaultQuestion(newId)]);
+    emitChange([...items, createDefaultQuizQuestion()]);
   };
 
   const handleRemoveQuestion = (idx: number) => {
     emitChange(items.filter((_, i) => i !== idx));
   };
 
-  const handleUpdateQuestion = (idx: number, field: string, value: any) => {
+  const handleUpdateQuestion = (idx: number, field: string, value: unknown) => {
     const updated = items.map(deepClone);
-    const q = updated[idx] as any;
+    const q = updated[idx] as unknown as Record<string, unknown>;
     if (field === "type" && value !== q.type) {
       q.type = value;
       if (value === "essay") {
@@ -78,11 +59,21 @@ export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: 
         q.correctOptionIds = undefined;
         q.correctAnswer = "";
       } else if (value === "single") {
-        q.options = q.options.length >= 2 ? q.options : [{ id: `${q.id}-a`, label: "A", value: "" }, { id: `${q.id}-b`, label: "B", value: "" }];
+        q.options = (q.options as unknown[]).length >= 2
+          ? q.options
+          : [
+              { id: `${q.id}-a`, label: "A", value: "" },
+              { id: `${q.id}-b`, label: "B", value: "" },
+            ];
         q.correctOptionId = undefined;
         q.correctOptionIds = undefined;
       } else if (value === "multiple") {
-        q.options = q.options.length >= 2 ? q.options : [{ id: `${q.id}-a`, label: "A", value: "" }, { id: `${q.id}-b`, label: "B", value: "" }];
+        q.options = (q.options as unknown[]).length >= 2
+          ? q.options
+          : [
+              { id: `${q.id}-a`, label: "A", value: "" },
+              { id: `${q.id}-b`, label: "B", value: "" },
+            ];
         q.correctOptionIds = [];
         q.correctOptionId = undefined;
       }
@@ -95,7 +86,7 @@ export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: 
   const handleAddOption = (qIdx: number) => {
     const updated = items.map(deepClone);
     const q = updated[qIdx];
-    const newLabel = LETTERS[q.options.length] || String.fromCharCode(65 + q.options.length);
+    const newLabel = OPTION_LETTERS[q.options.length] || String.fromCharCode(65 + q.options.length);
     q.options.push({ id: `${q.id}-${newLabel.toLowerCase()}`, label: newLabel, value: "" });
     emitChange(updated);
   };
@@ -104,12 +95,18 @@ export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: 
     const updated = items.map(deepClone);
     const q = updated[qIdx];
     const removedId = q.options[optIdx]?.id;
-    q.options = q.options.filter((_, i) => i !== optIdx).map((opt, i) => ({ ...opt, label: LETTERS[i], id: `${q.id}-${LETTERS[i].toLowerCase()}` }));
-    if (q.correctOptionId === removedId) {
-      q.correctOptionId = undefined;
-    }
-    if (q.correctOptionIds) {
-      q.correctOptionIds = q.correctOptionIds.filter(id => id !== removedId);
+    q.options = q.options.filter((_, i) => i !== optIdx).map((opt, i) => ({
+      ...opt,
+      label: OPTION_LETTERS[i] || `O${i + 1}`,
+      id: `${q.id}-${(OPTION_LETTERS[i] || `o${i + 1}`).toLowerCase()}`,
+    }));
+    if (removedId) {
+      if (q.correctOptionId === removedId) {
+        q.correctOptionId = undefined;
+      }
+      if (q.correctOptionIds) {
+        q.correctOptionIds = q.correctOptionIds.filter(id => id !== removedId);
+      }
     }
     emitChange(updated);
   };
@@ -401,4 +398,6 @@ export const QuizBuilderView = memo(({ questions, onChange, maxQuestions = 3 }: 
       )}
     </div>
   );
-});
+};
+
+export const QuizBuilderView = memo(QuizBuilderViewComponent);

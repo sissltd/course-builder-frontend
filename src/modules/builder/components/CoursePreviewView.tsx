@@ -18,18 +18,18 @@ export const CoursePreviewView = () => {
   return (
     <div className="bg-[#FDFDFD] w-full h-full flex flex-col overflow-hidden">
       {/* Hero Section */}
-      <div className="flex shrink-0">
-        <div className="flex-1 p-[40px] border-b border-[#D9D9D9]">
+      <div className="flex flex-col md:flex-row shrink-0">
+        <div className="flex-1 p-[24px] md:p-[40px] border-b md:border-b-0 md:border-r border-[#D9D9D9]">
           <div className="flex flex-col gap-[12px] max-w-[683px]">
-            <h2 className="text-[32px] font-bold text-[#202020] leading-[40px] font-sans">
+            <h2 className="text-[24px] md:text-[32px] font-bold text-[#202020] leading-[32px] md:leading-[40px] font-sans">
               {courseInfo.courseTitle}
             </h2>
-            <p className="text-[16px] text-[#606060] leading-[24px]">
+            <p className="text-[14px] md:text-[16px] text-[#606060] leading-[20px] md:leading-[24px]">
               {courseInfo.description}
             </p>
           </div>
         </div>
-        <div className="w-[615px] h-[333px] shrink-0 border-b border-[#D9D9D9] overflow-hidden">
+        <div className="w-full md:w-[615px] h-[220px] md:h-[333px] shrink-0 border-b border-[#D9D9D9] overflow-hidden">
           {courseInfo.thumbnail ? (
             <img
               src={courseInfo.thumbnail}
@@ -45,10 +45,10 @@ export const CoursePreviewView = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Module Sidebar */}
-        <div className="w-[295px] shrink-0 border-r border-[#F0F0F0] p-[20px] py-[40px] overflow-y-auto">
-          <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        {/* Module Sidebar - horizontal chips on mobile, vertical list on desktop */}
+        <div className="w-full md:w-[295px] shrink-0 border-b md:border-b-0 md:border-r border-[#F0F0F0] px-[16px] py-[20px] md:px-[20px] md:py-[40px] overflow-x-auto md:overflow-x-visible md:overflow-y-auto">
+          <div className="flex md:flex-col gap-[8px] min-w-max md:min-w-0">
             {modules.map((mod, modIdx) => {
               const isActive = modIdx === activeModuleIndex;
               const totalMinutes = mod.lessons.reduce((acc, l) => {
@@ -66,7 +66,7 @@ export const CoursePreviewView = () => {
                   type="button"
                   onClick={() => { setActiveModuleIndex(modIdx); setActiveLessonIndex(0); }}
                   className={cn(
-                    "w-full flex flex-col gap-[12px] p-[16px] rounded-[8px] text-left transition-colors",
+                    "w-[220px] md:w-full flex-shrink-0 flex flex-col gap-[12px] p-[16px] rounded-[8px] text-left transition-colors",
                     isActive ? "border-2 border-[#B3D3FF]" : "border-[1.5px] border-[#F0F0F0]"
                   )}
                 >
@@ -98,14 +98,14 @@ export const CoursePreviewView = () => {
           {activeModule && (
             <>
               {/* Lesson Tabs */}
-              <div className="flex items-center gap-[11px] h-[69px] px-[20px] border-b border-[#D9D9D9] overflow-x-auto">
+              <div className="flex items-center gap-[11px] h-[69px] px-[16px] md:px-[20px] border-b border-[#D9D9D9] overflow-x-auto">
                 {activeModule.lessons.map((lesson, lIdx) => (
                   <button
                     key={lesson.id}
                     type="button"
                     onClick={() => setActiveLessonIndex(lIdx)}
                     className={cn(
-                      "h-[40px] px-[10px] rounded-[8px] text-[16px] transition-colors",
+                      "h-[40px] px-[10px] rounded-[8px] text-[14px] md:text-[16px] transition-colors whitespace-nowrap",
                       lIdx === activeLessonIndex
                         ? "bg-[#EAF3FF] text-[#0A60E1]"
                         : "text-[#606060] hover:bg-[#F0F0F0]"
@@ -117,7 +117,7 @@ export const CoursePreviewView = () => {
               </div>
 
               {/* Video Player */}
-              <div className="relative w-full h-[346px] bg-black flex items-center justify-center">
+              <div className="relative w-full h-[200px] sm:h-[346px] bg-black flex items-center justify-center">
                 <div className="backdrop-blur-[8px] bg-[rgba(240,240,240,0.26)] rounded-full p-[11px] flex items-center justify-center">
                   <Play size={34} variant="Bold" color="white" />
                 </div>
@@ -125,8 +125,8 @@ export const CoursePreviewView = () => {
 
               {/* Lesson Title */}
               {activeLesson?.title && (
-                <div className="bg-white p-[20px] w-full">
-                  <h3 className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">
+                <div className="bg-white p-[16px] md:p-[20px] w-full">
+                  <h3 className="text-[20px] md:text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[28px] md:leading-[32px]">
                     {activeLesson.title}
                   </h3>
                 </div>
@@ -134,9 +134,9 @@ export const CoursePreviewView = () => {
 
               {/* Lesson Content (RTE HTML) */}
               {(activeLesson?.content || activeLesson?.videoScript) && (
-                <div className="bg-white p-[20px] w-full border-b border-[#D9D9D9]">
+                <div className="bg-white p-[16px] md:p-[20px] w-full border-b border-[#D9D9D9]">
                   <div
-                    className="text-[16px] text-[#636363] leading-[24px] [&_h1]:text-[24px] [&_h1]:font-medium [&_h1]:text-[#202020] [&_h1]:mb-[24px] [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#202020] [&_h2]:mb-[16px] [&_p]:mb-[16px] [&_ol]:list-decimal [&_ol]:pl-[24px] [&_ol_li]:mb-[8px] [&_ul]:list-disc [&_ul]:pl-[24px] [&_ul_li]:mb-[8px]"
+                    className="text-[14px] md:text-[16px] text-[#636363] leading-[20px] md:leading-[24px] [&_h1]:text-[20px] md:[&_h1]:text-[24px] [&_h1]:font-medium [&_h1]:text-[#202020] [&_h1]:mb-[16px] md:[&_h1]:mb-[24px] [&_h2]:text-[18px] md:[&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#202020] [&_h2]:mb-[12px] md:[&_h2]:mb-[16px] [&_p]:mb-[12px] md:[&_p]:mb-[16px] [&_ol]:list-decimal [&_ol]:pl-[24px] [&_ol_li]:mb-[8px] [&_ul]:list-disc [&_ul]:pl-[24px] [&_ul_li]:mb-[8px]"
                     dangerouslySetInnerHTML={{
                       __html: activeLesson?.content || activeLesson?.videoScript || "",
                     }}
@@ -147,32 +147,32 @@ export const CoursePreviewView = () => {
               {/* Quiz Section */}
               {(activeModule.quizQuestions.length > 0 ||
                 activeModule.lessons.some((l) => l.quizQuestions && l.quizQuestions.length > 0)) && (
-                <div className="bg-[#F0F0F0] p-[20px] w-full">
-                  <h4 className="text-[20px] font-semibold text-[#202020] leading-[28px] mb-[24px]">
+                <div className="bg-[#F0F0F0] p-[16px] md:p-[20px] w-full">
+                  <h4 className="text-[18px] md:text-[20px] font-semibold text-[#202020] leading-[24px] md:leading-[28px] mb-[16px] md:mb-[24px]">
                     Quiz
                   </h4>
-                  <div className="flex flex-col gap-[20px]">
+                  <div className="flex flex-col gap-[16px] md:gap-[20px]">
                     {activeModule.quizQuestions.slice(0, 3).map((q, qIdx) => (
                       <div
                         key={qIdx}
                         className="bg-[#FDFDFD] border border-[#D9D9D9] rounded-[8px] p-[16px] flex flex-col gap-[16px]"
                       >
                         <div className="flex items-start gap-[12px]">
-                          <span className="text-[16px] text-[#202020] shrink-0">
+                          <span className="text-[14px] md:text-[16px] text-[#202020] shrink-0">
                             Question {qIdx + 1}
                           </span>
-                          <span className="text-[16px] text-[#606060]">
+                          <span className="text-[14px] md:text-[16px] text-[#606060]">
                             {q.question}
                           </span>
                         </div>
-                        <div className="flex flex-col gap-[16px]">
+                        <div className="flex flex-col gap-[12px] md:gap-[16px]">
                           {q.options.map((opt, oIdx) => (
                             <div key={oIdx} className="flex items-center gap-[12px]">
-                              <span className="text-[14px] text-[#606060] w-[16px] shrink-0">
+                              <span className="text-[12px] md:text-[14px] text-[#606060] w-[16px] shrink-0">
                                 {String.fromCharCode(65 + oIdx)}
                               </span>
-                              <div className="size-[18px] rounded-full border border-[#D9D9D9] bg-white shrink-0" />
-                              <span className="text-[14px] text-[#606060]">{opt}</span>
+                              <div className="size-[16px] md:size-[18px] rounded-full border border-[#D9D9D9] bg-white shrink-0" />
+                              <span className="text-[12px] md:text-[14px] text-[#606060]">{opt.value}</span>
                             </div>
                           ))}
                         </div>

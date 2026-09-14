@@ -1,21 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { QuizBuilderQuestion } from "./quizBuilderSlice";
 
-export interface QuizQuestionOption {
-  id: string;
-  label: string;
-  value: string;
-}
-
-export interface QuizQuestionData {
-  question: string;
-  type: "single" | "multiple" | "essay";
-  points: number;
-  options: QuizQuestionOption[];
-  correctOptionId?: string;
-  correctOptionIds?: string[];
-  correctAnswer?: string;
-  explanation?: string;
-}
+export type QuizQuestionData = QuizBuilderQuestion;
 
 export interface Lesson {
   id: string;
@@ -32,15 +18,6 @@ export interface Lesson {
   videoUrl?: string;
   mediaFileName?: string;
   quizQuestions?: QuizQuestionData[];
-  quizId?: string;
-}
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  points: number;
-  correctAnswer?: string;
-  explanation?: string;
 }
 
 export interface Module {
@@ -49,8 +26,7 @@ export interface Module {
   description: string;
   objectives: string[];
   lessons: Lesson[];
-  quizQuestions: QuizQuestion[];
-  quizId?: string;
+  quizQuestions: QuizQuestionData[];
 }
 
 export interface CourseInformationData {
@@ -91,6 +67,8 @@ export interface CourseBuilderState {
   isSaving: boolean;
   isDirty: boolean;
   lastSavedAt: number | null;
+  saveDepth: number;
+  savedFingerprints: Record<string, string>;
 }
 
 const initialState: CourseBuilderState = {
@@ -119,6 +97,8 @@ const initialState: CourseBuilderState = {
   isSaving: false,
   isDirty: false,
   lastSavedAt: null,
+  saveDepth: 0,
+  savedFingerprints: {},
 };
 
 const courseBuilderSlice = createSlice({
@@ -131,13 +111,37 @@ const courseBuilderSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    setIsSaving: (state, action: PayloadAction<boolean>) => {
-      state.isSaving = action.payload;
+    beginSave: (state) => {
+      state.saveDepth = (state.saveDepth || 0) + 1;
+      state.isSaving = true;
+    },
+    endSave: (state) => {
+      state.saveDepth = Math.max(0, (state.saveDepth || 0) - 1);
+      if (state.saveDepth === 0) {
+        state.isSaving = false;
+      }
     },
     markSaved: (state) => {
       state.isDirty = false;
       state.isSaving = false;
+      state.saveDepth = 0;
       state.lastSavedAt = Date.now();
+    },
+    setFingerprint: (
+      state,
+      action: PayloadAction<{ key: string; value: string }>
+    ) => {
+      if (!state.savedFingerprints) state.savedFingerprints = {};
+      state.savedFingerprints[action.payload.key] = action.payload.value;
+    },
+    setFingerprints: (state, action: PayloadAction<Record<string, string>>) => {
+      state.savedFingerprints = {
+        ...(state.savedFingerprints || {}),
+        ...action.payload,
+      };
+    },
+    clearFingerprints: (state) => {
+      state.savedFingerprints = {};
     },
     setCourseInformation: (state, action: PayloadAction<CourseInformationData>) => {
       state.courseInformation = action.payload;
@@ -153,7 +157,7 @@ const courseBuilderSlice = createSlice({
       state.modules = action.payload;
     },
     addModule: (state) => {
-      const newId = (state.modules.length + 1).toString();
+      const newId = Date.now().toString();
       const newModule: Module = {
         id: newId,
         title: "",
@@ -265,9 +269,15 @@ const courseBuilderSlice = createSlice({
       const mod = state.modules.find((m) => m.id === moduleId);
       if (mod) {
         mod.quizQuestions.push({
+          id: `${moduleId}-${mod.quizQuestions.length + 1}`,
           question: "",
-          options: ["", "", "", ""],
+          type: "single",
           points: 0,
+          options: [
+            { id: `${moduleId}-${mod.quizQuestions.length + 1}-a`, label: "A", value: "" },
+            { id: `${moduleId}-${mod.quizQuestions.length + 1}-b`, label: "B", value: "" },
+          ],
+          explanation: "",
         });
         state.isDirty = true;
       }
@@ -309,19 +319,6 @@ const courseBuilderSlice = createSlice({
         }
       }
     },
-    setQuizIdForLesson: (
-      state,
-      action: PayloadAction<{ moduleId: string; lessonId: string; quizId: string }>
-    ) => {
-      const { moduleId, lessonId, quizId } = action.payload;
-      const mod = state.modules.find((m) => m.id === moduleId);
-      if (mod) {
-        const lesson = mod.lessons.find((l) => l.id === lessonId);
-        if (lesson) {
-          lesson.quizId = quizId;
-        }
-      }
-    },
     setQuizQuestionsForLesson: (
       state,
       action: PayloadAction<{ moduleId: string; lessonId: string; questions: QuizQuestionData[] }>
@@ -332,17 +329,7 @@ const courseBuilderSlice = createSlice({
         const lesson = mod.lessons.find((l) => l.id === lessonId);
         if (lesson) {
           lesson.quizQuestions = questions;
-          state.isDirty = true;
         }
-      }
-    },
-    setModuleQuizId: (
-      state,
-      action: PayloadAction<{ moduleId: string; quizId: string }>
-    ) => {
-      const mod = state.modules.find((m) => m.id === action.payload.moduleId);
-      if (mod) {
-        mod.quizId = action.payload.quizId;
       }
     },
     replaceLessonId: (
@@ -371,8 +358,12 @@ const courseBuilderSlice = createSlice({
 export const {
   setCourseId,
   setIsLoading,
-  setIsSaving,
+  beginSave,
+  endSave,
   markSaved,
+  setFingerprint,
+  setFingerprints,
+  clearFingerprints,
   setCourseInformation,
   updateCourseInformation,
   setModules,
@@ -393,9 +384,7 @@ export const {
   setActiveModuleIndex,
   setEditingLesson,
   setEditingQuiz,
-  setQuizIdForLesson,
   setQuizQuestionsForLesson,
-  setModuleQuizId,
   replaceModuleId,
   replaceLessonId,
   resetCourseBuilder,

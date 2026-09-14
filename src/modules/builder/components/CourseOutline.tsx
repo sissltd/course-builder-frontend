@@ -183,7 +183,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   };
 
   return (
-    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[24px] py-[40px] flex flex-col gap-[40px] mx-auto pb-[100px]">
+    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[100px]">
       
       {/* Title / Description */}
       <div className="flex flex-col gap-[12px]">
@@ -195,7 +195,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
 
       {/* Modules List Box */}
       <div className="flex flex-col gap-[24px]">
-        <div className="flex items-end justify-between w-full">
+        <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
           <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Modules</h3>
           <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
             Minimum of 5 required per modules
@@ -215,8 +215,8 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                 onClick={() => !isExpanded && toggleModule(mod.id)}
               >
                 {/* Accordion Header */}
-                <div className={cn("flex items-center justify-between w-full", isExpanded && "pb-[4px]")}>
-                  <div className="flex items-center gap-[12px]" onClick={(e) => {
+                <div className={cn("flex items-center justify-between w-full min-w-0", isExpanded && "pb-[4px]")}>
+                  <div className="flex items-center gap-[12px] min-w-0" onClick={(e) => {
                     if (isExpanded) {
                       e.stopPropagation();
                       toggleModule(mod.id);
@@ -227,7 +227,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                     ) : (
                       <ArrowRight2 size={20} variant="Linear" color="#202020" className="cursor-pointer" />
                     )}
-                    <span className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px]">
+                    <span className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px] truncate min-w-0">
                       Module {modIdx + 1}:{mod.title && ` ${mod.title}`}
                     </span>
                   </div>
@@ -285,7 +285,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                         {mod.objectives.map((obj, objIdx) => {
                           const isEditing = editingObjectiveIndex?.moduleId === mod.id && editingObjectiveIndex?.index === objIdx;
                           return (
-                            <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex items-center justify-between transition-all">
+                            <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[8px] sm:gap-0 transition-all">
                               {isEditing ? (
                                 <div className="flex items-center gap-[12px] w-full">
                                   <FormInput
@@ -416,7 +416,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                         {mod.lessons.map((lesson) => (
                           <div 
                             key={lesson.id}
-                            className="border border-[#D9D9D9] rounded-[8px] bg-[#FDFDFD] px-[20px] py-[16px] flex items-center justify-between"
+                            className="border border-[#D9D9D9] rounded-[8px] bg-[#FDFDFD] px-[20px] py-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[8px] sm:gap-0"
                           >
                             <div className="flex items-center gap-[12px]">
                               {lesson.type === "video" ? (

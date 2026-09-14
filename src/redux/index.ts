@@ -21,7 +21,7 @@ import { errorToastMiddleware } from "./errorToastMiddleware";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["courseBuilder", "quizBuilder", "auth"],
+  whitelist: ["courseBuilder", "auth"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

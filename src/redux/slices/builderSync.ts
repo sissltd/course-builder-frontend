@@ -1,17 +1,20 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { toast } from "sonner";
 import type { RootState, AppDispatch } from "@/redux";
 import {
   setCourseId,
   setCourseInformation,
   setModules,
   setIsLoading,
-  setIsSaving,
+  beginSave,
+  endSave,
   markSaved,
+  setFingerprint,
+  setFingerprints,
+  clearFingerprints,
   replaceModuleId,
   replaceLessonId,
-  setQuizIdForLesson,
   setQuizQuestionsForLesson,
-  setModuleQuizId,
   type Lesson,
 } from "./courseBuilderSlice";
 import { uploadFile } from "@/lib/uploads";
@@ -20,14 +23,27 @@ import {
   apiCourseToCourseInfo,
   reduxLessonToApiPayload,
   reduxQuizQuestionsToAssessment,
-  apiQuizQuestionsToRedux,
-  reduxQuizQuestionsToApiQuestions,
-  apiQuizQuestionsToModuleQuiz,
+  apiRelationalQuestionsToRedux,
 } from "@/modules/builder/utils/transformers";
 import type { CreateModuleRequest, UpdateModuleRequest } from "@/modules/creator/courses/types/module";
 import type { CreateLessonRequest, UpdateLessonRequest, LessonContentType } from "@/modules/creator/courses/types/lesson";
 import type { UpsertAssessmentRequest } from "@/modules/creator/courses/types/assessment";
-import { CreateQuizRequest, QuizLevel, QuizQuestionType, CreateQuestionRequest } from "@/modules/creator/courses/types/quiz";
+import type { QuizQuestionItem } from "@/modules/creator/courses/types/quiz";
+
+type ApiErrorPayload = {
+  status?: number;
+  errors?: { message?: string; field_name?: string | null }[];
+};
+
+const toRejectValue = (err: unknown): ApiErrorPayload => {
+  const error = err as { status?: number; data?: { errors?: ApiErrorPayload["errors"] } };
+  return { status: error?.status, errors: error?.data?.errors };
+};
+
+const firstErrorMessage = (payload: unknown, fallback: string): string => {
+  const errors = (payload as ApiErrorPayload)?.errors;
+  return errors?.[0]?.message || fallback;
+};
 
 const fetchJson = async (url: string, token: string, init?: RequestInit) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${url}`, {
@@ -49,29 +65,98 @@ const fetchJson = async (url: string, token: string, init?: RequestInit) => {
 
 const getToken = (state: RootState): string => state.auth.accessToken || "";
 
-const syncQuestionsForQuiz = async (
+const stableStringify = (value: unknown): string => {
+  const normalize = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(normalize);
+    if (input && typeof input === "object") {
+      return Object.keys(input as Record<string, unknown>)
+        .sort()
+        .reduce<Record<string, unknown>>((acc, key) => {
+          acc[key] = normalize((input as Record<string, unknown>)[key]);
+          return acc;
+        }, {});
+    }
+    return input;
+  };
+  return JSON.stringify(normalize(value));
+};
+
+const buildModuleBody = (
+  title: string,
+  order: number,
+  description: string | undefined,
+  learningObjectives: string[] | undefined,
+): UpdateModuleRequest => ({
+  title,
+  order,
+  description: description || "",
+  learning_objectives: (learningObjectives || []).filter((o) => o.trim() !== ""),
+});
+
+const buildCourseInfoBody = (info: RootState["courseBuilder"]["courseInformation"]) => ({
+  title: info.courseTitle,
+  description: info.description,
+  category: info.category,
+  topic: info.topic || null,
+  difficulty_level: info.difficulty ? info.difficulty.toUpperCase() : "",
+  learning_objectives: info.objectives,
+  tags: info.tags,
+  duration_hours: info.hours,
+  duration_minutes: info.minutes,
+  duration_seconds: info.seconds,
+});
+
+const assessmentTitle = (title: string | undefined): string =>
+  `${title || "Untitled"} Quiz`;
+
+const courseFingerprint = (state: RootState): string =>
+  stableStringify(buildCourseInfoBody(state.courseBuilder.courseInformation));
+
+const moduleFingerprint = (
+  mod: RootState["courseBuilder"]["modules"][number],
+  order: number,
+): string =>
+  stableStringify(
+    buildModuleBody(mod.title, order, mod.description, mod.objectives),
+  );
+
+const moduleAssessmentFingerprint = (
+  mod: RootState["courseBuilder"]["modules"][number],
+): string =>
+  stableStringify(
+    reduxQuizQuestionsToAssessment(mod.quizQuestions || [], assessmentTitle(mod.title)),
+  );
+
+const lessonFingerprint = (lesson: Lesson): string =>
+  stableStringify(reduxLessonToApiPayload(lesson));
+
+const lessonAssessmentFingerprint = (
+  lesson: Lesson,
+  lessonTitle: string,
+): string =>
+  stableStringify(
+    reduxQuizQuestionsToAssessment(lesson.quizQuestions || [], assessmentTitle(lessonTitle)),
+  );
+
+interface LegacyQuizRow {
+  id: string;
+  lesson: string | null;
+  module: string | null;
+  questions?: QuizQuestionItem[];
+}
+
+const resolveLegacyQuizQuestions = async (
   token: string,
-  quizId: string,
-  apiQuestions: Omit<CreateQuestionRequest, "quiz">[],
-) => {
-  let existingQuestions: { id: string }[] = [];
+  quiz: LegacyQuizRow,
+): Promise<QuizQuestionItem[]> => {
+  const nested = Array.isArray(quiz.questions) ? quiz.questions : [];
+  if (nested.length > 0) return nested;
   try {
-    const qRes = await fetchJson(`/questions/?quiz=${quizId}&ordering=order`, token);
-    existingQuestions = qRes.data?.results || qRes.results || [];
-    if (!Array.isArray(existingQuestions)) existingQuestions = [];
+    const res = await fetchJson(`/questions/?quiz=${quiz.id}&ordering=order`, token);
+    const results = res.data?.results || res.results || [];
+    return Array.isArray(results) ? results : [];
   } catch {
-    // ignore
-  }
-
-  for (const eq of existingQuestions) {
-    await fetchJson(`/questions/${eq.id}/`, token, { method: "DELETE" }).catch(() => {});
-  }
-
-  for (const apiQ of apiQuestions) {
-    await fetchJson("/questions/", token, {
-      method: "POST",
-      body: JSON.stringify({ ...apiQ, quiz: quizId }),
-    }).catch(() => {});
+    return [];
   }
 };
 
@@ -81,82 +166,77 @@ export const loadCourse = createAsyncThunk<
   { state: RootState; dispatch: AppDispatch }
 >("builderSync/loadCourse", async (courseId, { dispatch, getState }) => {
   dispatch(setIsLoading(true));
+  dispatch(clearFingerprints());
   try {
     const token = getToken(getState());
     const course = await fetchJson(`/courses/${courseId}/`, token);
     dispatch(setCourseId(courseId));
-    const courseInfo = apiCourseToCourseInfo(course);
-    dispatch(setCourseInformation(courseInfo));
+    dispatch(setCourseInformation(apiCourseToCourseInfo(course)));
     dispatch(setModules(apiCourseToReduxModules(course)));
 
-    const modules = getState().courseBuilder.modules;
-
-    let allQuizzes: { id: string; lesson: string | null; module: string | null; questions: unknown[] }[] = [];
+    let legacyQuizzes: LegacyQuizRow[] = [];
     try {
       const quizRes = await fetchJson("/quizzes/?size=200", token);
-      allQuizzes = quizRes.data?.results?.flat?.() || quizRes.data?.results || [];
-      if (!Array.isArray(allQuizzes)) allQuizzes = [];
+      legacyQuizzes = quizRes.data?.results?.flat?.() || quizRes.data?.results || [];
+      if (!Array.isArray(legacyQuizzes)) legacyQuizzes = [];
     } catch {
-      // quizzes fetch failed silently
+      legacyQuizzes = [];
     }
 
-    for (const mod of modules) {
-      const moduleQuiz = allQuizzes.find(
-        (q) => q.module === mod.id && !q.lesson,
-      );
-      if (moduleQuiz) {
-        dispatch(setModuleQuizId({ moduleId: mod.id, quizId: moduleQuiz.id }));
-        let quizQuestions = moduleQuiz.questions || [];
-        if (quizQuestions.length === 0) {
-          try {
-            const qRes = await fetchJson(`/questions/?quiz=${moduleQuiz.id}&ordering=order`, token);
-            quizQuestions = qRes.data?.results || qRes.results || [];
-            if (!Array.isArray(quizQuestions)) quizQuestions = [];
-          } catch {
-            // ignore
+    if (legacyQuizzes.length > 0) {
+      for (const mod of getState().courseBuilder.modules) {
+        if ((mod.quizQuestions?.length || 0) === 0) {
+          const moduleQuiz = legacyQuizzes.find((q) => q.module === mod.id && !q.lesson);
+          if (moduleQuiz) {
+            const legacyQuestions = await resolveLegacyQuizQuestions(token, moduleQuiz);
+            if (legacyQuestions.length > 0) {
+              const mapped = apiRelationalQuestionsToRedux(legacyQuestions);
+              dispatch(
+                setModules(
+                  getState().courseBuilder.modules.map((m) =>
+                    m.id === mod.id ? { ...m, quizQuestions: mapped } : m,
+                  ),
+                ),
+              );
+            }
           }
         }
-        if (quizQuestions.length > 0) {
-          const typedQs = quizQuestions as Parameters<typeof apiQuizQuestionsToModuleQuiz>[0];
-          const mapped = apiQuizQuestionsToModuleQuiz(typedQs);
-          dispatch(setModules(
-            getState().courseBuilder.modules.map((m) =>
-              m.id === mod.id ? { ...m, quizQuestions: mapped } : m
-            )
-          ));
-        }
-      }
 
-      for (const lesson of mod.lessons) {
-        if (lesson.type === "quiz") {
-          const matched = allQuizzes.find((q) => q.lesson === lesson.id && q.module === mod.id);
-          if (matched) {
-            dispatch(setQuizIdForLesson({
+        for (const lesson of mod.lessons) {
+          if ((lesson.quizQuestions?.length || 0) > 0) continue;
+          const matched = legacyQuizzes.find(
+            (q) => q.lesson === lesson.id && q.module === mod.id,
+          );
+          if (!matched) continue;
+          const legacyQuestions = await resolveLegacyQuizQuestions(token, matched);
+          if (legacyQuestions.length === 0) continue;
+          dispatch(
+            setQuizQuestionsForLesson({
               moduleId: mod.id,
               lessonId: lesson.id,
-              quizId: matched.id,
-            }));
-            let lessonQuestions = matched.questions || [];
-            if (lessonQuestions.length === 0) {
-              try {
-                const qRes = await fetchJson(`/questions/?quiz=${matched.id}&ordering=order`, token);
-                lessonQuestions = qRes.data?.results || qRes.results || [];
-                if (!Array.isArray(lessonQuestions)) lessonQuestions = [];
-              } catch {
-                // ignore
-              }
-            }
-            if (lessonQuestions.length > 0) {
-              dispatch(setQuizQuestionsForLesson({
-                moduleId: mod.id,
-                lessonId: lesson.id,
-                questions: apiQuizQuestionsToRedux(lessonQuestions as Parameters<typeof apiQuizQuestionsToRedux>[0]),
-              }));
-            }
-          }
+              questions: apiRelationalQuestionsToRedux(legacyQuestions),
+            }),
+          );
         }
       }
     }
+
+    const hydrated = getState().courseBuilder;
+    const fingerprints: Record<string, string> = {
+      course: courseFingerprint(getState()),
+    };
+    hydrated.modules.forEach((mod, index) => {
+      fingerprints[`module:${mod.id}`] = moduleFingerprint(mod, index + 1);
+      fingerprints[`moduleAssessment:${mod.id}`] = moduleAssessmentFingerprint(mod);
+      mod.lessons.forEach((lesson) => {
+        fingerprints[`lesson:${lesson.id}`] = lessonFingerprint(lesson);
+        fingerprints[`lessonAssessment:${lesson.id}`] = lessonAssessmentFingerprint(
+          lesson,
+          lesson.title,
+        );
+      });
+    });
+    dispatch(setFingerprints(fingerprints));
   } finally {
     dispatch(setIsLoading(false));
   }
@@ -165,24 +245,26 @@ export const loadCourse = createAsyncThunk<
 export const syncCreateModule = createAsyncThunk<
   { tempId: string; apiId: string } | null,
   { moduleId?: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncCreateModule", async ({ moduleId }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncCreateModule", async ({ moduleId }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return null;
 
   const modules = state.courseBuilder.modules;
+  const tempModules = modules.filter((m) => /^\d+$/.test(m.id));
   const newModule = moduleId
     ? modules.find((m) => m.id === moduleId)
-    : modules.find((m) => /^\d+$/.test(m.id));
+    : tempModules[tempModules.length - 1];
   if (!newModule) return null;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
+    const order = modules.indexOf(newModule) + 1;
     const body: CreateModuleRequest = {
       title: newModule.title || "Untitled Module",
-      order: modules.length,
+      order,
       learning_objectives: (newModule.objectives || []).filter((o) => o.trim() !== ""),
     };
     const result = await fetchJson(`/courses/${courseId}/modules/`, token, {
@@ -190,68 +272,72 @@ export const syncCreateModule = createAsyncThunk<
       body: JSON.stringify(body),
     });
     dispatch(replaceModuleId({ oldId: newModule.id, newId: result.id }));
-    dispatch(markSaved());
+    dispatch(
+      setFingerprint({
+        key: `module:${result.id}`,
+        value: moduleFingerprint({ ...newModule, id: result.id }, order),
+      }),
+    );
     return { tempId: newModule.id, apiId: result.id };
-  } catch {
-    dispatch(setIsSaving(false));
-    return null;
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncUpdateModule = createAsyncThunk<
   void,
   { moduleId: string; title: string; order: number; description?: string; learningObjectives?: string[] },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncUpdateModule", async ({ moduleId, title, order, description, learningObjectives }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncUpdateModule", async ({ moduleId, title, order, description, learningObjectives }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
-    const body: UpdateModuleRequest = {
-      title,
-      order,
-      description: description || "",
-      learning_objectives: (learningObjectives || []).filter((o) => o.trim() !== ""),
-    };
+    const body = buildModuleBody(title, order, description, learningObjectives);
     await fetchJson(`/courses/${courseId}/modules/${moduleId}/`, token, {
       method: "PATCH",
       body: JSON.stringify(body),
     });
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+    dispatch(setFingerprint({ key: `module:${moduleId}`, value: stableStringify(body) }));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncDeleteModule = createAsyncThunk<
   void,
   string,
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncDeleteModule", async (moduleId, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncDeleteModule", async (moduleId, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     await fetchJson(`/courses/${courseId}/modules/${moduleId}/`, token, {
       method: "DELETE",
     });
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncCreateLesson = createAsyncThunk<
   { moduleId: string; tempId: string; apiId: string } | null,
   { moduleId: string; type: "video" | "quiz" | "text"; lessonId?: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncCreateLesson", async ({ moduleId, type, lessonId }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncCreateLesson", async ({ moduleId, type, lessonId }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return null;
@@ -259,13 +345,13 @@ export const syncCreateLesson = createAsyncThunk<
   const mod = state.courseBuilder.modules.find((m) => m.id === moduleId);
   if (!mod) return null;
 
-  // If lessonId provided, find that specific lesson; otherwise find the last temp lesson
+  const tempLessons = mod.lessons.filter((l) => /^\d+$/.test(l.id));
   const newLesson = lessonId
     ? mod.lessons.find((l) => l.id === lessonId)
-    : mod.lessons.find((l) => /^\d+$/.test(l.id));
+    : tempLessons[tempLessons.length - 1];
   if (!newLesson) return null;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     const contentTypeMap: Record<string, LessonContentType> = {
@@ -293,24 +379,30 @@ export const syncCreateLesson = createAsyncThunk<
       },
     );
     dispatch(replaceLessonId({ moduleId, oldLessonId: newLesson.id, newLessonId: result.id }));
-    dispatch(markSaved());
+    dispatch(
+      setFingerprint({
+        key: `lesson:${result.id}`,
+        value: lessonFingerprint({ ...newLesson, id: result.id }),
+      }),
+    );
     return { moduleId, tempId: newLesson.id, apiId: result.id };
-  } catch {
-    dispatch(setIsSaving(false));
-    return null;
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncUpdateLesson = createAsyncThunk<
   void,
   { moduleId: string; lessonId: string; lesson: Lesson },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncUpdateLesson", async ({ moduleId, lessonId, lesson }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncUpdateLesson", async ({ moduleId, lessonId, lesson }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     const body: UpdateLessonRequest = reduxLessonToApiPayload(lesson) as UpdateLessonRequest;
@@ -322,22 +414,24 @@ export const syncUpdateLesson = createAsyncThunk<
         body: JSON.stringify(body),
       },
     );
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+    dispatch(setFingerprint({ key: `lesson:${lessonId}`, value: lessonFingerprint(lesson) }));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncDeleteLesson = createAsyncThunk<
   void,
   { moduleId: string; lessonId: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncDeleteLesson", async ({ moduleId, lessonId }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncDeleteLesson", async ({ moduleId, lessonId }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     await fetchJson(
@@ -345,17 +439,18 @@ export const syncDeleteLesson = createAsyncThunk<
       token,
       { method: "DELETE" },
     );
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncSaveModuleAssessment = createAsyncThunk<
   void,
   { moduleId: string; moduleTitle: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncSaveModuleAssessment", async ({ moduleId, moduleTitle }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncSaveModuleAssessment", async ({ moduleId, moduleTitle }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
@@ -363,111 +458,35 @@ export const syncSaveModuleAssessment = createAsyncThunk<
   const mod = state.courseBuilder.modules.find((m) => m.id === moduleId);
   if (!mod) return;
 
-  let quizId = mod.quizId;
-
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
-    const apiQuestions = mod.quizQuestions.map((q, idx) => {
-      const correctIdx = q.options.indexOf(q.correctAnswer || "");
-      return {
-        question_text: q.question,
-        question_type: QuizQuestionType.MULTIPLE_CHOICE,
-        points: q.points ?? 0,
-        model_response_guide: "",
-        order: idx,
-        options: q.options.map((opt, oi) => ({
-          option_text: opt,
-          is_correct: oi === correctIdx,
-          explanation: oi === correctIdx ? (q.explanation || "") : "",
-          order: oi,
-        })),
-      };
+    const payload: UpsertAssessmentRequest = reduxQuizQuestionsToAssessment(
+      mod.quizQuestions || [],
+      assessmentTitle(moduleTitle),
+    );
+    await fetchJson(`/courses/${courseId}/modules/${moduleId}/assessment/`, token, {
+      method: "PUT",
+      body: JSON.stringify(payload),
     });
-
-    if (!quizId) {
-      let existingQuizId: string | null = null;
-      try {
-        const quizRes = await fetchJson("/quizzes/?size=200", token);
-        const allQuizzes = quizRes.data?.results || [];
-        const existing = allQuizzes.find(
-          (q: { module: string | null }) => q.module === moduleId
-        );
-        if (existing) {
-          existingQuizId = existing.id;
-        }
-      } catch {
-        // ignore fetch error
-      }
-
-      if (existingQuizId) {
-        quizId = existingQuizId;
-        dispatch(setModuleQuizId({ moduleId, quizId: existingQuizId }));
-        await fetchJson(`/quizzes/${existingQuizId}/`, token, {
-          method: "PUT",
-          body: JSON.stringify({
-            level: QuizLevel.MODULE,
-            title: `${moduleTitle || "Untitled"} Quiz`,
-            description: "",
-            module: moduleId,
-            passing_score: 70,
-            time_limit_minutes: 0,
-            attempts_allowed: 3,
-            shuffle_questions: false,
-            randomize_options: false,
-          }),
-        });
-      } else {
-        const body: CreateQuizRequest = {
-          level: QuizLevel.MODULE,
-          title: `${moduleTitle || "Untitled"} Quiz`,
-          description: "",
-          module: moduleId,
-          passing_score: 70,
-          time_limit_minutes: 0,
-          attempts_allowed: 3,
-          shuffle_questions: false,
-          randomize_options: false,
-        };
-        const result = await fetchJson("/quizzes/", token, {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
-        quizId = result.id;
-        dispatch(setModuleQuizId({ moduleId, quizId: result.id }));
-      }
-    } else {
-      await fetchJson(`/quizzes/${quizId}/`, token, {
-        method: "PUT",
-        body: JSON.stringify({
-          level: QuizLevel.MODULE,
-          title: `${moduleTitle || "Untitled"} Quiz`,
-          description: "",
-          module: moduleId,
-          passing_score: 70,
-          time_limit_minutes: 0,
-          attempts_allowed: 3,
-          shuffle_questions: false,
-          randomize_options: false,
-        }),
-      });
-    }
-
-    if (quizId) {
-      await syncQuestionsForQuiz(token, quizId, apiQuestions);
-    }
-
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+    dispatch(
+      setFingerprint({
+        key: `moduleAssessment:${moduleId}`,
+        value: moduleAssessmentFingerprint(mod),
+      }),
+    );
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncSaveLessonAssessment = createAsyncThunk<
   void,
   { moduleId: string; lessonId: string; lessonTitle: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncSaveLessonAssessment", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncSaveLessonAssessment", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
@@ -476,12 +495,12 @@ export const syncSaveLessonAssessment = createAsyncThunk<
   const lesson = mod?.lessons.find((l) => l.id === lessonId);
   if (!lesson) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     const payload: UpsertAssessmentRequest = reduxQuizQuestionsToAssessment(
       lesson.quizQuestions || [],
-      `${lessonTitle} Quiz`,
+      assessmentTitle(lessonTitle),
     );
     await fetchJson(
       `/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessment/`,
@@ -491,235 +510,54 @@ export const syncSaveLessonAssessment = createAsyncThunk<
         body: JSON.stringify(payload),
       },
     );
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
-  }
-});
-
-export const syncCreateQuiz = createAsyncThunk<
-  string | null,
-  { moduleId: string; lessonId: string; lessonTitle: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncCreateQuiz", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState }) => {
-  const state = getState();
-  const courseId = state.courseBuilder.courseId;
-  if (!courseId) return null;
-
-  dispatch(setIsSaving(true));
-  try {
-    const token = getToken(state);
-    const lesson = state.courseBuilder.modules
-      .find((m) => m.id === moduleId)
-      ?.lessons.find((l) => l.id === lessonId);
-    const questions = lesson?.quizQuestions || [];
-    const apiQuestions = reduxQuizQuestionsToApiQuestions(questions);
-
-    let existingQuizId: string | null = null;
-    try {
-      const quizRes = await fetchJson("/quizzes/?size=200", token);
-      const allQuizzes = quizRes.data?.results || [];
-      const existing = allQuizzes.find(
-        (q: { lesson: string | null; module: string | null }) => q.module === moduleId && (q.lesson === lessonId || !q.lesson)
-      );
-      if (existing) {
-        existingQuizId = existing.id;
-      }
-    } catch {
-      // ignore fetch error
-    }
-
-    if (existingQuizId) {
-      await fetchJson(`/quizzes/${existingQuizId}/`, token, {
-        method: "PUT",
-        body: JSON.stringify({
-          level: QuizLevel.LESSON,
-          title: `${lessonTitle || "Untitled"} Quiz`,
-          description: "",
-          lesson: lessonId,
-          passing_score: 70,
-          time_limit_minutes: 0,
-          attempts_allowed: 3,
-          shuffle_questions: false,
-          randomize_options: false,
-        }),
-      });
-      await syncQuestionsForQuiz(token, existingQuizId, apiQuestions);
-      dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: existingQuizId }));
-      dispatch(markSaved());
-      return existingQuizId;
-    }
-
-    const body: CreateQuizRequest = {
-      level: QuizLevel.LESSON,
-      title: `${lessonTitle || "Untitled"} Quiz`,
-      description: "",
-      lesson: lessonId,
-      passing_score: 70,
-      time_limit_minutes: 0,
-      attempts_allowed: 3,
-      shuffle_questions: false,
-      randomize_options: false,
-    };
-    const result = await fetchJson("/quizzes/", token, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-    await syncQuestionsForQuiz(token, result.id, apiQuestions);
-    dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: result.id }));
-    dispatch(markSaved());
-    return result.id as string;
-  } catch {
-    dispatch(setIsSaving(false));
-    return null;
-  }
-});
-
-export const syncSaveQuizQuestions = createAsyncThunk<
-  void,
-  { moduleId: string; lessonId: string; lessonTitle: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncSaveQuizQuestions", async ({ moduleId, lessonId, lessonTitle }, { dispatch, getState }) => {
-  const state = getState();
-  const courseId = state.courseBuilder.courseId;
-  if (!courseId) return;
-
-  const lesson = state.courseBuilder.modules
-    .find((m) => m.id === moduleId)
-    ?.lessons.find((l) => l.id === lessonId);
-  if (!lesson) return;
-
-  let quizId = lesson.quizId;
-
-  dispatch(setIsSaving(true));
-  try {
-    const token = getToken(state);
-    const questions = lesson.quizQuestions || [];
-    const apiQuestions = reduxQuizQuestionsToApiQuestions(questions);
-
-    if (!quizId) {
-      let existingQuizId: string | null = null;
-      try {
-        const quizRes = await fetchJson("/quizzes/?size=200", token);
-        const allQuizzes = quizRes.data?.results || [];
-        const existing = allQuizzes.find(
-          (q: { lesson: string | null; module: string | null }) => q.module === moduleId && (q.lesson === lessonId || !q.lesson)
-        );
-        if (existing) {
-          existingQuizId = existing.id;
-        }
-      } catch {
-        // ignore fetch error
-      }
-
-      if (existingQuizId) {
-        quizId = existingQuizId;
-        dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: existingQuizId }));
-        await fetchJson(`/quizzes/${existingQuizId}/`, token, {
-          method: "PUT",
-          body: JSON.stringify({
-            level: QuizLevel.LESSON,
-            title: `${lessonTitle || "Untitled"} Quiz`,
-            description: "",
-            lesson: lessonId,
-            passing_score: 70,
-            time_limit_minutes: 0,
-            attempts_allowed: 3,
-            shuffle_questions: false,
-            randomize_options: false,
-          }),
-        });
-      } else {
-        const body: CreateQuizRequest = {
-          level: QuizLevel.LESSON,
-          title: `${lessonTitle || "Untitled"} Quiz`,
-          description: "",
-          lesson: lessonId,
-          passing_score: 70,
-          time_limit_minutes: 0,
-          attempts_allowed: 3,
-          shuffle_questions: false,
-          randomize_options: false,
-        };
-        const result = await fetchJson("/quizzes/", token, {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
-        quizId = result.id;
-        dispatch(setQuizIdForLesson({ moduleId, lessonId, quizId: result.id }));
-      }
-    } else {
-      await fetchJson(`/quizzes/${quizId}/`, token, {
-        method: "PUT",
-        body: JSON.stringify({
-          level: QuizLevel.LESSON,
-          title: `${lessonTitle || "Untitled"} Quiz`,
-          description: "",
-          lesson: lessonId,
-          passing_score: 70,
-          time_limit_minutes: 0,
-          attempts_allowed: 3,
-          shuffle_questions: false,
-          randomize_options: false,
-        }),
-      });
-    }
-
-    if (quizId) {
-      await syncQuestionsForQuiz(token, quizId, apiQuestions);
-    }
-
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+    dispatch(
+      setFingerprint({
+        key: `lessonAssessment:${lessonId}`,
+        value: lessonAssessmentFingerprint(lesson, lessonTitle),
+      }),
+    );
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncUpdateCourseInfo = createAsyncThunk<
   void,
   void,
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncUpdateCourseInfo", async (_, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncUpdateCourseInfo", async (_, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  const info = state.courseBuilder.courseInformation;
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
-    const body = {
-      title: info.courseTitle,
-      description: info.description,
-      category: info.category,
-      topic: info.topic || null,
-      difficulty_level: info.difficulty ? info.difficulty.toUpperCase() : "",
-      learning_objectives: info.objectives,
-      tags: info.tags,
-      duration_hours: info.hours,
-      duration_minutes: info.minutes,
-      duration_seconds: info.seconds,
-    };
+    const body = buildCourseInfoBody(state.courseBuilder.courseInformation);
     await fetchJson(`/courses/${courseId}/`, token, {
       method: "PATCH",
       body: JSON.stringify(body),
     });
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+    dispatch(setFingerprint({ key: "course", value: courseFingerprint(getState()) }));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncSetThumbnail = createAsyncThunk<
   void,
   { source: string; externalUrl?: string; file?: string },
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncSetThumbnail", async ({ source, externalUrl, file }, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncSetThumbnail", async ({ source, externalUrl, file }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     const body: Record<string, unknown> = {
@@ -732,22 +570,23 @@ export const syncSetThumbnail = createAsyncThunk<
       method: "POST",
       body: JSON.stringify(body),
     });
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
 export const syncSetCoverVideo = createAsyncThunk<
   void,
   File,
-  { state: RootState; dispatch: AppDispatch }
->("builderSync/syncSetCoverVideo", async (file, { dispatch, getState }) => {
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncSetCoverVideo", async (file, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return;
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     const presigned = await uploadFile(file, {}, token);
@@ -755,9 +594,10 @@ export const syncSetCoverVideo = createAsyncThunk<
       method: "PATCH",
       body: JSON.stringify({ preview_video_url: presigned.file_url }),
     });
-    dispatch(markSaved());
-  } catch {
-    dispatch(setIsSaving(false));
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
   }
 });
 
@@ -770,21 +610,21 @@ export const syncSubmitCourse = createAsyncThunk<
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return { success: false };
 
-  dispatch(setIsSaving(true));
+  dispatch(beginSave());
   try {
     const token = getToken(state);
     await fetchJson(`/courses/${courseId}/submit/`, token, {
       method: "POST",
     });
-    dispatch(markSaved());
     return { success: true };
   } catch (err: unknown) {
-    dispatch(setIsSaving(false));
     const error = err as { status?: number; data?: { errors?: unknown[] } };
     if (error.status === 400 && error.data?.errors) {
       return { success: false, errors: error.data.errors };
     }
     return { success: false };
+  } finally {
+    dispatch(endSave());
   }
 });
 
@@ -796,70 +636,153 @@ export const saveAllDirty = createAsyncThunk<
   const state = getState();
   if (!state.courseBuilder.isDirty) return;
 
-  dispatch(setIsSaving(true));
+  const courseId = state.courseBuilder.courseId;
+  if (!courseId) return;
+
+  dispatch(beginSave());
+  let hadError = false;
+  let reportedValidationError = false;
+
+  const reportError = (err: unknown) => {
+    hadError = true;
+    const payload = err as ApiErrorPayload;
+    if (payload?.status === 400 && !reportedValidationError) {
+      reportedValidationError = true;
+      toast.error(firstErrorMessage(payload, "Some changes could not be saved."));
+    }
+  };
+
   try {
-    const courseId = state.courseBuilder.courseId;
-    if (courseId) {
-      await dispatch(syncUpdateCourseInfo()).unwrap();
+    const saved = () => getState().courseBuilder.savedFingerprints || {};
+
+    if (courseFingerprint(getState()) !== saved().course) {
+      try {
+        await dispatch(syncUpdateCourseInfo()).unwrap();
+      } catch (err) {
+        reportError(err);
+      }
     }
 
-    for (const mod of state.courseBuilder.modules) {
-      const isTempModule = /^\d+$/.test(mod.id);
+    const moduleSnapshots = getState().courseBuilder.modules;
+    for (let index = 0; index < moduleSnapshots.length; index++) {
+      const snapshot = moduleSnapshots[index];
+      let moduleId = snapshot.id;
+      const isTempModule = /^\d+$/.test(moduleId);
 
-      // 1. Create temp modules first so lessons can reference a real API ID
-      if (isTempModule && courseId) {
-        const created = await dispatch(syncCreateModule({ moduleId: mod.id })).unwrap();
-        if (!created) continue;
-      }
-
-      // 2. Update existing (non-temp) modules
-      if (!isTempModule && courseId) {
-        await dispatch(
-          syncUpdateModule({
-            moduleId: mod.id,
-            title: mod.title,
-            order: state.courseBuilder.modules.indexOf(mod) + 1,
-            description: mod.description,
-            learningObjectives: mod.objectives,
-          }),
-        ).unwrap();
-      }
-
-      // 3. Module assessment (existing modules only)
-      if (!isTempModule && mod.quizQuestions.length > 0) {
-        await dispatch(
-          syncSaveModuleAssessment({ moduleId: mod.id, moduleTitle: mod.title }),
-        ).unwrap();
-      }
-
-      // 4. Create temp lessons, then update existing lessons
-      for (const lesson of mod.lessons) {
-        const isTempLesson = /^\d+$/.test(lesson.id);
-
-        if (isTempLesson && courseId) {
-          await dispatch(
-            syncCreateLesson({ moduleId: mod.id, type: lesson.type, lessonId: lesson.id }),
-          ).unwrap();
-        } else if (!isTempLesson && courseId) {
-          await dispatch(
-            syncUpdateLesson({ moduleId: mod.id, lessonId: lesson.id, lesson }),
-          ).unwrap();
-
-          if (lesson.quizQuestions && lesson.quizQuestions.length > 0) {
+      if (isTempModule) {
+        try {
+          const created = await dispatch(syncCreateModule({ moduleId })).unwrap();
+          if (!created) continue;
+          moduleId = created.apiId;
+        } catch (err) {
+          reportError(err);
+          continue;
+        }
+      } else {
+        const fresh = getState().courseBuilder.modules.find((m) => m.id === moduleId);
+        if (!fresh) continue;
+        if (moduleFingerprint(fresh, index + 1) !== saved()[`module:${moduleId}`]) {
+          try {
             await dispatch(
-              syncSaveQuizQuestions({
-                moduleId: mod.id,
-                lessonId: lesson.id,
-                lessonTitle: lesson.title,
+              syncUpdateModule({
+                moduleId,
+                title: fresh.title,
+                order: index + 1,
+                description: fresh.description,
+                learningObjectives: fresh.objectives,
               }),
             ).unwrap();
+          } catch (err) {
+            reportError(err);
+          }
+        }
+      }
+
+      const mod = getState().courseBuilder.modules.find((m) => m.id === moduleId);
+      if (!mod) continue;
+
+      const moduleAssessmentKey = `moduleAssessment:${moduleId}`;
+      const moduleAssessmentChanged =
+        moduleAssessmentFingerprint(mod) !== saved()[moduleAssessmentKey];
+      const hasSavedModuleAssessment = saved()[moduleAssessmentKey] !== undefined;
+      if (
+        moduleAssessmentChanged &&
+        ((mod.quizQuestions?.length || 0) > 0 || hasSavedModuleAssessment)
+      ) {
+        try {
+          await dispatch(
+            syncSaveModuleAssessment({ moduleId, moduleTitle: mod.title }),
+          ).unwrap();
+        } catch (err) {
+          reportError(err);
+        }
+      }
+
+      const lessonSnapshots = mod.lessons;
+      for (const lessonSnapshot of lessonSnapshots) {
+        let lessonId = lessonSnapshot.id;
+        const isTempLesson = /^\d+$/.test(lessonId);
+
+        if (isTempLesson) {
+          try {
+            const created = await dispatch(
+              syncCreateLesson({ moduleId, type: lessonSnapshot.type, lessonId }),
+            ).unwrap();
+            if (!created) continue;
+            lessonId = created.apiId;
+          } catch (err) {
+            reportError(err);
+            continue;
+          }
+        } else {
+          const freshLesson = getState().courseBuilder.modules
+            .find((m) => m.id === moduleId)
+            ?.lessons.find((l) => l.id === lessonId);
+          if (!freshLesson) continue;
+          if (lessonFingerprint(freshLesson) !== saved()[`lesson:${lessonId}`]) {
+            try {
+              await dispatch(
+                syncUpdateLesson({ moduleId, lessonId, lesson: freshLesson }),
+              ).unwrap();
+            } catch (err) {
+              reportError(err);
+            }
+          }
+        }
+
+        const freshLesson = getState().courseBuilder.modules
+          .find((m) => m.id === moduleId)
+          ?.lessons.find((l) => l.id === lessonId);
+        if (!freshLesson) continue;
+
+        const lessonAssessmentKey = `lessonAssessment:${lessonId}`;
+        const lessonAssessmentChanged =
+          lessonAssessmentFingerprint(freshLesson, freshLesson.title) !==
+          saved()[lessonAssessmentKey];
+        const hasSavedLessonAssessment = saved()[lessonAssessmentKey] !== undefined;
+        if (
+          lessonAssessmentChanged &&
+          ((freshLesson.quizQuestions?.length || 0) > 0 || hasSavedLessonAssessment)
+        ) {
+          try {
+            await dispatch(
+              syncSaveLessonAssessment({
+                moduleId,
+                lessonId,
+                lessonTitle: freshLesson.title,
+              }),
+            ).unwrap();
+          } catch (err) {
+            reportError(err);
           }
         }
       }
     }
 
-    dispatch(markSaved());
-  } catch {
-    // errors handled inside individual thunks
+    if (!hadError) {
+      dispatch(markSaved());
+    }
+  } finally {
+    dispatch(endSave());
   }
 });

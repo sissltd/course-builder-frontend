@@ -95,7 +95,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
   };
 
   return (
-    <div className="w-full bg-[#FDFDFD] pl-[24px] pr-[200px] py-[40px] flex flex-col gap-[40px] pb-[100px]">
+    <div className="w-full bg-[#FDFDFD] px-[16px] md:pl-[24px] md:pr-[200px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] pb-[100px]">
       {/* Title Section */}
       <div className="flex flex-col gap-[12px]">
         <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">
@@ -151,7 +151,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
       )}
 
       {/* Footer Navigation */}
-      <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
+      <div className="flex flex-col-reverse gap-[12px] sm:flex-row sm:items-center sm:justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
         <Button
           variant="app-outline"
           onClick={onBack}

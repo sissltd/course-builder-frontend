@@ -26,6 +26,65 @@ const initialState: QuizBuilderState = {
   questions: [],
 };
 
+export const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+export const createQuizQuestionId = (): string =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `q-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+export const createDefaultQuizQuestion = (
+  id?: string,
+): QuizBuilderQuestion => {
+  const questionId = id || createQuizQuestionId();
+  return {
+    id: questionId,
+    question: "",
+    type: "single",
+    points: 0,
+    options: [
+      { id: `${questionId}-a`, label: "A", value: "" },
+      { id: `${questionId}-b`, label: "B", value: "" },
+    ],
+    correctOptionId: undefined,
+    explanation: "",
+  };
+};
+
+export const toQuizBuilderQuestions = (
+  questions: QuizBuilderQuestion[] | undefined | null,
+): QuizBuilderQuestion[] => {
+  if (!Array.isArray(questions)) return [];
+  return questions.map((raw, index) => {
+    const q = raw as Partial<QuizBuilderQuestion> & { options?: unknown[] };
+    const id = q.id || `q-${index}-${createQuizQuestionId()}`;
+    const options = Array.isArray(q.options) ? q.options : [];
+    return {
+      id,
+      question: q.question || "",
+      type:
+        q.type === "multiple" || q.type === "essay" ? q.type : "single",
+      points: typeof q.points === "number" ? q.points : 0,
+      options: options.map((opt, optionIndex) => {
+        const label = OPTION_LETTERS[optionIndex] || `O${optionIndex + 1}`;
+        if (typeof opt === "string") {
+          return { id: `${id}-${label.toLowerCase()}`, label, value: opt };
+        }
+        const option = opt as Partial<QuizBuilderOption>;
+        return {
+          id: option.id || `${id}-${label.toLowerCase()}`,
+          label: option.label || label,
+          value: option.value || "",
+        };
+      }),
+      correctOptionId: q.correctOptionId,
+      correctOptionIds: q.correctOptionIds,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation || "",
+    };
+  });
+};
+
 const quizBuilderSlice = createSlice({
   name: "quizBuilder",
   initialState,
@@ -34,20 +93,12 @@ const quizBuilderSlice = createSlice({
       state.questions = action.payload;
     },
 
+    resetQuestions: (state) => {
+      state.questions = [];
+    },
+
     addQuestion: (state) => {
-      const newId = (state.questions.length + 1).toString();
-      state.questions.push({
-        id: newId,
-        question: "",
-        type: "single",
-        points: 0,
-        options: [
-          { id: `${newId}-a`, label: "A", value: "" },
-          { id: `${newId}-b`, label: "B", value: "" },
-        ],
-        correctOptionId: undefined,
-        explanation: "",
-      });
+      state.questions.push(createDefaultQuizQuestion());
     },
 
     removeQuestion: (state, action: PayloadAction<number>) => {
@@ -56,11 +107,12 @@ const quizBuilderSlice = createSlice({
 
     updateQuestion: (
       state,
-      action: PayloadAction<{ index: number; field: string; value: any }>
+      action: PayloadAction<{ index: number; field: string; value: unknown }>
     ) => {
       const { index, field, value } = action.payload;
-      if (state.questions[index]) {
-        (state.questions[index] as any)[field] = value;
+      const question = state.questions[index];
+      if (question) {
+        (question as unknown as Record<string, unknown>)[field] = value;
       }
     },
 
@@ -68,8 +120,7 @@ const quizBuilderSlice = createSlice({
       const { qIndex } = action.payload;
       const q = state.questions[qIndex];
       if (!q || q.options.length >= 6) return;
-      const LETTERS = ["A", "B", "C", "D", "E", "F"];
-      const newLabel = LETTERS[q.options.length];
+      const newLabel = OPTION_LETTERS[q.options.length];
       q.options.push({
         id: `${q.id}-${newLabel.toLowerCase()}`,
         label: newLabel,
@@ -81,14 +132,20 @@ const quizBuilderSlice = createSlice({
       const { qIndex, optIndex } = action.payload;
       const q = state.questions[qIndex];
       if (!q) return;
+      const removedId = q.options[optIndex]?.id;
       q.options.splice(optIndex, 1);
-      const LETTERS = ["A", "B", "C", "D", "E", "F"];
       q.options.forEach((opt, i) => {
-        opt.label = LETTERS[i];
-        opt.id = `${q.id}-${LETTERS[i].toLowerCase()}`;
+        const label = OPTION_LETTERS[i] || `O${i + 1}`;
+        opt.label = label;
+        opt.id = `${q.id}-${label.toLowerCase()}`;
       });
-      if (q.correctOptionId === q.options[optIndex]?.id) {
-        q.correctOptionId = undefined;
+      if (removedId) {
+        if (q.correctOptionId === removedId) {
+          q.correctOptionId = undefined;
+        }
+        if (q.correctOptionIds) {
+          q.correctOptionIds = q.correctOptionIds.filter((id) => id !== removedId);
+        }
       }
     },
 
@@ -107,6 +164,7 @@ const quizBuilderSlice = createSlice({
 
 export const {
   setQuestions,
+  resetQuestions,
   addQuestion,
   removeQuestion,
   updateQuestion,

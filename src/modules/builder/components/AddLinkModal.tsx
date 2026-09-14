@@ -80,7 +80,7 @@ export const AddLinkModal = ({ isOpen, onOpenChange }: AddLinkModalProps) => {
       ) : (
         <div className="flex flex-col gap-[24px] mt-[8px]">
           {/* Link type selection */}
-          <div className="grid grid-cols-5 gap-[10px]">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-[10px]">
             {LINK_OPTIONS.map((opt) => (
               <button
                 key={opt.type}

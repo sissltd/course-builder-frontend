@@ -2,27 +2,30 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import type { QuizQuestionData } from "@/redux/slices/courseBuilderSlice";
 
 interface QuizSummaryDisplayProps {
-  questions: any[];
+  questions: QuizQuestionData[];
 }
 
-function getOptionValue(opt: any): string {
+type OptionLike = QuizQuestionData["options"][number] | string;
+
+function getOptionValue(opt: OptionLike): string {
   if (typeof opt === "string") return opt;
-  return opt?.value ?? "";
+  return opt.value ?? "";
 }
 
-function getOptionId(opt: any, fallback: string): string {
+function getOptionId(opt: OptionLike, fallback: string): string {
   if (typeof opt === "string") return fallback;
-  return opt?.id ?? fallback;
+  return opt.id ?? fallback;
 }
 
-function getOptionLabel(opt: any, fallback: string): string {
+function getOptionLabel(opt: OptionLike, fallback: string): string {
   if (typeof opt === "string") return fallback;
-  return opt?.label ?? fallback;
+  return opt.label ?? fallback;
 }
 
-function isCorrectOption(q: any, opt: any, optIdx: number): boolean {
+function isCorrectOption(q: QuizQuestionData, opt: OptionLike, optIdx: number): boolean {
   if (q.type === "single") {
     return q.correctOptionId === getOptionId(opt, `${optIdx}`);
   }
@@ -43,7 +46,7 @@ export const QuizSummaryDisplay = ({ questions }: QuizSummaryDisplayProps) => {
 
   return (
     <div className="flex flex-col gap-[16px] w-full">
-      {questions.map((q: any, qIdx: number) => {
+      {questions.map((q, qIdx) => {
         const options = q.options || [];
         return (
           <div
@@ -80,7 +83,7 @@ export const QuizSummaryDisplay = ({ questions }: QuizSummaryDisplayProps) => {
             ) : (
               /* Single / Multiple choice options */
               <div className="flex flex-col gap-[8px]">
-                {options.map((opt: any, optIdx: number) => {
+                {options.map((opt, optIdx) => {
                   const label = getOptionLabel(opt, String.fromCharCode(65 + optIdx));
                   const isCorrect = isCorrectOption(q, opt, optIdx);
                   return (

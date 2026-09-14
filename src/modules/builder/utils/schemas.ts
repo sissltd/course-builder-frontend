@@ -96,17 +96,6 @@ export const quizBuilderFormSchema = z.object({
 
 export type QuizBuilderFormData = z.infer<typeof quizBuilderFormSchema>;
 
-export const quizQuestionSchema = z.object({
-  question: z.string().min(1, "Question is required"),
-  options: z
-    .array(z.string().min(1, "Option cannot be empty"))
-    .min(2, "At least 2 options required"),
-  points: z.number(),
-  correctAnswer: z.string().optional(),
-});
-
-export type QuizQuestionFormData = z.infer<typeof quizQuestionSchema>;
-
 export const lessonSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Lesson title is required"),
@@ -119,7 +108,6 @@ export const lessonSchema = z.object({
   content: z.string().optional(),
   embedLink: z.string().optional(),
   videoScript: z.string().optional(),
-  quizQuestions: z.array(quizQuestionSchema).optional(),
 });
 
 export type LessonFormData = z.infer<typeof lessonSchema>;
@@ -137,7 +125,6 @@ export const moduleSchema = z.object({
       "Minimum of 5 learning objectives required per module"
     ),
   lessons: z.array(lessonSchema).optional(),
-  quizQuestions: z.array(quizQuestionSchema).optional(),
 });
 
 export type ModuleFormData = z.infer<typeof moduleSchema>;
