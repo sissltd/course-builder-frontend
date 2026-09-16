@@ -17,7 +17,7 @@ import { registerSchema, RegisterFormData } from "@/modules/auth/utils/schemas";
 import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 import { useSignupMutation } from "@/modules/auth/api/accountApi";
 import { normalizeApiError } from "@/lib/api/errors";
-import { REGISTER_EMAIL_STORAGE_KEY } from "@/modules/auth/utils/storage";
+import { REGISTER_EMAIL_STORAGE_KEY, GOOGLE_AUTH_PENDING_STORAGE_KEY } from "@/modules/auth/utils/storage";
 import { toast } from "sonner";
 import { Country, isSupportedCountry } from "react-phone-number-input";
 import { Country as CountryMeta } from "country-state-city";
@@ -83,10 +83,8 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = async () => {
-    const result = await signIn("google", { redirect: false });
-    if (result?.error) {
-      toast.error("Google sign in failed. Please try again.");
-    }
+    sessionStorage.setItem(GOOGLE_AUTH_PENDING_STORAGE_KEY, "1");
+    await signIn("google", { callbackUrl: `${AuthRoute.LOGIN}?google=1` });
   };
 
   const handleDetailsSubmit = async (e: React.FormEvent) => {

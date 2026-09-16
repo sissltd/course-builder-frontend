@@ -32,12 +32,19 @@ function AuthSessionSync() {
         return;
       }
 
-      dispatch(
-        setCredentials({
-          user: session.user,
-          accessToken: session.accessToken,
-        }),
-      );
+      if (session.googleError) {
+        dispatch(clearAuth());
+        return;
+      }
+
+      if (session.accessToken) {
+        dispatch(
+          setCredentials({
+            user: session.user,
+            accessToken: session.accessToken,
+          }),
+        );
+      }
     } else if (status === "unauthenticated") {
       dispatch(clearAuth());
     }

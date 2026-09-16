@@ -8,18 +8,20 @@ export function getDashboardRoute(workspace?: string): string {
     case "admin_studio":
       return "/admin/dashboard";
     case Workspace.REVIEWER_STUDIO:
+    case Workspace.CREATOR_REVIEW_DASHBOARD:
       return "/reviewer/dashboard";
     default:
       return "/creator/dashboard";
   }
 }
 
-export function getWorkspaceForRole(role: UserRole): string {
+export function getWorkspaceForRole(role: UserRole | string): string {
   switch (role) {
     case UserRole.SUPER_ADMIN:
     case UserRole.STAFF:
       return Workspace.ADMIN_DASHBOARD;
     case UserRole.REVIEWER:
+    case UserRole.CREATOR_REVIEWER:
       return Workspace.REVIEWER_STUDIO;
     case UserRole.COURSE_CREATOR:
     default:

@@ -90,38 +90,22 @@ export const authOptions: NextAuthOptions = {
       : []),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (user) {
-        token.user = {
-          id: user.id,
-          email: user.email ?? "",
-          first_name: user.first_name ?? "",
-          last_name: user.last_name ?? "",
-          country: user.country ?? "",
-          state: user.state ?? "",
-          address: user.address ?? "",
-          phone_number: user.phone_number ?? "",
-          timezone: user.timezone ?? "",
-          avatar_url: user.avatar_url ?? "",
-          terms_accepted_at: user.terms_accepted_at ?? "",
-          role: user.role as UserRole,
-          is_active: user.is_active ?? false,
-          status: user.status as UserStatus,
-          created_datetime: user.created_datetime ?? "",
-          updated_datetime: user.updated_datetime ?? "",
-          has_completed_onboarding: user.has_completed_onboarding ?? false,
-          category: user.category ?? null,
-          workspace: user.workspace,
-        };
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
-        token.accessTokenExpiresAt = user.accessTokenExpiresAt;
-        token.role = user.role;
-        token.mfaEnrollmentOverdue = user.mfaEnrollmentOverdue;
-        return token;
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {
+        // Fall through to the login page for malformed callback URLs.
       }
+      return `${baseUrl}/auth/login`;
+    },
+    async jwt({ token, user, account }) {
+      if (account?.provider === "google") {
+        if (!account.id_token) {
+          token.googleError = "Google sign in failed. Please try again.";
+          return token;
+        }
 
-      if (account?.provider === "google" && account.id_token) {
         try {
           const result = await exchangeGoogleToken(account.id_token);
           token.user = {
@@ -151,20 +135,62 @@ export const authOptions: NextAuthOptions = {
           token.role = result.role;
           token.mfaEnrollmentOverdue = result.mfa_enrollment_overdue;
           token.googleSignupRequired = undefined;
+          token.googleIdToken = undefined;
+          token.googleError = undefined;
           return token;
         } catch (err) {
-          const googleError = err as { status?: number; body?: { errors?: Array<{ message?: string }> } };
-          if (googleError.status === 400) {
-            const errorMsg =
-              googleError.body?.errors?.[0]?.message ?? "";
-            if (errorMsg.includes("No account is linked")) {
-              token.googleSignupRequired = true;
-              token.googleIdToken = account.id_token;
-              return token;
-            }
+          const googleError = err as {
+            status?: number;
+            body?: { errors?: Array<{ message?: string }> };
+          };
+          const errorMsg = googleError.body?.errors?.[0]?.message ?? "";
+          if (googleError.status === 400 && errorMsg.includes("No account is linked")) {
+            token.googleSignupRequired = true;
+            token.googleIdToken = account.id_token;
+            token.googleError = undefined;
+            return token;
           }
-          throw err;
+          token.user = undefined;
+          token.accessToken = undefined;
+          token.refreshToken = undefined;
+          token.accessTokenExpiresAt = undefined;
+          token.googleSignupRequired = undefined;
+          token.googleIdToken = undefined;
+          token.googleError =
+            errorMsg || "Google sign in failed. Please try again.";
+          return token;
         }
+      }
+
+      if (user) {
+        token.user = {
+          id: user.id,
+          email: user.email ?? "",
+          first_name: user.first_name ?? "",
+          last_name: user.last_name ?? "",
+          country: user.country ?? "",
+          state: user.state ?? "",
+          address: user.address ?? "",
+          phone_number: user.phone_number ?? "",
+          timezone: user.timezone ?? "",
+          avatar_url: user.avatar_url ?? "",
+          terms_accepted_at: user.terms_accepted_at ?? "",
+          role: user.role as UserRole,
+          is_active: user.is_active ?? false,
+          status: user.status as UserStatus,
+          created_datetime: user.created_datetime ?? "",
+          updated_datetime: user.updated_datetime ?? "",
+          has_completed_onboarding: user.has_completed_onboarding ?? false,
+          category: user.category ?? null,
+          workspace: user.workspace,
+        };
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        token.accessTokenExpiresAt = user.accessTokenExpiresAt;
+        token.role = user.role;
+        token.mfaEnrollmentOverdue = user.mfaEnrollmentOverdue;
+        token.googleError = undefined;
+        return token;
       }
 
       if (
@@ -189,6 +215,7 @@ export const authOptions: NextAuthOptions = {
         | boolean
         | undefined;
       session.googleIdToken = token.googleIdToken as string | undefined;
+      session.googleError = token.googleError as string | undefined;
       return session;
     },
   },

@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/auth/signup-google",
   "/api/auth",
 ];
 
@@ -33,8 +34,10 @@ export async function middleware(req: NextRequest) {
   });
 
   if (isPublicPath(pathname)) {
-    if (token && pathname.startsWith("/auth")) {
-      const dashboard = getDashboardRoute(token.user?.workspace);
+    const isGoogleHandoff = req.nextUrl.searchParams.get("google") === "1";
+    const isAuthenticated = Boolean(token?.user);
+    if (isAuthenticated && pathname.startsWith("/auth") && !isGoogleHandoff) {
+      const dashboard = getDashboardRoute(token?.user?.workspace);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
     return NextResponse.next();

@@ -14,6 +14,7 @@ declare module "next-auth" {
     error?: string;
     googleSignupRequired?: boolean;
     googleIdToken?: string;
+    googleError?: string;
   }
 
   interface User {
@@ -54,5 +55,6 @@ declare module "next-auth/jwt" {
     error?: string;
     googleSignupRequired?: boolean;
     googleIdToken?: string;
+    googleError?: string;
   }
 }

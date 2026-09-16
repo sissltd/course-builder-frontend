@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
+import { LoadingState } from "@/modules/auth/components/LoadingState";
 import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 import { AuthInput } from "@/modules/auth/components/AuthInput";
 import { AuthButton } from "@/modules/auth/components/AuthButton";
@@ -15,20 +16,36 @@ import { useLoginMutation } from "@/modules/auth/api/sessionApi";
 
 
 import { normalizeApiError, getErrorEnvelope } from "@/lib/api/errors";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { setCredentials } from "@/redux/slices/authSlice";
 import {
   getDashboardRoute,
   getWorkspaceForRole,
 } from "@/modules/auth/utils/workspace";
+import {
+  GOOGLE_AUTH_PENDING_STORAGE_KEY,
+  GOOGLE_CALLBACK_URL_STORAGE_KEY,
+} from "@/modules/auth/utils/storage";
 
-export default function LoginPage() {
+const isSafeInternalPath = (value: string | null): value is string =>
+  Boolean(
+    value &&
+      value.startsWith("/") &&
+      !value.startsWith("//") &&
+      !value.startsWith("/auth"),
+  );
+
+function LoginContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+  const googleHandoff = searchParams.get("google") === "1";
+  const queryError = searchParams.get("error");
   const [step, setStep] = useState<"email" | "password">("email");
+  const [formError, setFormError] = useState<string | null>(null);
   const [login, { isLoading }] = useLoginMutation();
 
 
@@ -43,15 +60,96 @@ export default function LoginPage() {
 
   const { handleSubmit, trigger, setError } = methods;
 
-  const handleGoogleLogin = async () => {
-    const result = await signIn("google", { redirect: false });
-    if (result?.error) {
-      toast.error("Google sign in failed. Please try again.");
+  useEffect(() => {
+    const hasPending =
+      googleHandoff ||
+      sessionStorage.getItem(GOOGLE_AUTH_PENDING_STORAGE_KEY) === "1";
+    if (!hasPending || status === "loading") return;
+
+    if (status === "authenticated" && session) {
+      if (session.googleSignupRequired) {
+        sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
+        router.replace(AuthRoute.SIGNUP_GOOGLE);
+        return;
+      }
+
+      if (session.googleError) {
+        const message = session.googleError;
+        sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
+        void signOut({ redirect: false }).then(() => setFormError(message));
+        return;
+      }
+
+      if (session.error === "RefreshAccessTokenError") {
+        sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
+        void signOut({ redirect: false }).then(() =>
+          setFormError("Your session expired. Please sign in again."),
+        );
+        return;
+      }
+
+      if (session.user && session.accessToken) {
+        dispatch(
+          setCredentials({
+            user: session.user,
+            accessToken: session.accessToken,
+          }),
+        );
+
+        const storedCallback = sessionStorage.getItem(
+          GOOGLE_CALLBACK_URL_STORAGE_KEY,
+        );
+        sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
+        sessionStorage.removeItem(GOOGLE_CALLBACK_URL_STORAGE_KEY);
+
+        const workspace =
+          session.user.workspace ??
+          getWorkspaceForRole(session.role ?? session.user.role);
+        const target = isSafeInternalPath(storedCallback)
+          ? storedCallback
+          : getDashboardRoute(workspace);
+
+        router.replace(target);
+        router.refresh();
+        return;
+      }
+
+      return;
     }
+
+    sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
+  }, [googleHandoff, status, session, dispatch, router]);
+
+  const googleSigningIn =
+    googleHandoff &&
+    (status === "loading" ||
+      (status === "authenticated" &&
+        !session?.googleError &&
+        session?.error !== "RefreshAccessTokenError" &&
+        !session?.googleSignupRequired));
+
+  const displayError =
+    formError ??
+    (googleHandoff && session?.googleError ? session.googleError : null) ??
+    (queryError
+      ? "Google sign in was cancelled or failed. Please try again."
+      : null);
+
+  const handleGoogleLogin = async () => {
+    setFormError(null);
+    const callbackUrl = new URLSearchParams(window.location.search).get(
+      "callbackUrl",
+    );
+    if (callbackUrl) {
+      sessionStorage.setItem(GOOGLE_CALLBACK_URL_STORAGE_KEY, callbackUrl);
+    }
+    sessionStorage.setItem(GOOGLE_AUTH_PENDING_STORAGE_KEY, "1");
+    await signIn("google", { callbackUrl: `${AuthRoute.LOGIN}?google=1` });
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     const isEmailValid = await trigger("email");
     if (isEmailValid) {
       setStep("password");
@@ -59,6 +157,7 @@ export default function LoginPage() {
   };
 
   const handleLoginSubmit = handleSubmit(async (data) => {
+    setFormError(null);
     try {
       const result = await login({
         email: data.email,
@@ -77,7 +176,7 @@ export default function LoginPage() {
       });
 
       if (signInResult?.error) {
-        toast.error("Sign in failed. Please try again.");
+        setFormError("Sign in failed. Please try again.");
         return;
       }
 
@@ -88,7 +187,14 @@ export default function LoginPage() {
         }),
       );
 
-      router.push(getDashboardRoute(workspace));
+      const callbackUrl = new URLSearchParams(window.location.search).get(
+        "callbackUrl",
+      );
+      router.push(
+        isSafeInternalPath(callbackUrl)
+          ? callbackUrl
+          : getDashboardRoute(workspace),
+      );
       router.refresh();
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(error as never);
@@ -117,10 +223,18 @@ export default function LoginPage() {
         });
       }
       if (Object.keys(fieldErrors).length === 0 && message) {
-        toast.error(message);
+        setFormError(message);
       }
     }
   });
+
+  if (googleSigningIn) {
+    return (
+      <AuthLayout showNav={false} showLogo>
+        <LoadingState message="Signing you in..." />
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout showNav={step === "password"} showLogo={step !== "password"}>
@@ -158,6 +272,14 @@ export default function LoginPage() {
                 
                 <div className="flex flex-col gap-[16px] w-full">
                   <AuthButton type="submit">Continue</AuthButton>
+                  {displayError && (
+                    <p
+                      role="alert"
+                      className="w-full rounded-[8px] border border-[#FFD6CC] bg-[#FFF4F1] px-[12px] py-[10px] text-[13px] leading-[18px] text-[#D92D20]"
+                    >
+                      {displayError}
+                    </p>
+                  )}
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
                     <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
@@ -202,6 +324,14 @@ export default function LoginPage() {
                   <AuthButton type="submit" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Continue"}
                   </AuthButton>
+                  {displayError && (
+                    <p
+                      role="alert"
+                      className="w-full rounded-[8px] border border-[#FFD6CC] bg-[#FFF4F1] px-[12px] py-[10px] text-[13px] leading-[18px] text-[#D92D20]"
+                    >
+                      {displayError}
+                    </p>
+                  )}
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
                     <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
@@ -214,5 +344,13 @@ export default function LoginPage() {
         </div>
       </FormProvider>
     </AuthLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

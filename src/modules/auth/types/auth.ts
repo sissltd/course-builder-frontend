@@ -3,6 +3,7 @@ export enum UserRole {
   STAFF = "STAFF",
   COURSE_CREATOR = "COURSE_CREATOR",
   REVIEWER = "REVIEWER",
+  CREATOR_REVIEWER = "CREATOR_REVIEWER",
 }
 
 export enum UserStatus {
@@ -21,6 +22,7 @@ export enum Workspace {
   CREATOR_STUDIO = "creator_studio",
   ADMIN_DASHBOARD = "admin_dashboard",
   REVIEWER_STUDIO = "reviewer_studio",
+  CREATOR_REVIEW_DASHBOARD = "creator_review_dashboard",
 }
 
 export interface User {
