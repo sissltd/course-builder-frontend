@@ -56,7 +56,7 @@ export const ThumbnailStep = ({ onNext, onBack }: ThumbnailStepProps) => {
   };
 
   return (
-    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[100px]">
+    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[32px]">
       {/* Title Section */}
       <div className="flex flex-col gap-[12px] w-full">
         <h2 className="text-[24px] font-medium text-[#202020] leading-[32px] tracking-[-0.48px]">

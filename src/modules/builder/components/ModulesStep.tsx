@@ -189,7 +189,7 @@ export const ModulesStep = ({
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[100px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[32px]">
         
         {/* Title Header with Lock Module */}
         <div className="flex flex-col gap-[16px] md:flex-row md:items-start md:justify-between w-full border-b border-[#F0F0F0] pb-[20px]">

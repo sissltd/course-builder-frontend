@@ -183,7 +183,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   };
 
   return (
-    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[100px]">
+    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[32px]">
       
       {/* Title / Description */}
       <div className="flex flex-col gap-[12px]">
