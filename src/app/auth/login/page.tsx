@@ -9,6 +9,7 @@ import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 import { AuthInput } from "@/modules/auth/components/AuthInput";
 import { AuthButton } from "@/modules/auth/components/AuthButton";
 import Link from "next/link";
+import { Warning2 } from "iconsax-react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/modules/auth/utils/schemas";
@@ -17,7 +18,7 @@ import { useLoginMutation } from "@/modules/auth/api/sessionApi";
 
 import { normalizeApiError, getErrorEnvelope } from "@/lib/api/errors";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { setCredentials } from "@/redux/slices/authSlice";
 import {
@@ -102,22 +103,14 @@ function LoginContent() {
       }
 
       if (session.googleError) {
-        const message = session.googleError;
-        console.log("[GoogleLogin] useEffect: googleError →", message, "signing out");
+        console.log("[GoogleLogin] useEffect: googleError →", session.googleError);
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-        void signOut({ redirect: false }).then(() => {
-          console.log("[GoogleLogin] signOut complete, setting formError:", message);
-          setFormError(message);
-        });
         return;
       }
 
       if (session.error === "RefreshAccessTokenError") {
-        console.log("[GoogleLogin] useEffect: RefreshAccessTokenError → signing out");
+        console.log("[GoogleLogin] useEffect: RefreshAccessTokenError");
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-        void signOut({ redirect: false }).then(() => {
-          setFormError("Your session expired. Please sign in again.");
-        });
         return;
       }
 
@@ -171,16 +164,22 @@ function LoginContent() {
         session?.error !== "RefreshAccessTokenError" &&
         !session?.googleSignupRequired));
 
+  const sessionAuthError =
+    session?.googleError ??
+    (session?.error === "RefreshAccessTokenError"
+      ? "Your session expired. Please sign in again."
+      : null);
+
   const displayError =
     formError ??
-    (googleHandoff && session?.googleError ? session.googleError : null) ??
+    sessionAuthError ??
     (queryError
       ? "Google sign in was cancelled or failed. Please try again."
       : null);
 
   console.log("[GoogleLogin] displayError:", displayError, {
     formError,
-    googleError: session?.googleError,
+    sessionAuthError,
     queryError,
     googleHandoff,
   });
@@ -298,6 +297,24 @@ function LoginContent() {
 
       <FormProvider {...methods}>
         <div className="flex flex-col gap-[32px] w-full items-center">
+          {displayError && (
+            <div
+              role="alert"
+              data-testid="auth-error"
+              className="w-full flex items-start gap-[10px] rounded-[10px] border border-[#FDA29B] bg-[#FFFBFA] px-[14px] py-[12px]"
+            >
+              <Warning2
+                variant="Bold"
+                color="#B42318"
+                size={20}
+                className="mt-[1px] shrink-0"
+              />
+              <p className="text-[14px] leading-[20px] font-medium text-[#B42318]">
+                {displayError}
+              </p>
+            </div>
+          )}
+
           {step === "email" && (
             <>
               <SocialLogin label="Continue with Google" onClick={handleGoogleLogin} />
@@ -322,14 +339,6 @@ function LoginContent() {
                 
                 <div className="flex flex-col gap-[16px] w-full">
                   <AuthButton type="submit">Continue</AuthButton>
-                  {displayError && (
-                    <p
-                      role="alert"
-                      className="w-full rounded-[8px] border border-[#FFD6CC] bg-[#FFF4F1] px-[12px] py-[10px] text-[13px] leading-[18px] text-[#D92D20]"
-                    >
-                      {displayError}
-                    </p>
-                  )}
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
                     <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}
@@ -374,14 +383,6 @@ function LoginContent() {
                   <AuthButton type="submit" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Continue"}
                   </AuthButton>
-                  {displayError && (
-                    <p
-                      role="alert"
-                      className="w-full rounded-[8px] border border-[#FFD6CC] bg-[#FFF4F1] px-[12px] py-[10px] text-[13px] leading-[18px] text-[#D92D20]"
-                    >
-                      {displayError}
-                    </p>
-                  )}
                   <p className="text-center text-caption-xs leading-[16px] text-sd-grey-11 font-medium">
                     By clicking on continue, you agree to SoluDesks{" "}
                     <Link href={WebsiteRoute.TERMS} className="underline">Terms of Use</Link> and{" "}

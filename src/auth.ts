@@ -203,7 +203,9 @@ export const authOptions: NextAuthOptions = {
           token.googleSignupRequired = undefined;
           token.googleIdToken = undefined;
           token.googleError =
-            errorMsg || "Google sign in failed. Please try again.";
+            googleError.status === 503
+              ? "Google sign-in is temporarily unavailable. Please try again in a few minutes."
+              : errorMsg || "Google sign in failed. Please try again.";
           console.log("[GoogleAuth] jwt callback: returning token with googleError:", token.googleError);
           return token;
         }
