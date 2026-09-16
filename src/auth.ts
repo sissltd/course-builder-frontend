@@ -14,14 +14,26 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
 async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
+  console.log("[GoogleAuth] exchangeGoogleToken: calling POST /auth/login/google/", {
+    hasIdToken: Boolean(idToken),
+    tokenPrefix: idToken ? idToken.substring(0, 20) + "..." : "null",
+    apiBase: API_BASE_URL,
+  });
+
   const response = await fetch(`${API_BASE_URL}/auth/login/google/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id_token: idToken }),
   });
 
+  console.log("[GoogleAuth] exchangeGoogleToken: response status", response.status, response.statusText);
+
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
+    console.error("[GoogleAuth] exchangeGoogleToken: FAILED", {
+      status: response.status,
+      body: errorBody,
+    });
     const error = new Error("Google login failed") as Error & {
       status: number;
       body: unknown;
@@ -31,7 +43,14 @@ async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
     throw error;
   }
 
-  return response.json() as Promise<LoginResponse>;
+  const result = (await response.json()) as LoginResponse;
+  console.log("[GoogleAuth] exchangeGoogleToken: SUCCESS", {
+    hasAccess: Boolean(result.access),
+    hasRefresh: Boolean(result.refresh),
+    userId: result.user?.id,
+    userRole: result.role,
+  });
+  return result;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -91,22 +110,42 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      try {
-        if (new URL(url).origin === baseUrl) return url;
-      } catch {
-        // Fall through to the login page for malformed callback URLs.
+      console.log("[GoogleAuth] redirect callback: url=", url, "baseUrl=", baseUrl);
+      if (url.startsWith("/")) {
+        console.log("[GoogleAuth] redirect: relative URL, returning", `${baseUrl}${url}`);
+        return `${baseUrl}${url}`;
       }
+      try {
+        const parsed = new URL(url);
+        if (parsed.origin === baseUrl) {
+          console.log("[GoogleAuth] redirect: same origin, returning", url);
+          return url;
+        }
+      } catch {
+        console.log("[GoogleAuth] redirect: malformed URL, falling through");
+      }
+      console.log("[GoogleAuth] redirect: external/unknown, redirecting to login");
       return `${baseUrl}/auth/login`;
     },
     async jwt({ token, user, account }) {
+      console.log("[GoogleAuth] jwt callback: provider=", account?.provider, {
+        hasUser: Boolean(user),
+        hasAccount: Boolean(account),
+        hasIdToken: Boolean(account?.id_token),
+        tokenKeys: Object.keys(token),
+      });
+
       if (account?.provider === "google") {
+        console.log("[GoogleAuth] jwt callback: Google provider detected, id_token present:", Boolean(account.id_token));
+
         if (!account.id_token) {
+          console.error("[GoogleAuth] jwt callback: NO id_token from Google provider");
           token.googleError = "Google sign in failed. Please try again.";
           return token;
         }
 
         try {
+          console.log("[GoogleAuth] jwt callback: calling exchangeGoogleToken...");
           const result = await exchangeGoogleToken(account.id_token);
           token.user = {
             id: result.user.id,
@@ -137,6 +176,7 @@ export const authOptions: NextAuthOptions = {
           token.googleSignupRequired = undefined;
           token.googleIdToken = undefined;
           token.googleError = undefined;
+          console.log("[GoogleAuth] jwt callback: token populated successfully, user:", token.user?.id, "role:", token.role);
           return token;
         } catch (err) {
           const googleError = err as {
@@ -144,7 +184,13 @@ export const authOptions: NextAuthOptions = {
             body?: { errors?: Array<{ message?: string }> };
           };
           const errorMsg = googleError.body?.errors?.[0]?.message ?? "";
+          console.error("[GoogleAuth] jwt callback: exchangeGoogleToken FAILED", {
+            status: googleError.status,
+            errorMsg,
+            fullError: JSON.stringify(err).substring(0, 500),
+          });
           if (googleError.status === 400 && errorMsg.includes("No account is linked")) {
+            console.log("[GoogleAuth] jwt callback: No linked account — marking googleSignupRequired");
             token.googleSignupRequired = true;
             token.googleIdToken = account.id_token;
             token.googleError = undefined;
@@ -158,6 +204,7 @@ export const authOptions: NextAuthOptions = {
           token.googleIdToken = undefined;
           token.googleError =
             errorMsg || "Google sign in failed. Please try again.";
+          console.log("[GoogleAuth] jwt callback: returning token with googleError:", token.googleError);
           return token;
         }
       }
@@ -203,6 +250,12 @@ export const authOptions: NextAuthOptions = {
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
+      console.log("[GoogleAuth] session callback: hasUser=", Boolean(token.user), {
+        googleError: token.googleError,
+        googleSignupRequired: token.googleSignupRequired,
+        accessTokenPresent: Boolean(token.accessToken),
+        error: token.error,
+      });
       if (token.user) {
         session.user = token.user;
       }

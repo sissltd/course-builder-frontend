@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
@@ -47,6 +47,13 @@ function LoginContent() {
   const [step, setStep] = useState<"email" | "password">("email");
   const [formError, setFormError] = useState<string | null>(null);
   const [login, { isLoading }] = useLoginMutation();
+  const googleAuthHandled = useRef(false);
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    routerRef.current = router;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const methods = useForm<LoginFormData>({
@@ -61,34 +68,64 @@ function LoginContent() {
   const { handleSubmit, trigger, setError } = methods;
 
   useEffect(() => {
+    console.log("[GoogleLogin] useEffect: googleHandoff=", googleHandoff, "status=", status, {
+      hasSession: Boolean(session),
+      googleError: session?.googleError,
+      googleSignupRequired: session?.googleSignupRequired,
+      sessionError: session?.error,
+      hasUser: Boolean(session?.user),
+      hasAccessToken: Boolean(session?.accessToken),
+      alreadyHandled: googleAuthHandled.current,
+    });
+
+    if (googleAuthHandled.current) {
+      console.log("[GoogleLogin] useEffect: already handled, skipping");
+      return;
+    }
+
     const hasPending =
       googleHandoff ||
       sessionStorage.getItem(GOOGLE_AUTH_PENDING_STORAGE_KEY) === "1";
-    if (!hasPending || status === "loading") return;
+    if (!hasPending || status === "loading") {
+      console.log("[GoogleLogin] useEffect: no pending or still loading, returning");
+      return;
+    }
 
     if (status === "authenticated" && session) {
+      googleAuthHandled.current = true;
+
       if (session.googleSignupRequired) {
+        console.log("[GoogleLogin] useEffect: googleSignupRequired → redirecting to SIGNUP_GOOGLE");
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-        router.replace(AuthRoute.SIGNUP_GOOGLE);
+        routerRef.current.replace(AuthRoute.SIGNUP_GOOGLE);
         return;
       }
 
       if (session.googleError) {
         const message = session.googleError;
+        console.log("[GoogleLogin] useEffect: googleError →", message, "signing out");
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-        void signOut({ redirect: false }).then(() => setFormError(message));
+        void signOut({ redirect: false }).then(() => {
+          console.log("[GoogleLogin] signOut complete, setting formError:", message);
+          setFormError(message);
+        });
         return;
       }
 
       if (session.error === "RefreshAccessTokenError") {
+        console.log("[GoogleLogin] useEffect: RefreshAccessTokenError → signing out");
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-        void signOut({ redirect: false }).then(() =>
-          setFormError("Your session expired. Please sign in again."),
-        );
+        void signOut({ redirect: false }).then(() => {
+          setFormError("Your session expired. Please sign in again.");
+        });
         return;
       }
 
       if (session.user && session.accessToken) {
+        console.log("[GoogleLogin] useEffect: SUCCESS — dispatching credentials, redirecting", {
+          userId: session.user.id,
+          role: session.user.role,
+        });
         dispatch(
           setCredentials({
             user: session.user,
@@ -109,16 +146,22 @@ function LoginContent() {
           ? storedCallback
           : getDashboardRoute(workspace);
 
-        router.replace(target);
-        router.refresh();
+        console.log("[GoogleLogin] useEffect: redirecting to", target);
+        routerRef.current.replace(target);
+        routerRef.current.refresh();
         return;
       }
 
+      console.log("[GoogleLogin] useEffect: authenticated but no user/accessToken — not handled");
       return;
     }
 
+    if (status === "unauthenticated") {
+      console.log("[GoogleLogin] useEffect: unauthenticated, clearing pending flag");
+    }
+
     sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
-  }, [googleHandoff, status, session, dispatch, router]);
+  }, [googleHandoff, status, session, dispatch]);
 
   const googleSigningIn =
     googleHandoff &&
@@ -134,6 +177,13 @@ function LoginContent() {
     (queryError
       ? "Google sign in was cancelled or failed. Please try again."
       : null);
+
+  console.log("[GoogleLogin] displayError:", displayError, {
+    formError,
+    googleError: session?.googleError,
+    queryError,
+    googleHandoff,
+  });
 
   const handleGoogleLogin = async () => {
     setFormError(null);
