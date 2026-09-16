@@ -14,7 +14,7 @@ export interface QuizOption {
   id?: string;
   option_text: string;
   is_correct: boolean;
-  explanation: string;
+  explanation?: string;
   order: number;
 }
 
@@ -25,6 +25,7 @@ export interface QuizQuestionItem {
   question_type: QuizQuestionType;
   points: number;
   model_response_guide: string;
+  explanation?: string;
   order: number;
   options: QuizOption[];
 }
@@ -89,6 +90,7 @@ export interface CreateQuestionRequest {
   question_type: QuizQuestionType;
   points: number;
   model_response_guide?: string;
+  explanation?: string;
   order: number;
   options?: QuizOption[];
 }
@@ -99,6 +101,7 @@ export interface UpdateQuestionRequest {
   question_type?: QuizQuestionType;
   points?: number;
   model_response_guide?: string;
+  explanation?: string;
   order?: number;
   options?: QuizOption[];
 }

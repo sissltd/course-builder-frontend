@@ -26,7 +26,17 @@ const initialState: QuizBuilderState = {
   questions: [],
 };
 
-export const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F"];
+export const MIN_OPTIONS = 2;
+
+export const optionLetter = (index: number): string => {
+  let n = Math.max(0, index);
+  let label = "";
+  do {
+    label = String.fromCharCode(65 + (n % 26)) + label;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return label;
+};
 
 export const createQuizQuestionId = (): string =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -42,10 +52,10 @@ export const createDefaultQuizQuestion = (
     question: "",
     type: "single",
     points: 0,
-    options: [
-      { id: `${questionId}-a`, label: "A", value: "" },
-      { id: `${questionId}-b`, label: "B", value: "" },
-    ],
+    options: Array.from({ length: MIN_OPTIONS }, (_, i) => {
+      const label = optionLetter(i);
+      return { id: `${questionId}-${label.toLowerCase()}`, label, value: "" };
+    }),
     correctOptionId: undefined,
     explanation: "",
   };
@@ -66,7 +76,7 @@ export const toQuizBuilderQuestions = (
         q.type === "multiple" || q.type === "essay" ? q.type : "single",
       points: typeof q.points === "number" ? q.points : 0,
       options: options.map((opt, optionIndex) => {
-        const label = OPTION_LETTERS[optionIndex] || `O${optionIndex + 1}`;
+        const label = optionLetter(optionIndex);
         if (typeof opt === "string") {
           return { id: `${id}-${label.toLowerCase()}`, label, value: opt };
         }
@@ -119,8 +129,8 @@ const quizBuilderSlice = createSlice({
     addOption: (state, action: PayloadAction<{ qIndex: number }>) => {
       const { qIndex } = action.payload;
       const q = state.questions[qIndex];
-      if (!q || q.options.length >= 6) return;
-      const newLabel = OPTION_LETTERS[q.options.length];
+      if (!q) return;
+      const newLabel = optionLetter(q.options.length);
       q.options.push({
         id: `${q.id}-${newLabel.toLowerCase()}`,
         label: newLabel,
@@ -135,7 +145,7 @@ const quizBuilderSlice = createSlice({
       const removedId = q.options[optIndex]?.id;
       q.options.splice(optIndex, 1);
       q.options.forEach((opt, i) => {
-        const label = OPTION_LETTERS[i] || `O${i + 1}`;
+        const label = optionLetter(i);
         opt.label = label;
         opt.id = `${q.id}-${label.toLowerCase()}`;
       });

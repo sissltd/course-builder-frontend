@@ -20,6 +20,8 @@ interface BuilderSidebarProps {
   activeModuleIndex?: number;
   onChangeActiveModuleIndex?: (index: number) => void;
   onAddModule?: () => void;
+  onOpenFinalAssessment?: () => void;
+  finalAssessmentCount?: number;
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -42,6 +44,8 @@ export const BuilderSidebar = ({
   activeModuleIndex,
   onChangeActiveModuleIndex,
   onAddModule,
+  onOpenFinalAssessment,
+  finalAssessmentCount = 0,
   isOpen = false,
   onClose
 }: BuilderSidebarProps) => {
@@ -142,6 +146,26 @@ export const BuilderSidebar = ({
                     >
                       Add
                     </Button>
+
+                    <div className="w-full h-[1px] bg-[#F0F0F0] my-[4px]" />
+
+                    <button
+                      type="button"
+                      onClick={onOpenFinalAssessment}
+                      className="flex items-center gap-[12px] h-[32px] text-left hover:text-[#0A60E1] transition-colors group w-full"
+                    >
+                      <div className="size-[16px] rounded-full border border-[#B6B6B6] flex items-center justify-center transition-all shrink-0 group-hover:border-[#0A60E1]">
+                        {finalAssessmentCount > 0 && (
+                          <div className="size-[8px] rounded-full bg-[#0A60E1]" />
+                        )}
+                      </div>
+                      <span className="text-[14px] leading-[20px] tracking-[-0.28px] truncate text-[#606060] group-hover:text-[#0A60E1]">
+                        Assessment
+                      </span>
+                      <span className="ml-auto text-[12px] leading-[16px] text-[#B6B6B6]">
+                        {finalAssessmentCount}
+                      </span>
+                    </button>
                   </div>
                 )}
               </div>

@@ -54,15 +54,25 @@ export type BuilderStep =
   | "thumbnail"
   | "quality";
 
+export interface FinalAssessmentData {
+  title: string;
+  quizQuestions: QuizQuestionData[];
+}
+
+export type EditingQuizTarget =
+  | { level: "lesson"; moduleId: string; lessonId: string }
+  | { level: "course" };
+
 export interface CourseBuilderState {
   courseId: string | null;
   courseInformation: CourseInformationData;
   modules: Module[];
+  finalAssessment: FinalAssessmentData;
   version: string;
   activeStep: BuilderStep;
   activeModuleIndex: number;
   editingLesson: { moduleId: string; lessonId: string } | null;
-  editingQuiz: { moduleId: string; lessonId: string } | null;
+  editingQuiz: EditingQuizTarget | null;
   isLoading: boolean;
   isSaving: boolean;
   isDirty: boolean;
@@ -88,6 +98,10 @@ const initialState: CourseBuilderState = {
     creationMethod: "",
   },
   modules: [],
+  finalAssessment: {
+    title: "Final Assessment",
+    quizQuestions: [],
+  },
   version: "v1.0",
   activeStep: "information",
   activeModuleIndex: 0,
@@ -155,6 +169,19 @@ const courseBuilderSlice = createSlice({
     },
     setModules: (state, action: PayloadAction<Module[]>) => {
       state.modules = action.payload;
+    },
+    setFinalAssessment: (state, action: PayloadAction<FinalAssessmentData>) => {
+      state.finalAssessment = action.payload;
+    },
+    updateFinalAssessment: (
+      state,
+      action: PayloadAction<Partial<FinalAssessmentData>>
+    ) => {
+      state.finalAssessment = {
+        ...(state.finalAssessment || { title: "", quizQuestions: [] }),
+        ...action.payload,
+      };
+      state.isDirty = true;
     },
     addModule: (state) => {
       const newId = Date.now().toString();
@@ -303,7 +330,7 @@ const courseBuilderSlice = createSlice({
     setEditingLesson: (state, action: PayloadAction<{ moduleId: string; lessonId: string } | null>) => {
       state.editingLesson = action.payload;
     },
-    setEditingQuiz: (state, action: PayloadAction<{ moduleId: string; lessonId: string } | null>) => {
+    setEditingQuiz: (state, action: PayloadAction<EditingQuizTarget | null>) => {
       state.editingQuiz = action.payload;
     },
     replaceModuleId: (state, action: PayloadAction<{ oldId: string; newId: string }>) => {
@@ -314,7 +341,7 @@ const courseBuilderSlice = createSlice({
         if (state.editingLesson?.moduleId === oldId) {
           state.editingLesson.moduleId = newId;
         }
-        if (state.editingQuiz?.moduleId === oldId) {
+        if (state.editingQuiz?.level === "lesson" && state.editingQuiz.moduleId === oldId) {
           state.editingQuiz.moduleId = newId;
         }
       }
@@ -345,7 +372,7 @@ const courseBuilderSlice = createSlice({
           if (state.editingLesson?.lessonId === oldLessonId) {
             state.editingLesson.lessonId = newLessonId;
           }
-          if (state.editingQuiz?.lessonId === oldLessonId) {
+          if (state.editingQuiz?.level === "lesson" && state.editingQuiz.lessonId === oldLessonId) {
             state.editingQuiz.lessonId = newLessonId;
           }
         }
@@ -367,6 +394,8 @@ export const {
   setCourseInformation,
   updateCourseInformation,
   setModules,
+  setFinalAssessment,
+  updateFinalAssessment,
   addModule,
   updateModule,
   removeModule,

@@ -51,6 +51,7 @@ export default function BuilderView() {
   const isLoading = useAppSelector((state) => state.courseBuilder.isLoading);
   const isDirty = useAppSelector((state) => state.courseBuilder.isDirty);
   const courseId = useAppSelector((state) => state.courseBuilder.courseId);
+  const finalAssessment = useAppSelector((state) => state.courseBuilder.finalAssessment);
   const [showingPreview, setShowingPreview] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const courseLoadedRef = useRef(false);
@@ -107,9 +108,12 @@ export default function BuilderView() {
       if (qMod) {
         const qLesson = qMod.lessons.find((l) => l.id === quizLessonParam);
         if (qLesson) {
-          dispatch(setEditingQuiz({ moduleId: quizModuleParam, lessonId: quizLessonParam }));
+          dispatch(setEditingQuiz({ level: "lesson", moduleId: quizModuleParam, lessonId: quizLessonParam }));
         }
       }
+    }
+    if (searchParams.get("quizLevel") === "course") {
+      dispatch(setEditingQuiz({ level: "course" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, isLoading]);
@@ -123,14 +127,19 @@ export default function BuilderView() {
     params.set("id", id);
 
     if (editingQuiz) {
-      params.set("quizModuleId", editingQuiz.moduleId);
-      params.set("quizLessonId", editingQuiz.lessonId);
+      if (editingQuiz.level === "lesson") {
+        params.set("quizModuleId", editingQuiz.moduleId);
+        params.set("quizLessonId", editingQuiz.lessonId);
+      } else {
+        params.set("quizLevel", "course");
+      }
       // Clear lesson params when quiz is open
       params.delete("moduleId");
       params.delete("lessonId");
     } else {
       params.delete("quizModuleId");
       params.delete("quizLessonId");
+      params.delete("quizLevel");
       if (editingLesson) {
         params.set("moduleId", editingLesson.moduleId);
         params.set("lessonId", editingLesson.lessonId);
@@ -243,7 +252,7 @@ export default function BuilderView() {
   const showSidebar = !showingPreview && !editingQuiz;
 
   return (
-    <div className="flex flex-col h-full bg-[#FDFDFD] overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-[#FDFDFD] overflow-hidden">
 
       {/* Dynamic Header Breadcrumbs based on Edit view state */}
       <BuilderHeader
@@ -252,14 +261,14 @@ export default function BuilderView() {
         onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Preview mode: full-screen course preview */}
         {showingPreview ? (
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 min-w-0 overflow-hidden">
             <CoursePreviewView />
           </main>
         ) : editingQuiz ? (
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-w-0 overflow-y-auto">
             <QuizEditorPageView />
           </main>
         ) : (
@@ -295,12 +304,17 @@ export default function BuilderView() {
                   handleAddModule();
                   closeSidebar();
                 }}
+                onOpenFinalAssessment={() => {
+                  dispatch(setEditingQuiz({ level: "course" }));
+                  closeSidebar();
+                }}
+                finalAssessmentCount={finalAssessment?.quizQuestions?.length || 0}
                 isOpen={sidebarOpen}
                 onClose={closeSidebar}
               />
             ))}
 
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden">
               {/* Swap main panel content to Lesson Editor when editing a lesson */}
               {editingLesson && currentLesson ? (
                 <LessonEditView

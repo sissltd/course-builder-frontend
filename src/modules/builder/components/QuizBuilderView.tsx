@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FormSelect } from "@/components/form/FormSelect";
 import {
   createDefaultQuizQuestion,
-  OPTION_LETTERS,
+  optionLetter,
   type QuizBuilderQuestion,
 } from "@/redux/slices/quizBuilderSlice";
 
@@ -62,8 +62,8 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
         q.options = (q.options as unknown[]).length >= 2
           ? q.options
           : [
-              { id: `${q.id}-a`, label: "A", value: "" },
-              { id: `${q.id}-b`, label: "B", value: "" },
+              { id: `${q.id}-${optionLetter(0).toLowerCase()}`, label: optionLetter(0), value: "" },
+              { id: `${q.id}-${optionLetter(1).toLowerCase()}`, label: optionLetter(1), value: "" },
             ];
         q.correctOptionId = undefined;
         q.correctOptionIds = undefined;
@@ -71,8 +71,8 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
         q.options = (q.options as unknown[]).length >= 2
           ? q.options
           : [
-              { id: `${q.id}-a`, label: "A", value: "" },
-              { id: `${q.id}-b`, label: "B", value: "" },
+              { id: `${q.id}-${optionLetter(0).toLowerCase()}`, label: optionLetter(0), value: "" },
+              { id: `${q.id}-${optionLetter(1).toLowerCase()}`, label: optionLetter(1), value: "" },
             ];
         q.correctOptionIds = [];
         q.correctOptionId = undefined;
@@ -86,7 +86,7 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
   const handleAddOption = (qIdx: number) => {
     const updated = items.map(deepClone);
     const q = updated[qIdx];
-    const newLabel = OPTION_LETTERS[q.options.length] || String.fromCharCode(65 + q.options.length);
+    const newLabel = optionLetter(q.options.length);
     q.options.push({ id: `${q.id}-${newLabel.toLowerCase()}`, label: newLabel, value: "" });
     emitChange(updated);
   };
@@ -97,8 +97,8 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
     const removedId = q.options[optIdx]?.id;
     q.options = q.options.filter((_, i) => i !== optIdx).map((opt, i) => ({
       ...opt,
-      label: OPTION_LETTERS[i] || `O${i + 1}`,
-      id: `${q.id}-${(OPTION_LETTERS[i] || `o${i + 1}`).toLowerCase()}`,
+      label: optionLetter(i),
+      id: `${q.id}-${optionLetter(i).toLowerCase()}`,
     }));
     if (removedId) {
       if (q.correctOptionId === removedId) {
@@ -295,16 +295,14 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
                       )}
                     </div>
                   ))}
-                  {q.options.length < 6 && (
-                    <button
-                      type="button"
-                      onClick={() => handleAddOption(qIdx)}
-                      className="mt-[8px] flex items-center gap-[8px] text-[13px] text-[#0A60E1] hover:underline"
-                    >
-                      <Add size={16} variant="Linear" color="#0A60E1" />
-                      New option
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleAddOption(qIdx)}
+                    className="mt-[8px] flex items-center gap-[8px] text-[13px] text-[#0A60E1] hover:underline"
+                  >
+                    <Add size={16} variant="Linear" color="#0A60E1" />
+                    New option
+                  </button>
                 </div>
               )}
 

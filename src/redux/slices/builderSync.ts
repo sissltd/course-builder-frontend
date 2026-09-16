@@ -5,6 +5,7 @@ import {
   setCourseId,
   setCourseInformation,
   setModules,
+  setFinalAssessment,
   setIsLoading,
   beginSave,
   endSave,
@@ -24,10 +25,11 @@ import {
   reduxLessonToApiPayload,
   reduxQuizQuestionsToAssessment,
   apiRelationalQuestionsToRedux,
+  mapFinalAssessmentQuestions,
 } from "@/modules/builder/utils/transformers";
 import type { CreateModuleRequest, UpdateModuleRequest } from "@/modules/creator/courses/types/module";
 import type { CreateLessonRequest, UpdateLessonRequest, LessonContentType } from "@/modules/creator/courses/types/lesson";
-import type { UpsertAssessmentRequest } from "@/modules/creator/courses/types/assessment";
+import type { UpsertAssessmentRequest, Assessment } from "@/modules/creator/courses/types/assessment";
 import type { QuizQuestionItem } from "@/modules/creator/courses/types/quiz";
 
 type ApiErrorPayload = {
@@ -138,6 +140,21 @@ const lessonAssessmentFingerprint = (
     reduxQuizQuestionsToAssessment(lesson.quizQuestions || [], assessmentTitle(lessonTitle)),
   );
 
+const courseAssessmentTitle = (courseTitle: string | undefined): string =>
+  `${courseTitle || "Untitled"} Final Assessment`;
+
+const courseAssessmentFingerprint = (
+  state: RootState,
+): string => {
+  const finalAssessment = state.courseBuilder.finalAssessment;
+  return stableStringify(
+    reduxQuizQuestionsToAssessment(
+      finalAssessment?.quizQuestions || [],
+      finalAssessment?.title || courseAssessmentTitle(state.courseBuilder.courseInformation.courseTitle),
+    ),
+  );
+};
+
 interface LegacyQuizRow {
   id: string;
   lesson: string | null;
@@ -173,6 +190,37 @@ export const loadCourse = createAsyncThunk<
     dispatch(setCourseId(courseId));
     dispatch(setCourseInformation(apiCourseToCourseInfo(course)));
     dispatch(setModules(apiCourseToReduxModules(course)));
+    dispatch(
+      setFinalAssessment({
+        title:
+          (course.final_assessment as { title?: string } | null)?.title ||
+          courseAssessmentTitle(course.title),
+        quizQuestions: mapFinalAssessmentQuestions(
+          (course.final_assessment as Assessment | null) ?? null,
+        ),
+      }),
+    );
+
+    if (!course.final_assessment) {
+      try {
+        const finalAssessment = await fetchJson(
+          `/courses/${courseId}/final-assessment/`,
+          token,
+        );
+        dispatch(
+          setFinalAssessment({
+            title:
+              (finalAssessment?.title as string | undefined) ||
+              courseAssessmentTitle(course.title),
+            quizQuestions: mapFinalAssessmentQuestions(
+              (finalAssessment as Assessment | null) ?? null,
+            ),
+          }),
+        );
+      } catch {
+        // No final assessment has been set yet.
+      }
+    }
 
     let legacyQuizzes: LegacyQuizRow[] = [];
     try {
@@ -224,6 +272,7 @@ export const loadCourse = createAsyncThunk<
     const hydrated = getState().courseBuilder;
     const fingerprints: Record<string, string> = {
       course: courseFingerprint(getState()),
+      courseAssessment: courseAssessmentFingerprint(getState()),
     };
     hydrated.modules.forEach((mod, index) => {
       fingerprints[`module:${mod.id}`] = moduleFingerprint(mod, index + 1);
@@ -523,6 +572,40 @@ export const syncSaveLessonAssessment = createAsyncThunk<
   }
 });
 
+export const syncSaveCourseAssessment = createAsyncThunk<
+  void,
+  void,
+  { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
+>("builderSync/syncSaveCourseAssessment", async (_, { dispatch, getState, rejectWithValue }) => {
+  const state = getState();
+  const courseId = state.courseBuilder.courseId;
+  if (!courseId) return;
+
+  const finalAssessment = state.courseBuilder.finalAssessment;
+  dispatch(beginSave());
+  try {
+    const token = getToken(state);
+    const payload: UpsertAssessmentRequest = reduxQuizQuestionsToAssessment(
+      finalAssessment?.quizQuestions || [],
+      finalAssessment?.title || courseAssessmentTitle(state.courseBuilder.courseInformation.courseTitle),
+    );
+    await fetchJson(`/courses/${courseId}/final-assessment/`, token, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    dispatch(
+      setFingerprint({
+        key: "courseAssessment",
+        value: courseAssessmentFingerprint(getState()),
+      }),
+    );
+  } catch (err) {
+    return rejectWithValue(toRejectValue(err));
+  } finally {
+    dispatch(endSave());
+  }
+});
+
 export const syncUpdateCourseInfo = createAsyncThunk<
   void,
   void,
@@ -658,6 +741,21 @@ export const saveAllDirty = createAsyncThunk<
     if (courseFingerprint(getState()) !== saved().course) {
       try {
         await dispatch(syncUpdateCourseInfo()).unwrap();
+      } catch (err) {
+        reportError(err);
+      }
+    }
+
+    const courseAssessmentChanged =
+      courseAssessmentFingerprint(getState()) !== saved().courseAssessment;
+    const hasSavedCourseAssessment = saved().courseAssessment !== undefined;
+    if (
+      courseAssessmentChanged &&
+      ((getState().courseBuilder.finalAssessment?.quizQuestions?.length || 0) > 0 ||
+        hasSavedCourseAssessment)
+    ) {
+      try {
+        await dispatch(syncSaveCourseAssessment()).unwrap();
       } catch (err) {
         reportError(err);
       }

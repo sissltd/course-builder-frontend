@@ -747,7 +747,7 @@ export const LessonEditView = ({
                   isGhost
                   onClick={() => {
                     if (editingLesson) {
-                      dispatch(setEditingQuiz({ moduleId: editingLesson.moduleId, lessonId: editingLesson.lessonId }));
+                      dispatch(setEditingQuiz({ level: "lesson", moduleId: editingLesson.moduleId, lessonId: editingLesson.lessonId }));
                     }
                   }}
                   className="text-[#0A60E1] text-[16px] font-normal tracking-[-0.32px] h-[32px] px-[12px]"

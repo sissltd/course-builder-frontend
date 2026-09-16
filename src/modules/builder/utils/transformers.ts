@@ -3,6 +3,7 @@ import { QuestionType } from "@/modules/creator/courses/types/assessment";
 import type {
   AssessmentQuestion,
   Assessment,
+  AssessmentOption,
   UpsertAssessmentRequest,
 } from "@/modules/creator/courses/types/assessment";
 import type { QuizQuestionItem } from "@/modules/creator/courses/types/quiz";
@@ -52,6 +53,9 @@ const correctIndicesForQuestion = (q: AssessmentQuestion): number[] => {
   return q.correct_index !== undefined ? [q.correct_index] : [];
 };
 
+const optionText = (opt: AssessmentOption | { text?: string }): string =>
+  typeof opt === "string" ? opt : opt?.text ?? "";
+
 export const mapAssessmentQuestions = (
   questions: AssessmentQuestion[],
 ): QuizQuestionData[] => {
@@ -72,7 +76,7 @@ export const mapAssessmentQuestions = (
     const options = q.options.map((opt, oi) => ({
       id: `${id}-${String.fromCharCode(97 + oi)}`,
       label: String.fromCharCode(65 + oi),
-      value: opt.text,
+      value: optionText(opt),
     }));
     const correctIndices = correctIndicesForQuestion(q);
     const explanation = q.explanation || "";
@@ -216,13 +220,15 @@ export const reduxQuizQuestionsToAssessment = (
   return {
     title,
     questions: questions.map((q): AssessmentQuestion => {
+      const explanation = (q.explanation || "").trim();
+
       if (q.type === "essay") {
         return {
           type: QuestionType.ESSAY,
           question: q.question,
           points: q.points || 0,
           expected_answer: q.correctAnswer || "",
-          explanation: q.explanation || "",
+          ...(explanation ? { explanation } : {}),
         };
       }
 
@@ -236,10 +242,8 @@ export const reduxQuizQuestionsToAssessment = (
           type: QuestionType.MULTIPLE_CHOICE,
           question: q.question,
           points: q.points || 0,
-          options: q.options.map((opt) => ({
-            text: opt.value,
-          })),
-          explanation: q.explanation || "",
+          options: q.options.map((opt) => opt.value),
+          ...(explanation ? { explanation } : {}),
           correct_indices: indices.length > 0 ? indices : [0],
         };
       }
@@ -250,14 +254,19 @@ export const reduxQuizQuestionsToAssessment = (
         type: QuestionType.SINGLE_CHOICE,
         question: q.question,
         points: q.points || 0,
-        options: q.options.map((opt) => ({
-          text: opt.value,
-        })),
-        explanation: q.explanation || "",
+        options: q.options.map((opt) => opt.value),
+        ...(explanation ? { explanation } : {}),
         correct_index: resolvedCorrect,
       };
     }),
   };
+};
+
+export const mapFinalAssessmentQuestions = (
+  assessment: Assessment | null | undefined,
+): QuizQuestionData[] => {
+  if (!assessment?.questions?.length) return [];
+  return mapAssessmentQuestions(assessment.questions);
 };
 
 export const apiRelationalQuestionsToRedux = (
@@ -273,7 +282,7 @@ export const apiRelationalQuestionsToRedux = (
         points: q.points ?? 0,
         options: [],
         correctAnswer: q.model_response_guide || "",
-        explanation: q.model_response_guide || "",
+        explanation: q.explanation || "",
       };
     }
 
@@ -285,8 +294,7 @@ export const apiRelationalQuestionsToRedux = (
     const correctIndices = q.options
       .map((opt, oi) => (opt.is_correct ? oi : -1))
       .filter((oi) => oi >= 0);
-    const explanation =
-      correctIndices.length > 0 ? q.options[correctIndices[0]]?.explanation || "" : "";
+    const explanation = q.explanation || "";
 
     if (q.question_type === "MULTIPLE_CHOICE") {
       return {

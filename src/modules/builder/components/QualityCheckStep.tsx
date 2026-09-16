@@ -95,7 +95,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
   };
 
   return (
-    <div className="w-full bg-[#FDFDFD] px-[16px] md:pl-[24px] md:pr-[200px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] pb-[100px]">
+    <div className="w-full bg-[#FDFDFD] px-[16px] md:pl-[24px] md:pr-[200px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] pb-[32px]">
       {/* Title Section */}
       <div className="flex flex-col gap-[12px]">
         <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">
@@ -197,6 +197,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
 const QualityCheckFallback = () => {
   const courseInfo = useAppSelector((state) => state.courseBuilder.courseInformation);
   const modules = useAppSelector((state) => state.courseBuilder.modules);
+  const finalAssessment = useAppSelector((state) => state.courseBuilder.finalAssessment);
   const version = useAppSelector((state) => state.courseBuilder.version);
 
   const hasTitle = courseInfo.courseTitle.trim().length > 0;
@@ -217,11 +218,13 @@ const QualityCheckFallback = () => {
   const allModulesHaveDescription = modules.length > 0 && modules.every((m) => m.description.trim().length > 0);
   const allModulesHaveObjectives = modules.length > 0 && modules.every((m) => m.objectives.length > 0);
   const hasLessons = modules.some((m) => m.lessons.length > 0);
-  const hasQuiz = modules.some(
-    (m) =>
-      m.quizQuestions.length > 0 ||
-      m.lessons.some((l) => l.type === "quiz" || (l.quizQuestions && l.quizQuestions.length > 0))
-  );
+  const hasQuiz =
+    (finalAssessment?.quizQuestions?.length || 0) > 0 ||
+    modules.some(
+      (m) =>
+        m.quizQuestions.length > 0 ||
+        m.lessons.some((l) => l.type === "quiz" || (l.quizQuestions && l.quizQuestions.length > 0))
+    );
 
   return (
     <>

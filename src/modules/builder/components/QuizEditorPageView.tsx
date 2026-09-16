@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft2 } from "iconsax-react";
 import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
@@ -11,8 +11,16 @@ import {
   toQuizBuilderQuestions,
   type QuizBuilderQuestion,
 } from "@/redux/slices/quizBuilderSlice";
-import { updateLessonInModule, setEditingQuiz, setEditingLesson } from "@/redux/slices/courseBuilderSlice";
-import { syncSaveLessonAssessment } from "@/redux/slices/builderSync";
+import {
+  updateLessonInModule,
+  setEditingQuiz,
+  setEditingLesson,
+  updateFinalAssessment,
+} from "@/redux/slices/courseBuilderSlice";
+import {
+  syncSaveLessonAssessment,
+  syncSaveCourseAssessment,
+} from "@/redux/slices/builderSync";
 import { quizBuilderFormSchema } from "@/modules/builder/utils/schemas";
 import { QuizBuilderView } from "./QuizBuilderView";
 
@@ -33,26 +41,56 @@ export const QuizEditorPageView = () => {
   const editingQuiz = useAppSelector((s) => s.courseBuilder.editingQuiz);
   const questions = useAppSelector((s) => s.quizBuilder.questions);
   const modules = useAppSelector((s) => s.courseBuilder.modules);
+  const finalAssessment = useAppSelector((s) => s.courseBuilder.finalAssessment);
+  const courseInformation = useAppSelector((s) => s.courseBuilder.courseInformation);
   const hydratedForRef = useRef<string | null>(null);
 
-  const currentModule = editingQuiz ? modules.find((m) => m.id === editingQuiz.moduleId) : null;
-  const currentLesson = currentModule?.lessons.find((l) => l.id === editingQuiz?.lessonId) || null;
+  const isCourseLevel = editingQuiz?.level === "course";
+
+  const currentModule =
+    editingQuiz?.level === "lesson"
+      ? modules.find((m) => m.id === editingQuiz.moduleId) ?? null
+      : null;
+  const currentLesson =
+    editingQuiz?.level === "lesson"
+      ? currentModule?.lessons.find((l) => l.id === editingQuiz.lessonId) || null
+      : null;
+
+  const contextTitle = isCourseLevel
+    ? `${courseInformation.courseTitle || "Course"} Final Assessment`
+    : currentLesson?.title || "";
+
+  const contextQuestions = useMemo(
+    () =>
+      isCourseLevel
+        ? finalAssessment?.quizQuestions || []
+        : currentLesson?.quizQuestions || [],
+    [isCourseLevel, finalAssessment, currentLesson],
+  );
 
   useEffect(() => {
-    if (!editingQuiz || !currentLesson) return;
-    const key = `${editingQuiz.moduleId}:${editingQuiz.lessonId}`;
+    if (!editingQuiz) return;
+    if (!isCourseLevel && !currentLesson) return;
+    const key =
+      editingQuiz.level === "course"
+        ? "course"
+        : `${editingQuiz.moduleId}:${editingQuiz.lessonId}`;
     if (hydratedForRef.current === key) return;
     hydratedForRef.current = key;
     dispatch(resetQuestions());
-    dispatch(setQuestions(toQuizBuilderQuestions(currentLesson.quizQuestions || [])));
-  }, [editingQuiz, currentLesson, dispatch]);
+    dispatch(setQuestions(toQuizBuilderQuestions(contextQuestions)));
+  }, [editingQuiz, isCourseLevel, currentLesson, currentModule, contextQuestions, dispatch]);
 
-  const handleQuestionsChange = useCallback((updated: QuizBuilderQuestion[]) => {
-    dispatch(setQuestions(updated));
-  }, [dispatch]);
+  const handleQuestionsChange = useCallback(
+    (updated: QuizBuilderQuestion[]) => {
+      dispatch(setQuestions(updated));
+    },
+    [dispatch],
+  );
 
   const handleSave = async () => {
-    if (!editingQuiz || !currentLesson) return;
+    if (!editingQuiz) return;
+    if (!isCourseLevel && !currentLesson) return;
 
     const sanitized = sanitizeQuestions(questions);
 
@@ -73,23 +111,38 @@ export const QuizEditorPageView = () => {
       }
     }
 
-    const moduleId = editingQuiz.moduleId;
-    const lessonId = editingQuiz.lessonId;
-    const updatedLesson = { ...currentLesson, quizQuestions: sanitized };
-
-    dispatch(updateLessonInModule({ moduleId, lessonId, updatedLesson }));
-
     try {
-      await dispatch(
-        syncSaveLessonAssessment({
-          moduleId,
-          lessonId,
-          lessonTitle: currentLesson.title,
-        }),
-      ).unwrap();
-      toast.success("Quiz saved.");
-      dispatch(setEditingQuiz(null));
-      dispatch(setEditingLesson({ moduleId, lessonId }));
+      if (isCourseLevel) {
+        dispatch(
+          updateFinalAssessment({
+            title: contextTitle,
+            quizQuestions: sanitized,
+          }),
+        );
+        await dispatch(syncSaveCourseAssessment()).unwrap();
+        toast.success("Final assessment saved.");
+        dispatch(setEditingQuiz(null));
+      } else if (editingQuiz.level === "lesson" && currentLesson) {
+        const moduleId = editingQuiz.moduleId;
+        const lessonId = editingQuiz.lessonId;
+        dispatch(
+          updateLessonInModule({
+            moduleId,
+            lessonId,
+            updatedLesson: { ...currentLesson, quizQuestions: sanitized },
+          }),
+        );
+        await dispatch(
+          syncSaveLessonAssessment({
+            moduleId,
+            lessonId,
+            lessonTitle: currentLesson.title,
+          }),
+        ).unwrap();
+        toast.success("Quiz saved.");
+        dispatch(setEditingQuiz(null));
+        dispatch(setEditingLesson({ moduleId, lessonId }));
+      }
     } catch (error) {
       const errors = (error as { errors?: { message?: string }[] })?.errors;
       toast.error(errors?.[0]?.message || "Failed to save quiz. Please try again.");
@@ -97,11 +150,25 @@ export const QuizEditorPageView = () => {
   };
 
   const handleBack = () => {
-    if (editingQuiz) {
-      dispatch(setEditingQuiz(null));
-      dispatch(setEditingLesson({ moduleId: editingQuiz.moduleId, lessonId: editingQuiz.lessonId }));
+    if (!editingQuiz) return;
+    const previous = editingQuiz;
+    dispatch(setEditingQuiz(null));
+    if (previous.level === "lesson") {
+      dispatch(
+        setEditingLesson({
+          moduleId: previous.moduleId,
+          lessonId: previous.lessonId,
+        }),
+      );
     }
   };
+
+  const heading = isCourseLevel
+    ? "Customize your final assessment"
+    : "Customize your quizzes";
+  const subheading = isCourseLevel
+    ? "Customize the quiz questions taken after every module is complete"
+    : "Customize your quiz questions for this lesson";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -120,10 +187,10 @@ export const QuizEditorPageView = () => {
             </Button>
           </div>
           <h2 className="text-[24px] font-semibold text-[#202020] leading-[32px]">
-            Customize your quizzes
+            {heading}
           </h2>
           <p className="text-[14px] text-[#606060] leading-[20px]">
-            Customize your quiz questions for this lesson
+            {subheading}
           </p>
         </div>
       </div>
@@ -133,7 +200,7 @@ export const QuizEditorPageView = () => {
         <QuizBuilderView
           questions={questions}
           onChange={handleQuestionsChange}
-          maxQuestions={10}
+          maxQuestions={isCourseLevel ? 50 : 10}
         />
       </div>
 
