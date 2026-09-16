@@ -242,6 +242,10 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      if (token.googleError || token.googleSignupRequired) {
+        return token;
+      }
+
       if (
         token.accessTokenExpiresAt &&
         Date.now() < token.accessTokenExpiresAt - REFRESH_BEFORE_EXPIRY_MS

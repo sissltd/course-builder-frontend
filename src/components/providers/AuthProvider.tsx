@@ -19,13 +19,6 @@ function AuthSessionSync() {
     if (hasRedirected.current) return;
 
     if (status === "authenticated" && session?.user) {
-      if (session.error === "RefreshAccessTokenError") {
-        hasRedirected.current = true;
-        dispatch(clearAuth());
-        signOut({ callbackUrl: "/auth/login", redirect: true });
-        return;
-      }
-
       if (session.googleSignupRequired) {
         hasRedirected.current = true;
         router.push(AuthRoute.SIGNUP_GOOGLE);
@@ -34,6 +27,13 @@ function AuthSessionSync() {
 
       if (session.googleError) {
         dispatch(clearAuth());
+        return;
+      }
+
+      if (session.error === "RefreshAccessTokenError") {
+        hasRedirected.current = true;
+        dispatch(clearAuth());
+        signOut({ callbackUrl: "/auth/login", redirect: true });
         return;
       }
 

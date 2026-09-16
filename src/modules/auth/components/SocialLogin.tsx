@@ -12,7 +12,7 @@ export const SocialLogin = ({ label = "Continue with Google", onClick, type = "g
   return (
     <Button
       variant={type === "google" ? "google" : "apple"}
-      className="w-full h-[44px] gap-[8px]"
+      className="w-full h-[44px] gap-[8px] cursor-pointer"
       onClick={onClick}
       leftIcon={
         <div className="relative size-[20px]">
