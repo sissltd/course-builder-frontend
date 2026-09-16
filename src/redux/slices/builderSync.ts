@@ -31,6 +31,7 @@ import type { CreateModuleRequest, UpdateModuleRequest } from "@/modules/creator
 import type { CreateLessonRequest, UpdateLessonRequest, LessonContentType } from "@/modules/creator/courses/types/lesson";
 import type { UpsertAssessmentRequest, Assessment } from "@/modules/creator/courses/types/assessment";
 import type { QuizQuestionItem } from "@/modules/creator/courses/types/quiz";
+import type { ApiErrorItem } from "@/lib/api/types";
 
 type ApiErrorPayload = {
   status?: number;
@@ -685,7 +686,7 @@ export const syncSetCoverVideo = createAsyncThunk<
 });
 
 export const syncSubmitCourse = createAsyncThunk<
-  { success: boolean; errors?: unknown[] },
+  { success: boolean; errors?: ApiErrorItem[] },
   void,
   { state: RootState; dispatch: AppDispatch }
 >("builderSync/syncSubmitCourse", async (_, { dispatch, getState }) => {
@@ -701,7 +702,7 @@ export const syncSubmitCourse = createAsyncThunk<
     });
     return { success: true };
   } catch (err: unknown) {
-    const error = err as { status?: number; data?: { errors?: unknown[] } };
+    const error = err as { status?: number; data?: { errors?: ApiErrorItem[] } };
     if (error.status === 400 && error.data?.errors) {
       return { success: false, errors: error.data.errors };
     }
