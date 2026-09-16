@@ -8,7 +8,7 @@ import type {
   UserRole,
   UserStatus,
 } from "@/modules/auth/types/auth";
-import { getAccessTokenExpiresAt } from "@/modules/auth/utils/token";
+import { decodeJwtPayload, getAccessTokenExpiresAt } from "@/modules/auth/utils/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
@@ -19,6 +19,22 @@ async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
     tokenPrefix: idToken ? idToken.substring(0, 20) + "..." : "null",
     apiBase: API_BASE_URL,
   });
+
+  try {
+    const claims = decodeJwtPayload<{
+      aud?: string;
+      iss?: string;
+      email?: string;
+    }>(idToken);
+    console.log("[GoogleAuth] id_token claims", {
+      aud: claims.aud,
+      iss: claims.iss,
+      email: claims.email,
+      expectedAudience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch (err) {
+    console.warn("[GoogleAuth] could not decode id_token claims", err);
+  }
 
   const response = await fetch(`${API_BASE_URL}/auth/login/google/`, {
     method: "POST",
