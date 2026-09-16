@@ -23,7 +23,7 @@ import {
   useCreateGenerationMutation,
   useGetGenerationJobQuery,
   useCancelGenerationMutation,
-  useGetCategoriesQuery,
+  useGetCategoriesPickerQuery,
   useGetTopicsQuery,
 } from "./hooks";
 import {
@@ -35,7 +35,6 @@ import {
   GenerationItem,
   GENERATION_JOB_STORAGE_KEY,
 } from "./types/aiGeneration";
-import { CategoryStatus } from "./types/category";
 import { TopicStatus } from "./types/topic";
 import { normalizeApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
@@ -215,9 +214,7 @@ export default function AiCourseGenerationView() {
   const [cancelGeneration, { isLoading: isCancelling }] =
     useCancelGenerationMutation();
 
-  const { data: categoriesResponse } =
-    useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
-  const categories = categoriesResponse?.data?.results || [];
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   const { data: topicsResponse } = useGetTopicsQuery(
     { status: TopicStatus.ACTIVE },
@@ -379,7 +376,7 @@ export default function AiCourseGenerationView() {
               required
               searchable
               placeholder="Select category"
-              options={categories.map((c) => ({ label: c.name, value: c.id }))}
+              options={(categories ?? []).map((c) => ({ label: c.name, value: c.id }))}
               onValueChange={() => {
                 if (selectedTopic) {
                   setValue("topic", "", { shouldValidate: true });

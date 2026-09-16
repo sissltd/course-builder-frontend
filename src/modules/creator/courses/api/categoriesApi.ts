@@ -2,6 +2,12 @@ import { BaseAPI } from "@/redux/baseApi";
 import type { PaginatedResponse } from "../types";
 import type { Category, CategoryListParams } from "../types/category";
 
+export interface CategoryPicker {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
 export const categoriesApi = BaseAPI.injectEndpoints({
   endpoints: (builder) => ({
     getCategories: builder.query<
@@ -30,6 +36,19 @@ export const categoriesApi = BaseAPI.injectEndpoints({
       providesTags: ["Category"],
     }),
 
+    getCategoriesPicker: builder.query<CategoryPicker[], void>({
+      query: () => ({
+        url: "/categories/picker/",
+        method: "GET",
+      }),
+      transformResponse: (response: {
+        status: boolean;
+        message: string;
+        data: CategoryPicker[];
+      }) => response.data,
+      providesTags: ["Category"],
+    }),
+
     getCategory: builder.query<Category, string>({
       query: (id) => ({
         url: `/categories/${id}/`,
@@ -40,4 +59,8 @@ export const categoriesApi = BaseAPI.injectEndpoints({
   }),
 });
 
-export const { useGetCategoriesQuery, useGetCategoryQuery } = categoriesApi;
+export const {
+  useGetCategoriesQuery,
+  useGetCategoriesPickerQuery,
+  useGetCategoryQuery,
+} = categoriesApi;

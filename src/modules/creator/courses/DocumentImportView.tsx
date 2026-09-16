@@ -21,13 +21,10 @@ import {
   useCreateCourseFromImportMutation,
   useCreateModuleForImportMutation,
   useCreateLessonForImportMutation,
-  useGetCategoriesQuery,
+  useGetCategoriesPickerQuery,
   useGetTopicsQuery,
 } from "./hooks";
 import { parseDocument, extractDocumentTitle } from "./utils/documentParser";
-import {
-  CategoryStatus,
-} from "./types/category";
 import {
   TopicStatus,
 } from "./types/topic";
@@ -71,9 +68,7 @@ export default function DocumentImportView() {
   const [createLesson, { isLoading: isCreatingLesson }] =
     useCreateLessonForImportMutation();
 
-  const { data: categoriesResponse } =
-    useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
-  const categories = categoriesResponse?.data?.results || [];
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   const { data: topicsResponse } =
     useGetTopicsQuery({ status: TopicStatus.ACTIVE });
@@ -328,7 +323,7 @@ export default function DocumentImportView() {
               required
               searchable
               placeholder="Select category"
-              options={categories.map((c) => ({ label: c.name, value: c.id }))}
+              options={(categories ?? []).map((c) => ({ label: c.name, value: c.id }))}
               onValueChange={() => {
                 if (selectedTopic) {
                   setValue("topic", "", { shouldValidate: true });

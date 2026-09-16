@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
-import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
+import { useGetCoursesQuery, useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
 import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
-import { CategoryStatus } from "@/modules/creator/courses/types/category";
 import { format } from "date-fns";
 import { CreatorRoute } from "@/lib/routes";
 
@@ -42,10 +40,7 @@ export const CoursesTable = () => {
     ...(categoryFilter && { category: categoryFilter }),
   });
 
-  const { data: categoriesResponse } = useGetCategoriesQuery({
-    status: CategoryStatus.ACTIVE,
-  });
-  const categories = categoriesResponse?.data?.results ?? [];
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   const courses: Course[] = (response?.data?.results ?? []).map((c) => ({
     id: c.id,
@@ -107,7 +102,7 @@ export const CoursesTable = () => {
           icon: <Filter size={20} variant="Linear" color="#606060" />,
           searchable: true,
           searchPlaceholder: "Search category...",
-          options: categories.map((c) => ({
+          options: (categories ?? []).map((c) => ({
             label: c.name,
             value: c.id,
           })),

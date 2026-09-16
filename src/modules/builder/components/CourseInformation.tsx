@@ -20,8 +20,7 @@ import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
 import { syncSetCoverVideo } from "@/redux/slices/builderSync";
 import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
-import { CategoryStatus } from "@/modules/creator/courses/types/category";
+import { useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
 import { VideoPlayerModal } from "@/modules/creator/courses/components/VideoPlayerModal";
 
 interface CourseInformationProps {
@@ -33,8 +32,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
   const dispatch = useAppDispatch();
   const info = useAppSelector((state) => state.courseBuilder.courseInformation);
   const { updateAndSave } = useDebouncedCourseSave();
-  const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
-  const categories = categoriesResponse?.data?.results || [];
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   // Main form
   const methods = useForm<CourseInformationFormData>({
@@ -209,7 +207,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[40px] md:gap-[60px] mx-auto pb-[100px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[40px] md:gap-[60px] mx-auto pb-[32px]">
         
         {/* Course Info Section */}
         <div className="flex flex-col gap-[24px]">
@@ -244,7 +242,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 label="Course category"
                 required
                 placeholder="Select category"
-                options={categories.map((c) => ({
+                options={(categories ?? []).map((c) => ({
                   label: c.name,
                   value: c.id,
                 }))}

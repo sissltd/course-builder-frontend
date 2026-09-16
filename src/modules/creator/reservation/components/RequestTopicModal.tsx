@@ -9,8 +9,7 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { requestCategorySchema, RequestCategoryFormData } from "../utils/schemas";
 import { useCreateTopicReservationMutation } from "../hooks";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
-import { CategoryStatus } from "@/modules/creator/courses/types/category";
+import { useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
 
 interface RequestTopicModalProps {
   isOpen: boolean;
@@ -20,7 +19,7 @@ interface RequestTopicModalProps {
 
 export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTopicModalProps) => {
   const [createReservation, { isLoading }] = useCreateTopicReservationMutation();
-  const { data: categoriesResponse } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   const methods = useForm<RequestCategoryFormData>({
     resolver: zodResolver(requestCategorySchema),
@@ -30,7 +29,7 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
     },
   });
 
-  const categoryOptions = categoriesResponse?.data?.results?.map((cat) => ({
+  const categoryOptions = categories?.map((cat) => ({
     label: cat.name,
     value: cat.id,
   })) ?? [];

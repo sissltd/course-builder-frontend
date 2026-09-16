@@ -54,6 +54,7 @@ export {
 
 export {
   useGetCategoriesQuery,
+  useGetCategoriesPickerQuery,
   useGetCategoryQuery,
 } from "../api/categoriesApi";
 

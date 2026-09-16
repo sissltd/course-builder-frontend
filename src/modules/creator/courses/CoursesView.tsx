@@ -28,14 +28,13 @@ import { toast } from "sonner";
 import {
   useGetCoursesQuery,
   useDeleteCourseMutation,
-  useGetCategoriesQuery,
+  useGetCategoriesPickerQuery,
 } from "./hooks";
 import type { CourseSummary, CoursesListParams } from "./types";
 import {
   CourseStatus,
   SourceType,
 } from "./types";
-import { CategoryStatus } from "./types/category";
 import { CreatorRoute } from "@/lib/routes";
 import { normalizeApiError } from "@/lib/api/errors";
 
@@ -63,10 +62,7 @@ export const CoursesView = () => {
   const { data: response, isLoading, error } = useGetCoursesQuery(queryParams);
   const [deleteCourse] = useDeleteCourseMutation();
 
-  const { data: categoriesResponse } = useGetCategoriesQuery({
-    status: CategoryStatus.ACTIVE,
-  });
-  const categories = categoriesResponse?.data?.results ?? [];
+  const { data: categories } = useGetCategoriesPickerQuery();
 
   const courses = response?.data?.results ?? [];
   const paginator = response?.data?.paginator;
@@ -256,7 +252,7 @@ export const CoursesView = () => {
                 icon: <Filter size={20} variant="Linear" color="#606060" />,
                 searchable: true,
                 searchPlaceholder: "Search category...",
-                options: categories.map((c) => ({
+                options: (categories ?? []).map((c) => ({
                   label: c.name,
                   value: c.id,
                 })),

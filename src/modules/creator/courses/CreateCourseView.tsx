@@ -24,8 +24,7 @@ import { RequestTopicModal } from "@/modules/creator/reservation/components/Requ
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { useCreateCourseMutation, useGetCategoriesQuery, useGetTopicsQuery } from "./hooks";
-import { CategoryStatus } from "./types/category";
+import { useCreateCourseMutation, useGetCategoriesPickerQuery, useGetTopicsQuery } from "./hooks";
 import { TopicStatus } from "./types/topic";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
@@ -71,8 +70,7 @@ export default function CreateCourseView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
-  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
-  const categories = categoriesResponse?.data?.results || [];
+  const { data: categories, isLoading: isLoadingCategories } = useGetCategoriesPickerQuery();
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -123,7 +121,7 @@ export default function CreateCourseView() {
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => Math.max(0, s - 1));
 
-  const filteredCategories = categories.filter(c =>
+  const filteredCategories = (categories ?? []).filter(c =>
     c.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 
@@ -418,7 +416,7 @@ export default function CreateCourseView() {
               )}
             >
               <span className={cn("text-[14px]", selectedCategory ? "text-[#202020] font-semibold" : "text-[#B6B6B6]")}>
-                {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || "Selected" : "Select option"}
+                {selectedCategory ? (categories ?? []).find(c => c.id === selectedCategory)?.name || "Selected" : "Select option"}
               </span>
               <RightArrowIcon />
             </button>
@@ -459,12 +457,9 @@ export default function CreateCourseView() {
                             ? "bg-sd-grey-2 text-[#202020]" 
                             : "text-[#636363] hover:bg-sd-grey-1 hover:text-[#202020]"
                         )}
-                      >
-                        <span>{c.name}</span>
-                        <span className="bg-[#EBF3FF] text-[#0063EF] text-[12px] font-semibold px-[8px] py-[2px] rounded-[6px]">
-                          ${c.creator_price}
-                        </span>
-                      </button>
+                       >
+                         <span>{c.name}</span>
+                       </button>
                     ))
                   ) : (
                     <p className="text-[12px] text-[#B6B6B6] text-center py-[12px]">No category found</p>
