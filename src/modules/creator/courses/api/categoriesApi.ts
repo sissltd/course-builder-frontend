@@ -41,11 +41,18 @@ export const categoriesApi = BaseAPI.injectEndpoints({
         url: "/categories/picker/",
         method: "GET",
       }),
-      transformResponse: (response: {
-        status: boolean;
-        message: string;
-        data: CategoryPicker[];
-      }) => response.data,
+      transformResponse: (
+        response:
+          | CategoryPicker[]
+          | CategoryPicker[][]
+          | { data: CategoryPicker[] | CategoryPicker[][] },
+      ) => {
+        const list = Array.isArray(response) ? response : response?.data;
+        if (!Array.isArray(list)) return [];
+        return Array.isArray(list[0])
+          ? (list as CategoryPicker[][]).flat()
+          : (list as CategoryPicker[]);
+      },
       providesTags: ["Category"],
     }),
 
