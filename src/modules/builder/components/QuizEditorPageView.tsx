@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/redux";
 import {
   setQuestions,
   resetQuestions,
+  createDefaultQuizQuestion,
   toQuizBuilderQuestions,
   type QuizBuilderQuestion,
 } from "@/redux/slices/quizBuilderSlice";
@@ -88,64 +89,103 @@ export const QuizEditorPageView = () => {
     [dispatch],
   );
 
+  const persistQuestions = useCallback(
+    async (list: QuizBuilderQuestion[]): Promise<boolean> => {
+      if (!editingQuiz) return false;
+      if (!isCourseLevel && !currentLesson) return false;
+
+      const sanitized = sanitizeQuestions(list);
+
+      if (sanitized.length > 0) {
+        const parsed = quizBuilderFormSchema.safeParse({ questions: sanitized });
+        if (!parsed.success) {
+          const issue = parsed.error.issues[0];
+          const questionIndex =
+            issue.path[0] === "questions" && typeof issue.path[1] === "number"
+              ? issue.path[1]
+              : null;
+          toast.error(
+            questionIndex !== null
+              ? `Question ${questionIndex + 1}: ${issue.message}`
+              : issue.message,
+          );
+          return false;
+        }
+      }
+
+      try {
+        if (isCourseLevel) {
+          dispatch(
+            updateFinalAssessment({
+              title: contextTitle,
+              quizQuestions: sanitized,
+            }),
+          );
+          await dispatch(syncSaveCourseAssessment()).unwrap();
+        } else if (editingQuiz.level === "lesson" && currentLesson) {
+          const moduleId = editingQuiz.moduleId;
+          const lessonId = editingQuiz.lessonId;
+          dispatch(
+            updateLessonInModule({
+              moduleId,
+              lessonId,
+              updatedLesson: { ...currentLesson, quizQuestions: sanitized },
+            }),
+          );
+          await dispatch(
+            syncSaveLessonAssessment({
+              moduleId,
+              lessonId,
+              lessonTitle: currentLesson.title,
+            }),
+          ).unwrap();
+        }
+        return true;
+      } catch (error) {
+        const errors = (error as { errors?: { message?: string }[] })?.errors;
+        toast.error(errors?.[0]?.message || "Failed to save quiz. Please try again.");
+        return false;
+      }
+    },
+    [editingQuiz, isCourseLevel, currentLesson, contextTitle, dispatch],
+  );
+
+  const addingQuestionRef = useRef(false);
+  const maxQuestions = isCourseLevel ? 50 : 10;
+
+  const handleAddQuestion = useCallback(
+    async (current: QuizBuilderQuestion[]) => {
+      if (addingQuestionRef.current) return;
+      if (current.length >= maxQuestions) return;
+      addingQuestionRef.current = true;
+      try {
+        const saved = await persistQuestions(current);
+        if (!saved) return;
+        dispatch(setQuestions([...current, createDefaultQuizQuestion()]));
+      } finally {
+        addingQuestionRef.current = false;
+      }
+    },
+    [maxQuestions, persistQuestions, dispatch],
+  );
+
   const handleSave = async () => {
     if (!editingQuiz) return;
     if (!isCourseLevel && !currentLesson) return;
 
-    const sanitized = sanitizeQuestions(questions);
+    const saved = await persistQuestions(questions);
+    if (!saved) return;
 
-    if (sanitized.length > 0) {
-      const parsed = quizBuilderFormSchema.safeParse({ questions: sanitized });
-      if (!parsed.success) {
-        const issue = parsed.error.issues[0];
-        const questionIndex =
-          issue.path[0] === "questions" && typeof issue.path[1] === "number"
-            ? issue.path[1]
-            : null;
-        toast.error(
-          questionIndex !== null
-            ? `Question ${questionIndex + 1}: ${issue.message}`
-            : issue.message,
-        );
-        return;
-      }
-    }
-
-    try {
-      if (isCourseLevel) {
-        dispatch(
-          updateFinalAssessment({
-            title: contextTitle,
-            quizQuestions: sanitized,
-          }),
-        );
-        await dispatch(syncSaveCourseAssessment()).unwrap();
-        toast.success("Final assessment saved.");
-        dispatch(setEditingQuiz(null));
-      } else if (editingQuiz.level === "lesson" && currentLesson) {
-        const moduleId = editingQuiz.moduleId;
-        const lessonId = editingQuiz.lessonId;
-        dispatch(
-          updateLessonInModule({
-            moduleId,
-            lessonId,
-            updatedLesson: { ...currentLesson, quizQuestions: sanitized },
-          }),
-        );
-        await dispatch(
-          syncSaveLessonAssessment({
-            moduleId,
-            lessonId,
-            lessonTitle: currentLesson.title,
-          }),
-        ).unwrap();
-        toast.success("Quiz saved.");
-        dispatch(setEditingQuiz(null));
-        dispatch(setEditingLesson({ moduleId, lessonId }));
-      }
-    } catch (error) {
-      const errors = (error as { errors?: { message?: string }[] })?.errors;
-      toast.error(errors?.[0]?.message || "Failed to save quiz. Please try again.");
+    toast.success(isCourseLevel ? "Final assessment saved." : "Quiz saved.");
+    const previous = editingQuiz;
+    dispatch(setEditingQuiz(null));
+    if (previous.level === "lesson") {
+      dispatch(
+        setEditingLesson({
+          moduleId: previous.moduleId,
+          lessonId: previous.lessonId,
+        }),
+      );
     }
   };
 
@@ -200,7 +240,8 @@ export const QuizEditorPageView = () => {
         <QuizBuilderView
           questions={questions}
           onChange={handleQuestionsChange}
-          maxQuestions={isCourseLevel ? 50 : 10}
+          onAddQuestion={handleAddQuestion}
+          maxQuestions={maxQuestions}
         />
       </div>
 

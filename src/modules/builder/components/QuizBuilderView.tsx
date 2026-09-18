@@ -14,6 +14,7 @@ import {
 interface QuizBuilderViewProps {
   questions: QuizBuilderQuestion[];
   onChange: (questions: QuizBuilderQuestion[]) => void;
+  onAddQuestion?: (current: QuizBuilderQuestion[]) => void;
   maxQuestions?: number;
 }
 
@@ -28,7 +29,7 @@ const deepClone = (q: QuizBuilderQuestion): QuizBuilderQuestion => ({
   options: q.options.map((o) => ({ ...o })),
 });
 
-const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: QuizBuilderViewProps) => {
+const QuizBuilderViewComponent = ({ questions, onChange, onAddQuestion, maxQuestions = 10 }: QuizBuilderViewProps) => {
   const [activeTab, setActiveTab] = React.useState<"builder" | "preview">("builder");
 
   const items = useMemo(
@@ -41,6 +42,10 @@ const QuizBuilderViewComponent = ({ questions, onChange, maxQuestions = 10 }: Qu
   };
 
   const handleAddQuestion = () => {
+    if (onAddQuestion) {
+      onAddQuestion(items);
+      return;
+    }
     emitChange([...items, createDefaultQuizQuestion()]);
   };
 
