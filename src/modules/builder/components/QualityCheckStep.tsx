@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft2,
   ArrowRight2,
@@ -112,7 +112,10 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
   const courseId = searchParams.get("id");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitErrors, setSubmitErrors] = useState<ApiErrorItem[]>([]);
+  const [submitState, setSubmitState] = useState<{
+    errors: ApiErrorItem[];
+    signature: string;
+  }>({ errors: [], signature: "" });
   const [refreshQualityChecks] = useRefreshQualityChecksMutation();
 
   const courseInformation = useAppSelector(
@@ -140,6 +143,19 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
     [courseInformation, modules, version, finalAssessment],
   );
 
+  const courseSignature = useMemo(
+    () => JSON.stringify({ courseInformation, modules, version, finalAssessment }),
+    [courseInformation, modules, version, finalAssessment],
+  );
+
+  const submitErrors =
+    submitState.signature === courseSignature ? submitState.errors : [];
+
+  useEffect(() => {
+    if (!courseId) return;
+    refreshQualityChecks(courseId);
+  }, [courseId, courseSignature, refreshQualityChecks]);
+
   const failedStandards = structuralStandards.filter((standard) => !standard.passed);
   const blockingCount = failedStandards.length + submitErrors.length;
   const canSubmit = !isSubmitting && blockingCount === 0;
@@ -150,7 +166,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
     if (!courseId) return;
     try {
       await refreshQualityChecks(courseId).unwrap();
-      setSubmitErrors([]);
+      setSubmitState({ errors: [], signature: courseSignature });
       toast.success("Quality checks refreshed");
     } catch (err) {
       const { message } = normalizeApiError(err as never);
@@ -159,7 +175,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
   };
 
   const handleSubmit = async () => {
-    setSubmitErrors([]);
+    setSubmitState({ errors: [], signature: courseSignature });
     setIsSubmitting(true);
     try {
       const result = await dispatch(syncSubmitCourse()).unwrap();
@@ -167,7 +183,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
         toast.success("Course submitted for review!");
         router.push(CreatorRoute.COURSES);
       } else if (result.errors && result.errors.length > 0) {
-        setSubmitErrors(result.errors);
+        setSubmitState({ errors: result.errors, signature: courseSignature });
         toast.error("This course does not meet the submission standards yet.");
       } else {
         toast.error("Failed to submit course. Please try again.");

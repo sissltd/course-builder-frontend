@@ -63,6 +63,26 @@ const build = (
 const scriptWords = (lesson: Lesson): number =>
   countWords(lesson.videoScript ?? lesson.content);
 
+const lessonDurationMinutes = (lesson: Lesson): number => {
+  const source =
+    lesson.type === "text"
+      ? lesson.estimatedDuration || lesson.duration || "0"
+      : lesson.duration || "0";
+  const match = source.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+};
+
+const totalDurationMinutes = (modules: Module[]): number =>
+  modules.reduce(
+    (total, courseModule) =>
+      total +
+      courseModule.lessons.reduce(
+        (sum, lesson) => sum + lessonDurationMinutes(lesson),
+        0,
+      ),
+    0,
+  );
+
 export const evaluateStructuralStandards = ({
   courseInformation,
   modules,
@@ -97,9 +117,7 @@ export const evaluateStructuralStandards = ({
     build(
       "course-duration",
       "Course duration",
-      courseInformation.hours * 60 +
-        courseInformation.minutes +
-        Math.round(courseInformation.seconds / 60),
+      totalDurationMinutes(modules),
       STRUCTURAL_LIMITS.durationMinutes.min,
       STRUCTURAL_LIMITS.durationMinutes.max,
       "minutes",
