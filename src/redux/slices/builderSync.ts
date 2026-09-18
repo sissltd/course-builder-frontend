@@ -384,7 +384,7 @@ export const syncDeleteModule = createAsyncThunk<
 
 export const syncCreateLesson = createAsyncThunk<
   { moduleId: string; tempId: string; apiId: string } | null,
-  { moduleId: string; type: "video" | "quiz" | "text"; lessonId?: string },
+  { moduleId: string; type: "video" | "text"; lessonId?: string },
   { state: RootState; dispatch: AppDispatch; rejectValue: ApiErrorPayload }
 >("builderSync/syncCreateLesson", async ({ moduleId, type, lessonId }, { dispatch, getState, rejectWithValue }) => {
   const state = getState();
@@ -406,7 +406,6 @@ export const syncCreateLesson = createAsyncThunk<
     const contentTypeMap: Record<string, LessonContentType> = {
       video: "VIDEO" as LessonContentType,
       text: "TEXT" as LessonContentType,
-      quiz: "QUIZ" as LessonContentType,
     };
     const body = {
       title: newLesson.title || "Untitled Lesson",

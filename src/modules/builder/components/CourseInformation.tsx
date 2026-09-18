@@ -96,6 +96,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   // File Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [savedVideoName, setSavedVideoName] = useState<string | null>(info.coverVideo?.name || null);
   const [savedVideoSize, setSavedVideoSize] = useState<number | null>(info.coverVideo?.size || null);
@@ -132,6 +133,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
     setValue("objectives", updated, { shouldValidate: true });
     updateAndSave({ objectives: updated });
   };
+
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
 
   // Tag Handlers
   const handleAddTag = () => {
@@ -383,6 +390,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 {isAddingObjective ? (
                   <div className="flex items-center gap-[12px] h-[60px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                     <input
+                      ref={objectiveInputRef}
                       type="text"
                       value={newObjective}
                       onChange={(e) => setNewObjective(e.target.value)}
@@ -438,6 +446,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 {isAddingObjective ? (
                   <div className="flex items-center gap-[12px] h-[60px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                     <input
+                      ref={objectiveInputRef}
                       type="text"
                       value={newObjective}
                       onChange={(e) => setNewObjective(e.target.value)}

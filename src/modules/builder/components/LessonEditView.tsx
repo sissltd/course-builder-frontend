@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Trash,
   Add,
@@ -11,7 +11,6 @@ import {
   Timer1,
   Book,
   DocumentText,
-  DocumentCode2,
 } from "iconsax-react";
 import Image from "next/image";
 import { useForm, FormProvider, Controller } from "react-hook-form";
@@ -140,8 +139,15 @@ export const LessonEditView = ({
   const [videoScript, setVideoScript] = useState(lesson.videoScript || "");
   const [isAddingObjective, setIsAddingObjective] = useState(false);
   const [newObjective, setNewObjective] = useState("");
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
   const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<number | null>(null);
   const [editingObjectiveValue, setEditingObjectiveValue] = useState("");
+
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
 
   const handleUpdateField = <K extends keyof Lesson>(field: K, value: Lesson[K]) => {
     onUpdateLesson({
@@ -375,7 +381,6 @@ export const LessonEditView = ({
             <div className="flex gap-[12px] items-start flex-1">
               <span className="mt-[2px] text-sd-grey-9 shrink-0">
                 {lesson.type === "video" && <VideoPlay size={32} variant="Linear" color="#8C8C8C" />}
-                {lesson.type === "quiz" && <DocumentCode2 size={32} variant="Linear" color="#8C8C8C" />}
                 {lesson.type === "text" && <DocumentText size={32} variant="Linear" color="#8C8C8C" />}
               </span>
               <div className="flex flex-col gap-[6px] flex-1">
@@ -455,32 +460,23 @@ export const LessonEditView = ({
                 onClick={onBack}
                 leftIcon={<Trash size={24} variant="Linear" color="#FF6B00" />}
               />
-              {lesson.type !== "quiz" && (
-                <Button
-                  type="button"
-                  variant="app-outline"
-                  className="h-[40px] px-[16px] text-[14px] text-[#0063EF] border-[#0063EF]"
-                  leftIcon={
-                    <Image
-                      src="/images/builder/preview-play.svg"
-                      alt="Preview"
-                      width={24}
-                      height={24}
-                    />
-                  }
-                >
-                  Preview
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="app-outline"
+                className="h-[40px] px-[16px] text-[14px] text-[#0063EF] border-[#0063EF]"
+                leftIcon={
+                  <Image
+                    src="/images/builder/preview-play.svg"
+                    alt="Preview"
+                    width={24}
+                    height={24}
+                  />
+                }
+              >
+                Preview
+              </Button>
             </div>
           </div>
-
-          {/* Quiz type — read-only summary */}
-          {lesson.type === "quiz" ? (
-            <div className="border border-[#E8E8E8] rounded-[16px] p-[24px] bg-white flex-1">
-              <QuizSummaryDisplay questions={lesson.quizQuestions || []} />
-            </div>
-          ) : null}
 
           {/* Media Block Upload Container — only for video lessons */}
           {lesson.type === "video" && (
@@ -740,6 +736,7 @@ export const LessonEditView = ({
                       containerClassName="flex-1"
                       className="border-none focus:ring-0 focus-visible:border-none h-[40px] text-[14px] text-[#202020] bg-transparent"
                       autoFocus
+                      inputRef={objectiveInputRef}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === "Enter") handleAddObjective();
                         else if (e.key === "Escape")
@@ -789,8 +786,7 @@ export const LessonEditView = ({
           </div>
 
           {/* Lessons Requirement Text Editor Section — shown for video and text */}
-          {lesson.type !== "quiz" && (
-            <div className="flex flex-col gap-[18px] w-full">
+          <div className="flex flex-col gap-[18px] w-full">
               <div className="flex items-center justify-between w-full">
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">
                   Lessons Requirement
@@ -826,11 +822,9 @@ export const LessonEditView = ({
                 />
               </div>
             </div>
-          )}
 
           {/* Quiz Section — shown for all lesson types */}
-          {lesson.type !== "quiz" && (
-            <div className="flex flex-col gap-[18px] w-full">
+          <div className="flex flex-col gap-[18px] w-full">
               <div className="flex items-center justify-between w-full">
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">
                   Quiz
@@ -868,7 +862,6 @@ export const LessonEditView = ({
                 </Button>
               </div>
             </div>
-          )}
 
           {/* Footer Actions */}
           <div className="flex flex-col-reverse gap-[12px] sm:flex-row sm:items-center sm:justify-between w-full pt-[24px] border-t border-[#F0F0F0]">

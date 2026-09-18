@@ -9,7 +9,7 @@ export interface Lesson {
   duration?: string;
   estimatedDuration?: string;
   assessments?: string;
-  type: "video" | "quiz" | "text";
+  type: "video" | "text";
   objectives?: string[];
   requirements?: string;
   content?: string;
@@ -249,7 +249,7 @@ const courseBuilderSlice = createSlice({
         state.isDirty = true;
       }
     },
-    addLessonToModule: (state, action: PayloadAction<{ moduleId: string; type: "video" | "quiz" | "text"; lessonId?: string }>) => {
+    addLessonToModule: (state, action: PayloadAction<{ moduleId: string; type: "video" | "text"; lessonId?: string }>) => {
       const { moduleId, type, lessonId } = action.payload;
       const mod = state.modules.find((m) => m.id === moduleId);
       if (mod) {

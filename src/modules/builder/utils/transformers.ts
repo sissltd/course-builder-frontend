@@ -39,8 +39,6 @@ interface ApiModuleLike {
 
 const mapContentType = (lesson: ApiLessonLike): Lesson["type"] => {
   if (lesson.content_type === "VIDEO" || lesson.video_url || lesson.embedded_link) return "video";
-  if (lesson.content_type === "QUIZ" || lesson.assessment) return "quiz";
-  if (lesson.content_type === "TEXT") return "text";
   return "text";
 };
 
@@ -196,7 +194,6 @@ export const reduxLessonToApiPayload = (lesson: Lesson) => {
 
   const contentTypeMap: Record<string, string> = {
     video: "VIDEO",
-    quiz: "QUIZ",
     text: "TEXT",
   };
 

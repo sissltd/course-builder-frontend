@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Trash, 
   Add, 
@@ -9,7 +9,6 @@ import {
   ArrowRight2,
   VideoPlay,
   DocumentText,
-  DocumentCode2,
   More,
   Timer,
   Book,
@@ -21,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { Button } from "@/components/shared/Button";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { moduleSchema, ModuleFormData } from "../utils/schemas";
 import { QuizBuilderView } from "./QuizBuilderView";
 import {
@@ -36,7 +36,7 @@ export interface Lesson {
   duration?: string;
   estimatedDuration?: string;
   assessments?: string;
-  type: "video" | "quiz" | "text";
+  type: "video" | "text";
   objectives?: string[];
   requirements?: string;
   content?: string;
@@ -80,6 +80,16 @@ export const ModulesStep = ({
   const [showLessonTypes, setShowLessonTypes] = useState(false);
   const [isAddingObjective, setIsAddingObjective] = useState(false);
   const [newObjective, setNewObjective] = useState("");
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<
+    { kind: "module" } | { kind: "lesson"; lessonId: string; title: string } | null
+  >(null);
+
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
 
   const methods = useForm<ModuleFormData>({
     resolver: zodResolver(moduleSchema),
@@ -94,7 +104,7 @@ export const ModulesStep = ({
 
   const { handleSubmit, formState: { errors } } = methods;
 
-  const handleAddLesson = (type: "video" | "quiz" | "text") => {
+  const handleAddLesson = (type: "video" | "text") => {
     const formValues = methods.getValues();
     const newLesson: Lesson = {
       id: Date.now().toString(),
@@ -117,15 +127,25 @@ export const ModulesStep = ({
     });
   };
 
-  const handleRemoveLesson = (lessonId: string) => {
-    const formValues = methods.getValues();
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: formValues.objectives,
-      lessons: module.lessons.filter(l => l.id !== lessonId)
-    });
+  const requestRemoveLesson = (lessonId: string, title: string) => {
+    setPendingDelete({ kind: "lesson", lessonId, title });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === "module") {
+      onRemoveModule?.(module.id);
+    } else {
+      const formValues = methods.getValues();
+      onUpdateModule({
+        ...module,
+        title: formValues.title,
+        description: formValues.description || "",
+        objectives: formValues.objectives,
+        lessons: module.lessons.filter((l) => l.id !== pendingDelete.lessonId),
+      });
+    }
+    setPendingDelete(null);
   };
 
   const handleEditLesson = (lessonId: string) => {
@@ -212,7 +232,7 @@ export const ModulesStep = ({
               variant="app-outline"
               isGhost
               leftIcon={<Trash size={16} variant="Linear" color="#FF6B00" />}
-              onClick={() => onRemoveModule?.(module.id)}
+              onClick={() => setPendingDelete({ kind: "module" })}
             >
               Delete module
             </Button>
@@ -277,6 +297,7 @@ export const ModulesStep = ({
               {isAddingObjective ? (
                 <div className="flex items-center gap-[12px] h-[56px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                   <input
+                    ref={objectiveInputRef}
                     type="text"
                     value={newObjective}
                     onChange={(e) => setNewObjective(e.target.value)}
@@ -373,8 +394,6 @@ export const ModulesStep = ({
                 <div className="flex items-center gap-[12px]">
                   {lesson.type === "video" ? (
                     <VideoPlay size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
-                  ) : lesson.type === "quiz" ? (
-                    <DocumentCode2 size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   ) : (
                     <DocumentText size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   )}
@@ -413,7 +432,7 @@ export const ModulesStep = ({
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleRemoveLesson(lesson.id)}
+                    onClick={() => requestRemoveLesson(lesson.id, lesson.title)}
                     className="p-0 bg-transparent border-none cursor-pointer"
                   >
                     <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
@@ -505,6 +524,28 @@ export const ModulesStep = ({
         </div>
 
       </form>
+
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title={pendingDelete?.kind === "module" ? "Delete module?" : "Delete lesson?"}
+        description={
+          pendingDelete
+            ? `Are you sure you want to delete ${
+                pendingDelete.kind === "module"
+                  ? `module "${module.title || "Untitled Module"}"`
+                  : `lesson "${pendingDelete.title || "Untitled Lesson"}"`
+              }? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </FormProvider>
   );
 };

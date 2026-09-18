@@ -171,18 +171,16 @@ export const evaluateStructuralStandards = ({
     for (const lesson of courseModule.lessons) {
       const lessonName = lesson.title.trim() || "Untitled Lesson";
 
-      if (lesson.type !== "quiz") {
-        standards.push(
-          build(
-            `lesson-objectives-${lesson.id}`,
-            `Lesson '${lessonName}' learning objectives`,
-            countItems(lesson.objectives),
-            STRUCTURAL_LIMITS.lessonObjectives.min,
-            STRUCTURAL_LIMITS.lessonObjectives.max,
-            "learning objectives",
-          ),
-        );
-      }
+      standards.push(
+        build(
+          `lesson-objectives-${lesson.id}`,
+          `Lesson '${lessonName}' learning objectives`,
+          countItems(lesson.objectives),
+          STRUCTURAL_LIMITS.lessonObjectives.min,
+          STRUCTURAL_LIMITS.lessonObjectives.max,
+          "learning objectives",
+        ),
+      );
 
       if (lesson.type === "video") {
         standards.push(
