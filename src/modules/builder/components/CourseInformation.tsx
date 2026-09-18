@@ -17,7 +17,7 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { syncSetCoverVideo } from "@/redux/slices/builderSync";
+import { syncSetCoverVideo, syncUpdateCourseInfo } from "@/redux/slices/builderSync";
 import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
 import { useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
@@ -53,14 +53,34 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   const { handleSubmit, watch, setValue, formState: { errors } } = methods;
   const description = watch("description");
+  const watchedTitle = watch("courseTitle");
+  const watchedCategory = watch("category");
   const watchedDifficulty = watch("difficulty");
   const wordCount = description?.trim() === "" ? 0 : (description?.trim()?.split(/\s+/).length ?? 0);
 
   useEffect(() => {
-    if (watchedDifficulty && watchedDifficulty !== info.difficulty) {
-      updateAndSave({ difficulty: watchedDifficulty });
+    const patch: {
+      courseTitle?: string;
+      description?: string;
+      category?: string;
+      difficulty?: string;
+    } = {};
+    if (watchedTitle && watchedTitle !== info.courseTitle) {
+      patch.courseTitle = watchedTitle;
     }
-  }, [watchedDifficulty, info.difficulty, updateAndSave]);
+    if (description && description !== info.description) {
+      patch.description = description;
+    }
+    if (watchedCategory && watchedCategory !== info.category) {
+      patch.category = watchedCategory;
+    }
+    if (watchedDifficulty && watchedDifficulty !== info.difficulty) {
+      patch.difficulty = watchedDifficulty;
+    }
+    if (Object.keys(patch).length > 0) {
+      updateAndSave(patch);
+    }
+  }, [watchedTitle, description, watchedCategory, watchedDifficulty, info, updateAndSave]);
 
   // Objectives states
   const [objectives, setObjectives] = useState<string[]>(info.objectives);
@@ -199,6 +219,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
           ? { name: savedVideoName, size: savedVideoSize || 0, type: "" }
           : null,
     }));
+    dispatch(syncUpdateCourseInfo());
     if (videoFile) {
       dispatch(syncSetCoverVideo(videoFile));
     }
