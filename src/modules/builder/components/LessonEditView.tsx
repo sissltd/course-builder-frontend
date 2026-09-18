@@ -90,6 +90,11 @@ export const LessonEditView = ({
     return `${mins} mins`;
   };
 
+  const parseDurationMinutes = (value?: string): string => {
+    const match = (value || "").match(/\d+/);
+    return match ? match[0] : "0";
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -370,11 +375,18 @@ export const LessonEditView = ({
                       <Timer1 size={16} variant="Linear" color="#8C8C8C" />
                       <input
                         type="text"
-                        value={lesson.estimatedDuration || lesson.duration || "0 mins"}
-                        onChange={(e) => handleUpdateField("estimatedDuration", e.target.value)}
-                        placeholder="Estimated duration"
-                        className="text-[12px] text-[#8C8C8C] bg-transparent border-none outline-none focus:ring-0 w-[120px] placeholder-[#B6B6B6]"
+                        inputMode="numeric"
+                        value={parseDurationMinutes(lesson.estimatedDuration || lesson.duration)}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
+                          const minutes = digits === "" ? "0" : String(parseInt(digits, 10));
+                          handleUpdateField("estimatedDuration", `${minutes} mins`);
+                          methods.setValue("estimatedDuration", `${minutes} mins`);
+                        }}
+                        placeholder="0"
+                        className="text-[12px] text-[#8C8C8C] bg-transparent border-none outline-none focus:ring-0 w-[32px] text-center placeholder-[#B6B6B6]"
                       />
+                      <span>mins</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">

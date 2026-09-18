@@ -318,6 +318,7 @@ export default function BuilderView() {
               {/* Swap main panel content to Lesson Editor when editing a lesson */}
               {editingLesson && currentLesson ? (
                 <LessonEditView
+                  key={currentLesson.id}
                   lesson={currentLesson}
                   onUpdateLesson={handleUpdateLesson}
                   onBack={() => dispatch(setEditingLesson(null))}
