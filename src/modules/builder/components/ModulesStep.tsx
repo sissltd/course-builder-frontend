@@ -87,7 +87,7 @@ export const ModulesStep = ({
     values: {
       title: module.title,
       description: module.description,
-      objectives: module.objectives.join(", "),
+      objectives: module.objectives,
       lessons: module.lessons,
     },
   });
@@ -96,9 +96,6 @@ export const ModulesStep = ({
 
   const handleAddLesson = (type: "video" | "quiz" | "text") => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     const newLesson: Lesson = {
       id: Date.now().toString(),
       title: "",
@@ -115,35 +112,29 @@ export const ModulesStep = ({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
       lessons: [...module.lessons, newLesson]
     });
   };
 
   const handleRemoveLesson = (lessonId: string) => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
       lessons: module.lessons.filter(l => l.id !== lessonId)
     });
   };
 
   const handleEditLesson = (lessonId: string) => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
     });
     onEditLesson(lessonId);
   };
@@ -155,27 +146,21 @@ export const ModulesStep = ({
 
   const handleModuleQuizChange = (updated: QuizBuilderQuestion[]) => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
       quizQuestions: updated,
     });
   };
 
   const onSubmit = (data: ModuleFormData) => {
-    const parsedObjectives = data.objectives
-      ? data.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: data.title,
       description: data.description || "",
-      objectives: parsedObjectives,
+      objectives: data.objectives,
       lessons: module.lessons,
       quizQuestions: module.quizQuestions,
     });

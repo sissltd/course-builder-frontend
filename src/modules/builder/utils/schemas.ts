@@ -115,15 +115,7 @@ export type LessonFormData = z.infer<typeof lessonSchema>;
 export const moduleSchema = z.object({
   title: z.string().min(1, "Module title is required"),
   description: z.string().min(1, "Module description is required"),
-  objectives: z.string()
-    .min(1, "Module objectives are required")
-    .refine(
-      (val) => {
-        const list = val.split(",").map((o) => o.trim()).filter(Boolean);
-        return list.length >= 5;
-      },
-      "Minimum of 5 learning objectives required per module"
-    ),
+  objectives: z.array(z.string().min(1, "Objective cannot be empty")).min(5, "Minimum of 5 learning objectives required per module"),
   lessons: z.array(lessonSchema).optional(),
 });
 
