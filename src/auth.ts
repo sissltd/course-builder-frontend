@@ -220,7 +220,7 @@ export const authOptions: NextAuthOptions = {
           token.refreshToken = undefined;
           token.accessTokenExpiresAt = undefined;
           token.googleSignupRequired = undefined;
-          token.googleIdToken = undefined;
+          token.googleIdToken = account.id_token;
           token.googleError =
             googleError.status === 503
               ? "Google sign-in is temporarily unavailable. Please try again in a few minutes."
@@ -268,6 +268,7 @@ export const authOptions: NextAuthOptions = {
         if (token.googleErrorShown) {
           token.googleError = undefined;
           token.googleErrorShown = undefined;
+          token.googleIdToken = undefined;
         } else {
           token.googleErrorShown = true;
         }

@@ -76,6 +76,7 @@ function LoginContent() {
       sessionError: session?.error,
       hasUser: Boolean(session?.user),
       hasAccessToken: Boolean(session?.accessToken),
+      googleIdToken: session?.googleIdToken,
       alreadyHandled: googleAuthHandled.current,
     });
 
@@ -104,6 +105,10 @@ function LoginContent() {
 
       if (session.googleError) {
         console.log("[GoogleLogin] useEffect: googleError →", session.googleError);
+        console.log(
+          "[GoogleLogin] Google id_token returned from Google (debug):",
+          session.googleIdToken,
+        );
         sessionStorage.removeItem(GOOGLE_AUTH_PENDING_STORAGE_KEY);
         return;
       }
@@ -160,6 +165,8 @@ function LoginContent() {
     googleHandoff &&
     (status === "loading" ||
       (status === "authenticated" &&
+        Boolean(session?.user?.id) &&
+        Boolean(session?.accessToken) &&
         !session?.googleError &&
         session?.error !== "RefreshAccessTokenError" &&
         !session?.googleSignupRequired));
