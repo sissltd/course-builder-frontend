@@ -23,6 +23,7 @@ import {
   syncSaveCourseAssessment,
 } from "@/redux/slices/builderSync";
 import { quizBuilderFormSchema } from "@/modules/builder/utils/schemas";
+import { formatApiErrors } from "@/lib/api/errors";
 import { QuizBuilderView } from "./QuizBuilderView";
 
 const sanitizeQuestions = (list: QuizBuilderQuestion[]): QuizBuilderQuestion[] =>
@@ -171,8 +172,13 @@ export const QuizEditorPageView = () => {
         setHasUnsavedChanges(false);
         return true;
       } catch (error) {
-        const errors = (error as { errors?: { message?: string }[] })?.errors;
-        toast.error(errors?.[0]?.message || "Failed to save quiz. Please try again.");
+        toast.error(
+          formatApiErrors(
+            (error as { errors?: { message?: string; field_name?: string | null }[] })
+              ?.errors,
+            "Failed to save quiz. Please try again.",
+          ),
+        );
         return false;
       }
     },

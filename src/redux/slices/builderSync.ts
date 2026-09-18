@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "sonner";
+import { formatApiErrors } from "@/lib/api/errors";
 import type { RootState, AppDispatch } from "@/redux";
 import {
   setCourseId,
@@ -43,10 +44,8 @@ const toRejectValue = (err: unknown): ApiErrorPayload => {
   return { status: error?.status, errors: error?.data?.errors };
 };
 
-const firstErrorMessage = (payload: unknown, fallback: string): string => {
-  const errors = (payload as ApiErrorPayload)?.errors;
-  return errors?.[0]?.message || fallback;
-};
+const firstErrorMessage = (payload: unknown, fallback: string): string =>
+  formatApiErrors((payload as ApiErrorPayload)?.errors, fallback);
 
 const fetchJson = async (url: string, token: string, init?: RequestInit) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${url}`, {

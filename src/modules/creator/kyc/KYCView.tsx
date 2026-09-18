@@ -15,6 +15,7 @@ import { CreatorRoute } from "@/lib/routes";
 import { FormSelect } from "@/components/form/FormSelect";
 import { Country } from "country-state-city";
 import { toast } from "sonner";
+import { formatApiErrors } from "@/lib/api/errors";
 import { kycSchema, KYCFormData } from "./utils/validation";
 import {
   useSubmitKycMutation,
@@ -134,10 +135,11 @@ export default function KYCView() {
       }).unwrap();
       setStep("selfie-instructions");
     } catch (err) {
-      const error = err as { data?: { errors?: { message?: string }[] } };
-      const message =
-        error?.data?.errors?.[0]?.message ??
-        "Failed to submit KYC. Please try again.";
+      const error = err as { data?: { errors?: { message?: string; field_name?: string | null }[] } };
+      const message = formatApiErrors(
+        error?.data?.errors,
+        "Failed to submit KYC. Please try again.",
+      );
       toast.error(message);
     }
   };

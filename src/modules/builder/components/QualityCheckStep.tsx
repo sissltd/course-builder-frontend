@@ -12,7 +12,7 @@ import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { syncSubmitCourse } from "@/redux/slices/builderSync";
 import { toast } from "sonner";
-import { normalizeApiError } from "@/lib/api/errors";
+import { normalizeApiError, formatApiErrorItem } from "@/lib/api/errors";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CreatorRoute } from "@/lib/routes";
 import { useGetQualityChecksQuery, useRefreshQualityChecksMutation } from "@/modules/creator/hooks";
@@ -233,7 +233,7 @@ export const QualityCheckStep = ({ onBack }: QualityCheckStepProps) => {
                 className="flex items-start gap-[8px] text-[14px] text-[#B42318] leading-[20px]"
               >
                 <span className="mt-[7px] size-[5px] shrink-0 rounded-full bg-[#B42318]" />
-                <span>{error.message}</span>
+                <span>{formatApiErrorItem(error)}</span>
               </li>
             ))}
           </ul>

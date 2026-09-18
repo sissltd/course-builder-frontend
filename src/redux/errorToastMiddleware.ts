@@ -1,6 +1,7 @@
 import { isRejected, Middleware } from "@reduxjs/toolkit";
 import { toast } from "sonner";
 import type { ApiErrorEnvelope } from "@/lib/api/types";
+import { formatApiErrors } from "@/lib/api/errors";
 
 const isApiError = (data: unknown): data is ApiErrorEnvelope =>
   !!data && typeof data === "object" && "errors" in data && Array.isArray((data as ApiErrorEnvelope).errors);
@@ -26,17 +27,24 @@ function isDuplicateToast(message: string): boolean {
 export const errorToastMiddleware: Middleware = () => (next) => (action) => {
   if (isRejected(action)) {
     const payload = action.payload as
-      | { status: number; data: unknown }
+      | {
+          status?: number;
+          data?: unknown;
+          errors?: { message?: string; field_name?: string | null }[];
+        }
       | undefined;
 
     if (payload?.status === 401 || payload?.status === 403) {
       return next(action);
     }
 
-    if (payload?.data && isApiError(payload.data)) {
-      const firstError = payload.data.errors[0];
-      if (firstError?.message && !isDuplicateToast(firstError.message)) {
-        toast.error(firstError.message);
+    const data = payload?.data;
+    const errors = isApiError(data) ? data.errors : payload?.errors;
+
+    if (errors && errors.length > 0) {
+      const message = formatApiErrors(errors, "");
+      if (message && !isDuplicateToast(message)) {
+        toast.error(message);
       }
     } else if (payload?.status) {
       const msg = `Request failed with status ${payload.status}.`;
