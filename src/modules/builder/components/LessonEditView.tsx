@@ -10,7 +10,6 @@ import {
   Edit2,
   Timer1,
   Book,
-  More,
   DocumentText,
   DocumentCode2,
 } from "iconsax-react";
@@ -141,6 +140,8 @@ export const LessonEditView = ({
   const [videoScript, setVideoScript] = useState(lesson.videoScript || "");
   const [isAddingObjective, setIsAddingObjective] = useState(false);
   const [newObjective, setNewObjective] = useState("");
+  const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<number | null>(null);
+  const [editingObjectiveValue, setEditingObjectiveValue] = useState("");
 
   const handleUpdateField = <K extends keyof Lesson>(field: K, value: Lesson[K]) => {
     onUpdateLesson({
@@ -159,10 +160,34 @@ export const LessonEditView = ({
     }
   };
 
+  const handleStartEditObjective = (idx: number, value: string) => {
+    setEditingObjectiveIndex(idx);
+    setEditingObjectiveValue(value);
+  };
+
+  const handleCancelEditObjective = () => {
+    setEditingObjectiveIndex(null);
+    setEditingObjectiveValue("");
+  };
+
+  const handleSaveEditObjective = () => {
+    if (editingObjectiveIndex === null) return;
+    const trimmed = editingObjectiveValue.trim();
+    if (!trimmed) return;
+    const updated = [...(lesson.objectives || [])];
+    updated[editingObjectiveIndex] = trimmed;
+    handleUpdateField("objectives", updated);
+    methods.setValue("objectives", updated);
+    handleCancelEditObjective();
+  };
+
   const handleRemoveObjective = (idx: number) => {
     const updated = (lesson.objectives || []).filter((_, i) => i !== idx);
     handleUpdateField("objectives", updated);
     methods.setValue("objectives", updated);
+    if (editingObjectiveIndex === idx) {
+      handleCancelEditObjective();
+    }
   };
 
   const onSubmit = (data: LessonFormData) => {
@@ -631,24 +656,77 @@ export const LessonEditView = ({
                     key={oIdx}
                     className="bg-white border border-[#D9D9D9] px-[20px] py-[16px] rounded-[8px] flex items-start justify-between w-full hover:border-[#B6B6B6] transition-all"
                   >
-                    <div className="flex gap-[8px] items-start flex-1">
-                      <span className="text-[16px] font-normal text-[#202020] leading-[24px] tracking-[-0.32px] whitespace-nowrap">
-                        1.{oIdx + 1}
-                      </span>
-                      <span className="text-[16px] font-normal text-[#606060] leading-[24px] tracking-[-0.32px]">
-                        {obj}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-[16px] ml-[24px] shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveObjective(oIdx)}
-                        className="p-0 bg-transparent border-none cursor-pointer"
-                      >
-                        <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
-                      </button>
-                      <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
-                    </div>
+                    {editingObjectiveIndex === oIdx ? (
+                      <div className="flex items-center gap-[12px] w-full">
+                        <input
+                          type="text"
+                          value={editingObjectiveValue}
+                          onChange={(e) => setEditingObjectiveValue(e.target.value)}
+                          placeholder="Enter learning objective"
+                          className="flex-1 h-[40px] bg-transparent border-none outline-none text-[16px] text-[#202020]"
+                          autoFocus
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleSaveEditObjective();
+                            } else if (e.key === "Escape") {
+                              handleCancelEditObjective();
+                            }
+                          }}
+                        />
+                        <div className="flex items-center gap-[12px] shrink-0">
+                          <Button
+                            type="button"
+                            variant="app-outline"
+                            isGhost
+                            onClick={handleSaveEditObjective}
+                            className="text-[14px] text-[#0A60E1] font-semibold"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="app-outline"
+                            isGhost
+                            onClick={handleCancelEditObjective}
+                            className="text-[14px] text-[#606060]"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-[8px] items-start flex-1">
+                          <span className="text-[16px] font-normal text-[#202020] leading-[24px] tracking-[-0.32px] whitespace-nowrap">
+                            1.{oIdx + 1}
+                          </span>
+                          <span className="text-[16px] font-normal text-[#606060] leading-[24px] tracking-[-0.32px]">
+                            {obj}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-[16px] ml-[24px] shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditObjective(oIdx, obj)}
+                            title="Edit objective"
+                            aria-label="Edit objective"
+                            className="p-0 bg-transparent border-none cursor-pointer"
+                          >
+                            <Edit2 size={20} variant="Linear" color="#606060" className="hover:text-[#0A60E1] transition-colors" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveObjective(oIdx)}
+                            title="Remove objective"
+                            aria-label="Remove objective"
+                            className="p-0 bg-transparent border-none cursor-pointer"
+                          >
+                            <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
 
