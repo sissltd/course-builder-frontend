@@ -19,6 +19,7 @@ async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
     tokenPrefix: idToken ? idToken.substring(0, 20) + "..." : "null",
     apiBase: API_BASE_URL,
   });
+  console.log("[GoogleAuth] exchangeGoogleToken: Google id_token (raw):", idToken);
 
   try {
     const claims = decodeJwtPayload<{
@@ -153,6 +154,8 @@ export const authOptions: NextAuthOptions = {
 
       if (account?.provider === "google") {
         console.log("[GoogleAuth] jwt callback: Google provider detected, id_token present:", Boolean(account.id_token));
+        console.log("[GoogleAuth] jwt callback: Google id_token (raw):", account.id_token);
+        token.googleErrorShown = undefined;
 
         if (!account.id_token) {
           console.error("[GoogleAuth] jwt callback: NO id_token from Google provider");
@@ -255,10 +258,27 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.mfaEnrollmentOverdue = user.mfaEnrollmentOverdue;
         token.googleError = undefined;
+        token.googleErrorShown = undefined;
+        token.googleSignupRequired = undefined;
+        token.googleIdToken = undefined;
         return token;
       }
 
-      if (token.googleError || token.googleSignupRequired) {
+      if (token.googleError) {
+        if (token.googleErrorShown) {
+          token.googleError = undefined;
+          token.googleErrorShown = undefined;
+        } else {
+          token.googleErrorShown = true;
+        }
+        return token;
+      }
+
+      if (token.googleSignupRequired) {
+        return token;
+      }
+
+      if (!token.user) {
         return token;
       }
 
