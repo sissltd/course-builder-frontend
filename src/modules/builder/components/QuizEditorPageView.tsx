@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft2 } from "iconsax-react";
 import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
@@ -37,6 +37,28 @@ const sanitizeQuestions = (list: QuizBuilderQuestion[]): QuizBuilderQuestion[] =
       return { ...q, options: q.options.filter((o) => o.value.trim() !== "") };
     });
 
+const hasQuestionContent = (q: QuizBuilderQuestion): boolean =>
+  q.question.trim() !== "" ||
+  (q.correctAnswer || "").trim() !== "" ||
+  (q.explanation || "").trim() !== "" ||
+  q.options.some((o) => o.value.trim() !== "");
+
+interface QuizIssue {
+  path: PropertyKey[];
+  message: string;
+}
+
+const formatQuizIssues = (issues: QuizIssue[]): string => {
+  const shown = issues.slice(0, 6).map((issue) => {
+    const index = issue.path[0] === "questions" ? issue.path[1] : undefined;
+    return typeof index === "number"
+      ? `Question ${index + 1}: ${issue.message}`
+      : issue.message;
+  });
+  const extra = issues.length > shown.length ? ` (+${issues.length - shown.length} more)` : "";
+  return `Please fix the following before saving: ${shown.join(" • ")}${extra}`;
+};
+
 export const QuizEditorPageView = () => {
   const dispatch = useAppDispatch();
   const editingQuiz = useAppSelector((s) => s.courseBuilder.editingQuiz);
@@ -45,6 +67,7 @@ export const QuizEditorPageView = () => {
   const finalAssessment = useAppSelector((s) => s.courseBuilder.finalAssessment);
   const courseInformation = useAppSelector((s) => s.courseBuilder.courseInformation);
   const hydratedForRef = useRef<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const isCourseLevel = editingQuiz?.level === "course";
 
@@ -80,11 +103,23 @@ export const QuizEditorPageView = () => {
     hydratedForRef.current = key;
     dispatch(resetQuestions());
     dispatch(setQuestions(toQuizBuilderQuestions(contextQuestions)));
+    setHasUnsavedChanges(false);
   }, [editingQuiz, isCourseLevel, currentLesson, currentModule, contextQuestions, dispatch]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const handleQuestionsChange = useCallback(
     (updated: QuizBuilderQuestion[]) => {
       dispatch(setQuestions(updated));
+      setHasUnsavedChanges(true);
     },
     [dispatch],
   );
@@ -94,23 +129,16 @@ export const QuizEditorPageView = () => {
       if (!editingQuiz) return false;
       if (!isCourseLevel && !currentLesson) return false;
 
-      const sanitized = sanitizeQuestions(list);
+      const meaningful = list.filter(hasQuestionContent);
+      let sanitized: QuizBuilderQuestion[] = [];
 
-      if (sanitized.length > 0) {
-        const parsed = quizBuilderFormSchema.safeParse({ questions: sanitized });
+      if (meaningful.length > 0) {
+        const parsed = quizBuilderFormSchema.safeParse({ questions: meaningful });
         if (!parsed.success) {
-          const issue = parsed.error.issues[0];
-          const questionIndex =
-            issue.path[0] === "questions" && typeof issue.path[1] === "number"
-              ? issue.path[1]
-              : null;
-          toast.error(
-            questionIndex !== null
-              ? `Question ${questionIndex + 1}: ${issue.message}`
-              : issue.message,
-          );
+          toast.error(formatQuizIssues(parsed.error.issues), { duration: 7000 });
           return false;
         }
+        sanitized = sanitizeQuestions(meaningful);
       }
 
       try {
@@ -140,6 +168,7 @@ export const QuizEditorPageView = () => {
             }),
           ).unwrap();
         }
+        setHasUnsavedChanges(false);
         return true;
       } catch (error) {
         const errors = (error as { errors?: { message?: string }[] })?.errors;
@@ -162,6 +191,7 @@ export const QuizEditorPageView = () => {
         const saved = await persistQuestions(current);
         if (!saved) return;
         dispatch(setQuestions([...current, createDefaultQuizQuestion()]));
+        setHasUnsavedChanges(true);
       } finally {
         addingQuestionRef.current = false;
       }
@@ -191,6 +221,13 @@ export const QuizEditorPageView = () => {
 
   const handleBack = () => {
     if (!editingQuiz) return;
+    if (hasUnsavedChanges) {
+      toast.warning("You have unsaved changes. Save your quiz before leaving.", {
+        description: "Fill in every question (question text, points, options and the correct answer) before saving.",
+        duration: 6000,
+      });
+      return;
+    }
     const previous = editingQuiz;
     dispatch(setEditingQuiz(null));
     if (previous.level === "lesson") {

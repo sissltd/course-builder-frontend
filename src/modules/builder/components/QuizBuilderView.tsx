@@ -29,6 +29,44 @@ const deepClone = (q: QuizBuilderQuestion): QuizBuilderQuestion => ({
   options: q.options.map((o) => ({ ...o })),
 });
 
+interface PointsInputProps {
+  value: number;
+  onChange: (value: number) => void;
+}
+
+const PointsInput = ({ value, onChange }: PointsInputProps) => {
+  const commit = (input: HTMLInputElement) => {
+    const parsed = parseInt(input.value, 10);
+    const next = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    if (next !== value) onChange(next);
+    input.value = String(next);
+  };
+
+  return (
+    <input
+      key={value}
+      type="text"
+      inputMode="numeric"
+      aria-label="Points"
+      defaultValue={value}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, "");
+      }}
+      onBlur={(e) => commit(e.currentTarget)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        } else if (e.key === "Escape") {
+          e.currentTarget.value = String(value);
+          e.currentTarget.blur();
+        }
+      }}
+      className="px-[8px] text-[14px] text-[#202020] min-w-[28px] w-[44px] text-center bg-transparent outline-none focus:text-[#0A60E1]"
+    />
+  );
+};
+
 const QuizBuilderViewComponent = ({ questions, onChange, onAddQuestion, maxQuestions = 10 }: QuizBuilderViewProps) => {
   const [activeTab, setActiveTab] = React.useState<"builder" | "preview">("builder");
 
@@ -185,7 +223,10 @@ const QuizBuilderViewComponent = ({ questions, onChange, onAddQuestion, maxQuest
                         onClick={() => handleUpdateQuestion(qIdx, "points", Math.max(0, q.points - 1))}
                         className="px-[8px] h-full text-[#606060] hover:text-[#202020] border-r border-[#D9D9D9]"
                       >−</button>
-                      <span className="px-[12px] text-[14px] text-[#202020] min-w-[24px] text-center">{q.points}</span>
+                      <PointsInput
+                        value={q.points}
+                        onChange={(val) => handleUpdateQuestion(qIdx, "points", val)}
+                      />
                       <button
                         type="button"
                         onClick={() => handleUpdateQuestion(qIdx, "points", q.points + 1)}
