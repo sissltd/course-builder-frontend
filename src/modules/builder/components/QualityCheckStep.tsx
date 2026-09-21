@@ -88,16 +88,19 @@ interface QualityCheckSection {
   items: QualityCheckResult[];
 }
 
-const isScriptWordCountCheck = (check: QualityCheckResult): boolean => {
+const isExcludedCheck = (check: QualityCheckResult): boolean => {
   const label = check.criterion.label.toLowerCase();
-  return label.includes("script") && label.includes("words");
+  const section = check.criterion.section.toLowerCase();
+  if (label.includes("script") && label.includes("words")) return true;
+  if (section.includes("version") || label.includes("version")) return true;
+  return false;
 };
 
 const groupBySection = (checks: QualityCheckResult[]): QualityCheckSection[] => {
   const grouped = new Map<string, QualityCheckResult[]>();
 
   for (const check of checks) {
-    if (isScriptWordCountCheck(check)) continue;
+    if (isExcludedCheck(check)) continue;
     const section = check.criterion.section;
     if (!grouped.has(section)) {
       grouped.set(section, []);

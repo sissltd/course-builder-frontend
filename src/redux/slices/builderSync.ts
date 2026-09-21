@@ -95,7 +95,7 @@ const buildModuleBody = (
   learning_objectives: (learningObjectives || []).filter((o) => o.trim() !== ""),
 });
 
-const buildCourseInfoBody = (info: RootState["courseBuilder"]["courseInformation"]) => ({
+const buildCourseInfoBody = (info: RootState["courseBuilder"]["courseInformation"], version?: string) => ({
   title: info.courseTitle,
   description: info.description,
   category: info.category,
@@ -106,13 +106,14 @@ const buildCourseInfoBody = (info: RootState["courseBuilder"]["courseInformation
   duration_hours: info.hours,
   duration_minutes: info.minutes,
   duration_seconds: info.seconds,
+  version: version || "",
 });
 
 const assessmentTitle = (title: string | undefined): string =>
   `${title || "Untitled"} Quiz`;
 
 const courseFingerprint = (state: RootState): string =>
-  stableStringify(buildCourseInfoBody(state.courseBuilder.courseInformation));
+  stableStringify(buildCourseInfoBody(state.courseBuilder.courseInformation, state.courseBuilder.version));
 
 const moduleFingerprint = (
   mod: RootState["courseBuilder"]["modules"][number],
@@ -617,7 +618,7 @@ export const syncUpdateCourseInfo = createAsyncThunk<
   dispatch(beginSave());
   try {
     const token = getToken(state);
-    const body = buildCourseInfoBody(state.courseBuilder.courseInformation);
+    const body = buildCourseInfoBody(state.courseBuilder.courseInformation, state.courseBuilder.version);
     await fetchJson(`/courses/${courseId}/`, token, {
       method: "PATCH",
       body: JSON.stringify(body),
