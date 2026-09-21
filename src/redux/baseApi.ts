@@ -24,6 +24,8 @@ const PUBLIC_ENDPOINTS = [
   "/auth/token/refresh",
   "/auth/reviewer/login",
   "/auth/staff/invitations/accept",
+  "/auth/login/google",
+  "/auth/signup/google",
 ];
 
 const isPublicEndpoint = (url: string): boolean =>
@@ -271,6 +273,7 @@ export const BaseAPI = createApi({
     "ReviewQueueComments",
     "ReviewerSettings",
     "CategoryPicker",
+    "GenerationJob",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

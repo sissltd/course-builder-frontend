@@ -63,7 +63,7 @@ interface ProfileFormProps {
 
 export const ProfileForm = ({ profile }: ProfileFormProps) => {
   const [updateProfile, { isLoading: isSaving }] = useUpdateMyProfileMutation();
-  const { data: categoriesData } = useGetCategoryPickerQuery();
+  const { data: categories } = useGetCategoryPickerQuery();
 
   const [firstName, setFirstName] = useState(profile.first_name);
   const [lastName, setLastName] = useState(profile.last_name);
@@ -92,13 +92,13 @@ export const ProfileForm = ({ profile }: ProfileFormProps) => {
     useState<PhoneCountry>(initialPhoneCountry);
 
   const categoryOptions = useMemo(() => {
-    if (!categoriesData) return [];
-    return categoriesData.map((c) => ({
+    if (!categories) return [];
+    return categories.map((c) => ({
       label: c.name,
       value: c.id,
       searchValue: c.name,
     }));
-  }, [categoriesData]);
+  }, [categories]);
 
   const stateOptions = useMemo(
     () =>

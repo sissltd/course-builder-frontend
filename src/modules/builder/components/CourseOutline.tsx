@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Trash, 
@@ -11,13 +11,13 @@ import {
   Timer,
   Book,
   PlayCircle,
-  DocumentCode2,
   More,
 } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { Button } from "@/components/shared/Button";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { 
   addModule, 
@@ -55,6 +55,13 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   // Objectives form helper states
   const [isAddingObjectiveForId, setIsAddingObjectiveForId] = useState<string | null>(null);
   const [newObjectiveValue, setNewObjectiveValue] = useState("");
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isAddingObjectiveForId) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjectiveForId]);
   const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<{ moduleId: string; index: number } | null>(null);
   const [editingObjectiveValue, setEditingObjectiveValue] = useState("");
 
@@ -65,11 +72,18 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   // Lesson type dropdown state
   const [showLessonTypesForModule, setShowLessonTypesForModule] = useState<string | null>(null);
 
+  // Delete confirmation
+  const [pendingDelete, setPendingDelete] = useState<
+    | { kind: "module"; id: string; title: string }
+    | { kind: "lesson"; moduleId: string; lessonId: string; title: string }
+    | null
+  >(null);
+
   const toggleModule = (id: string) => {
     setExpandedModuleId(expandedModuleId === id ? null : id);
   };
 
-  const handleAddLesson = (moduleId: string, type: "video" | "quiz" | "text") => {
+  const handleAddLesson = (moduleId: string, type: "video" | "text") => {
     dispatch(addLessonToModule({ moduleId, type }));
     if (courseId) {
       dispatch(syncCreateLesson({ moduleId, type }));
@@ -77,12 +91,9 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
     setShowLessonTypesForModule(null);
   };
 
-  const handleRemoveLesson = (moduleId: string, lessonId: string, e: React.MouseEvent) => {
+  const requestRemoveLesson = (moduleId: string, lessonId: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    dispatch(removeLessonFromModule({ moduleId, lessonId }));
-    if (courseId && !/^\d+$/.test(lessonId)) {
-      dispatch(syncDeleteLesson({ moduleId, lessonId }));
-    }
+    setPendingDelete({ kind: "lesson", moduleId, lessonId, title });
   };
 
   const handleEditLesson = (moduleId: string, lessonId: string, e: React.MouseEvent) => {
@@ -99,25 +110,40 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   const handleAddModule = () => {
     dispatch(addModule());
     if (courseId) {
-      dispatch(syncCreateModule());
+      dispatch(syncCreateModule({}));
     }
     const newId = (modules.length + 1).toString();
     setExpandedModuleId(newId);
   };
 
-  const handleRemoveModule = (id: string, e: React.MouseEvent) => {
+  const requestRemoveModule = (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onRemoveModule) {
-      onRemoveModule(id);
+    setPendingDelete({ kind: "module", id, title });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === "module") {
+      const id = pendingDelete.id;
+      if (onRemoveModule) {
+        onRemoveModule(id);
+      } else {
+        dispatch(removeModule(id));
+        if (courseId && !/^\d+$/.test(id)) {
+          dispatch(syncDeleteModule(id));
+        }
+      }
+      if (expandedModuleId === id) {
+        setExpandedModuleId(null);
+      }
     } else {
-      dispatch(removeModule(id));
-      if (courseId && !/^\d+$/.test(id)) {
-        dispatch(syncDeleteModule(id));
+      const { moduleId, lessonId } = pendingDelete;
+      dispatch(removeLessonFromModule({ moduleId, lessonId }));
+      if (courseId && !/^\d+$/.test(lessonId)) {
+        dispatch(syncDeleteLesson({ moduleId, lessonId }));
       }
     }
-    if (expandedModuleId === id) {
-      setExpandedModuleId(null);
-    }
+    setPendingDelete(null);
   };
 
   const handleUpdateModuleField = (id: string, field: "title" | "description", value: string) => {
@@ -183,7 +209,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
   };
 
   return (
-    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[24px] py-[40px] flex flex-col gap-[40px] mx-auto pb-[100px]">
+    <div className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[32px]">
       
       {/* Title / Description */}
       <div className="flex flex-col gap-[12px]">
@@ -195,7 +221,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
 
       {/* Modules List Box */}
       <div className="flex flex-col gap-[24px]">
-        <div className="flex items-end justify-between w-full">
+        <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
           <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Modules</h3>
           <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
             Minimum of 5 required per modules
@@ -215,8 +241,8 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                 onClick={() => !isExpanded && toggleModule(mod.id)}
               >
                 {/* Accordion Header */}
-                <div className={cn("flex items-center justify-between w-full", isExpanded && "pb-[4px]")}>
-                  <div className="flex items-center gap-[12px]" onClick={(e) => {
+                <div className={cn("flex items-center justify-between w-full min-w-0", isExpanded && "pb-[4px]")}>
+                  <div className="flex items-center gap-[12px] min-w-0" onClick={(e) => {
                     if (isExpanded) {
                       e.stopPropagation();
                       toggleModule(mod.id);
@@ -227,7 +253,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                     ) : (
                       <ArrowRight2 size={20} variant="Linear" color="#202020" className="cursor-pointer" />
                     )}
-                    <span className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px]">
+                    <span className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px] truncate min-w-0">
                       Module {modIdx + 1}:{mod.title && ` ${mod.title}`}
                     </span>
                   </div>
@@ -237,7 +263,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                     <Button 
                       variant="app-outline"
                       isGhost
-                      onClick={(e: React.MouseEvent) => handleRemoveModule(mod.id, e)}
+                      onClick={(e: React.MouseEvent) => requestRemoveModule(mod.id, mod.title, e)}
                     >
                       <Trash size={20} variant="Linear" color="#FF6B00" />
                     </Button>
@@ -285,7 +311,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                         {mod.objectives.map((obj, objIdx) => {
                           const isEditing = editingObjectiveIndex?.moduleId === mod.id && editingObjectiveIndex?.index === objIdx;
                           return (
-                            <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex items-center justify-between transition-all">
+                            <div key={objIdx} className="min-h-[56px] border border-[#D9D9D9] bg-white rounded-[8px] px-[20px] py-[10px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[8px] sm:gap-0 transition-all">
                               {isEditing ? (
                                 <div className="flex items-center gap-[12px] w-full">
                                   <FormInput
@@ -364,6 +390,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                               value={newObjectiveValue}
                               onChange={(e) => setNewObjectiveValue(e.target.value)}
                               containerClassName="flex-1"
+                              inputRef={objectiveInputRef}
                               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                                 if (e.key === "Enter") handleAddObjective(mod.id);
                                 else if (e.key === "Escape") setIsAddingObjectiveForId(null);
@@ -416,13 +443,11 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                         {mod.lessons.map((lesson) => (
                           <div 
                             key={lesson.id}
-                            className="border border-[#D9D9D9] rounded-[8px] bg-[#FDFDFD] px-[20px] py-[16px] flex items-center justify-between"
+                            className="border border-[#D9D9D9] rounded-[8px] bg-[#FDFDFD] px-[20px] py-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[8px] sm:gap-0"
                           >
                             <div className="flex items-center gap-[12px]">
                               {lesson.type === "video" ? (
                                 <PlayCircle size={24} variant="Linear" color="#202020" className="shrink-0" />
-                              ) : lesson.type === "quiz" ? (
-                                <DocumentCode2 size={24} variant="Linear" color="#202020" className="shrink-0" />
                               ) : (
                                 <Book size={24} variant="Linear" color="#202020" className="shrink-0" />
                               )}
@@ -433,7 +458,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                                 <div className="flex items-center gap-[12px]">
                                   <div className="flex items-center gap-[8px]">
                                     <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
-                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.duration}</span>
+                                    <span className="text-[14px] font-normal text-[#606060] tracking-[-0.28px]">{lesson.type === "text" ? (lesson.estimatedDuration || lesson.duration) : lesson.duration}</span>
                                   </div>
                                   <div className="flex items-center gap-[8px]">
                                     <Book size={16} variant="Linear" color="#606060" className="shrink-0" />
@@ -451,7 +476,7 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                               </span>
                               <button
                                 type="button"
-                                onClick={(e) => handleRemoveLesson(mod.id, lesson.id, e)}
+                                onClick={(e) => requestRemoveLesson(mod.id, lesson.id, lesson.title, e)}
                                 className="p-0 bg-transparent border-none cursor-pointer"
                               >
                                 <Trash size={20} variant="Linear" color="#FF6B00" />
@@ -479,13 +504,6 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
                             >
                               <PlayCircle size={20} variant="Linear" color="#0A60E1" />
                               <span className="text-[16px] font-medium text-[#0A60E1] tracking-[-0.32px]">Video</span>
-                            </div>
-                            <div 
-                              className="flex items-center gap-[8px] cursor-pointer select-none"
-                              onClick={() => handleAddLesson(mod.id, "quiz")}
-                            >
-                              <DocumentCode2 size={20} variant="Linear" color="#0A60E1" />
-                              <span className="text-[16px] font-medium text-[#0A60E1] tracking-[-0.32px]">Quiz</span>
                             </div>
                             <div 
                               className="flex items-center gap-[8px] cursor-pointer select-none"
@@ -538,6 +556,28 @@ export const CourseOutline = ({ onNext, onBack, onRemoveModule }: CourseOutlineP
           Save & continue
         </Button>
       </div>
+
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title={pendingDelete?.kind === "module" ? "Delete module?" : "Delete lesson?"}
+        description={
+          pendingDelete
+            ? `Are you sure you want to delete ${
+                pendingDelete.kind === "module"
+                  ? `module "${pendingDelete.title || "Untitled Module"}"`
+                  : `lesson "${pendingDelete.title || "Untitled Lesson"}"`
+              }? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
 
     </div>
   );

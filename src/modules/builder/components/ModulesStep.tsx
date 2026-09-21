@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Trash, 
   Add, 
@@ -9,7 +9,6 @@ import {
   ArrowRight2,
   VideoPlay,
   DocumentText,
-  DocumentCode2,
   More,
   Timer,
   Book,
@@ -21,29 +20,31 @@ import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/form/FormInput";
 import { FormTextarea } from "@/components/form/FormTextarea";
 import { Button } from "@/components/shared/Button";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { moduleSchema, ModuleFormData } from "../utils/schemas";
 import { QuizBuilderView } from "./QuizBuilderView";
-import type { QuizBuilderQuestion } from "@/redux/slices/quizBuilderSlice";
+import {
+  toQuizBuilderQuestions,
+  type QuizBuilderQuestion,
+} from "@/redux/slices/quizBuilderSlice";
+import type { QuizQuestionData } from "@/redux/slices/courseBuilderSlice";
 
 
 export interface Lesson {
   id: string;
   title: string;
   duration?: string;
+  estimatedDuration?: string;
   assessments?: string;
-  type: "video" | "quiz" | "text";
+  type: "video" | "text";
   objectives?: string[];
   requirements?: string;
   content?: string;
   videoScript?: string;
   embedLink?: string;
-  quizQuestions?: any[];
-}
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer?: string;
+  videoUrl?: string;
+  mediaFileName?: string;
+  quizQuestions?: QuizQuestionData[];
 }
 
 export interface Module {
@@ -52,8 +53,7 @@ export interface Module {
   description: string;
   objectives: string[];
   lessons: Lesson[];
-  quizQuestions: QuizQuestion[];
-  quizId?: string;
+  quizQuestions: QuizQuestionData[];
 }
 
 interface ModulesStepProps {
@@ -80,6 +80,16 @@ export const ModulesStep = ({
   const [showLessonTypes, setShowLessonTypes] = useState(false);
   const [isAddingObjective, setIsAddingObjective] = useState(false);
   const [newObjective, setNewObjective] = useState("");
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<
+    { kind: "module" } | { kind: "lesson"; lessonId: string; title: string } | null
+  >(null);
+
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
 
   const methods = useForm<ModuleFormData>({
     resolver: zodResolver(moduleSchema),
@@ -87,23 +97,20 @@ export const ModulesStep = ({
     values: {
       title: module.title,
       description: module.description,
-      objectives: module.objectives.join(", "),
+      objectives: module.objectives,
       lessons: module.lessons,
-      quizQuestions: module.quizQuestions,
     },
   });
 
   const { handleSubmit, formState: { errors } } = methods;
 
-  const handleAddLesson = (type: "video" | "quiz" | "text") => {
+  const handleAddLesson = (type: "video" | "text") => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     const newLesson: Lesson = {
       id: Date.now().toString(),
       title: "",
       duration: "0 mins",
+      estimatedDuration: "0 mins",
       assessments: "0 Assessment",
       type: type,
       objectives: [],
@@ -115,93 +122,67 @@ export const ModulesStep = ({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
       lessons: [...module.lessons, newLesson]
     });
   };
 
-  const handleRemoveLesson = (lessonId: string) => {
-    const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
-    onUpdateModule({
-      ...module,
-      title: formValues.title,
-      description: formValues.description || "",
-      objectives: parsedObjectives,
-      lessons: module.lessons.filter(l => l.id !== lessonId)
-    });
+  const requestRemoveLesson = (lessonId: string, title: string) => {
+    setPendingDelete({ kind: "lesson", lessonId, title });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === "module") {
+      onRemoveModule?.(module.id);
+    } else {
+      const formValues = methods.getValues();
+      onUpdateModule({
+        ...module,
+        title: formValues.title,
+        description: formValues.description || "",
+        objectives: formValues.objectives,
+        lessons: module.lessons.filter((l) => l.id !== pendingDelete.lessonId),
+      });
+    }
+    setPendingDelete(null);
   };
 
   const handleEditLesson = (lessonId: string) => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
+      objectives: formValues.objectives,
     });
     onEditLesson(lessonId);
   };
 
-  const builderQuestions = useMemo(() =>
-    module.quizQuestions.map((q, i) => {
-      const opts = q.options.map((opt, oi) => ({
-        id: `mod-q${i}-o${oi}`,
-        label: String.fromCharCode(65 + oi),
-        value: opt,
-      }));
-      const correctIdx = q.options.indexOf(q.correctAnswer || "");
-      return {
-        id: `mod-q${i}`,
-        question: q.question,
-        type: "single" as const,
-        points: 0,
-        options: opts,
-        correctOptionId: correctIdx >= 0 ? opts[correctIdx]?.id : undefined,
-        explanation: "",
-      };
-    }), [module.quizQuestions]);
-
-  const fromBuilderQuestions = (qs: QuizBuilderQuestion[]): QuizQuestion[] =>
-    qs.map((q) => {
-      const correctOpt = q.options.find((o) => o.id === q.correctOptionId);
-      return {
-        question: q.question,
-        options: q.options.map((o) => o.value),
-        correctAnswer: correctOpt?.value || "",
-      };
-    });
+  const builderQuestions = useMemo(
+    () => toQuizBuilderQuestions(module.quizQuestions),
+    [module.quizQuestions],
+  );
 
   const handleModuleQuizChange = (updated: QuizBuilderQuestion[]) => {
     const formValues = methods.getValues();
-    const parsedObjectives = formValues.objectives
-      ? formValues.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: formValues.title,
       description: formValues.description || "",
-      objectives: parsedObjectives,
-      quizQuestions: fromBuilderQuestions(updated),
+      objectives: formValues.objectives,
+      quizQuestions: updated,
     });
   };
 
   const onSubmit = (data: ModuleFormData) => {
-    const parsedObjectives = data.objectives
-      ? data.objectives.split(",").map(obj => obj.trim()).filter(Boolean)
-      : [];
     onUpdateModule({
       ...module,
       title: data.title,
       description: data.description || "",
-      objectives: parsedObjectives,
-      lessons: data.lessons || [],
-      quizQuestions: data.quizQuestions || [],
+      objectives: data.objectives,
+      lessons: module.lessons,
+      quizQuestions: module.quizQuestions,
     });
     onNext?.();
   };
@@ -213,10 +194,10 @@ export const ModulesStep = ({
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[24px] py-[40px] flex flex-col gap-[40px] mx-auto pb-[100px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[32px] md:gap-[40px] mx-auto pb-[32px]">
         
         {/* Title Header with Lock Module */}
-        <div className="flex items-start justify-between w-full border-b border-[#F0F0F0] pb-[20px]">
+        <div className="flex flex-col gap-[16px] md:flex-row md:items-start md:justify-between w-full border-b border-[#F0F0F0] pb-[20px]">
           <div className="flex flex-col gap-[8px]">
             <h2 className="text-[24px] font-semibold text-[#202020] tracking-[-0.48px] leading-[32px]">Modules</h2>
             <p className="text-[16px] text-[#606060] leading-[24px]">Assign a version to this course</p>
@@ -234,7 +215,7 @@ export const ModulesStep = ({
 
         {/* Module Overview Details Card */}
         <div className="flex flex-col gap-[20px] bg-white border border-[#E8E8E8] rounded-[16px] p-[24px]">
-          <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col gap-[12px] sm:flex-row sm:items-center sm:justify-between w-full">
             <div className="flex flex-col gap-[2px]">
               <span className="text-[18px] font-semibold text-[#202020]">
                 Module {moduleIndex + 1}: {module.title || "Untitled Module"}
@@ -251,7 +232,7 @@ export const ModulesStep = ({
               variant="app-outline"
               isGhost
               leftIcon={<Trash size={16} variant="Linear" color="#FF6B00" />}
-              onClick={() => onRemoveModule?.(module.id)}
+              onClick={() => setPendingDelete({ kind: "module" })}
             >
               Delete module
             </Button>
@@ -316,6 +297,7 @@ export const ModulesStep = ({
               {isAddingObjective ? (
                 <div className="flex items-center gap-[12px] h-[56px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                   <input
+                    ref={objectiveInputRef}
                     type="text"
                     value={newObjective}
                     onChange={(e) => setNewObjective(e.target.value)}
@@ -405,15 +387,13 @@ export const ModulesStep = ({
               <div 
                 key={lesson.id}
                 className={cn(
-                  "border border-[#D9D9D9] rounded-[8px] bg-white px-[20px] py-[16px] flex items-center justify-between hover:border-[#0A60E1]/40 transition-all",
+                  "border border-[#D9D9D9] rounded-[8px] bg-white px-[20px] py-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-[12px] sm:gap-0 hover:border-[#0A60E1]/40 transition-all",
                   errors.lessons?.[idx] && "border-[#FF5025]"
                 )}
               >
                 <div className="flex items-center gap-[12px]">
                   {lesson.type === "video" ? (
                     <VideoPlay size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
-                  ) : lesson.type === "quiz" ? (
-                    <DocumentCode2 size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   ) : (
                     <DocumentText size={24} variant="Linear" color="#0A60E1" className="shrink-0" />
                   )}
@@ -427,7 +407,7 @@ export const ModulesStep = ({
                     <div className="flex items-center gap-[12px] text-[14px] text-[#606060] font-normal leading-[20px]">
                       <div className="flex items-center gap-[6px]">
                         <Timer size={16} variant="Linear" color="#606060" className="shrink-0" />
-                        <span>{lesson.duration}</span>
+                        <span>{lesson.type === "text" ? (lesson.estimatedDuration || lesson.duration) : lesson.duration}</span>
                       </div>
                       <div className="flex items-center gap-[6px]">
                         <Book size={16} variant="Linear" color="#606060" className="shrink-0" />
@@ -452,7 +432,7 @@ export const ModulesStep = ({
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleRemoveLesson(lesson.id)}
+                    onClick={() => requestRemoveLesson(lesson.id, lesson.title)}
                     className="p-0 bg-transparent border-none cursor-pointer"
                   >
                     <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
@@ -480,13 +460,6 @@ export const ModulesStep = ({
                 >
                   <PlayCircle size={20} variant="Linear" color="#0A60E1" />
                   <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Video</span>
-                </div>
-                <div 
-                  className="flex items-center gap-[8px] cursor-pointer select-none"
-                  onClick={() => { handleAddLesson("quiz"); setShowLessonTypes(false); }}
-                >
-                  <DocumentCode2 size={20} variant="Linear" color="#0A60E1" />
-                  <span className="text-[16px] font-medium text-[#0A60E1] leading-[24px]">Quiz</span>
                 </div>
                 <div 
                   className="flex items-center gap-[8px] cursor-pointer select-none"
@@ -551,6 +524,28 @@ export const ModulesStep = ({
         </div>
 
       </form>
+
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title={pendingDelete?.kind === "module" ? "Delete module?" : "Delete lesson?"}
+        description={
+          pendingDelete
+            ? `Are you sure you want to delete ${
+                pendingDelete.kind === "module"
+                  ? `module "${module.title || "Untitled Module"}"`
+                  : `lesson "${pendingDelete.title || "Untitled Lesson"}"`
+              }? This action cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </FormProvider>
   );
 };

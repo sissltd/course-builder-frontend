@@ -5,6 +5,7 @@ export enum QuizLevel {
 }
 
 export enum QuizQuestionType {
+  SINGLE_CHOICE = "SINGLE_CHOICE",
   MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
   ESSAY = "ESSAY",
 }
@@ -13,7 +14,7 @@ export interface QuizOption {
   id?: string;
   option_text: string;
   is_correct: boolean;
-  explanation: string;
+  explanation?: string;
   order: number;
 }
 
@@ -24,6 +25,7 @@ export interface QuizQuestionItem {
   question_type: QuizQuestionType;
   points: number;
   model_response_guide: string;
+  explanation?: string;
   order: number;
   options: QuizOption[];
 }
@@ -88,6 +90,7 @@ export interface CreateQuestionRequest {
   question_type: QuizQuestionType;
   points: number;
   model_response_guide?: string;
+  explanation?: string;
   order: number;
   options?: QuizOption[];
 }
@@ -98,6 +101,7 @@ export interface UpdateQuestionRequest {
   question_type?: QuizQuestionType;
   points?: number;
   model_response_guide?: string;
+  explanation?: string;
   order?: number;
   options?: QuizOption[];
 }
@@ -108,4 +112,22 @@ export interface QuestionListParams {
   ordering?: string;
   page?: number;
   size?: number;
+}
+
+export interface QuestionListResponse {
+  status: boolean;
+  message: string;
+  data: {
+    paginator: {
+      count: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      next_page_number: number | null;
+      next: string | null;
+      previous_page_number: number | null;
+      previous: string | null;
+    };
+    results: QuizQuestionItem[];
+  };
 }

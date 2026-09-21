@@ -8,9 +8,8 @@ export interface NavLink {
 }
 
 export const NAV_LINKS: NavLink[] = [
-  { label: "Product", href: "/product" },
+  { label: "Product", href: "/" },
   { label: "Creators", href: "/creators" },
-  { label: "Company", href: "/company" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -279,7 +278,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Menu",
     links: [
-      { label: "Course Builder", href: "/product" },
+      { label: "Course Builder", href: "/" },
       { label: "Creators", href: "/creators" },
       { label: "Creating Account", href: "/auth/register" },
       { label: "Testimonials", href: "/#testimonials" },
@@ -297,8 +296,8 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Support",
     links: [
-      { label: "Helpdesk", href: "/company" },
-      { label: "Marketing /Sales", href: "/company" },
+      { label: "Helpdesk", href: "/contact" },
+      { label: "Marketing /Sales", href: "/contact" },
     ],
   },
 ];

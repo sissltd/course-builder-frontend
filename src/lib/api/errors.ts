@@ -6,7 +6,6 @@ export interface NormalizedApiError {
   message: string | null;
 }
 
-
 export function getErrorStatus(
   error: FetchBaseQueryError | undefined,
 ): number | null {
@@ -15,6 +14,36 @@ export function getErrorStatus(
   }
   return null;
 }
+
+export const humanizeFieldName = (name: string): string =>
+  name
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+export const formatApiErrorItem = (item: {
+  message: string;
+  field_name?: string | null;
+}): string =>
+  item.field_name
+    ? `${humanizeFieldName(item.field_name)}: ${item.message}`
+    : item.message;
+
+export const formatApiErrors = (
+  errors: { message?: string; field_name?: string | null }[] | undefined,
+  fallback = "An unexpected error occurred.",
+): string => {
+  const items = (errors ?? []).filter(
+    (item): item is { message: string; field_name?: string | null } =>
+      typeof item.message === "string" && item.message.length > 0,
+  );
+  if (items.length === 0) return fallback;
+  const shown = items.slice(0, 5).map(formatApiErrorItem);
+  const extra =
+    items.length > shown.length ? ` (+${items.length - shown.length} more)` : "";
+  return `${shown.join(" • ")}${extra}`;
+};
 
 export function getErrorEnvelope(
   error: FetchBaseQueryError | undefined,
@@ -46,20 +75,13 @@ export function normalizeApiError(
   }
 
   const fieldErrors: Record<string, string> = {};
-  let message: string | null = null;
 
   for (const item of envelope.errors) {
     if (item.field_name) {
       const field = fieldMap[item.field_name] ?? item.field_name;
       fieldErrors[field] = item.message;
-    } else if (!message) {
-      message = item.message;
     }
   }
 
-  if (!message && envelope.errors.length > 0) {
-    message = envelope.errors[0].message;
-  }
-
-  return { fieldErrors, message };
+  return { fieldErrors, message: formatApiErrors(envelope.errors) };
 }

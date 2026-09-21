@@ -108,7 +108,7 @@ export const CoursesTable = () => {
           icon: <Filter size={20} variant="Linear" color="#606060" />,
           searchable: true,
           searchPlaceholder: "Search category...",
-          options: categories.map((c) => ({
+          options: (categories ?? []).map((c) => ({
             label: c.name,
             value: c.id,
           })),

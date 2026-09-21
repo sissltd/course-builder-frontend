@@ -7,6 +7,7 @@ export enum AuthRoute {
   VERIFY_EMAIL = "/auth/verify-email",
   ONBOARDING = "/auth/onboarding",
   ACCEPT_INVITATION = "/accept-invitation",
+  SIGNUP_GOOGLE = "/auth/signup-google",
 }
 
 export enum WebsiteRoute {
@@ -15,9 +16,7 @@ export enum WebsiteRoute {
   PRIVACY = "/privacy",
   ABOUT = "/about",
   CONTACT = "/contact",
-  COMPANY = "/company",
   CREATORS = "/creators",
-  PRODUCT = "/product",
   COOKIES = "/cookies",
 }
 
@@ -49,7 +48,9 @@ export enum CreatorRoute {
   DASHBOARD = "/creator/dashboard",
   COURSES = "/creator/courses",
   COURSES_CREATE = "/creator/courses/create",
+  COURSES_AI_CREATE = "/creator/courses/create-with-ai",
   COURSES_BUILDER = "/creator/courses/builder",
+  COURSES_IMPORT = "/creator/courses/import",
   DRAFTS = "/creator/drafts",
   COLLABORATORS = "/creator/collaborators",
   WALLET = "/creator/wallet",

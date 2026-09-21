@@ -28,6 +28,7 @@ export const SEAT_WORKSPACE: Record<UserRole, Workspace> = {
   */
   [UserRole.AI_REVIEWER]: Workspace.ADMIN_DASHBOARD,
 
+  [UserRole.REVIEWER]: Workspace.REVIEWER_STUDIO,
   [UserRole.CREATOR_REVIEWER]: Workspace.REVIEWER_STUDIO,
   [UserRole.STAFF_VERIFIER]: Workspace.REVIEWER_STUDIO,
   [UserRole.STAFF_APPROVER]: Workspace.REVIEWER_STUDIO,
@@ -51,6 +52,7 @@ export function getDashboardRoute(workspace?: string): string {
     case "admin_studio":
       return "/admin/dashboard";
     case Workspace.REVIEWER_STUDIO:
+    case Workspace.CREATOR_REVIEW_DASHBOARD:
       return "/reviewer/dashboard";
     default:
       return "/creator/dashboard";

@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   Note,
   Add,
+  Menu,
+  MoreSquare,
 } from "iconsax-react";
 import Image from "next/image";
 import { Button } from "@/components/shared/Button";
@@ -14,10 +16,18 @@ import { useAppDispatch, useAppSelector } from "@/redux";
 import { saveAllDirty } from "@/redux/slices/builderSync";
 import { useGetCollaboratorsQuery } from "@/modules/creator/collaborators/api/collaboratorsApi";
 import { InviteCollaboratorModal } from "./InviteCollaboratorModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface BuilderHeaderProps {
   moduleName?: string;
   onBackToModules?: () => void;
+  onToggleSidebar?: () => void;
 }
 
 const AVATAR_COLORS = [
@@ -40,7 +50,7 @@ function getAvatarColor(index: number): string {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProps) => {
+export const BuilderHeader = ({ moduleName, onBackToModules, onToggleSidebar }: BuilderHeaderProps) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const isSaving = useAppSelector((state) => state.courseBuilder.isSaving);
@@ -69,30 +79,39 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
 
   return (
     <>
-      <div className="h-[70px] w-full bg-white border-b border-[#F0F0F0] px-[24px] py-[12px] flex items-center justify-between z-10 sticky top-0 shrink-0">
+      <div className="h-[64px] md:h-[70px] w-full bg-white border-b border-[#F0F0F0] px-[12px] md:px-[24px] py-[12px] flex items-center justify-between z-10 sticky top-0 shrink-0">
 
         {/* Left Section */}
-        <div className="flex items-center gap-[12px]">
+        <div className="flex items-center gap-[8px] md:gap-[12px] min-w-0">
+          {/* Hamburger - mobile only */}
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden hover:bg-sd-grey-2 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center justify-center size-[32px]"
+            aria-label="Toggle sidebar"
+          >
+            <Menu variant="Linear" size={20} color="#636363" />
+          </button>
+
           {/* Back Button */}
           <Button
             variant="app-outline"
             isGhost
             onClick={onBackToModules || (() => router.back())}
-            className="h-[40px] px-[10px] text-[#202020]"
+            className="h-[40px] px-[10px] text-[#202020] shrink-0"
             leftIcon={<ArrowLeft size={18} variant="Linear" color="#202020" />}
           >
-            <span className="text-[14px] font-medium leading-[20px] tracking-[-0.28px]">Back</span>
+            <span className="hidden sm:inline text-[14px] font-medium leading-[20px] tracking-[-0.28px]">Back</span>
           </Button>
 
-          <div className="h-[20px] w-px bg-[#F0F0F0]" />
+          <div className="h-[20px] w-px bg-[#F0F0F0] hidden md:block" />
 
           {/* Note Icon Container */}
-          <div className="size-[32px] bg-[#EAF3FF] rounded-[6px] flex items-center justify-center shrink-0 ml-[4px]">
+          <div className="hidden md:flex size-[32px] bg-[#EAF3FF] rounded-[6px] items-center justify-center shrink-0 ml-[4px]">
             <Note size={18} variant="Bold" color="#0A60E1" />
           </div>
 
           {/* Title */}
-          <span className="text-[16px] font-semibold text-[#202020] leading-[24px] whitespace-nowrap">
+          <span className="text-[14px] md:text-[16px] font-semibold text-[#202020] leading-[24px] whitespace-nowrap truncate min-w-0">
             {moduleName ? (
               <span className="flex items-center gap-[4px]">
                 Create a new lesson <span className="text-[#B6B6B6]">/</span> {moduleName}
@@ -103,7 +122,7 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
           </span>
 
           {/* Saved Status Badge */}
-          <div className={`h-[24px] px-[8px] rounded-[4px] flex items-center justify-center shrink-0 ml-[4px] ${
+          <div className={`hidden sm:flex h-[24px] px-[8px] rounded-[4px] items-center justify-center shrink-0 ml-[4px] ${
             isSaving ? "bg-[#FFF3E0]" : isDirty ? "bg-[#FFF3E0]" : "bg-[#061E2D]"
           }`}>
             <span className={`text-[11px] font-normal leading-[14px] ${
@@ -115,89 +134,133 @@ export const BuilderHeader = ({ moduleName, onBackToModules }: BuilderHeaderProp
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-[16px]">
-          {/* Collaborators Avatar stack */}
-          <div className="flex items-center">
-            {collaborators.slice(0, 3).map((collab, i) => (
-              <div
-                key={collab.id}
-                className="size-[32px] rounded-full overflow-hidden mr-[-6px] relative z-10 border-2 border-white"
-                style={{ zIndex: 10 - i }}
-              >
+        <div className="flex items-center gap-[8px] md:gap-[16px] shrink-0">
+          {/* Desktop: Full action buttons */}
+          <div className="hidden md:flex items-center gap-[16px]">
+            {/* Collaborators Avatar stack */}
+            <div className="flex items-center">
+              {collaborators.slice(0, 3).map((collab, i) => (
                 <div
-                  className="w-full h-full flex items-center justify-center text-white text-[12px] font-semibold"
-                  style={{ backgroundColor: getAvatarColor(i) }}
+                  key={collab.id}
+                  className="size-[32px] rounded-full overflow-hidden mr-[-6px] relative z-10 border-2 border-white"
+                  style={{ zIndex: 10 - i }}
                 >
-                  {getInitials(collab.name)}
+                  <div
+                    className="w-full h-full flex items-center justify-center text-white text-[12px] font-semibold"
+                    style={{ backgroundColor: getAvatarColor(i) }}
+                  >
+                    {getInitials(collab.name)}
+                  </div>
                 </div>
+              ))}
+              <div
+                className="size-[32px] rounded-full border border-dashed border-[#B6B6B6] bg-white flex items-center justify-center relative z-0 p-[7px] cursor-pointer hover:bg-[#F5F5F5] transition-colors"
+                onClick={() => setShowInviteModal(true)}
+              >
+                <Add size={14} variant="Linear" color="#606060" />
               </div>
-            ))}
-            <div
-              className="size-[32px] rounded-full border border-dashed border-[#B6B6B6] bg-white flex items-center justify-center relative z-0 p-[7px] cursor-pointer hover:bg-[#F5F5F5] transition-colors"
-              onClick={() => setShowInviteModal(true)}
-            >
-              <Add size={14} variant="Linear" color="#606060" />
+            </div>
+
+            {/* Desktop: Action Buttons */}
+            <div className="flex items-center gap-[16px]">
+              <Button
+                variant="app-outline"
+                isGhost
+                className="h-[36px] text-[#606060]"
+                leftIcon={<Add size={18} variant="Linear" color="#606060" />}
+                onClick={() => setShowInviteModal(true)}
+              >
+                <span className="text-[14px] font-medium tracking-[-0.28px]">Invite collaborators</span>
+              </Button>
+
+              <Button
+                variant="app-outline"
+                isGhost
+                className="h-[36px] text-[#606060]"
+                leftIcon={
+                  <Image
+                    src="/images/builder/publish-story.svg"
+                    alt="Publish"
+                    width={24}
+                    height={24}
+                  />
+                }
+              >
+                <span className="text-[14px] font-medium tracking-[-0.28px]">Publish course</span>
+              </Button>
+
+              <div className="h-[20px] w-px bg-[#F0F0F0]" />
+
+              <Button
+                variant="app-outline"
+                className="h-[36px] px-[12px] rounded-[8px] text-[#0063EF] border-[#0063EF]"
+                leftIcon={
+                  <Image
+                    src="/images/builder/preview-play.svg"
+                    alt="Preview"
+                    width={24}
+                    height={24}
+                  />
+                }
+              >
+                <span className="text-[14px] tracking-[-0.28px]">Preview</span>
+              </Button>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-[16px]">
-            <Button
-              variant="app-outline"
-              isGhost
-              className="h-[36px] text-[#606060]"
-              leftIcon={<Add size={18} variant="Linear" color="#606060" />}
-              onClick={() => setShowInviteModal(true)}
-            >
-              <span className="text-[14px] font-medium tracking-[-0.28px]">Invite collaborators</span>
-            </Button>
-
-            <Button
-              variant="app-outline"
-              isGhost
-              className="h-[36px] text-[#606060]"
-              leftIcon={
+          {/* Mobile: Overflow menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="md:hidden p-2 hover:bg-sd-grey-2 rounded-lg transition-colors cursor-pointer">
+                <MoreSquare variant="Linear" size={20} color="#636363" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[220px] bg-white border border-[#F0F0F0] rounded-[16px] p-[8px] mt-[8px]" align="end">
+              <DropdownMenuItem
+                onClick={() => setShowInviteModal(true)}
+                className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]"
+              >
+                <Add size={20} color="#606060" variant="Linear" />
+                <span>Invite collaborators</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
                 <Image
                   src="/images/builder/publish-story.svg"
                   alt="Publish"
-                  width={24}
-                  height={24}
+                  width={20}
+                  height={20}
                 />
-              }
-            >
-              <span className="text-[14px] font-medium tracking-[-0.28px]">Publish course</span>
-            </Button>
-
-            <div className="h-[20px] w-px bg-[#F0F0F0]" />
-
-            <Button
-              variant="app-outline"
-              className="h-[36px] px-[12px] rounded-[8px] text-[#0063EF] border-[#0063EF]"
-              leftIcon={
+                <span>Publish course</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />
+              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#0063EF] hover:bg-[#F4F9FF] cursor-pointer text-[14px]">
                 <Image
                   src="/images/builder/preview-play.svg"
                   alt="Preview"
-                  width={24}
-                  height={24}
+                  width={20}
+                  height={20}
                 />
-              }
-            >
-              <span className="text-[14px] tracking-[-0.28px]">Preview</span>
-            </Button>
+                <span>Preview</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <Button
-              variant="app-primary"
-              className={`h-[36px] px-[16px] rounded-[8px] text-white text-[14px] font-medium transition-all ${
-                isDirty && !isSaving
-                  ? "bg-[#0063EF] shadow-[0_2px_8px_rgba(0,99,239,0.4)] hover:bg-[#0052CC]"
-                  : "bg-[#0063EF]"
-              }`}
-              onClick={handleSave}
-              disabled={isSaving || !isDirty}
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-          </div>
+          {/* Divider - desktop only */}
+          <div className="hidden md:block h-[20px] w-px bg-[#F0F0F0]" />
+
+          {/* Save Button */}
+          <Button
+            variant="app-primary"
+            className={`h-[36px] px-[12px] md:px-[16px] rounded-[8px] text-white text-[14px] font-medium transition-all shrink-0 ${
+              isDirty && !isSaving
+                ? "bg-[#0063EF] shadow-[0_2px_8px_rgba(0,99,239,0.4)] hover:bg-[#0052CC]"
+                : "bg-[#0063EF]"
+            }`}
+            onClick={handleSave}
+            disabled={isSaving || !isDirty}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
         </div>
       </div>
 

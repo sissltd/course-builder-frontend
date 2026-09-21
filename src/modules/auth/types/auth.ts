@@ -10,6 +10,7 @@
  */
 export enum UserRole {
   COURSE_CREATOR = "COURSE_CREATOR",
+  REVIEWER = "REVIEWER",
   CREATOR_REVIEWER = "CREATOR_REVIEWER",
   STAFF_WRITER = "STAFF_WRITER",
   STAFF_VERIFIER = "STAFF_VERIFIER",
@@ -36,6 +37,7 @@ export enum Workspace {
   CREATOR_STUDIO = "creator_studio",
   ADMIN_DASHBOARD = "admin_dashboard",
   REVIEWER_STUDIO = "reviewer_studio",
+  CREATOR_REVIEW_DASHBOARD = "creator_review_dashboard",
 }
 
 export interface User {
@@ -95,6 +97,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  id_token: string;
+}
+
+export interface GoogleSignupRequest {
+  id_token: string;
+  first_name: string;
+  last_name: string;
+  country: string;
+  terms_accepted: boolean;
+}
+
 export interface LoginResponse extends AuthTokens {
   user: User;
   role: UserRole;
@@ -143,7 +157,6 @@ export interface AccessRole {
   is_system: boolean;
   base_role: string;
 }
-
 
 export type AssignedTrack = "CREATOR_TRACK" | "AI_TRACK" | "ALL" | null;
 

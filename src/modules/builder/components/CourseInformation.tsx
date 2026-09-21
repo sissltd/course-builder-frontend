@@ -17,7 +17,7 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { syncSetCoverVideo } from "@/redux/slices/builderSync";
+import { syncSetCoverVideo, syncUpdateCourseInfo } from "@/redux/slices/builderSync";
 import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
 import {
@@ -58,14 +58,34 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   const { handleSubmit, watch, setValue, formState: { errors } } = methods;
   const description = watch("description");
+  const watchedTitle = watch("courseTitle");
+  const watchedCategory = watch("category");
   const watchedDifficulty = watch("difficulty");
   const wordCount = description?.trim() === "" ? 0 : (description?.trim()?.split(/\s+/).length ?? 0);
 
   useEffect(() => {
-    if (watchedDifficulty && watchedDifficulty !== info.difficulty) {
-      updateAndSave({ difficulty: watchedDifficulty });
+    const patch: {
+      courseTitle?: string;
+      description?: string;
+      category?: string;
+      difficulty?: string;
+    } = {};
+    if (watchedTitle && watchedTitle !== info.courseTitle) {
+      patch.courseTitle = watchedTitle;
     }
-  }, [watchedDifficulty, info.difficulty, updateAndSave]);
+    if (description && description !== info.description) {
+      patch.description = description;
+    }
+    if (watchedCategory && watchedCategory !== info.category) {
+      patch.category = watchedCategory;
+    }
+    if (watchedDifficulty && watchedDifficulty !== info.difficulty) {
+      patch.difficulty = watchedDifficulty;
+    }
+    if (Object.keys(patch).length > 0) {
+      updateAndSave(patch);
+    }
+  }, [watchedTitle, description, watchedCategory, watchedDifficulty, info, updateAndSave]);
 
   // Objectives states
   const [objectives, setObjectives] = useState<string[]>(info.objectives);
@@ -81,6 +101,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   // File Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [savedVideoName, setSavedVideoName] = useState<string | null>(info.coverVideo?.name || null);
   const [savedVideoSize, setSavedVideoSize] = useState<number | null>(info.coverVideo?.size || null);
@@ -117,6 +138,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
     setValue("objectives", updated, { shouldValidate: true });
     updateAndSave({ objectives: updated });
   };
+
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
 
   // Tag Handlers
   const handleAddTag = () => {
@@ -204,6 +231,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
           ? { name: savedVideoName, size: savedVideoSize || 0, type: "" }
           : null,
     }));
+    dispatch(syncUpdateCourseInfo());
     if (videoFile) {
       dispatch(syncSetCoverVideo(videoFile));
     }
@@ -212,7 +240,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[24px] py-[40px] flex flex-col gap-[60px] mx-auto pb-[100px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[739px] max-w-full bg-[#FDFDFD] px-[16px] md:px-[24px] py-[24px] md:py-[40px] flex flex-col gap-[40px] md:gap-[60px] mx-auto pb-[32px]">
         
         {/* Course Info Section */}
         <div className="flex flex-col gap-[24px]">
@@ -247,7 +275,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 label="Course category"
                 required
                 placeholder="Select category"
-                options={categories.map((c) => ({
+                options={(categories ?? []).map((c) => ({
                   label: c.name,
                   value: c.id,
                 }))}
@@ -278,12 +306,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
         {/* Learning Objectives Section */}
         <div className="flex flex-col gap-[24px]">
-          <div className="flex items-end justify-between w-full">
+          <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
             <div className="flex flex-col gap-[8px] max-w-[486px]">
               <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Learning Objectives</h3>
               <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Add what you expect your student to gain at the end of this course.</p>
             </div>
-            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
+            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px] shrink-0">
               Minimum of 5 required
             </span>
           </div>
@@ -367,6 +395,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 {isAddingObjective ? (
                   <div className="flex items-center gap-[12px] h-[60px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                     <input
+                      ref={objectiveInputRef}
                       type="text"
                       value={newObjective}
                       onChange={(e) => setNewObjective(e.target.value)}
@@ -422,6 +451,7 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
                 {isAddingObjective ? (
                   <div className="flex items-center gap-[12px] h-[60px] border border-[#0A60E1] bg-white rounded-[8px] px-[20px]">
                     <input
+                      ref={objectiveInputRef}
                       type="text"
                       value={newObjective}
                       onChange={(e) => setNewObjective(e.target.value)}
@@ -480,12 +510,12 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
 
         {/* Tags Section */}
         <div className="flex flex-col gap-[24px]">
-          <div className="flex items-end justify-between w-full">
+          <div className="flex flex-col gap-[8px] md:flex-row md:items-end md:justify-between w-full">
             <div className="flex flex-col gap-[8px] max-w-[486px]">
               <h3 className="text-[20px] font-semibold text-[#202020] leading-[28px]">Tags</h3>
               <p className="text-[14px] text-[#606060] tracking-[-0.28px] leading-[20px]">Add relevant tag to your course. For easy searching</p>
             </div>
-            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px]">
+            <span className="text-[14px] text-[#606060] font-medium tracking-[-0.28px] leading-[20px] shrink-0">
               Minimum of 3 required
             </span>
           </div>

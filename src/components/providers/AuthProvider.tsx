@@ -4,11 +4,14 @@ import React, { useEffect, useRef } from "react";
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth, setCredentials } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
+import { AuthRoute } from "@/lib/routes";
 
 const SESSION_REFRESH_INTERVAL_MS = 25 * 60 * 1000;
 
 function AuthSessionSync() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const hasRedirected = useRef(false);
 
@@ -16,6 +19,17 @@ function AuthSessionSync() {
     if (hasRedirected.current) return;
 
     if (status === "authenticated" && session?.user) {
+      if (session.googleSignupRequired) {
+        hasRedirected.current = true;
+        router.push(AuthRoute.SIGNUP_GOOGLE);
+        return;
+      }
+
+      if (session.googleError) {
+        dispatch(clearAuth());
+        return;
+      }
+
       if (session.error === "RefreshAccessTokenError") {
         hasRedirected.current = true;
         dispatch(clearAuth());
@@ -23,16 +37,18 @@ function AuthSessionSync() {
         return;
       }
 
-      dispatch(
-        setCredentials({
-          user: session.user,
-          accessToken: session.accessToken,
-        }),
-      );
+      if (session.accessToken) {
+        dispatch(
+          setCredentials({
+            user: session.user,
+            accessToken: session.accessToken,
+          }),
+        );
+      }
     } else if (status === "unauthenticated") {
       dispatch(clearAuth());
     }
-  }, [status, session, dispatch]);
+  }, [status, session, dispatch, router]);
 
   useEffect(() => {
     const intervalId = setInterval(async () => {

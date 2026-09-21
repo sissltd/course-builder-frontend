@@ -66,17 +66,17 @@ export const quizBuilderQuestionSchema = z.discriminatedUnion("type", [
     id: z.string(),
     question: z.string().min(1, "Question is required"),
     type: z.literal("single"),
-    points: z.number().min(0, "Points cannot be negative"),
-    options: z.array(quizBuilderOptionSchema).min(2, "At least 2 options required").max(6, "Maximum 6 options"),
-    correctOptionId: z.string().min(1, "Please select the correct option"),
+    points: z.number().min(1, "Set the points for this question (at least 1)"),
+    options: z.array(quizBuilderOptionSchema).min(2, "At least 2 options required"),
+    correctOptionId: z.string().min(1, "Select the correct option"),
     explanation: z.string().optional(),
   }),
   z.object({
     id: z.string(),
     question: z.string().min(1, "Question is required"),
     type: z.literal("multiple"),
-    points: z.number().min(0, "Points cannot be negative"),
-    options: z.array(quizBuilderOptionSchema).min(2, "At least 2 options required").max(6, "Maximum 6 options"),
+    points: z.number().min(1, "Set the points for this question (at least 1)"),
+    options: z.array(quizBuilderOptionSchema).min(2, "At least 2 options required"),
     correctOptionIds: z.array(z.string()).min(1, "Select at least one correct option"),
     explanation: z.string().optional(),
   }),
@@ -84,7 +84,7 @@ export const quizBuilderQuestionSchema = z.discriminatedUnion("type", [
     id: z.string(),
     question: z.string().min(1, "Question is required"),
     type: z.literal("essay"),
-    points: z.number().min(0, "Points cannot be negative"),
+    points: z.number().min(1, "Set the points for this question (at least 1)"),
     correctAnswer: z.string().optional(),
     explanation: z.string().optional(),
   }),
@@ -96,20 +96,11 @@ export const quizBuilderFormSchema = z.object({
 
 export type QuizBuilderFormData = z.infer<typeof quizBuilderFormSchema>;
 
-export const quizQuestionSchema = z.object({
-  question: z.string().min(1, "Question is required"),
-  options: z
-    .array(z.string().min(1, "Option cannot be empty"))
-    .min(2, "At least 2 options required"),
-  correctAnswer: z.string().optional(),
-});
-
-export type QuizQuestionFormData = z.infer<typeof quizQuestionSchema>;
-
 export const lessonSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Lesson title is required"),
   duration: z.string().optional(),
+  estimatedDuration: z.string().optional(),
   assessments: z.string().optional(),
   type: z.enum(["video", "quiz", "text"]),
   objectives: z.array(z.string()).optional(),
@@ -117,7 +108,6 @@ export const lessonSchema = z.object({
   content: z.string().optional(),
   embedLink: z.string().optional(),
   videoScript: z.string().optional(),
-  quizQuestions: z.array(quizQuestionSchema).optional(),
 });
 
 export type LessonFormData = z.infer<typeof lessonSchema>;
@@ -125,17 +115,8 @@ export type LessonFormData = z.infer<typeof lessonSchema>;
 export const moduleSchema = z.object({
   title: z.string().min(1, "Module title is required"),
   description: z.string().min(1, "Module description is required"),
-  objectives: z.string()
-    .min(1, "Module objectives are required")
-    .refine(
-      (val) => {
-        const list = val.split(",").map((o) => o.trim()).filter(Boolean);
-        return list.length >= 5;
-      },
-      "Minimum of 5 learning objectives required per module"
-    ),
+  objectives: z.array(z.string().min(1, "Objective cannot be empty")).min(5, "Minimum of 5 learning objectives required per module"),
   lessons: z.array(lessonSchema).optional(),
-  quizQuestions: z.array(quizQuestionSchema).optional(),
 });
 
 export type ModuleFormData = z.infer<typeof moduleSchema>;

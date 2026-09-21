@@ -12,6 +12,9 @@ declare module "next-auth" {
     role?: string;
     mfaEnrollmentOverdue?: boolean;
     error?: string;
+    googleSignupRequired?: boolean;
+    googleIdToken?: string;
+    googleError?: string;
   }
 
   interface User {
@@ -50,5 +53,8 @@ declare module "next-auth/jwt" {
     role?: string;
     mfaEnrollmentOverdue?: boolean;
     error?: string;
+    googleSignupRequired?: boolean;
+    googleIdToken?: string;
+    googleError?: string;
   }
 }

@@ -38,6 +38,7 @@ import { ThumbnailStep } from "./components/ThumbnailStep";
 import { QualityCheckStep } from "./components/QualityCheckStep";
 import { CoursePreviewView } from "./components/CoursePreviewView";
 import { QuizEditorPageView } from "./components/QuizEditorPageView";
+import { useDebouncedSave } from "./hooks/useDebouncedSave";
 
 export default function BuilderView() {
   const dispatch = useAppDispatch();
@@ -50,9 +51,17 @@ export default function BuilderView() {
   const isLoading = useAppSelector((state) => state.courseBuilder.isLoading);
   const isDirty = useAppSelector((state) => state.courseBuilder.isDirty);
   const courseId = useAppSelector((state) => state.courseBuilder.courseId);
+  const finalAssessment = useAppSelector((state) => state.courseBuilder.finalAssessment);
   const [showingPreview, setShowingPreview] = React.useState(false);
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const courseLoadedRef = useRef(false);
+
+  const { schedule: scheduleSave } = useDebouncedSave(
+    () => {
+      dispatch(saveAllDirty());
+    },
+    { wait: 5000, maxWait: 15000 },
+  );
 
   const stepsOrder: BuilderStep[] = ["information", "outline", "version", "modules", "thumbnail", "quality"];
   const didRestoreRef = useRef(false);
@@ -99,9 +108,12 @@ export default function BuilderView() {
       if (qMod) {
         const qLesson = qMod.lessons.find((l) => l.id === quizLessonParam);
         if (qLesson) {
-          dispatch(setEditingQuiz({ moduleId: quizModuleParam, lessonId: quizLessonParam }));
+          dispatch(setEditingQuiz({ level: "lesson", moduleId: quizModuleParam, lessonId: quizLessonParam }));
         }
       }
+    }
+    if (searchParams.get("quizLevel") === "course") {
+      dispatch(setEditingQuiz({ level: "course" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, isLoading]);
@@ -115,14 +127,19 @@ export default function BuilderView() {
     params.set("id", id);
 
     if (editingQuiz) {
-      params.set("quizModuleId", editingQuiz.moduleId);
-      params.set("quizLessonId", editingQuiz.lessonId);
+      if (editingQuiz.level === "lesson") {
+        params.set("quizModuleId", editingQuiz.moduleId);
+        params.set("quizLessonId", editingQuiz.lessonId);
+      } else {
+        params.set("quizLevel", "course");
+      }
       // Clear lesson params when quiz is open
       params.delete("moduleId");
       params.delete("lessonId");
     } else {
       params.delete("quizModuleId");
       params.delete("quizLessonId");
+      params.delete("quizLevel");
       if (editingLesson) {
         params.set("moduleId", editingLesson.moduleId);
         params.set("lessonId", editingLesson.lessonId);
@@ -141,21 +158,16 @@ export default function BuilderView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingLesson, editingQuiz, activeStep]);
 
+  // Auto-close sidebar when entering lesson/quiz/preview editing
+  React.useEffect(() => {
+    setSidebarOpen(false);
+  }, [editingLesson, editingQuiz, showingPreview]);
+
   useEffect(() => {
     if (isDirty && courseId) {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current);
-      }
-      autoSaveTimerRef.current = setTimeout(() => {
-        dispatch(saveAllDirty());
-      }, 5000);
+      scheduleSave();
     }
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current);
-      }
-    };
-  }, [isDirty, courseId, dispatch, modules]);
+  }, [isDirty, courseId, modules, scheduleSave]);
 
   const handleNext = () => {
     const currentIndex = stepsOrder.indexOf(activeStep);
@@ -176,7 +188,7 @@ export default function BuilderView() {
   const handleAddModule = () => {
     dispatch(addModule());
     if (courseId) {
-      dispatch(syncCreateModule());
+      dispatch(syncCreateModule({}));
     }
   };
 
@@ -191,17 +203,16 @@ export default function BuilderView() {
     dispatch(updateModule(updated));
   };
 
-  const handleAddLessonForSidebar = (type: "video" | "quiz" | "text") => {
+  const handleAddLessonForSidebar = (type: "video" | "text") => {
     if (modules.length === 0) return;
     const currentModule = modules[activeModuleIndex];
     const newLessonId = Date.now().toString();
     dispatch(addLessonToModule({ moduleId: currentModule.id, type, lessonId: newLessonId }));
-    if (courseId) {
+    // Only create immediately if module already has an API ID (not a temp numeric ID)
+    if (courseId && !/^\d+$/.test(currentModule.id)) {
       dispatch(syncCreateLesson({ moduleId: currentModule.id, type }));
     }
-    if (editingLesson) {
-      dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId: newLessonId }));
-    }
+    dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId: newLessonId }));
   };
 
   const handleRemoveLesson = (moduleId: string, lessonId: string) => {
@@ -222,6 +233,8 @@ export default function BuilderView() {
     );
   };
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   const currentModule = modules[activeModuleIndex] || null;
   const currentLesson = currentModule?.lessons.find(l => l.id === editingLesson?.lessonId) || null;
 
@@ -236,51 +249,76 @@ export default function BuilderView() {
     );
   }
 
+  const showSidebar = !showingPreview && !editingQuiz;
+
   return (
-    <div className="flex flex-col h-full bg-[#FDFDFD] overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-[#FDFDFD] overflow-hidden">
 
       {/* Dynamic Header Breadcrumbs based on Edit view state */}
       <BuilderHeader
         moduleName={editingLesson && currentModule ? `Module ${activeModuleIndex + 1}` : undefined}
         onBackToModules={editingLesson ? () => dispatch(setEditingLesson(null)) : undefined}
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Preview mode: full-screen course preview */}
         {showingPreview ? (
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 min-w-0 overflow-hidden">
             <CoursePreviewView />
           </main>
         ) : editingQuiz ? (
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-w-0 overflow-y-auto">
             <QuizEditorPageView />
           </main>
         ) : (
           <>
             {/* Sidebar swaps to Lesson List Sidebar when editing a lesson */}
-            {editingLesson && currentModule ? (
+            {showSidebar && (editingLesson && currentModule ? (
               <LessonSidebar
                 lessons={currentModule.lessons}
                 activeLessonId={editingLesson.lessonId}
-                onSelectLesson={(lessonId: string) => dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId }))}
+                onSelectLesson={(lessonId: string) => {
+                  dispatch(setEditingLesson({ moduleId: currentModule.id, lessonId }));
+                  closeSidebar();
+                }}
                 onAddLesson={handleAddLessonForSidebar}
                 onBack={() => dispatch(setEditingLesson(null))}
+                isOpen={sidebarOpen}
+                onClose={closeSidebar}
               />
             ) : (
               <BuilderSidebar
                 activeStep={activeStep}
-                onChangeStep={(step) => dispatch(setActiveStep(step))}
+                onChangeStep={(step) => {
+                  dispatch(setActiveStep(step));
+                  closeSidebar();
+                }}
                 modules={modules.map(m => ({ id: m.id, title: m.title }))}
                 activeModuleIndex={activeModuleIndex}
-                onChangeActiveModuleIndex={(index) => dispatch(setActiveModuleIndex(index))}
-                onAddModule={handleAddModule}
+                onChangeActiveModuleIndex={(index) => {
+                  dispatch(setActiveModuleIndex(index));
+                  closeSidebar();
+                }}
+                onAddModule={() => {
+                  handleAddModule();
+                  closeSidebar();
+                }}
+                onOpenFinalAssessment={() => {
+                  dispatch(setEditingQuiz({ level: "course" }));
+                  closeSidebar();
+                }}
+                finalAssessmentCount={finalAssessment?.quizQuestions?.length || 0}
+                isOpen={sidebarOpen}
+                onClose={closeSidebar}
               />
-            )}
+            ))}
 
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden">
               {/* Swap main panel content to Lesson Editor when editing a lesson */}
               {editingLesson && currentLesson ? (
                 <LessonEditView
+                  key={currentLesson.id}
                   lesson={currentLesson}
                   onUpdateLesson={handleUpdateLesson}
                   onBack={() => dispatch(setEditingLesson(null))}

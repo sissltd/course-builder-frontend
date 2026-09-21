@@ -29,9 +29,10 @@ interface FormInputProps {
   maxLength?: number;
   min?: string;
   max?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
-export const FormInput = ({ name, label, error: externalError, hint, required, placeholder, type = "text", className, containerClassName, leftElement, rightElement, disabled, readOnly, autoFocus, isSuccess, isFilled, value: externalValue, onChange: externalOnChange, onBlur: externalOnBlur, onKeyDown, onFocus: externalOnFocus, maxLength, min, max }: FormInputProps) => {
+export const FormInput = ({ name, label, error: externalError, hint, required, placeholder, type = "text", className, containerClassName, leftElement, rightElement, disabled, readOnly, autoFocus, isSuccess, isFilled, value: externalValue, onChange: externalOnChange, onBlur: externalOnBlur, onKeyDown, onFocus: externalOnFocus, maxLength, min, max, inputRef }: FormInputProps) => {
   let fieldValue = externalValue ?? "";
   let fieldOnChange = externalOnChange || (() => {});
   let fieldOnBlur = externalOnBlur || (() => {});
@@ -84,7 +85,7 @@ export const FormInput = ({ name, label, error: externalError, hint, required, p
           </div>
         )}
         <Input
-          ref={fieldRef}
+          ref={inputRef ?? fieldRef}
           type={inputType}
           placeholder={placeholder}
           disabled={disabled}

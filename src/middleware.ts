@@ -5,12 +5,10 @@ import { getDashboardRoute } from "@/modules/auth/utils/workspace";
 const PUBLIC_PATHS = [
   "/",
   "/about",
-  "/company",
   "/contact",
   "/cookies",
   "/creators",
   "/privacy",
-  "/product",
   "/terms",
   "/auth/login",
   "/auth/register",
@@ -20,6 +18,7 @@ const PUBLIC_PATHS = [
   "/auth/verify-email",
   "/accept-invitation",
   "/auth/accept-invitation",
+  "/auth/signup-google",
   "/api/auth",
 ];
 
@@ -28,7 +27,6 @@ const isPublicPath = (pathname: string): boolean =>
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({
@@ -36,15 +34,33 @@ export async function middleware(req: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
+  const isGoogleHandoff = req.nextUrl.searchParams.get("google") === "1";
+  const isAuthenticated = Boolean(token?.user);
+
+  console.log("[Middleware]", pathname, {
+    isAuthenticated,
+    isGoogleHandoff,
+    hasToken: Boolean(token),
+    hasUser: Boolean(token?.user),
+  });
+
   if (isPublicPath(pathname)) {
-    if (token && pathname.startsWith("/auth")) {
-      const dashboard = getDashboardRoute(token.user?.workspace);
+    if (
+      isAuthenticated &&
+      pathname.startsWith("/auth") &&
+      !isGoogleHandoff &&
+      !pathname.includes("accept-invitation")
+    ) {
+      const dashboard = getDashboardRoute(token?.user?.workspace);
+      console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
+    console.log("[Middleware] public path, next");
     return NextResponse.next();
   }
 
   if (!token) {
+    console.log("[Middleware] no token, path not public → redirect to login");
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         {
@@ -69,6 +85,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  console.log("[Middleware] authenticated, next");
   return NextResponse.next();
 }
 

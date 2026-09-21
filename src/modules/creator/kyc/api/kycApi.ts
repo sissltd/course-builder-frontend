@@ -40,6 +40,12 @@ export interface SubmitKycPayload {
   date_of_birth: string;
 }
 
+export interface LivenessResult {
+  is_real: boolean;
+  score: number;
+  liveness_threshold: number;
+}
+
 export const DOCUMENT_TYPE_MAP: Record<string, KycDocumentType> = {
   "National ID (NIN)": "NATIONAL_ID",
   "Driver's License": "DRIVERS_LICENSE",
@@ -54,6 +60,8 @@ export const kycApi = BaseAPI.injectEndpoints({
         url: "/users/me/kyc/",
         method: "GET",
       }),
+      transformResponse: (response: { success: boolean; status: number; message: string; data: KycSubmission | null }) =>
+        response.data,
       providesTags: ["KycSubmission" as const],
     }),
 
@@ -65,7 +73,15 @@ export const kycApi = BaseAPI.injectEndpoints({
       }),
       invalidatesTags: ["KycSubmission" as const],
     }),
+
+    verifyLiveness: builder.mutation<LivenessResult, { photo: string }>({
+      query: (body) => ({
+        url: "/users/me/kyc/liveness/",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useGetMyKycQuery, useSubmitKycMutation } = kycApi;
+export const { useGetMyKycQuery, useSubmitKycMutation, useVerifyLivenessMutation } = kycApi;

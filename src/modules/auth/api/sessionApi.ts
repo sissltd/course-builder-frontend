@@ -5,6 +5,8 @@ import type {
   LogoutRequest,
   RefreshRequest,
   RefreshResponse,
+  GoogleLoginRequest,
+  GoogleSignupRequest,
 } from "@/modules/auth/types/auth";
 
 export const sessionApi = BaseAPI.injectEndpoints({
@@ -12,6 +14,20 @@ export const sessionApi = BaseAPI.injectEndpoints({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (body) => ({
         url: "/auth/login/",
+        method: "POST",
+        body,
+      }),
+    }),
+    googleLogin: builder.mutation<LoginResponse, GoogleLoginRequest>({
+      query: (body) => ({
+        url: "/auth/login/google/",
+        method: "POST",
+        body,
+      }),
+    }),
+    googleSignup: builder.mutation<LoginResponse, GoogleSignupRequest>({
+      query: (body) => ({
+        url: "/auth/signup/google/",
         method: "POST",
         body,
       }),
@@ -48,6 +64,8 @@ export const sessionApi = BaseAPI.injectEndpoints({
 
 export const {
   useLoginMutation,
+  useGoogleLoginMutation,
+  useGoogleSignupMutation,
   useReviewerLoginMutation,
   useLogoutMutation,
   useLogoutAllMutation,

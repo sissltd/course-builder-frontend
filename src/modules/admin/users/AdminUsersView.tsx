@@ -17,6 +17,7 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Pagination } from "@/components/shared/Pagination";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { formatApiErrors } from "@/lib/api/errors";
 import { format } from "date-fns";
 import {
   useGetUsersQuery,
@@ -100,6 +101,13 @@ const SORT_OPTIONS = [
   { label: "A-Z", value: "first_name" },
   { label: "Z-A", value: "-first_name" },
 ];
+
+interface ApiFailure {
+  data?: {
+    message?: string;
+    errors?: { message?: string; field_name?: string | null }[];
+  };
+}
 
 export const AdminUsersView = () => {
   // Query Filter States
@@ -202,8 +210,9 @@ export const AdminUsersView = () => {
       if (selectedUser?.id === suspendingUser.id) {
         setIsDrawerOpen(false);
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || err?.data?.errors?.[0]?.message || "Failed to suspend account";
+    } catch (err) {
+      const error = err as ApiFailure;
+      const msg = error?.data?.message || formatApiErrors(error?.data?.errors, "Failed to suspend account");
       toast.error(msg);
     }
   };
@@ -221,8 +230,9 @@ export const AdminUsersView = () => {
       if (selectedUser?.id === deactivatingUser.id) {
         setIsDrawerOpen(false);
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || err?.data?.errors?.[0]?.message || "Failed to deactivate account";
+    } catch (err) {
+      const error = err as ApiFailure;
+      const msg = error?.data?.message || formatApiErrors(error?.data?.errors, "Failed to deactivate account");
       toast.error(msg);
     }
   };
@@ -240,8 +250,9 @@ export const AdminUsersView = () => {
       if (selectedUser?.id === reinstatingUser.id) {
         setIsDrawerOpen(false);
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || err?.data?.errors?.[0]?.message || "Failed to reinstate account";
+    } catch (err) {
+      const error = err as ApiFailure;
+      const msg = error?.data?.message || formatApiErrors(error?.data?.errors, "Failed to reinstate account");
       toast.error(msg);
     }
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight2, Add } from "iconsax-react";
+import { ArrowRight2, Add, CloseCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/shared/Button";
 
@@ -20,6 +20,10 @@ interface BuilderSidebarProps {
   activeModuleIndex?: number;
   onChangeActiveModuleIndex?: (index: number) => void;
   onAddModule?: () => void;
+  onOpenFinalAssessment?: () => void;
+  finalAssessmentCount?: number;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const STEPS: { id: BuilderStep; label: string; collapsable?: boolean }[] = [
@@ -39,86 +43,136 @@ export const BuilderSidebar = ({
   modules,
   activeModuleIndex,
   onChangeActiveModuleIndex,
-  onAddModule
+  onAddModule,
+  onOpenFinalAssessment,
+  finalAssessmentCount = 0,
+  isOpen = false,
+  onClose
 }: BuilderSidebarProps) => {
   const activeIndex = stepsOrder.indexOf(activeStep);
 
   return (
-    <div className="w-[234px] h-full bg-[#FDFDFD] border-r border-[#F0F0F0] px-[20px] py-[40px] flex flex-col gap-[8px] shrink-0">
-      {STEPS.map((step) => {
-        const isActive = activeStep === step.id;
-        const isCompleted = stepsOrder.indexOf(step.id) < activeIndex;
-        
-        return (
-          <div key={step.id} className="flex flex-col w-full">
-            <button
-              type="button"
-              onClick={() => onChangeStep(step.id)}
-              className={cn(
-                "w-full h-[44px] flex items-center justify-between px-[10px] rounded-[12px] transition-colors text-left",
-                isActive ? "border-l-2 border-[#0A60E1] rounded-l-none" : "hover:bg-sd-grey-1"
-              )}
-            >
-              <span className={cn(
-                "text-[16px] leading-[24px] tracking-[-0.32px]",
-                isActive ? "text-[#0A60E1] font-semibold" : "text-[#606060] font-normal"
-              )}>
-                {step.label}
-              </span>
-              {isCompleted ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                  <circle cx="12" cy="12" r="10" stroke="#0A60E1" strokeWidth="2" fill="none" />
-                  <path d="M8 12.5L11 15.5L16 9" stroke="#0A60E1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ) : step.collapsable ? (
-                <ArrowRight2 
-                  size={20} 
-                  variant="Linear" 
-                  color={isActive ? "#0A60E1" : "#606060"} 
-                  className={cn("transition-transform duration-200", isActive && "rotate-90")}
-                />
-              ) : null}
-            </button>
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      <div
+        className={cn(
+          "w-[234px] h-full bg-[#FDFDFD] border-r border-[#F0F0F0] flex flex-col shrink-0 transition-transform duration-300",
+          "fixed left-0 top-0 z-40 h-dvh",
+          "md:static md:h-full md:z-auto md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
+        <div className="h-[52px] flex items-center justify-between px-[20px] border-b border-[#F0F0F0] md:hidden shrink-0">
+          <span className="text-[14px] font-semibold text-[#202020]">Steps</span>
+          <button
+            onClick={onClose}
+            className="p-1 text-[#606060] hover:text-[#202020] transition-colors cursor-pointer"
+            aria-label="Close sidebar"
+          >
+            <CloseCircle variant="Linear" size={20} color="currentColor" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-[8px] px-[20px] py-[40px] md:py-[40px] overflow-y-auto flex-1">
+          {STEPS.map((step) => {
+            const isActive = activeStep === step.id;
+            const isCompleted = stepsOrder.indexOf(step.id) < activeIndex;
+            
+            return (
+              <div key={step.id} className="flex flex-col w-full">
+                <button
+                  type="button"
+                  onClick={() => onChangeStep(step.id)}
+                  className={cn(
+                    "w-full h-[44px] flex items-center justify-between px-[10px] rounded-[12px] transition-colors text-left",
+                    isActive ? "border-l-2 border-[#0A60E1] rounded-l-none" : "hover:bg-sd-grey-1"
+                  )}
+                >
+                  <span className={cn(
+                    "text-[16px] leading-[24px] tracking-[-0.32px]",
+                    isActive ? "text-[#0A60E1] font-semibold" : "text-[#606060] font-normal"
+                  )}>
+                    {step.label}
+                  </span>
+                  {isCompleted ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                      <circle cx="12" cy="12" r="10" stroke="#0A60E1" strokeWidth="2" fill="none" />
+                      <path d="M8 12.5L11 15.5L16 9" stroke="#0A60E1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : step.collapsable ? (
+                    <ArrowRight2 
+                      size={20} 
+                      variant="Linear" 
+                      color={isActive ? "#0A60E1" : "#606060"} 
+                      className={cn("transition-transform duration-200", isActive && "rotate-90")}
+                    />
+                  ) : null}
+                </button>
 
-            {/* Sub-items for Course Modules step */}
-            {step.id === "modules" && isActive && modules && (
-              <div className="flex flex-col gap-[8px] pl-[20px] mt-[8px]">
-                {modules.map((m, idx) => {
-                  const isSelected = activeModuleIndex === idx;
-                  return (
+                {step.id === "modules" && isActive && modules && (
+                  <div className="flex flex-col gap-[8px] pl-[20px] mt-[8px]">
+                    {modules.map((m, idx) => {
+                      const isSelected = activeModuleIndex === idx;
+                      return (
+                        <button
+                          type="button"
+                          key={m.id}
+                          onClick={() => onChangeActiveModuleIndex?.(idx)}
+                          className="flex items-center gap-[12px] h-[32px] text-left hover:text-[#0A60E1] transition-colors group w-full"
+                        >
+                          <div className={cn(
+                            "size-[16px] rounded-full border flex items-center justify-center transition-all shrink-0",
+                            isSelected ? "border-[#0A60E1] border-[5px]" : "border-[#B6B6B6] group-hover:border-[#0A60E1]"
+                          )} />
+                          <span className={cn(
+                            "text-[14px] leading-[20px] tracking-[-0.28px] truncate",
+                            isSelected ? "text-[#0A60E1] font-semibold" : "text-[#606060]"
+                          )}>
+                            Module {idx + 1}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <Button
+                      variant="app-outline"
+                      isGhost
+                      onClick={onAddModule}
+                      className="h-[32px] text-[14px] text-[#606060] pl-[2px] justify-start"
+                      leftIcon={<Add size={16} variant="Linear" color="#606060" />}
+                    >
+                      Add
+                    </Button>
+
+                    <div className="w-full h-[1px] bg-[#F0F0F0] my-[4px]" />
+
                     <button
                       type="button"
-                      key={m.id}
-                      onClick={() => onChangeActiveModuleIndex?.(idx)}
+                      onClick={onOpenFinalAssessment}
                       className="flex items-center gap-[12px] h-[32px] text-left hover:text-[#0A60E1] transition-colors group w-full"
                     >
-                      <div className={cn(
-                        "size-[16px] rounded-full border flex items-center justify-center transition-all shrink-0",
-                        isSelected ? "border-[#0A60E1] border-[5px]" : "border-[#B6B6B6] group-hover:border-[#0A60E1]"
-                      )} />
-                      <span className={cn(
-                        "text-[14px] leading-[20px] tracking-[-0.28px] truncate",
-                        isSelected ? "text-[#0A60E1] font-semibold" : "text-[#606060]"
-                      )}>
-                        Module {idx + 1}
+                      <div className="size-[16px] rounded-full border border-[#B6B6B6] flex items-center justify-center transition-all shrink-0 group-hover:border-[#0A60E1]">
+                        {finalAssessmentCount > 0 && (
+                          <div className="size-[8px] rounded-full bg-[#0A60E1]" />
+                        )}
+                      </div>
+                      <span className="text-[14px] leading-[20px] tracking-[-0.28px] truncate text-[#606060] group-hover:text-[#0A60E1]">
+                        Assessment
+                      </span>
+                      <span className="ml-auto text-[12px] leading-[16px] text-[#B6B6B6]">
+                        {finalAssessmentCount}
                       </span>
                     </button>
-                  );
-                })}
-                <Button
-                  variant="app-outline"
-                  isGhost
-                  onClick={onAddModule}
-                  className="h-[32px] text-[14px] text-[#606060] pl-[2px] justify-start"
-                  leftIcon={<Add size={16} variant="Linear" color="#606060" />}
-                >
-                  Add
-                </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 };

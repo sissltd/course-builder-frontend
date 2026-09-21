@@ -1,7 +1,18 @@
 import type { Course, CourseModule } from "@/modules/creator/courses/types";
-import type { AssessmentQuestion, Assessment } from "@/modules/creator/courses/types/assessment";
-import type { QuizQuestionItem, QuizQuestionType, QuizOption } from "@/modules/creator/courses/types/quiz";
-import type { Module, Lesson, CourseInformationData, QuizQuestionData, QuizQuestion } from "@/redux/slices/courseBuilderSlice";
+import { QuestionType } from "@/modules/creator/courses/types/assessment";
+import type {
+  AssessmentQuestion,
+  Assessment,
+  AssessmentOption,
+  UpsertAssessmentRequest,
+} from "@/modules/creator/courses/types/assessment";
+import type { QuizQuestionItem } from "@/modules/creator/courses/types/quiz";
+import type {
+  Module,
+  Lesson,
+  CourseInformationData,
+  QuizQuestionData,
+} from "@/redux/slices/courseBuilderSlice";
 
 interface ApiLessonLike {
   id: string;
@@ -13,6 +24,8 @@ interface ApiLessonLike {
   duration_minutes?: number;
   learning_objectives?: string[];
   assessment?: Assessment | null;
+  content_type?: string;
+  requirements?: { id: string; text: string; order: number }[];
 }
 
 interface ApiModuleLike {
@@ -25,59 +38,70 @@ interface ApiModuleLike {
 }
 
 const mapContentType = (lesson: ApiLessonLike): Lesson["type"] => {
-  if (lesson.video_url || lesson.embedded_link) return "video";
-  if (lesson.assessment) return "quiz";
+  if (lesson.content_type === "VIDEO" || lesson.video_url || lesson.embedded_link) return "video";
   return "text";
 };
 
-const mapAssessmentQuestions = (
+const correctIndicesForQuestion = (q: AssessmentQuestion): number[] => {
+  if (q.type === QuestionType.ESSAY) return [];
+  if (q.type === QuestionType.MULTIPLE_CHOICE) {
+    if (q.correct_indices && q.correct_indices.length > 0) return q.correct_indices;
+    return q.correct_index !== undefined ? [q.correct_index] : [];
+  }
+  return q.correct_index !== undefined ? [q.correct_index] : [];
+};
+
+const optionText = (opt: AssessmentOption | { text?: string }): string =>
+  typeof opt === "string" ? opt : opt?.text ?? "";
+
+export const mapAssessmentQuestions = (
   questions: AssessmentQuestion[],
 ): QuizQuestionData[] => {
   return questions.map((q, idx) => {
-    if (q.type === "ESSAY") {
+    const id = `q-${idx}`;
+    if (q.type === QuestionType.ESSAY) {
       return {
+        id,
         question: q.question,
         type: "essay",
-        points: q.points,
+        points: q.points ?? 0,
         options: [],
-        correctAnswer: "",
-        explanation: q.explanation,
+        correctAnswer: q.expected_answer || "",
+        explanation: q.explanation || "",
       };
     }
+
+    const options = q.options.map((opt, oi) => ({
+      id: `${id}-${String.fromCharCode(97 + oi)}`,
+      label: String.fromCharCode(65 + oi),
+      value: optionText(opt),
+    }));
+    const correctIndices = correctIndicesForQuestion(q);
+    const explanation = q.explanation || "";
+
+    if (q.type === QuestionType.MULTIPLE_CHOICE) {
+      return {
+        id,
+        question: q.question,
+        type: "multiple",
+        points: q.points ?? 0,
+        options,
+        correctOptionIds: correctIndices
+          .map((index) => options[index]?.id)
+          .filter((optionId): optionId is string => Boolean(optionId)),
+        explanation,
+      };
+    }
+
     return {
+      id,
       question: q.question,
       type: "single",
-      points: q.points,
-      options: q.options.map((opt, oi) => ({
-        id: `${idx}-${String.fromCharCode(97 + oi)}`,
-        label: String.fromCharCode(65 + oi),
-        value: opt.text,
-      })),
+      points: q.points ?? 0,
+      options,
       correctOptionId:
-        q.options[q.correct_index]
-          ? `${idx}-${String.fromCharCode(97 + q.correct_index)}`
-          : undefined,
-      explanation: q.options[q.correct_index]?.explanation || "",
-    };
-  });
-};
-
-const mapAssessmentToQuizQuestions = (
-  questions: AssessmentQuestion[],
-): QuizQuestion[] => {
-  return questions.map((q) => {
-    if (q.type === "ESSAY") {
-      return {
-        question: q.question,
-        options: [],
-        correctAnswer: "",
-      };
-    }
-    const correctText = q.options[q.correct_index]?.text || "";
-    return {
-      question: q.question,
-      options: q.options.map((opt) => opt.text),
-      correctAnswer: correctText,
+        correctIndices[0] !== undefined ? options[correctIndices[0]]?.id : undefined,
+      explanation,
     };
   });
 };
@@ -89,6 +113,9 @@ export const apiModuleToRedux = (apiModule: CourseModule): Module => {
     const lessonQuizQuestions = l.assessment?.questions
       ? mapAssessmentQuestions(l.assessment.questions)
       : [];
+    const requirementsText = l.requirements
+      ? l.requirements.sort((a, b) => a.order - b.order).map((r) => r.text).join("\n\n")
+      : "";
     return {
       id: l.id,
       title: l.title,
@@ -98,16 +125,17 @@ export const apiModuleToRedux = (apiModule: CourseModule): Module => {
         : "0 Assessment",
       type,
       objectives: l.learning_objectives || [],
-      requirements: "",
+      requirements: requirementsText,
       content: l.script || "",
       videoScript: l.video_script_file || "",
-      embedLink: l.embedded_link || l.video_url || "",
+      videoUrl: l.video_url || "",
+      embedLink: l.embedded_link || "",
       quizQuestions: lessonQuizQuestions,
     };
   });
 
   const moduleQuizQuestions = apiMod.assessment?.questions
-    ? mapAssessmentToQuizQuestions(apiMod.assessment.questions)
+    ? mapAssessmentQuestions(apiMod.assessment.questions)
     : [];
 
   const objectives = Array.isArray(apiMod.learning_objectives)
@@ -156,128 +184,138 @@ export const apiCourseToCourseInfo = (
 };
 
 export const reduxLessonToApiPayload = (lesson: Lesson) => {
-  const durationParts = (lesson.duration || "0 mins").match(/(\d+)/);
+  const durationSource = lesson.type === "text"
+    ? (lesson.estimatedDuration || lesson.duration || "0 mins")
+    : (lesson.duration || "0 mins");
+  const durationParts = durationSource.match(/(\d+)/);
   const durationMinutes = durationParts
     ? parseInt(durationParts[1], 10)
     : 0;
 
+  const contentTypeMap: Record<string, string> = {
+    video: "VIDEO",
+    text: "TEXT",
+  };
+
   return {
     title: lesson.title,
     script: lesson.content || "",
+    video_url: lesson.type === "video" ? (lesson.videoUrl || "") : "",
     embedded_link: lesson.embedLink || "",
     video_script_file: lesson.videoScript || "",
     learning_objectives: lesson.objectives || [],
     duration_minutes: durationMinutes,
+    lesson_requirement: lesson.requirements || "",
+    content_type: contentTypeMap[lesson.type] || "TEXT",
   };
 };
 
 export const reduxQuizQuestionsToAssessment = (
   questions: QuizQuestionData[],
   title: string,
-): { title: string; questions: AssessmentQuestion[] } => {
+): UpsertAssessmentRequest => {
   return {
     title,
     questions: questions.map((q): AssessmentQuestion => {
+      const explanation = (q.explanation || "").trim();
+
       if (q.type === "essay") {
         return {
-          type: "ESSAY" as AssessmentQuestion["type"],
+          type: QuestionType.ESSAY,
           question: q.question,
           points: q.points || 0,
-          explanation: q.explanation || "",
-        } as AssessmentQuestion;
+          expected_answer: q.correctAnswer || "",
+          ...(explanation ? { explanation } : {}),
+        };
       }
-      const correctIdx = q.options.findIndex(
-        (opt) => opt.id === q.correctOptionId,
-      );
+
+      if (q.type === "multiple") {
+        const correctIds = new Set(q.correctOptionIds || []);
+        const indices: number[] = [];
+        q.options.forEach((opt, oi) => {
+          if (correctIds.has(opt.id)) indices.push(oi);
+        });
+        return {
+          type: QuestionType.MULTIPLE_CHOICE,
+          question: q.question,
+          points: q.points || 0,
+          options: q.options.map((opt) => opt.value),
+          ...(explanation ? { explanation } : {}),
+          correct_indices: indices.length > 0 ? indices : [0],
+        };
+      }
+
+      const correctIdx = q.options.findIndex((opt) => opt.id === q.correctOptionId);
+      const resolvedCorrect = correctIdx >= 0 ? correctIdx : 0;
       return {
-        type: "MULTIPLE_CHOICE" as AssessmentQuestion["type"],
+        type: QuestionType.SINGLE_CHOICE,
         question: q.question,
         points: q.points || 0,
-        options: q.options.map((opt) => ({
-          text: opt.value,
-          explanation: "",
-        })),
-        correct_index: correctIdx >= 0 ? correctIdx : 0,
-      } as AssessmentQuestion;
+        options: q.options.map((opt) => opt.value),
+        ...(explanation ? { explanation } : {}),
+        correct_index: resolvedCorrect,
+      };
     }),
   };
 };
 
-export const apiQuizQuestionsToRedux = (
+export const mapFinalAssessmentQuestions = (
+  assessment: Assessment | null | undefined,
+): QuizQuestionData[] => {
+  if (!assessment?.questions?.length) return [];
+  return mapAssessmentQuestions(assessment.questions);
+};
+
+export const apiRelationalQuestionsToRedux = (
   questions: QuizQuestionItem[],
 ): QuizQuestionData[] => {
-  return questions.map((q) => {
+  return questions.map((q, idx) => {
+    const id = `q-${idx}`;
     if (q.question_type === "ESSAY") {
       return {
+        id,
         question: q.question_text,
         type: "essay",
-        points: q.points,
+        points: q.points ?? 0,
         options: [],
-        explanation: q.model_response_guide || "",
+        correctAnswer: q.model_response_guide || "",
+        explanation: q.explanation || "",
       };
     }
-    const correctIdx = q.options.findIndex((opt) => opt.is_correct);
+
+    const options = q.options.map((opt, oi) => ({
+      id: `${id}-${String.fromCharCode(97 + oi)}`,
+      label: String.fromCharCode(65 + oi),
+      value: opt.option_text,
+    }));
+    const correctIndices = q.options
+      .map((opt, oi) => (opt.is_correct ? oi : -1))
+      .filter((oi) => oi >= 0);
+    const explanation = q.explanation || "";
+
+    if (q.question_type === "MULTIPLE_CHOICE") {
+      return {
+        id,
+        question: q.question_text,
+        type: "multiple",
+        points: q.points ?? 0,
+        options,
+        correctOptionIds: correctIndices
+          .map((index) => options[index]?.id)
+          .filter((optionId): optionId is string => Boolean(optionId)),
+        explanation,
+      };
+    }
+
     return {
+      id,
       question: q.question_text,
       type: "single",
-      points: q.points,
-      options: q.options.map((opt, oi) => ({
-        id: opt.id || `${q.id || "q"}-${oi}`,
-        label: String.fromCharCode(65 + oi),
-        value: opt.option_text,
-      })),
+      points: q.points ?? 0,
+      options,
       correctOptionId:
-        correctIdx >= 0
-          ? q.options[correctIdx].id || `${q.id || "q"}-${correctIdx}`
-          : undefined,
-      explanation:
-        q.options.find((opt) => opt.is_correct)?.explanation || "",
-    };
-  });
-};
-
-export const reduxQuizQuestionsToApiQuestions = (
-  questions: QuizQuestionData[],
-): { question_text: string; question_type: QuizQuestionType; points: number; model_response_guide: string; order: number; options: QuizOption[] }[] => {
-  return questions.map((q, idx) => {
-    if (q.type === "essay") {
-      return {
-        question_text: q.question,
-        question_type: "ESSAY" as QuizQuestionType,
-        points: q.points || 0,
-        model_response_guide: q.explanation || "",
-        order: idx,
-        options: [],
-      };
-    }
-    return {
-      question_text: q.question,
-      question_type: "MULTIPLE_CHOICE" as QuizQuestionType,
-      points: q.points || 0,
-      model_response_guide: "",
-      order: idx,
-      options: q.options.map((opt, oi) => ({
-        option_text: opt.value,
-        is_correct: opt.id === q.correctOptionId,
-        explanation: opt.id === q.correctOptionId ? (q.explanation || "") : "",
-        order: oi,
-      })),
-    };
-  });
-};
-
-export const apiQuizQuestionsToModuleQuiz = (
-  questions: QuizQuestionItem[],
-): { question: string; options: string[]; correctAnswer: string }[] => {
-  return questions.map((q) => {
-    if (q.question_type === "ESSAY") {
-      return { question: q.question_text, options: [], correctAnswer: "" };
-    }
-    const correct = q.options.find((o) => o.is_correct);
-    return {
-      question: q.question_text,
-      options: q.options.map((o) => o.option_text),
-      correctAnswer: correct?.option_text || "",
+        correctIndices[0] !== undefined ? options[correctIndices[0]]?.id : undefined,
+      explanation,
     };
   });
 };

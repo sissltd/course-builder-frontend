@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ReduxProvider } from "@/redux/providers";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { AiGenerationPollingProvider } from "@/components/shared/AiGenerationPollingProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,7 +36,9 @@ export default function RootLayout({
         <ReduxProvider>
           <AuthProvider>
             <TooltipProvider>
-              {children}
+              <AiGenerationPollingProvider>
+                {children}
+              </AiGenerationPollingProvider>
             </TooltipProvider>
           </AuthProvider>
         </ReduxProvider>

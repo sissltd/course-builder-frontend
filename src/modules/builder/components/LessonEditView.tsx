@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Trash,
   Add,
@@ -10,9 +10,7 @@ import {
   Edit2,
   Timer1,
   Book,
-  More,
   DocumentText,
-  DocumentCode2,
 } from "iconsax-react";
 import Image from "next/image";
 import { useForm, FormProvider, Controller } from "react-hook-form";
@@ -27,8 +25,8 @@ import { RichTextEditor, RichTextEditorHandle } from "./RichTextEditor";
 import { AddMediaModal } from "./AddMediaModal";
 import { QuizSummaryDisplay } from "./QuizSummaryDisplay";
 import { useAppDispatch, useAppSelector } from "@/redux";
-import { setQuestions } from "@/redux/slices/quizBuilderSlice";
 import { setEditingQuiz } from "@/redux/slices/courseBuilderSlice";
+import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 
 interface LessonEditViewProps {
   lesson: Lesson;
@@ -52,6 +50,8 @@ export const LessonEditView = ({
     "image" | "video" | "embed"
   >("image");
   const pendingMediaCallbackRef = useRef<((url: string) => void) | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, isUploading, progress, result, error: uploadError, reset: resetUpload } = useUploadFile();
 
   const openMediaModal = (
     type: "image" | "video" | "embed",
@@ -67,6 +67,53 @@ export const LessonEditView = ({
     pendingMediaCallbackRef.current = null;
   };
 
+  const getVideoDuration = (file: File): Promise<number | null> =>
+    new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        resolve(video.duration && isFinite(video.duration) ? video.duration : null);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      video.src = url;
+    });
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.max(1, Math.round(seconds / 60));
+    return `${mins} mins`;
+  };
+
+  const parseDurationMinutes = (value?: string): string => {
+    const match = (value || "").match(/\d+/);
+    return match ? match[0] : "0";
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const [res, duration] = await Promise.all([
+        upload(file, { folder: "general" }),
+        getVideoDuration(file),
+      ]);
+      onUpdateLesson({
+        ...lesson,
+        videoUrl: res.file_url,
+        mediaFileName: file.name,
+        ...(duration !== null ? { duration: formatDuration(duration) } : {}),
+      });
+      resetUpload();
+    } catch {
+      // error handled by useUploadFile
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const methods = useForm<LessonFormData>({
     resolver: zodResolver(lessonSchema),
     mode: "onBlur",
@@ -74,6 +121,7 @@ export const LessonEditView = ({
       id: lesson.id,
       title: lesson.title,
       duration: lesson.duration,
+      estimatedDuration: lesson.estimatedDuration,
       assessments: lesson.assessments,
       type: lesson.type,
       objectives: lesson.objectives,
@@ -81,7 +129,6 @@ export const LessonEditView = ({
       content: lesson.content || "",
       embedLink: lesson.embedLink || "",
       videoScript: lesson.videoScript || "",
-      quizQuestions: lesson.quizQuestions,
     },
   });
 
@@ -92,8 +139,17 @@ export const LessonEditView = ({
   const [videoScript, setVideoScript] = useState(lesson.videoScript || "");
   const [isAddingObjective, setIsAddingObjective] = useState(false);
   const [newObjective, setNewObjective] = useState("");
+  const objectiveInputRef = useRef<HTMLInputElement>(null);
+  const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<number | null>(null);
+  const [editingObjectiveValue, setEditingObjectiveValue] = useState("");
 
-  const handleUpdateField = (field: keyof Lesson, value: any) => {
+  useEffect(() => {
+    if (isAddingObjective) {
+      objectiveInputRef.current?.focus();
+    }
+  }, [isAddingObjective]);
+
+  const handleUpdateField = <K extends keyof Lesson>(field: K, value: Lesson[K]) => {
     onUpdateLesson({
       ...lesson,
       [field]: value,
@@ -110,10 +166,34 @@ export const LessonEditView = ({
     }
   };
 
+  const handleStartEditObjective = (idx: number, value: string) => {
+    setEditingObjectiveIndex(idx);
+    setEditingObjectiveValue(value);
+  };
+
+  const handleCancelEditObjective = () => {
+    setEditingObjectiveIndex(null);
+    setEditingObjectiveValue("");
+  };
+
+  const handleSaveEditObjective = () => {
+    if (editingObjectiveIndex === null) return;
+    const trimmed = editingObjectiveValue.trim();
+    if (!trimmed) return;
+    const updated = [...(lesson.objectives || [])];
+    updated[editingObjectiveIndex] = trimmed;
+    handleUpdateField("objectives", updated);
+    methods.setValue("objectives", updated);
+    handleCancelEditObjective();
+  };
+
   const handleRemoveObjective = (idx: number) => {
     const updated = (lesson.objectives || []).filter((_, i) => i !== idx);
     handleUpdateField("objectives", updated);
     methods.setValue("objectives", updated);
+    if (editingObjectiveIndex === idx) {
+      handleCancelEditObjective();
+    }
   };
 
   const onSubmit = (data: LessonFormData) => {
@@ -125,7 +205,7 @@ export const LessonEditView = ({
       embedLink: data.embedLink || "",
       videoScript: data.videoScript || "",
       objectives: data.objectives || [],
-      quizQuestions: data.quizQuestions || [],
+      estimatedDuration: data.estimatedDuration,
     });
     onBack();
   };
@@ -292,35 +372,77 @@ export const LessonEditView = ({
     <FormProvider {...methods}>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex h-full w-full bg-white overflow-hidden"
+        className="flex flex-col md:flex-row h-full w-full bg-white overflow-hidden"
       >
         {/* Main Content Workspace Panel */}
-        <div className="flex-1 overflow-y-auto px-[40px] py-[40px] flex flex-col gap-[36px]">
+        <div className="flex-1 overflow-y-auto px-[16px] py-[24px] md:px-[40px] md:py-[40px] flex flex-col gap-[24px] md:gap-[36px] min-w-0">
           {/* Workspace Title & Toolbar Header Row */}
-          <div className="flex items-start justify-between w-full">
+          <div className="flex flex-col gap-[16px] md:flex-row md:items-start md:justify-between w-full">
             <div className="flex gap-[12px] items-start flex-1">
               <span className="mt-[2px] text-sd-grey-9 shrink-0">
                 {lesson.type === "video" && <VideoPlay size={32} variant="Linear" color="#8C8C8C" />}
-                {lesson.type === "quiz" && <DocumentCode2 size={32} variant="Linear" color="#8C8C8C" />}
                 {lesson.type === "text" && <DocumentText size={32} variant="Linear" color="#8C8C8C" />}
               </span>
               <div className="flex flex-col gap-[6px] flex-1">
+                <label
+                  htmlFor={`lesson-title-${lesson.id}`}
+                  className="text-[12px] font-medium text-[#606060]"
+                >
+                  Lesson title <span className="text-[#FF5025]">*</span>
+                </label>
                 <Controller
                   name="title"
                   control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      placeholder="Add lesson title..."
-                      className="w-full text-[28px] font-semibold text-[#202020] border-none outline-none focus:ring-0 placeholder-[#B6B6B6] bg-transparent p-0 leading-tight"
-                    />
+                  render={({ field, fieldState }) => (
+                    <>
+                      <input
+                        {...field}
+                        id={`lesson-title-${lesson.id}`}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleUpdateField("title", e.target.value);
+                        }}
+                        placeholder="Add lesson title..."
+                        aria-invalid={Boolean(fieldState.error)}
+                        className={`w-full text-[18px] md:text-[22px] font-semibold text-[#202020] rounded-[8px] border bg-white px-[12px] py-[8px] outline-none transition-colors placeholder-[#B6B6B6] ${
+                          fieldState.error
+                            ? "border-[#FF5025] focus:border-[#FF5025]"
+                            : "border-[#D9D9D9] focus:border-[#0063EF]"
+                        }`}
+                      />
+                      {fieldState.error && (
+                        <span className="text-[12px] text-[#FF5025]">
+                          {fieldState.error.message}
+                        </span>
+                      )}
+                    </>
                   )}
                 />
                 <div className="flex items-center gap-[12px] mt-[4px]">
-                  <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
-                    <Timer1 size={16} variant="Linear" color="#8C8C8C" />
-                    <span>{lesson.duration}</span>
-                  </div>
+                  {lesson.type === "text" ? (
+                    <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
+                      <Timer1 size={16} variant="Linear" color="#8C8C8C" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={parseDurationMinutes(lesson.estimatedDuration || lesson.duration)}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
+                          const minutes = digits === "" ? "0" : String(parseInt(digits, 10));
+                          handleUpdateField("estimatedDuration", `${minutes} mins`);
+                          methods.setValue("estimatedDuration", `${minutes} mins`);
+                        }}
+                        placeholder="0"
+                        className="text-[12px] text-[#8C8C8C] bg-transparent border-none outline-none focus:ring-0 w-[32px] text-center placeholder-[#B6B6B6]"
+                      />
+                      <span>mins</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
+                      <Timer1 size={16} variant="Linear" color="#8C8C8C" />
+                      <span>{lesson.duration}</span>
+                    </div>
+                  )}
                   <span className="size-[3px] bg-[#B6B6B6] rounded-full" />
                   <div className="flex items-center gap-[6px] text-[12px] text-[#8C8C8C]">
                     <Book size={16} variant="Linear" color="#8C8C8C" />
@@ -338,59 +460,104 @@ export const LessonEditView = ({
                 onClick={onBack}
                 leftIcon={<Trash size={24} variant="Linear" color="#FF6B00" />}
               />
-              {lesson.type !== "quiz" && (
-                <Button
-                  type="button"
-                  variant="app-outline"
-                  className="h-[40px] px-[16px] text-[14px] text-[#0063EF] border-[#0063EF]"
-                  leftIcon={
-                    <Image
-                      src="/images/builder/preview-play.svg"
-                      alt="Preview"
-                      width={24}
-                      height={24}
-                    />
-                  }
-                >
-                  Preview
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="app-outline"
+                className="h-[40px] px-[16px] text-[14px] text-[#0063EF] border-[#0063EF]"
+                leftIcon={
+                  <Image
+                    src="/images/builder/preview-play.svg"
+                    alt="Preview"
+                    width={24}
+                    height={24}
+                  />
+                }
+              >
+                Preview
+              </Button>
             </div>
           </div>
-
-          {/* Quiz type — read-only summary */}
-          {lesson.type === "quiz" ? (
-            <div className="border border-[#E8E8E8] rounded-[16px] p-[24px] bg-white flex-1">
-              <QuizSummaryDisplay questions={lesson.quizQuestions || []} />
-            </div>
-          ) : null}
 
           {/* Media Block Upload Container — only for video lessons */}
           {lesson.type === "video" && (
             <div className="bg-[rgba(240,240,240,0.8)] px-[16px] py-[20px] rounded-[16px] flex flex-col gap-[16px] items-start w-full">
-              <div className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full">
-                <div className="flex flex-col gap-[24px] items-center text-center w-full">
-                  <div className="flex flex-col gap-[8px] items-center text-center w-full">
-                    <p className="text-[20px] font-medium text-[#202020] leading-[28px]">
-                      Add Media
-                    </p>
-                    <p className="text-[14px] text-[#636363] tracking-[-0.28px] leading-[20px]">
-                      Drag your video/Image file or embed from Vimeo, YouTube,
-                      Wistia, Typeform and more.
-                    </p>
-                    <p className="text-[14px] text-[#202020] tracking-[-0.28px] leading-[20px]">
-                      (Media size 1280x720px, (1080p) Max 500mb)
-                    </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*,image/*"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+
+              {isUploading ? (
+                <div className="bg-[#FCFDFF] border-2 border-[#0A60E1] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full gap-[16px]">
+                  <div className="w-[48px] h-[48px] border-4 border-[#E8E8E8] border-t-[#0A60E1] rounded-full animate-spin" />
+                  <p className="text-[16px] font-medium text-[#202020]">Uploading... {progress}%</p>
+                  <div className="w-[280px] h-[6px] bg-[#E8E8E8] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#0A60E1] rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
-              <Button
-                  type="button"
-                  variant="app-outline"
-                  className="h-[40px] px-[24px] py-[12px] text-[14px] font-normal text-sd-blue border-sd-blue hover:bg-sd-blue/5 bg-transparent"
-                >
-                  Upload media
-                </Button>
+                  <p className="text-[14px] text-[#636363]">Please do not close this page</p>
                 </div>
-              </div>
+              ) : lesson.videoUrl ? (
+                <div className="flex flex-col items-center w-full gap-[12px]">
+                  <video
+                    src={lesson.videoUrl}
+                    controls
+                    className="w-full h-[400px] rounded-[8px] bg-black object-contain"
+                  />
+                  <div className="flex items-center gap-[12px]">
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      className="h-[36px] px-[16px] text-[13px] text-[#0A60E1] border-[#0A60E1]"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      isGhost
+                      className="h-[36px] px-[16px] text-[13px] text-[#FF6B00]"
+                      onClick={() => onUpdateLesson({ ...lesson, videoUrl: "", mediaFileName: "" })}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#FCFDFF] border-2 border-[#D9D9D9] border-dashed flex flex-col h-[289px] items-center justify-center p-[24px] rounded-[8px] w-full">
+                  <div className="flex flex-col gap-[24px] items-center text-center w-full">
+                    <div className="flex flex-col gap-[8px] items-center text-center w-full">
+                      <p className="text-[20px] font-medium text-[#202020] leading-[28px]">
+                        Add Media
+                      </p>
+                      <p className="text-[14px] text-[#636363] tracking-[-0.28px] leading-[20px]">
+                        Drag your video/Image file or embed from Vimeo, YouTube,
+                        Wistia, Typeform and more.
+                      </p>
+                      <p className="text-[14px] text-[#202020] tracking-[-0.28px] leading-[20px]">
+                        (Media size 1280x720px, (1080p) Max 500mb)
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="app-outline"
+                      className="h-[40px] px-[24px] py-[12px] text-[14px] font-normal text-sd-blue border-sd-blue hover:bg-sd-blue/5 bg-transparent"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload media
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {uploadError && (
+                <p className="text-[13px] text-[#FF5025] w-full">{uploadError}</p>
+              )}
 
               {/* Embedded link */}
               <div className="w-full">
@@ -399,7 +566,10 @@ export const LessonEditView = ({
                   label="Embedded link"
                   placeholder="Paste link here"
                   value={embedLink}
-                  onChange={(e) => setEmbedLink(e.target.value)}
+                  onChange={(e) => {
+                    setEmbedLink(e.target.value);
+                    handleUpdateField("embedLink", e.target.value);
+                  }}
                 />
               </div>
 
@@ -482,24 +652,77 @@ export const LessonEditView = ({
                     key={oIdx}
                     className="bg-white border border-[#D9D9D9] px-[20px] py-[16px] rounded-[8px] flex items-start justify-between w-full hover:border-[#B6B6B6] transition-all"
                   >
-                    <div className="flex gap-[8px] items-start flex-1">
-                      <span className="text-[16px] font-normal text-[#202020] leading-[24px] tracking-[-0.32px] whitespace-nowrap">
-                        1.{oIdx + 1}
-                      </span>
-                      <span className="text-[16px] font-normal text-[#606060] leading-[24px] tracking-[-0.32px]">
-                        {obj}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-[16px] ml-[24px] shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveObjective(oIdx)}
-                        className="p-0 bg-transparent border-none cursor-pointer"
-                      >
-                        <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
-                      </button>
-                      <More size={20} variant="Linear" color="#606060" className="opacity-40 cursor-grab" />
-                    </div>
+                    {editingObjectiveIndex === oIdx ? (
+                      <div className="flex items-center gap-[12px] w-full">
+                        <input
+                          type="text"
+                          value={editingObjectiveValue}
+                          onChange={(e) => setEditingObjectiveValue(e.target.value)}
+                          placeholder="Enter learning objective"
+                          className="flex-1 h-[40px] bg-transparent border-none outline-none text-[16px] text-[#202020]"
+                          autoFocus
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleSaveEditObjective();
+                            } else if (e.key === "Escape") {
+                              handleCancelEditObjective();
+                            }
+                          }}
+                        />
+                        <div className="flex items-center gap-[12px] shrink-0">
+                          <Button
+                            type="button"
+                            variant="app-outline"
+                            isGhost
+                            onClick={handleSaveEditObjective}
+                            className="text-[14px] text-[#0A60E1] font-semibold"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="app-outline"
+                            isGhost
+                            onClick={handleCancelEditObjective}
+                            className="text-[14px] text-[#606060]"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-[8px] items-start flex-1">
+                          <span className="text-[16px] font-normal text-[#202020] leading-[24px] tracking-[-0.32px] whitespace-nowrap">
+                            1.{oIdx + 1}
+                          </span>
+                          <span className="text-[16px] font-normal text-[#606060] leading-[24px] tracking-[-0.32px]">
+                            {obj}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-[16px] ml-[24px] shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditObjective(oIdx, obj)}
+                            title="Edit objective"
+                            aria-label="Edit objective"
+                            className="p-0 bg-transparent border-none cursor-pointer"
+                          >
+                            <Edit2 size={20} variant="Linear" color="#606060" className="hover:text-[#0A60E1] transition-colors" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveObjective(oIdx)}
+                            title="Remove objective"
+                            aria-label="Remove objective"
+                            className="p-0 bg-transparent border-none cursor-pointer"
+                          >
+                            <Trash size={20} variant="Linear" color="#606060" className="hover:text-[#FF6B00] transition-colors" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
 
@@ -513,6 +736,7 @@ export const LessonEditView = ({
                       containerClassName="flex-1"
                       className="border-none focus:ring-0 focus-visible:border-none h-[40px] text-[14px] text-[#202020] bg-transparent"
                       autoFocus
+                      inputRef={objectiveInputRef}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === "Enter") handleAddObjective();
                         else if (e.key === "Escape")
@@ -562,8 +786,7 @@ export const LessonEditView = ({
           </div>
 
           {/* Lessons Requirement Text Editor Section — shown for video and text */}
-          {lesson.type !== "quiz" && (
-            <div className="flex flex-col gap-[18px] w-full">
+          <div className="flex flex-col gap-[18px] w-full">
               <div className="flex items-center justify-between w-full">
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">
                   Lessons Requirement
@@ -599,26 +822,13 @@ export const LessonEditView = ({
                 />
               </div>
             </div>
-          )}
 
           {/* Quiz Section — shown for all lesson types */}
-          {lesson.type !== "quiz" && (
-            <div className="flex flex-col gap-[18px] w-full">
+          <div className="flex flex-col gap-[18px] w-full">
               <div className="flex items-center justify-between w-full">
                 <h3 className="text-[20px] font-medium text-[#202020] leading-[28px]">
                   Quiz
                 </h3>
-                <Button
-                  type="button"
-                  variant="app-outline"
-                  isGhost
-                  className="text-[14px] text-[#636363]"
-                >
-                  <span>More</span>
-                  <div className="rotate-90 ml-[4px]">
-                    <span className="text-[16px] font-bold">...</span>
-                  </div>
-                </Button>
               </div>
 
               <div className="border border-[#E8E8E8] rounded-[16px] p-[24px] bg-white flex flex-col gap-[16px] w-full">
@@ -640,29 +850,7 @@ export const LessonEditView = ({
                   isGhost
                   onClick={() => {
                     if (editingLesson) {
-                      dispatch(setQuestions(
-                        (lesson.quizQuestions || []).map((q: any, i) => ({
-                          id: q.id || `${i}`,
-                          question: q.question,
-                          type: q.type || "single",
-                          points: q.points || 0,
-                          options: (q.options || []).map((opt: any, oi: number) => {
-                            if (typeof opt === "string") {
-                              return {
-                                id: `${i}-${String.fromCharCode(97 + oi)}`,
-                                label: String.fromCharCode(65 + oi),
-                                value: opt,
-                              };
-                            }
-                            return { ...opt };
-                          }),
-                          correctOptionId: q.correctOptionId || undefined,
-                          correctOptionIds: q.correctOptionIds || undefined,
-                          correctAnswer: q.correctAnswer || undefined,
-                          explanation: (q as any).explanation || "",
-                        }))
-                      ));
-                      dispatch(setEditingQuiz({ moduleId: editingLesson.moduleId, lessonId: editingLesson.lessonId }));
+                      dispatch(setEditingQuiz({ level: "lesson", moduleId: editingLesson.moduleId, lessonId: editingLesson.lessonId }));
                     }
                   }}
                   className="text-[#0A60E1] text-[16px] font-normal tracking-[-0.32px] h-[32px] px-[12px]"
@@ -674,10 +862,9 @@ export const LessonEditView = ({
                 </Button>
               </div>
             </div>
-          )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
+          <div className="flex flex-col-reverse gap-[12px] sm:flex-row sm:items-center sm:justify-between w-full pt-[24px] border-t border-[#F0F0F0]">
             <Button
               type="button"
               variant="app-outline"
@@ -702,17 +889,17 @@ export const LessonEditView = ({
 
         {/* Right Sidebar - Component layout blocks — only for text lessons */}
         {lesson.type === "text" && (
-          <div className="w-[337px] h-full bg-[#FDFDFD] border-l border-[#F0F0F0] px-[20px] py-[32px] flex flex-col gap-[20px] shrink-0 overflow-y-auto">
+          <div className="w-full md:w-[337px] shrink-0 bg-[#FDFDFD] border-t md:border-t-0 md:border-l border-[#F0F0F0] px-[16px] py-[16px] md:px-[20px] md:py-[32px] flex flex-col gap-[12px] md:gap-[20px] overflow-x-auto md:overflow-x-visible md:overflow-y-auto order-first md:order-none">
             <span className="text-[14px] font-semibold text-[#202020] tracking-[-0.28px]">
               General
             </span>
-            <div className="grid grid-cols-3 gap-[10px] w-full">
+            <div className="flex md:grid md:grid-cols-3 gap-[10px] w-full overflow-x-auto md:overflow-x-visible">
               {GENERAL_BLOCKS.map((block, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={block.action}
-                  className="h-[78px] w-[92px] border border-[#F0F0F0] rounded-[8px] hover:border-[#D9D9D9] hover:shadow-sm bg-white cursor-pointer flex flex-col items-center justify-center gap-[8px] transition-all shrink-0"
+                  className="h-[78px] w-[92px] shrink-0 border border-[#F0F0F0] rounded-[8px] hover:border-[#D9D9D9] hover:shadow-sm bg-white cursor-pointer flex flex-col items-center justify-center gap-[8px] transition-all"
                 >
                   <span className="flex items-center justify-center size-[24px] text-[#0A60E1]">
                     {block.icon}

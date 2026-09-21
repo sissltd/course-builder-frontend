@@ -53,6 +53,21 @@ export {
 } from "../api/lessonsApi";
 
 export {
+  useGetCategoriesQuery,
+  useGetCategoryQuery,
+} from "@/modules/categories/api/categoriesApi";
+
+export {
+  useGetCategoryPickerQuery,
+  useGetCategoryPickerQuery as useGetCategoriesPickerQuery,
+} from "@/modules/categories/api/categoryPickerApi";
+
+export {
+  useGetTopicsQuery,
+  useGetTopicQuery,
+} from "@/modules/topics/api/topicsApi";
+
+export {
   useGetCourseVersionsQuery,
 } from "../api/courseVersionsApi";
 
@@ -60,3 +75,15 @@ export {
   useGetCategoryRequestsQuery,
   useCreateCategoryRequestMutation,
 } from "../api/categoryRequestsApi";
+
+export {
+  useCreateGenerationMutation,
+  useGetGenerationJobQuery,
+  useCancelGenerationMutation,
+} from "../api/aiGenerationApi";
+
+export {
+  useCreateCourseFromImportMutation,
+  useCreateModuleForImportMutation,
+  useCreateLessonForImportMutation,
+} from "../api/documentImportApi";

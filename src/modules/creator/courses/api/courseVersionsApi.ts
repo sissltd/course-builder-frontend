@@ -3,7 +3,7 @@ import { BaseAPI } from "@/redux/baseApi";
 export interface CourseVersion {
   id: string;
   label: string;
-  is_active: boolean;
+  is_active?: boolean;
 }
 
 export const courseVersionsApi = BaseAPI.injectEndpoints({
@@ -13,7 +13,8 @@ export const courseVersionsApi = BaseAPI.injectEndpoints({
         url: "/course-versions/",
         method: "GET",
       }),
-      transformResponse: (response: CourseVersion[]) => response,
+      transformResponse: (response: { data?: { results?: CourseVersion[] } }) =>
+        response?.data?.results ?? [],
     }),
   }),
 });

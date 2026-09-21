@@ -128,7 +128,7 @@ export default function CreateCourseView() {
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => Math.max(0, s - 1));
 
-  const filteredCategories = categories.filter(c =>
+  const filteredCategories = (categories ?? []).filter(c =>
     c.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 
@@ -153,7 +153,15 @@ export default function CreateCourseView() {
 
   const handleMethodNext = async () => {
     const isValid = await trigger(["creationMethod"]);
-    if (isValid) nextStep();
+    if (isValid) {
+      if (method === "ai") {
+        router.push(CreatorRoute.COURSES_AI_CREATE);
+      } else if (method === "import") {
+        router.push(CreatorRoute.COURSES_IMPORT);
+      } else {
+        nextStep();
+      }
+    }
   };
 
   const handleCategoryNext = async () => {
@@ -415,7 +423,7 @@ export default function CreateCourseView() {
               )}
             >
               <span className={cn("text-[14px]", selectedCategory ? "text-[#202020] font-semibold" : "text-[#B6B6B6]")}>
-                {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || "Selected" : "Select option"}
+                {selectedCategory ? (categories ?? []).find(c => c.id === selectedCategory)?.name || "Selected" : "Select option"}
               </span>
               <RightArrowIcon />
             </button>
