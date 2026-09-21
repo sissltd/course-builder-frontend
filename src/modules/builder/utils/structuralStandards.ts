@@ -27,7 +27,7 @@ export const STRUCTURAL_LIMITS = {
   modules: { min: 4, max: 12 },
   moduleLessons: { min: 3, max: 8 },
   lessonObjectives: { min: 2, max: 5 },
-  lessonScriptWords: { min: 500, max: 1500 },
+
   finalAssessmentQuestions: { min: 15 },
 } as const;
 
@@ -59,9 +59,6 @@ const build = (
   actual: String(value),
   passed: isWithin(value, min, max),
 });
-
-const scriptWords = (lesson: Lesson): number =>
-  countWords(lesson.videoScript ?? lesson.content);
 
 const lessonDurationMinutes = (lesson: Lesson): number => {
   const source =
@@ -182,18 +179,7 @@ export const evaluateStructuralStandards = ({
         ),
       );
 
-      if (lesson.type === "video") {
-        standards.push(
-          build(
-            `lesson-script-${lesson.id}`,
-            `Lesson '${lessonName}' script`,
-            scriptWords(lesson),
-            STRUCTURAL_LIMITS.lessonScriptWords.min,
-            STRUCTURAL_LIMITS.lessonScriptWords.max,
-            "words",
-          ),
-        );
-      }
+
     }
   }
 
