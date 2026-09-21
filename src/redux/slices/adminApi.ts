@@ -212,24 +212,72 @@ export interface ActivityLogParams {
   size?: number;
 }
 
-export interface KycUser {
-  id: string;
-  email: string;
+/**
+ * The identity fields both sides of a submission carry.
+ *
+ * Absence has no single sentinel here: a missing value arrives as `null`, as
+ * `""`, and — for `address.address` — sometimes as whitespace only. Callers
+ * must trim before testing for emptiness; see `clean` in the kyc-review lib.
+ */
+export interface KycIdentityData {
   first_name: string;
   last_name: string;
+  date_of_birth: string | null;
+  sex: string;
+  address: { address: string; state: string } | null;
+  phone: string;
 }
 
+/**
+ * What the KYC provider returned. Every field is empty when the provider found
+ * nothing, which is what `kyc_request_status` reports — so an all-empty
+ * `api_data` is a normal state, not a broken response.
+ */
+export interface KycApiData extends KycIdentityData {
+  document_image: string | null;
+}
+
+/**
+ * What the user submitted. `image` is their upload, handed out as a **signed
+ * URL** (`X-Amz-Expires=600`), so it is not stable enough to cache or store.
+ */
+export interface KycUserProvidedData extends KycIdentityData {
+  image: string;
+}
+
+/**
+ * Both `GET /users/kyc-review/` and `GET /users/kyc-review/{id}/` return this
+ * same object.
+ *
+ * The names live under `user_provided_data`. There is no `user` and no
+ * `kyc_user_data` — the previous shape declared a required `user`, and reading
+ * `user.first_name` off it is what crashed the review page.
+ */
 export interface KycSubmission {
   id: string;
-  user: KycUser;
   country_of_issue: string;
   document_type: string;
   id_number: string;
+  /** Status with the provider — found or not found. `""`, never null. */
+  kyc_request_status: string;
   status: string;
-  rejection_reason?: string;
-  reviewed_by?: KycUser;
-  reviewed_at?: string;
+  /** `""`, not null, when the submission was never rejected. */
+  rejection_reason: string;
   created_datetime: string;
+  reviewed_at: string | null;
+  /*
+    `reviewed_by` is null in every payload seen so far and nothing renders it,
+    so it is left out rather than guessed at. Check the detail endpoint before
+    adding it.
+  */
+  liveness_score: number | null;
+  liveness_passes: boolean;
+  /** Signed URL of the captured selfie; `""` when no check ran. */
+  liveness_avatar_url: string;
+  /** Score at or above which `liveness_passes` is true. */
+  liveness_threshold: number;
+  api_data: KycApiData | null;
+  user_provided_data: KycUserProvidedData | null;
 }
 
 export interface KycListResponse {

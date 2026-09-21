@@ -2,9 +2,52 @@
 
 import React from "react";
 import { CloudDownload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
+import { normalizeApiError } from "@/lib/api/errors";
+import {
+  useLazyExportActivityLogQuery,
+  useLazyExportAuditLogQuery,
+} from "../api/reviewerSettingsApi";
+
+/** Saves a fetched blob under a filename, then releases the object URL. */
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 export const DataPrivacyTab = () => {
+  const [exportActivityLog, { isFetching: isExportingActivity }] =
+    useLazyExportActivityLogQuery();
+  const [exportAuditLog, { isFetching: isExportingAudit }] =
+    useLazyExportAuditLogQuery();
+
+  const download = async (
+    trigger: () => Promise<{ data?: Blob; error?: unknown }>,
+    filename: string,
+    label: string,
+  ) => {
+    try {
+      const { data, error } = await trigger();
+      if (error || !data) {
+        const { message } = normalizeApiError(error as never);
+        toast.error(message ?? `Could not download the ${label}`);
+        return;
+      }
+      saveBlob(data, filename);
+      toast.success(`${label} downloaded`);
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? `Could not download the ${label}`);
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-[24px]">
       <div className="flex flex-col gap-[8px]">
@@ -30,9 +73,17 @@ export const DataPrivacyTab = () => {
           <Button
             type="button"
             variant="outline"
-            className="flex h-[40px] shrink-0 items-center gap-[8px] rounded-[8px] border-sd-grey-3 px-[16px] text-[14px] font-medium text-sd-grey-12 hover:bg-sd-grey-2"
+            disabled={isExportingActivity}
+            onClick={() =>
+              void download(
+                exportActivityLog,
+                "activity-log.csv",
+                "Activity log",
+              )
+            }
+            className="flex h-[40px] shrink-0 items-center gap-[8px] rounded-[8px] border-sd-grey-3 px-[16px] text-[14px] font-medium text-sd-grey-12 hover:bg-sd-grey-2 disabled:opacity-50"
           >
-            Download log
+            {isExportingActivity ? "Preparing..." : "Download log"}
             <CloudDownload size={18} strokeWidth={2} className="text-sd-grey-11" />
           </Button>
         </div>
@@ -50,9 +101,13 @@ export const DataPrivacyTab = () => {
           <Button
             type="button"
             variant="outline"
-            className="flex h-[40px] shrink-0 items-center gap-[8px] rounded-[8px] border-sd-grey-3 px-[16px] text-[14px] font-medium text-sd-grey-12 hover:bg-sd-grey-2"
+            disabled={isExportingAudit}
+            onClick={() =>
+              void download(exportAuditLog, "audit-log.csv", "Audit trail")
+            }
+            className="flex h-[40px] shrink-0 items-center gap-[8px] rounded-[8px] border-sd-grey-3 px-[16px] text-[14px] font-medium text-sd-grey-12 hover:bg-sd-grey-2 disabled:opacity-50"
           >
-            Download log
+            {isExportingAudit ? "Preparing..." : "Download log"}
             <CloudDownload size={18} strokeWidth={2} className="text-sd-grey-11" />
           </Button>
         </div>

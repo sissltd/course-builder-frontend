@@ -6,6 +6,16 @@ export interface NormalizedApiError {
   message: string | null;
 }
 
+
+export function getErrorStatus(
+  error: FetchBaseQueryError | undefined,
+): number | null {
+  if (error && "status" in error && typeof error.status === "number") {
+    return error.status;
+  }
+  return null;
+}
+
 export function getErrorEnvelope(
   error: FetchBaseQueryError | undefined,
 ): ApiErrorEnvelope | null {

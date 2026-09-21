@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,9 +9,15 @@ import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
 import { useLogoutMutation } from "@/modules/auth/api/sessionApi";
-import { useGetMyProfileQuery } from "@/modules/creator/profile/api/profileApi";
+import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
+import { usePermissions } from "@/modules/auth/hooks/usePermissions";
 import { useGetReviewerOverviewQuery } from "../hooks";
-import { useGetPendingCoursesQuery } from "@/redux/slices/adminApi";
+import { useGetReviewQueuePendingQuery } from "@/modules/reviewer/api/reviewQueueApi";
+import {
+  REVIEWER_ACCESS,
+  canOpenReviewerEntry,
+  type ReviewerAccessEntry,
+} from "@/modules/reviewer/access";
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
 import { toast } from "sonner";
@@ -23,18 +29,63 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Activity,
-  CloseCircle,
-  Eye,
-  Global,
-  Home2,
-  Logout,
-  Notification,
-  Setting2,
-  TaskSquare,
-  TickCircle,
-} from "iconsax-react";
+import { CloseCircle, Logout, Setting2 } from "iconsax-react";
+
+/*
+  The links themselves now live in `@/modules/reviewer/access`, so the sidebar
+  and the route guard cannot disagree about who may open what. This renders
+  whichever entries the table allows — the badge is the only thing the table
+  doesn't carry, so it is attached here.
+*/
+const SidebarLink = ({
+  link,
+  count,
+  pathname,
+}: {
+  link: ReviewerAccessEntry;
+  count?: number;
+  pathname: string | null;
+}) => {
+  const Icon = link.icon;
+  // Sub-routes (e.g. a course opened from a row) keep their parent lit.
+  const active =
+    pathname === link.href || (pathname?.startsWith(`${link.href}/`) ?? false);
+
+  return (
+    <Link
+      href={link.href}
+      className={cn(
+        // `justify-between` unconditionally: with a badge it pins the count to
+        // the right edge, and with one child the label still starts left.
+        "flex h-[36px] items-center justify-between gap-[8px] px-[8px] py-[8px] rounded-[8px]",
+        active ? "bg-sd-grey-3 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]" : "",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-[8px]">
+        <Icon
+          variant={active ? "Bold" : "Linear"}
+          size={20}
+          color={active ? "var(--sd-grey-12)" : "var(--sd-reviewer-muted)"}
+        />
+        <span
+          className={cn(
+            "text-[14px] tracking-[-0.28px] leading-[20px] truncate",
+            active
+              ? "font-medium text-sd-grey-12"
+              : "font-normal text-sd-reviewer-muted",
+          )}
+        >
+          {link.name}
+        </span>
+      </span>
+      {count !== undefined && count !== null && count > 0 && (
+        <span className="flex h-[20px] min-w-[24px] px-[5px] items-center justify-center rounded-[4px] bg-sd-grey-11 text-[10px] font-medium text-sd-muted-text leading-[16px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1)]">
+          {count > 999 ? "999+" : count}
+        </span>
+      )}
+    </Link>
+  );
+};
 
 function formatRole(role?: string): string {
   switch (role?.toUpperCase()) {
@@ -63,19 +114,18 @@ function formatRole(role?: string): string {
   }
 }
 
-const systemLinks = [
-  { name: "Activity log", href: ReviewerRoute.ACTIVITY_LOG, icon: Activity },
-  { name: "Notification", href: ReviewerRoute.NOTIFICATIONS, icon: Notification },
-];
-
-const bottomLinks = [
-  { name: "Setting", href: ReviewerRoute.SETTINGS, icon: Setting2 },
-];
-
 interface ReviewerSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+/*
+  The Overview row, hoisted so the skip below reads the same rule the nav does
+  rather than restating the seat list.
+*/
+const OVERVIEW_ENTRY = REVIEWER_ACCESS.find(
+  (entry) => entry.href === ReviewerRoute.DASHBOARD,
+);
 
 export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
   const pathname = usePathname();
@@ -84,9 +134,22 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
   const { data: session } = useSession();
   const user = session?.user;
 
+  const { canAny, role } = usePermissions();
+
+  /*
+    `/reviewer/overview/` is Creator Reviewer or Verifier only, enforced in the
+    service layer. Approvers and QA Reviewers are full members of this dashboard
+    but get a 403 from it, so the request is skipped for them rather than fired
+    and discarded — the badge falls back to the pending-queue count below.
+  */
+  const canReadOverview =
+    !OVERVIEW_ENTRY || canOpenReviewerEntry(OVERVIEW_ENTRY, canAny, role);
+
   const { data: profile, isLoading: isProfileLoading } = useGetMyProfileQuery();
-  const { data: overview } = useGetReviewerOverviewQuery();
-  const { data: pendingData } = useGetPendingCoursesQuery();
+  const { data: overview } = useGetReviewerOverviewQuery(undefined, {
+    skip: !canReadOverview,
+  });
+  const { data: pendingData } = useGetReviewQueuePendingQuery();
   const [logoutApi, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const pendingCount =
@@ -94,21 +157,25 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
     pendingData?.data?.paginator?.count ??
     overview?.courses_in_queue;
 
-  const reviewerLinks = useMemo(
-    () => [
-      { name: "Overview", href: ReviewerRoute.DASHBOARD, icon: Home2 },
-      {
-        name: "Pending",
-        href: ReviewerRoute.PENDING,
-        icon: TaskSquare,
-        count: pendingCount,
-      },
-      { name: "Approved Courses", href: ReviewerRoute.APPROVED_COURSES, icon: TickCircle },
-      { name: "In review", href: ReviewerRoute.IN_REVIEW, icon: Eye },
-      { name: "Published Courses", href: ReviewerRoute.PUBLISHED_COURSES, icon: Global },
-    ],
-    [pendingCount],
+  /*
+    Filtered in render rather than stored, exactly as AdminSidebar does: `canAny`
+    fails closed until the profile resolves, so the first paint legitimately has
+    no permissions and the list fills in when they arrive — no effect, no flash
+    of a remembered list.
+  */
+  const visible = useCallback(
+    (group: ReviewerAccessEntry["group"]) =>
+      REVIEWER_ACCESS.filter(
+        (entry) =>
+          entry.group === group &&
+          canOpenReviewerEntry(entry, canAny, role),
+      ),
+    [canAny, role],
   );
+
+  const reviewerLinks = useMemo(() => visible("review"), [visible]);
+  const systemLinks = useMemo(() => visible("system"), [visible]);
+  const bottomLinks = useMemo(() => visible("footer"), [visible]);
 
   const displayName =
     profile?.full_name ||
@@ -150,8 +217,6 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
       await signOut({ callbackUrl: "/auth/login" });
     }
   };
-
-  const isActive = (href: string) => pathname === href;
 
   return (
     <>
@@ -196,46 +261,16 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
                 </span>
               </div>
               <div className="flex flex-col w-full">
-                {reviewerLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex h-[36px] items-center justify-between gap-[8px] px-[8px] py-[8px] rounded-[8px]",
-                        active
-                          ? "bg-sd-grey-3 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                          : "",
-                      )}
-                    >
-                      <span className="flex min-w-0 items-center gap-[8px]">
-                        <Icon
-                          variant={active ? "Bold" : "Linear"}
-                          size={20}
-                          color={active ? "var(--sd-grey-12)" : "var(--sd-reviewer-muted)"}
-                        />
-                        <span
-                          className={cn(
-                            "text-[14px] tracking-[-0.28px] leading-[20px] truncate",
-                            active
-                              ? "font-medium text-sd-grey-12"
-                              : "font-normal text-sd-reviewer-muted",
-                          )}
-                        >
-                          {link.name}
-                        </span>
-                      </span>
-                      {link.count !== undefined && link.count !== null && link.count > 0 && (
-                        <span className="flex h-[20px] min-w-[24px] px-[5px] items-center justify-center rounded-[4px] bg-sd-grey-11 text-[10px] font-medium text-sd-muted-text leading-[16px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1)]">
-                          {link.count > 999 ? "999+" : link.count}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
+                {reviewerLinks.map((link) => (
+                  <SidebarLink
+                    key={link.href}
+                    link={link}
+                    pathname={pathname}
+                    count={
+                      link.href === ReviewerRoute.PENDING ? pendingCount : undefined
+                    }
+                  />
+                ))}
               </div>
             </div>
 
@@ -246,78 +281,22 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
                 </span>
               </div>
               <div className="flex flex-col w-full">
-                {systemLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px]",
-                        active
-                          ? "bg-sd-grey-3 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                          : "",
-                      )}
-                    >
-                      <Icon
-                        variant={active ? "Bold" : "Linear"}
-                        size={20}
-                        color={active ? "var(--sd-grey-12)" : "var(--sd-reviewer-muted)"}
-                      />
-                      <span
-                        className={cn(
-                          "text-[14px] tracking-[-0.28px] leading-[20px]",
-                          active
-                            ? "font-medium text-sd-grey-12"
-                            : "font-normal text-sd-reviewer-muted",
-                        )}
-                      >
-                        {link.name}
-                      </span>
-                    </Link>
-                  );
-                })}
+                {systemLinks.map((link) => (
+                  <SidebarLink
+                    key={link.href}
+                    link={link}
+                    pathname={pathname}
+                  />
+                ))}
               </div>
             </div>
           </div>
 
           <div className="mt-auto flex w-full flex-col gap-[12px] mb-[24px]">
             <div className="flex flex-col w-full">
-              {bottomLinks.map((link) => {
-                const Icon = link.icon;
-                const active = isActive(link.href);
-
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px]",
-                      active
-                        ? "bg-sd-grey-3 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                        : "",
-                    )}
-                  >
-                    <Icon
-                      variant={active ? "Bold" : "Linear"}
-                      size={20}
-                      color={active ? "var(--sd-grey-12)" : "var(--sd-reviewer-muted)"}
-                    />
-                    <span
-                      className={cn(
-                        "text-[14px] tracking-[-0.28px] leading-[20px]",
-                        active
-                          ? "font-medium text-sd-grey-12"
-                          : "font-normal text-sd-reviewer-muted",
-                      )}
-                    >
-                      {link.name}
-                    </span>
-                  </Link>
-                );
-              })}
+              {bottomLinks.map((link) => (
+                <SidebarLink key={link.href} link={link} pathname={pathname} />
+              ))}
               <button
                 type="button"
                 onClick={handleLogout}

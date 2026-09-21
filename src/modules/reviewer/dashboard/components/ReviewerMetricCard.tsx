@@ -3,7 +3,8 @@ import Image from "next/image";
 
 interface ReviewerMetricCardProps {
   iconSrc: string;
-  value: string | number;
+  /** `null` means the metric has nothing behind it — rendered as an empty state. */
+  value: string | number | null;
   label: string;
   isLoading?: boolean;
 }
@@ -22,6 +23,13 @@ export const ReviewerMetricCard = ({
       <div className="flex min-w-0 flex-col gap-[8px]">
         {isLoading ? (
           <div className="h-[32px] w-[70px] animate-pulse rounded bg-sd-grey-4" />
+        ) : value === null ? (
+          <span
+            className="text-[24px] font-medium text-sd-grey-11 tracking-[-0.48px] leading-[32px] truncate"
+            title="No data recorded"
+          >
+            —
+          </span>
         ) : (
           <span className="text-[24px] font-medium text-sd-grey-12 tracking-[-0.48px] leading-[32px] truncate">
             {typeof value === "number" ? value.toLocaleString() : value}

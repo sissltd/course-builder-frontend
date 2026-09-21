@@ -12,8 +12,8 @@ import {
   Value as PhoneValue,
   isSupportedCountry,
 } from "react-phone-number-input";
-import { useUpdateMyProfileMutation } from "../api/profileApi";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/api/categoriesApi";
+import { useUpdateMyProfileMutation } from "@/modules/auth/api/profileApi";
+import { useGetCategoryPickerQuery } from "@/modules/categories/api/categoryPickerApi";
 import type { UserProfile } from "@/modules/auth/types/auth";
 
 interface ProfileFormRowProps {
@@ -63,7 +63,7 @@ interface ProfileFormProps {
 
 export const ProfileForm = ({ profile }: ProfileFormProps) => {
   const [updateProfile, { isLoading: isSaving }] = useUpdateMyProfileMutation();
-  const { data: categoriesData } = useGetCategoriesQuery();
+  const { data: categoriesData } = useGetCategoryPickerQuery();
 
   const [firstName, setFirstName] = useState(profile.first_name);
   const [lastName, setLastName] = useState(profile.last_name);
@@ -92,8 +92,8 @@ export const ProfileForm = ({ profile }: ProfileFormProps) => {
     useState<PhoneCountry>(initialPhoneCountry);
 
   const categoryOptions = useMemo(() => {
-    if (!categoriesData?.data?.results) return [];
-    return categoriesData.data.results.map((c) => ({
+    if (!categoriesData) return [];
+    return categoriesData.map((c) => ({
       label: c.name,
       value: c.id,
       searchValue: c.name,

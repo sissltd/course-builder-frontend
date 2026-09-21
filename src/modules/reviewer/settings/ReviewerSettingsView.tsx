@@ -19,6 +19,18 @@ const TAB_CONTENT: Record<ReviewerSettingsTab, React.ReactNode> = {
   "data-privacy": <DataPrivacyTab />,
 };
 
+/**
+ * All six tabs are deliberately ungated, unlike the pages in
+ * `@/modules/reviewer/access`.
+ *
+ * Every one of them reads and writes the caller's own record under `/users/me/*`
+ * — profile, availability, queue preferences, notifications, password/MFA, data
+ * privacy — and the backend documents that whole family as "Any authenticated
+ * user". There is no permission codename to gate them on, so inventing one would
+ * hide pages the API would serve. The `Setting` entry in `REVIEWER_ACCESS`
+ * therefore carries no rule either, which is what puts it in the sidebar for
+ * every seat that can reach this dashboard at all.
+ */
 export const ReviewerSettingsView = () => {
   const [activeTab, setActiveTab] = useState<ReviewerSettingsTab>("account");
 

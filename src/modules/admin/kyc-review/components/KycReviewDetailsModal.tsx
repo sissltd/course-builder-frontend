@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
-import { KycSubmission } from "@/redux/slices/adminApi";
+import type { KycIdentityData, KycSubmission } from "@/redux/slices/adminApi";
 import { toast } from "sonner";
-import { normalizeApiError } from "@/lib/api/errors";
-import { format, parseISO } from "date-fns";
-import Image from "next/image";
+import {
+  EMPTY_VALUE,
+  formatAddress,
+  formatDate,
+  formatDateTime,
+  formatText,
+  hasValue,
+  isIdentityEmpty,
+  personName,
+  submissionName,
+} from "../lib/format";
 
 interface KycReviewDetailsModalProps {
   isOpen: boolean;
@@ -16,6 +24,97 @@ interface KycReviewDetailsModalProps {
   isApproving: boolean;
   isRejecting: boolean;
 }
+
+/** Label/value row. The label column is fixed so both panels line up. */
+const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="grid grid-cols-[80px_1fr] items-start gap-3">
+    <span className="font-semibold text-sd-grey-12">{label}</span>
+    <span className="break-words text-sd-grey-11">{value}</span>
+  </div>
+);
+
+/**
+ * A submitted or provider-supplied image.
+ *
+ * A plain `<img>`, not `next/image`, for two reasons: these are served from a
+ * host that is not in `images.remotePatterns` (so `next/image` would throw
+ * "hostname not configured"), and they are **signed URLs that expire about ten
+ * minutes after issue** — an optimizer cache holding one would start serving a
+ * dead link.
+ */
+const EvidenceImage = ({
+  src,
+  label,
+  alt,
+}: {
+  src: string | null | undefined;
+  label: string;
+  alt: string;
+}) => (
+  <div className="flex flex-col items-center gap-1">
+    <div className="relative h-[150px] w-[120px] overflow-hidden rounded-[8px] bg-sd-grey-3">
+      {hasValue(src) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src as string}
+          alt={alt}
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : (
+        <span className="flex size-full items-center justify-center px-2 text-center text-[11px] text-sd-grey-11">
+          Not supplied
+        </span>
+      )}
+    </div>
+    <span className="text-[12px] text-sd-grey-11">{label}</span>
+  </div>
+);
+
+interface IdentityPanelProps {
+  title: string;
+  data: KycIdentityData | null | undefined;
+  images: Array<{ src: string | null | undefined; label: string }>;
+  /** Explained in place of a column of dashes when the side has nothing. */
+  emptyNote: string;
+  className?: string;
+}
+
+const IdentityPanel = ({
+  title,
+  data,
+  images,
+  emptyNote,
+  className,
+}: IdentityPanelProps) => (
+  <div className={className}>
+    <h3 className="text-center text-[18px] font-semibold text-sd-grey-12">
+      {title}
+    </h3>
+
+    <div className="mt-4 flex justify-center gap-4">
+      {images.map((image) => (
+        <EvidenceImage
+          key={image.label}
+          src={image.src}
+          label={image.label}
+          alt={`${title}: ${image.label}`}
+        />
+      ))}
+    </div>
+
+    {isIdentityEmpty(data) ? (
+      <p className="mt-6 text-center text-[13px] text-sd-grey-11">{emptyNote}</p>
+    ) : (
+      <div className="mt-6 flex flex-col gap-3 text-[14px]">
+        <Field label="Name" value={personName(data)} />
+        <Field label="DOB" value={formatDate(data?.date_of_birth)} />
+        <Field label="Sex" value={formatText(data?.sex)} />
+        <Field label="Address" value={formatAddress(data?.address)} />
+        <Field label="Phone" value={formatText(data?.phone)} />
+      </div>
+    )}
+  </div>
+);
 
 export const KycReviewDetailsModal = ({
   isOpen,
@@ -28,17 +127,6 @@ export const KycReviewDetailsModal = ({
 }: KycReviewDetailsModalProps) => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectMode, setIsRejectMode] = useState(false);
-
-  // Mock data for fields not in the API payload yet
-  const mockData = {
-    dob: "14-Feb-1950",
-    bvn: "22446688891",
-    address: "12 Market Road, Aba, Abia State",
-    apiAddress: "14 Old Umuahia Road, Aba",
-    phone: "+2348031234567",
-    passportImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=mock1",
-    bvnImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=mock2",
-  };
 
   const handleClose = () => {
     setIsRejectMode(false);
@@ -64,100 +152,93 @@ export const KycReviewDetailsModal = ({
 
   if (!submission) return null;
 
+  /*
+    Both sides are the same shape; they differ only in which image they carry.
+    `api_data` is routinely all-empty — that is what an unanswered provider
+    looks like, and `kyc_request_status` is where that shows up.
+  */
+  const userData = submission.user_provided_data;
+  const apiData = submission.api_data;
+
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={handleClose}
       className="sm:max-w-[800px] p-[32px] rounded-[16px]"
       title="Identity Verification"
-      description={`Reviewing KYC submission for ${submission.user.first_name} ${submission.user.last_name}`}
+      description={`Reviewing KYC submission for ${submissionName(submission)}`}
     >
       <div className="flex flex-col gap-6 mt-4">
-        {/* Side-by-Side Comparison */}
+        {/* Liveness is a signal about the submission as a whole, not about
+            either data set, so it sits above the comparison. */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 rounded-[10px] bg-sd-grey-2 px-4 py-3 text-[13px]">
+          <span className="font-semibold text-sd-grey-12">Liveness</span>
+          <span
+            className={
+              submission.liveness_passes ? "text-[#218838]" : "text-[#C82333]"
+            }
+          >
+            {submission.liveness_passes ? "Passed" : "Not passed"}
+          </span>
+          <span className="text-sd-grey-11">
+            Score {submission.liveness_score ?? EMPTY_VALUE} / threshold{" "}
+            {submission.liveness_threshold}
+          </span>
+        </div>
+
+        {/* The two columns are the two sides of the check: what the user typed
+            in, against what the provider returned. An admin is looking for the
+            mismatches between them. */}
         <div className="grid grid-cols-2 gap-8">
-          {/* User Provided Data */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-[18px] font-semibold text-center text-sd-grey-12">User Provided Data</h3>
-            <div className="flex justify-center gap-4">
-              <div className="flex flex-col items-center">
-                <div className="relative w-[120px] h-[150px] bg-sd-grey-3 rounded-[8px] overflow-hidden">
-                  <Image src={mockData.passportImage} alt="Passport" fill className="object-cover" />
-                </div>
-                <span className="text-sd-grey-11 text-[12px] mt-1">Passport Live</span>
-              </div>
-              <div className="relative w-[120px] h-[150px] bg-sd-grey-3 rounded-[8px] overflow-hidden">
-                <Image src={mockData.passportImage} alt="Document" fill className="object-cover" />
-              </div>
-            </div>
+          <IdentityPanel
+            title="User Provided Data"
+            data={userData}
+            images={[
+              { src: submission.liveness_avatar_url, label: "Liveness selfie" },
+              { src: userData?.image, label: "Uploaded document" },
+            ]}
+            emptyNote="The user submitted no identity data."
+          />
 
-            <div className="flex flex-col gap-3 mt-4 text-[14px]">
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                <span className="font-semibold text-sd-grey-12">Name</span>
-                <span className="text-sd-grey-11">{submission.user.first_name} {submission.user.last_name}</span>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-start">
-                <div className="relative w-[80px] h-[100px] bg-sd-grey-3 rounded-[8px] overflow-hidden">
-                  <Image src={mockData.passportImage} alt="Selfie" fill className="object-cover" />
-                </div>
-                <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-[80px_1fr] gap-2">
-                    <span className="font-semibold text-sd-grey-12">DOB</span>
-                    <span className="text-sd-grey-11">{mockData.dob}</span>
-                  </div>
-                  <div className="grid grid-cols-[80px_1fr] gap-2">
-                    <span className="font-semibold text-sd-grey-12">BVN / ID</span>
-                    <span className="text-sd-grey-11">{submission.id_number}</span>
-                  </div>
-                  <div className="grid grid-cols-[80px_1fr] gap-2">
-                    <span className="font-semibold text-sd-grey-12">Address</span>
-                    <span className="text-sd-grey-11">{mockData.address}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center mt-2">
-                <span className="font-semibold text-sd-grey-12">Phone</span>
-                <span className="text-sd-grey-11">{mockData.phone}</span>
-              </div>
-            </div>
-          </div>
+          <IdentityPanel
+            className="border-l border-sd-grey-3 pl-8"
+            title="API Data (BVN / ID)"
+            data={apiData}
+            images={[{ src: apiData?.document_image, label: "Provider document" }]}
+            emptyNote="The provider returned no data for this submission."
+          />
+        </div>
 
-          {/* API Data */}
-          <div className="flex flex-col gap-4 border-l border-sd-grey-3 pl-8">
-            <h3 className="text-[18px] font-semibold text-center text-sd-grey-12">API Data (BVN / ID)</h3>
-            <div className="flex justify-center gap-4">
-              <div className="relative w-[120px] h-[150px] bg-sd-grey-3 rounded-[8px] overflow-hidden">
-                <Image src={mockData.bvnImage} alt="API Data" fill className="object-cover" />
-              </div>
-              <div className="flex items-center w-[120px]">
-                <span className="text-[16px] font-semibold text-center leading-tight">
-                  {submission.user.first_name} {submission.user.last_name}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 mt-4 text-[14px]">
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                <span className="font-semibold text-sd-grey-12">Name</span>
-                <span className="text-sd-grey-11">{submission.user.first_name} {submission.user.last_name}</span>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center mt-[100px]">
-                <span className="font-semibold text-sd-grey-12">DOB</span>
-                <span className="text-sd-grey-11">{mockData.dob}</span>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                <span className="font-semibold text-sd-grey-12">BVN / ID</span>
-                <span className="text-sd-grey-11">{submission.id_number}</span>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                <span className="font-semibold text-sd-grey-12">Address</span>
-                <span className="text-sd-grey-11">{mockData.apiAddress}</span>
-              </div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center mt-2">
-                <span className="font-semibold text-sd-grey-12">Phone</span>
-                <span className="text-sd-grey-11">{mockData.phone}</span>
-              </div>
-            </div>
-          </div>
+        {/* Submission-level context. `Provider status` being blank is itself
+            the signal that the provider has not answered yet. */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-sd-grey-3 pt-6 text-[13px] sm:grid-cols-2">
+          <Field
+            label="Document"
+            value={formatText(submission.document_type)}
+          />
+          <Field
+            label="Country"
+            value={formatText(submission.country_of_issue)}
+          />
+          <Field label="BVN / ID" value={formatText(submission.id_number)} />
+          <Field
+            label="Provider"
+            value={formatText(submission.kyc_request_status)}
+          />
+          <Field
+            label="Submitted"
+            value={formatDateTime(submission.created_datetime)}
+          />
+          <Field
+            label="Reviewed"
+            value={formatDateTime(submission.reviewed_at)}
+          />
+          {hasValue(submission.rejection_reason) ? (
+            <Field
+              label="Declined"
+              value={formatText(submission.rejection_reason)}
+            />
+          ) : null}
         </div>
 
         {/* Actions */}
@@ -205,6 +286,12 @@ export const KycReviewDetailsModal = ({
                   </div>
                 ) : (
                   <div className="w-full flex justify-center gap-4">
+                    {/*
+                      Not wired: there is no flag mutation yet, though the API
+                      exposes `POST /users/kyc-review/{id}/flag/` taking
+                      `{ flag_reason }`. Left in place rather than removed so
+                      the intent is visible — see the notes on this screen.
+                    */}
                     <Button
                       variant="outline"
                       className="border-[#FD7E14] text-[#FD7E14] hover:bg-[#FD7E14] hover:text-white max-w-[140px] flex-1"

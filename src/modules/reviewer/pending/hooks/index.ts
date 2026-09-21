@@ -1,7 +1,2 @@
-export { useGetPendingCoursesQuery } from "@/redux/slices/adminApi";
-export type {
-  AdminCoursesResponse,
-  AdminCoursesListParams,
-  AdminCourseItem,
-} from "@/redux/slices/adminApi";
+export { useGetReviewQueuePendingQuery } from "@/modules/reviewer/api/reviewQueueApi";
 export * from "../types";

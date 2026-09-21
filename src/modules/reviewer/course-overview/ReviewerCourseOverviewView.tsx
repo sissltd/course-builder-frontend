@@ -22,15 +22,22 @@ import {
 } from "@/modules/admin/course-overview/components/SidebarRails";
 import { InfoRow } from "@/modules/admin/course-overview/components/SharedUI";
 import {
-  useGetAdminCourseDetailQuery,
-  useGetAdminCourseCommentsQuery,
-  useAddAdminCourseCommentMutation,
-  useContentApproveAdminCourseMutation,
-  useQaApproveAdminCourseMutation,
-  useContentRejectAdminCourseMutation,
-  useQaRejectAdminCourseMutation,
-} from "@/redux/slices/adminApi";
+  useGetReviewQueueDetailQuery,
+  useGetReviewQueueCommentsQuery,
+  useAddReviewQueueCommentMutation,
+  useApproveReviewCourseContentMutation,
+  useRejectReviewCourseContentMutation,
+  useQaApproveReviewCourseMutation,
+  useQaRejectReviewCourseMutation,
+  useClaimReviewCourseMutation,
+  useQaClaimReviewCourseMutation,
+  usePublishReviewCourseMutation,
+} from "@/modules/reviewer/api/reviewQueueApi";
 import { CourseRejectModal } from "@/modules/admin/courses/components/CourseRejectModal";
+import { useReviewerRole } from "@/modules/reviewer/hooks/useReviewerRole";
+
+/** Canonical QA status, plus the legacy spellings some payloads still use. */
+const QA_STAGES = ["QA_VERIFICATION", "QA_REVIEW", "IN_QA"];
 
 interface ReviewerCourseOverviewViewProps {
   courseId: string;
@@ -57,22 +64,56 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
     isLoading: isCourseLoading,
     error: courseError,
     refetch,
-  } = useGetAdminCourseDetailQuery(courseId, { skip: !courseId });
+  } = useGetReviewQueueDetailQuery(courseId, { skip: !courseId });
 
   const {
     data: commentsResponse,
     refetch: refetchComments,
-  } = useGetAdminCourseCommentsQuery({ courseId }, { skip: !courseId });
+  } = useGetReviewQueueCommentsQuery(courseId, { skip: !courseId });
 
-  const [addCommentMutation, { isLoading: isAddingComment }] = useAddAdminCourseCommentMutation();
-  const [contentApproveMutation, { isLoading: isApprovingContent }] = useContentApproveAdminCourseMutation();
-  const [qaApproveMutation, { isLoading: isApprovingQa }] = useQaApproveAdminCourseMutation();
-  const [contentRejectMutation, { isLoading: isRejectingContent }] = useContentRejectAdminCourseMutation();
-  const [qaRejectMutation, { isLoading: isRejectingQa }] = useQaRejectAdminCourseMutation();
+  const [addCommentMutation, { isLoading: isAddingComment }] = useAddReviewQueueCommentMutation();
+  const [contentApproveMutation, { isLoading: isApprovingContent }] = useApproveReviewCourseContentMutation();
+  const [qaApproveMutation, { isLoading: isApprovingQa }] = useQaApproveReviewCourseMutation();
+  const [contentRejectMutation, { isLoading: isRejectingContent }] = useRejectReviewCourseContentMutation();
+  const [qaRejectMutation, { isLoading: isRejectingQa }] = useQaRejectReviewCourseMutation();
+  const [claimMutation, { isLoading: isClaiming }] = useClaimReviewCourseMutation();
+  const [qaClaimMutation, { isLoading: isQaClaiming }] = useQaClaimReviewCourseMutation();
+  const [publishMutation, { isLoading: isPublishing }] = usePublishReviewCourseMutation();
+
+  // Aliased because the permission-derived capabilities below are combined
+  // with the course's status into the same names the JSX already reads.
+  const {
+    canPublish,
+    canQa,
+    canApprove: mayApprove,
+    canReject: mayReject,
+    canClaim: mayClaim,
+  } = useReviewerRole();
 
   const comments = commentsResponse?.data?.results ?? [];
-  const isQaStage = course?.status === "QA_REVIEW" || course?.status === "IN_QA" || course?.status === "QA_VERIFICATION";
+  const isQaStage = QA_STAGES.includes(course?.status ?? "");
   const isRejecting = isRejectingContent || isRejectingQa;
+  const isClaimingCourse = isClaiming || isQaClaiming;
+
+  // A course nobody owns yet is claimed before it can be worked on. The stage
+  // decides which claim route applies.
+  //
+  // Doc §4.1: claim is also idempotent on a course already `IN_REVIEW` for the
+  // reviewer who holds it, and a *different* reviewer gets `400`. We cannot gate
+  // on ownership yet — `review_information` arrives as an untyped bag, so the
+  // field naming the holder is not known. Until it is, the content actions are
+  // status-driven and a non-holder hitting them sees the server's `400`.
+  // Each action needs both the right permission (from `Me.permissions`, via
+  // `useReviewerRole`) and the course to be in a status where it applies.
+  const canClaim = course?.status === "SUBMITTED" && mayClaim;
+  const canQaClaim = isQaStage && canQa;
+  const canApprove = isQaStage
+    ? canQa
+    : course?.status === "IN_REVIEW" && mayApprove;
+  const canReject = isQaStage
+    ? canQa
+    : course?.status === "IN_REVIEW" && mayReject;
+  const canPublishCourse = course?.status === "APPROVED" && canPublish;
 
   const handleAddComment = async (
     title: string,
@@ -83,16 +124,13 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
       const fullText = highlightedText
         ? `[Quote: "${highlightedText}"] ${commentText}`
         : commentText;
-      const stage = isQaStage ? "QA" : "CONTENT";
 
       await addCommentMutation({
-        courseId,
-        body: {
-          stage,
-          severity: "INFO",
-          reason_code: title.toUpperCase().replace(/\s+/g, "_") || "REVIEW_NOTE",
-          comment: fullText,
-        },
+        id: courseId,
+        stage: isQaStage ? "QA" : "CONTENT",
+        severity: "INFO",
+        reason_code: title.toUpperCase().replace(/\s+/g, "_") || "REVIEW_NOTE",
+        comment: fullText,
       }).unwrap();
 
       toast.success("Review note added");
@@ -123,6 +161,22 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
     }
   };
 
+  const handleClaim = async () => {
+    try {
+      if (isQaStage) {
+        await qaClaimMutation(courseId).unwrap();
+        toast.success("Course claimed for QA verification");
+      } else {
+        await claimMutation(courseId).unwrap();
+        toast.success("Course claimed for review");
+      }
+      void refetch();
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to claim course");
+    }
+  };
+
   const handleApprove = async () => {
     try {
       if (isQaStage) {
@@ -136,6 +190,17 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
     } catch (err) {
       const { message } = normalizeApiError(err as never);
       toast.error(message ?? "Failed to approve course");
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      await publishMutation({ id: courseId }).unwrap();
+      toast.success("Course published");
+      void refetch();
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Failed to publish course");
     }
   };
 
@@ -423,26 +488,57 @@ export const ReviewerCourseOverviewView = ({ courseId }: ReviewerCourseOverviewV
             </div>
 
             <div className="flex flex-col gap-[10px] pt-[4px]">
-              <Button
-                variant="app-primary"
-                disabled={isApprovingContent || isApprovingQa}
-                onClick={handleApprove}
-                className="h-[44px] w-full rounded-[8px] cursor-pointer"
-              >
-                {isApprovingContent || isApprovingQa
-                  ? "Approving..."
-                  : isQaStage
-                  ? "QA Approve"
-                  : "Approve Content"}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={isRejecting}
-                onClick={() => setIsRejectModalOpen(true)}
-                className="h-[44px] w-full rounded-[8px] border-[#FF6B00] text-[#FF6B00] hover:bg-sd-danger-soft cursor-pointer"
-              >
-                Reject course
-              </Button>
+              {canClaim || canQaClaim ? (
+                <Button
+                  variant="app-primary"
+                  disabled={isClaimingCourse}
+                  onClick={handleClaim}
+                  className="h-[44px] w-full rounded-[8px] cursor-pointer"
+                >
+                  {isClaimingCourse
+                    ? "Claiming..."
+                    : canQaClaim
+                    ? "Claim for QA"
+                    : "Claim course"}
+                </Button>
+              ) : canApprove ? (
+                <Button
+                  variant="app-primary"
+                  disabled={isApprovingContent || isApprovingQa}
+                  onClick={handleApprove}
+                  className="h-[44px] w-full rounded-[8px] cursor-pointer"
+                >
+                  {isApprovingContent || isApprovingQa
+                    ? "Approving..."
+                    : isQaStage
+                    ? "QA Approve"
+                    : "Approve Content"}
+                </Button>
+              ) : canPublishCourse ? (
+                <Button
+                  variant="app-primary"
+                  disabled={isPublishing}
+                  onClick={handlePublish}
+                  className="h-[44px] w-full rounded-[8px] cursor-pointer"
+                >
+                  {isPublishing ? "Publishing..." : "Publish course"}
+                </Button>
+              ) : (
+                <p className="rounded-[8px] border border-sd-grey-3 bg-sd-grey-2 px-[12px] py-[10px] text-[12px] leading-[16px] text-sd-reviewer-muted">
+                  No action is available to you on a course in this status.
+                </p>
+              )}
+
+              {canReject && (
+                <Button
+                  variant="outline"
+                  disabled={isRejecting}
+                  onClick={() => setIsRejectModalOpen(true)}
+                  className="h-[44px] w-full rounded-[8px] border-[#FF6B00] text-[#FF6B00] hover:bg-sd-danger-soft cursor-pointer"
+                >
+                  Reject course
+                </Button>
+              )}
             </div>
           </div>
         </aside>

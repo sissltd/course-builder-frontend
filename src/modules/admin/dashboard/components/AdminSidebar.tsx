@@ -1,70 +1,109 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { AdminRoute } from "@/lib/routes";
 import { signOut, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
+import { usePermissions } from "@/modules/auth/hooks/usePermissions";
+import { ADMIN_ACCESS, type AdminAccessEntry } from "@/modules/admin/access";
 import {
-  Home2,
-  Graph,
-  Global,
-  Profile2User,
-  Book,
-  Box,
-  Category,
-  Notification,
-  Activity,
-  Setting2,
   Logout,
-  TickCircle,
   CloseCircle,
-  SecurityUser,
-  Wallet,
-  People,
 } from "iconsax-react";
-
-const adminLinks = [
-  { name: "Overview", href: AdminRoute.OVERVIEW, icon: Home2 },
-  { name: "Analytics", href: AdminRoute.ANALYTICS, icon: Graph },
-  { name: "Users", href: AdminRoute.USERS, icon: People },
-  { name: "MIE Recommendation", href: AdminRoute.MIE_RECOMMENDATION, icon: TickCircle },
-  { name: "System Health", href: AdminRoute.SYSTEM_HEALTH, icon: Global },
-  { name: "APE Pipeline", href: AdminRoute.APE_PIPELINE, icon: Box },
-  { name: "Teams", href: AdminRoute.TEAMS, icon: Profile2User },
-  { name: "KYC Review", href: AdminRoute.KYC_REVIEW, icon: SecurityUser },
-  { name: "Wallets", href: AdminRoute.WALLETS, icon: Wallet },
-];
-
-const coursesLinks = [
-  { name: "Courses", href: AdminRoute.COURSES, icon: Book },
-  { name: "Production", href: AdminRoute.PRODUCTION, icon: Box },
-  { name: "Published", href: AdminRoute.PUBLISHED, icon: Global },
-  { name: "Reservation", href: AdminRoute.RESERVATION, icon: TickCircle },
-  { name: "Categories", href: AdminRoute.CATEGORIES, icon: Category },
-];
-
-const systemLinks = [
-  { name: "Notification", href: AdminRoute.NOTIFICATIONS, icon: Notification },
-  { name: "Activity Log", href: AdminRoute.ACTIVITY_LOG, icon: Activity },
-  { name: "Setting", href: AdminRoute.SETTINGS, icon: Setting2 },
-];
 
 interface AdminSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const SidebarGroup = ({
+  label,
+  links,
+  pathname,
+}: {
+  label: string;
+  links: readonly AdminAccessEntry[];
+  pathname: string | null;
+}) => {
+  // Sub-routes (e.g. /admin/mie-recommendation/developers) keep their parent lit.
+  const isActive = (href: string) =>
+    pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-[8px] w-full">
+      <div className="border-b-[0.5px] border-[#636363] flex h-[24px] items-center py-[10px] w-full">
+        <span className="text-[12px] font-medium text-[#606060] leading-[16px]">
+          {label}
+        </span>
+      </div>
+      <div className="flex flex-col gap-[4px] w-full">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const active = isActive(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] transition-colors",
+                active
+                  ? "bg-[#F0F0F0] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
+                  : "hover:bg-[#2A2A2A]",
+              )}
+            >
+              <Icon
+                variant={active ? "Bold" : "Linear"}
+                size={20}
+                color={active ? "#202020" : "#606060"}
+              />
+              <span
+                className={cn(
+                  "text-[14px] tracking-[-0.28px] leading-[20px]",
+                  active ? "font-medium text-[#202020]" : "font-normal text-[#606060]",
+                )}
+              >
+                {link.name}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
+  const { canAny, roleLabel } = usePermissions();
+
+  /*
+    Filtered in render rather than stored: `canAny` fails closed until the
+    profile resolves, so the first paint legitimately has no permissions and the
+    list fills in when they arrive — no effect, no flash of a remembered list.
+  */
+  const visible = useCallback(
+    (group: AdminAccessEntry["group"]) =>
+      ADMIN_ACCESS.filter(
+        (entry) =>
+          entry.group === group &&
+          (!entry.permissions || canAny(entry.permissions)),
+      ),
+    [canAny],
+  );
+
+  const shownAdminLinks = useMemo(() => visible("admin"), [visible]);
+  const shownCoursesLinks = useMemo(() => visible("courses"), [visible]);
+  const shownSystemLinks = useMemo(() => visible("system"), [visible]);
 
   const displayName =
     user?.first_name || user?.last_name
@@ -81,10 +120,6 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
     await serverLogout();
     await signOut({ callbackUrl: "/auth/login" });
   };
-
-  // Sub-routes (e.g. /admin/mie-recommendation/developers) keep their parent lit.
-  const isActive = (href: string) =>
-    pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
 
   return (
     <>
@@ -122,119 +157,9 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
           </div>
 
           <div className="flex flex-col gap-[16px] w-full">
-            <div className="flex flex-col gap-[8px] w-full">
-              <div className="flex h-[24px] items-center py-[10px] w-full">
-                <span className="text-[12px] font-medium text-[#606060] leading-[16px]">Admin</span>
-              </div>
-              <div className="flex flex-col gap-[4px] w-full">
-                {adminLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] transition-colors",
-                        active
-                          ? "bg-[#F0F0F0] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                          : "hover:bg-[#2A2A2A]"
-                      )}
-                    >
-                      <Icon
-                        variant={active ? "Bold" : "Linear"}
-                        size={20}
-                        color={active ? "#202020" : "#606060"}
-                      />
-                      <span
-                        className={cn(
-                          "text-[14px] tracking-[-0.28px] leading-[20px]",
-                          active ? "font-medium text-[#202020]" : "font-normal text-[#606060]"
-                        )}
-                      >
-                        {link.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-[8px] w-full">
-              <div className="border-b-[0.5px] border-[#636363] flex h-[24px] items-center py-[10px] w-full">
-                <span className="text-[12px] font-medium text-[#606060] leading-[16px]">Courses</span>
-              </div>
-              <div className="flex flex-col gap-[4px] w-full">
-                {coursesLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] transition-colors",
-                        active
-                          ? "bg-[#F0F0F0] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                          : "hover:bg-[#2A2A2A]"
-                      )}
-                    >
-                      <Icon
-                        variant={active ? "Bold" : "Linear"}
-                        size={20}
-                        color={active ? "#202020" : "#606060"}
-                      />
-                      <span
-                        className={cn(
-                          "text-[14px] tracking-[-0.28px] leading-[20px]",
-                          active ? "font-medium text-[#202020]" : "font-normal text-[#606060]"
-                        )}
-                      >
-                        {link.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-[8px] w-full">
-              <div className="border-b-[0.5px] border-[#636363] flex h-[24px] items-center py-[10px] w-full">
-                <span className="text-[12px] font-medium text-[#606060] leading-[16px]">System</span>
-              </div>
-              <div className="flex flex-col gap-[4px] w-full">
-                {systemLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] transition-colors",
-                        active
-                          ? "bg-[#F0F0F0] shadow-[0px_2px_4px_0px_rgba(0,0,0,0.1)]"
-                          : "hover:bg-[#2A2A2A]"
-                      )}
-                    >
-                      <Icon
-                        variant={active ? "Bold" : "Linear"}
-                        size={20}
-                        color={active ? "#202020" : "#606060"}
-                      />
-                      <span
-                        className={cn(
-                          "text-[14px] tracking-[-0.28px] leading-[20px]",
-                          active ? "font-medium text-[#202020]" : "font-normal text-[#606060]"
-                        )}
-                      >
-                        {link.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+            <SidebarGroup label="Admin" links={shownAdminLinks} pathname={pathname} />
+            <SidebarGroup label="Courses" links={shownCoursesLinks} pathname={pathname} />
+            <SidebarGroup label="System" links={shownSystemLinks} pathname={pathname} />
           </div>
 
           <div className="flex flex-col gap-[12px] w-full mt-auto">
@@ -263,7 +188,7 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
                       {displayName}
                     </span>
                     <span className="text-[12px] font-normal text-[#B6B6B6] leading-[16px]">
-                      Admin
+                      {roleLabel ?? "Admin"}
                     </span>
                   </div>
                 </div>

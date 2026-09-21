@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";
 import { Checkbox } from "@/components/shared/Checkbox";
 import { cn } from "@/lib/utils";
-import type { PendingCourseRow } from "../types";
+import type { ReviewQueueRow } from "../types";
 
 const columns = [
   { key: "creator", label: "Creator", width: "minmax(160px, 1.1fr)" },
@@ -15,11 +15,11 @@ const columns = [
   { key: "category", label: "Category", width: "minmax(160px, 1fr)" },
   { key: "difficultyLevel", label: "Difficulty Level", width: "minmax(140px, 0.9fr)" },
   { key: "approvedBy", label: "Approved by", width: "minmax(160px, 1fr)" },
-  { key: "dateApproved", label: "Date Approved", width: "minmax(180px, 1.1fr)" },
+  { key: "dateReviewed", label: "Date Approved", width: "minmax(180px, 1.1fr)" },
 ] as const;
 
 interface ReviewerPendingTableProps {
-  courses: PendingCourseRow[];
+  courses: ReviewQueueRow[];
   startIndex: number;
   isLoading?: boolean;
   onOpenCourse?: (index: number) => void;
@@ -171,7 +171,7 @@ export const ReviewerPendingTable = ({
                   <div className="truncate px-[8px] text-sd-grey-11">{row.category}</div>
                   <div className="truncate px-[8px] text-sd-grey-11">{row.difficultyLevel}</div>
                   <div className="truncate px-[8px] text-sd-grey-11">{row.approvedBy}</div>
-                  <div className="truncate px-[8px] text-sd-grey-11">{row.dateApproved}</div>
+                  <div className="truncate px-[8px] text-sd-grey-11">{row.dateReviewed}</div>
                 </div>
               );
             })}

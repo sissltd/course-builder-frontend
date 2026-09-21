@@ -53,16 +53,6 @@ export {
 } from "../api/lessonsApi";
 
 export {
-  useGetCategoriesQuery,
-  useGetCategoryQuery,
-} from "../api/categoriesApi";
-
-export {
-  useGetTopicsQuery,
-  useGetTopicQuery,
-} from "../api/topicsApi";
-
-export {
   useGetCourseVersionsQuery,
 } from "../api/courseVersionsApi";
 

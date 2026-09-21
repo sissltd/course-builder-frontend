@@ -7,8 +7,10 @@ import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
 import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
 import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
-import { CategoryStatus } from "@/modules/creator/courses/types/category";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
 import { format } from "date-fns";
 import { CreatorRoute } from "@/lib/routes";
 
@@ -42,10 +44,9 @@ export const CoursesTable = () => {
     ...(categoryFilter && { category: categoryFilter }),
   });
 
-  const { data: categoriesResponse } = useGetCategoriesQuery({
-    status: CategoryStatus.ACTIVE,
-  });
-  const categories = categoriesResponse?.data?.results ?? [];
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; the filter only wants live ones.
+  const categories = selectActivePickerOptions(categoriesResponse);
 
   const courses: Course[] = (response?.data?.results ?? []).map((c) => ({
     id: c.id,

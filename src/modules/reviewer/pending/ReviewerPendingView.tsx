@@ -7,58 +7,8 @@ import { ReviewerPendingFilters } from "./components/ReviewerPendingFilters";
 import { ReviewerPendingTable } from "./components/ReviewerPendingTable";
 import { ReviewerPendingPager } from "./components/ReviewerPendingPager";
 import { ReviewerCourseInfoDrawer } from "./components/ReviewerCourseInfoDrawer";
-import { useGetPendingCoursesQuery } from "./hooks";
-import type { PendingCourseRow } from "./types";
-import type { AdminCourseItem } from "@/redux/slices/adminApi";
-
-function formatDifficulty(diff?: string | null): string {
-  if (!diff) return "—";
-  const lower = diff.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-}
-
-function formatDisplayDate(dateStr?: string | null): string {
-  if (!dateStr) return "—";
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return format(d, "dd MMM yyyy, hh:mma");
-  } catch {
-    return dateStr;
-  }
-}
-
-function mapToPendingRow(item: AdminCourseItem): PendingCourseRow {
-  let creatorName = "—";
-  if (typeof item.creator === "object" && item.creator !== null) {
-    const fullName = `${item.creator.first_name || ""} ${item.creator.last_name || ""}`.trim();
-    creatorName = fullName || item.creator.name || item.creator.email || "—";
-  } else if (typeof item.creator === "string" && item.creator.trim()) {
-    creatorName = item.creator;
-  }
-
-  const displayId =
-    item.id.length > 14
-      ? `SLD-${item.id.slice(0, 6)}...`
-      : item.id;
-
-  return {
-    id: item.id,
-    creator: creatorName,
-    courseTitle: item.title || "Untitled Course",
-    courseId: displayId,
-    category: item.category?.name || "General",
-    difficultyLevel: formatDifficulty(item.difficulty_level),
-    approvedBy: (item as any).approved_by || "Pending assignment",
-    dateApproved: item.date_approved
-      ? formatDisplayDate(item.date_approved)
-      : item.submitted_at
-        ? formatDisplayDate(item.submitted_at)
-        : "Pending approval",
-    dateCreated: formatDisplayDate(item.created_datetime),
-    raw: item,
-  };
-}
+import { useGetReviewQueuePendingQuery } from "./hooks";
+import { mapToReviewQueueRows, type ReviewQueueRow } from "./types";
 
 export const ReviewerPendingView = () => {
   const [activeTab, setActiveTab] = useState("creators");
@@ -114,7 +64,7 @@ export const ReviewerPendingView = () => {
   };
 
   // API Call
-  const { data, isLoading, isFetching } = useGetPendingCoursesQuery({
+  const { data, isLoading, isFetching } = useGetReviewQueuePendingQuery({
     source_type: activeTab === "ai" ? "AI_GENERATED" : "CREATOR_UPLOADED",
     search: debouncedSearch.trim() || undefined,
     category: category || undefined,
@@ -128,8 +78,8 @@ export const ReviewerPendingView = () => {
   const rawCourses = data?.data?.results ?? [];
   const paginator = data?.data?.paginator;
 
-  const courses: PendingCourseRow[] = useMemo(() => {
-    return rawCourses.map(mapToPendingRow);
+  const courses: ReviewQueueRow[] = useMemo(() => {
+    return mapToReviewQueueRows(rawCourses);
   }, [rawCourses]);
 
   const totalEntries = paginator?.count ?? 0;

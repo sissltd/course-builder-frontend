@@ -24,9 +24,13 @@ import { RequestTopicModal } from "@/modules/creator/reservation/components/Requ
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { useCreateCourseMutation, useGetCategoriesQuery, useGetTopicsQuery } from "./hooks";
-import { CategoryStatus } from "./types/category";
-import { TopicStatus } from "./types/topic";
+import { useCreateCourseMutation } from "./hooks";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
+import { useGetTopicsQuery } from "@/modules/topics/api/topicsApi";
+import { TopicStatus } from "@/modules/topics/types";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
 import { toast } from "sonner";
@@ -71,8 +75,9 @@ export default function CreateCourseView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
-  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoriesQuery({ status: CategoryStatus.ACTIVE });
-  const categories = categoriesResponse?.data?.results || [];
+  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; only live ones may be chosen.
+  const categories = selectActivePickerOptions(categoriesResponse);
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -453,9 +458,6 @@ export default function CreateCourseView() {
                         )}
                       >
                         <span>{c.name}</span>
-                        <span className="bg-[#EBF3FF] text-[#0063EF] text-[12px] font-semibold px-[8px] py-[2px] rounded-[6px]">
-                          ${c.creator_price}
-                        </span>
                       </button>
                     ))
                   ) : (

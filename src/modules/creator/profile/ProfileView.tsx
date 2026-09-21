@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useGetMyProfileQuery } from "./api/profileApi";
+import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileForm } from "./components/ProfileForm";
 

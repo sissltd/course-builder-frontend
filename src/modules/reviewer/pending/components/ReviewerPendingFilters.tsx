@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/api/categoriesApi";
+import { useGetCategoryPickerQuery } from "@/modules/categories/api/categoryPickerApi";
 
 interface TriggerProps {
   icon: React.ReactNode;
@@ -137,9 +137,9 @@ export const ReviewerPendingFilters = ({
     else setLocalToDate(val);
   };
 
-  const { data: categoriesData } = useGetCategoriesQuery();
+  const { data: categoriesData } = useGetCategoryPickerQuery();
   const categories = useMemo(() => {
-    return categoriesData?.data?.results ?? [];
+    return categoriesData ?? [];
   }, [categoriesData]);
 
   const [categoryOpen, setCategoryOpen] = useState(false);

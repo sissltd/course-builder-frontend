@@ -22,16 +22,14 @@ import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/Re
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
 import {
-  useGetApprovedCoursesQuery,
-  useGetCourseReviewPricesQuery,
-  useSaveCoursePricesMutation,
-  usePublishCourseMutation,
-} from "@/redux/slices/adminApi";
-import type {
-  DistributionChannelPayload,
-  CoursePriceReviewItem,
-  AdminCourseItem,
-} from "@/redux/slices/adminApi";
+  useGetReviewQueueApprovedQuery,
+  useGetReviewQueuePricesQuery,
+  useSaveReviewQueuePricesMutation,
+  usePublishReviewCourseMutation,
+} from "@/modules/reviewer/api/reviewQueueApi";
+import type { CourseDistributionChannel } from "@/modules/reviewer/api/reviewQueueApi";
+import type { ReviewQueueApiItem } from "@/modules/reviewer/types/reviewQueue";
+import { mapToReviewQueueRow, EMPTY_FIELD } from "@/modules/reviewer/types/reviewQueue";
 import { useGetStaffQuery } from "@/modules/admin/teams/api/staffApi";
 
 interface ApprovedCourse {
@@ -46,7 +44,7 @@ interface ApprovedCourse {
   dateReviewed: string;
   drawerDateReviewed: string;
   reviewNote: string;
-  raw?: AdminCourseItem;
+  raw?: ReviewQueueApiItem;
 }
 
 const columns = [
@@ -116,62 +114,24 @@ const TableCheckbox = ({
   />
 );
 
-function formatDisplayDate(dateStr?: string | null): string {
-  if (!dateStr) return "—";
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return format(d, "dd MMM yyyy, hh:mma");
-  } catch {
-    return dateStr;
-  }
-}
-
-function mapToApprovedCourse(item: AdminCourseItem): ApprovedCourse {
-  let creatorName = "—";
-  if (typeof item.creator === "object" && item.creator !== null) {
-    creatorName =
-      `${item.creator.first_name || ""} ${item.creator.last_name || ""}`.trim() ||
-      item.creator.name ||
-      item.creator.email ||
-      "—";
-  } else if (typeof item.creator === "string" && item.creator.trim()) {
-    creatorName = item.creator;
-  }
-
-  let reviewerName = "—";
-  let reviewerId = item.id;
-  const anyItem = item as any;
-  if (anyItem.reviewer && typeof anyItem.reviewer === "object") {
-    const r = anyItem.reviewer;
-    reviewerName = `${r.first_name || ""} ${r.last_name || ""}`.trim() || r.name || r.email || "—";
-    reviewerId = r.id || item.id;
-  } else if (typeof anyItem.reviewer === "string" && anyItem.reviewer.trim()) {
-    reviewerName = anyItem.reviewer;
-    reviewerId = anyItem.reviewer_id || item.id;
-  }
-
-  const shortId =
-    item.id.length > 14 ? `SLD-${item.id.slice(0, 6)}...` : item.id;
-
-  const dateReviewedFormatted = formatDisplayDate(
-    anyItem.date_reviewed || item.date_approved || item.updated_datetime
-  );
+function mapToApprovedCourse(item: ReviewQueueApiItem): ApprovedCourse {
+  const row = mapToReviewQueueRow(item);
+  const reviewerId = row.reviewerId || item.id;
 
   return {
-    creator: creatorName,
-    courseTitle: item.title || "Untitled Course",
-    courseId: shortId,
+    creator: row.creator,
+    courseTitle: row.courseTitle,
+    courseId: row.courseId,
     fullCourseId: item.id,
-    category: item.category?.name || "General",
-    difficultyLevel: item.difficulty_level
-      ? item.difficulty_level.charAt(0).toUpperCase() + item.difficulty_level.slice(1).toLowerCase()
-      : "Intermediate",
-    reviewer: reviewerName,
+    category: row.category,
+    difficultyLevel:
+      row.difficultyLevel === EMPTY_FIELD ? "Intermediate" : row.difficultyLevel,
+    reviewer: row.reviewer,
     reviewerId,
-    dateReviewed: dateReviewedFormatted,
-    drawerDateReviewed: dateReviewedFormatted,
-    reviewNote: anyItem.review_note || anyItem.reviewer_note || "Approved without notes",
+    dateReviewed: row.dateReviewed,
+    drawerDateReviewed: row.dateReviewed,
+    reviewNote:
+      row.reviewerNote === EMPTY_FIELD ? "Approved without notes" : row.reviewerNote,
     raw: item,
   };
 }
@@ -230,7 +190,7 @@ export const ReviewerApprovedCoursesView = () => {
   }, [verifierList]);
 
   // Query Approved Courses
-  const { data: approvedData, isLoading, isFetching } = useGetApprovedCoursesQuery({
+  const { data: approvedData, isLoading, isFetching } = useGetReviewQueueApprovedQuery({
     search: debouncedSearch.trim() || undefined,
     category: category || undefined,
     reviewer: reviewer || undefined,
@@ -957,16 +917,16 @@ const ReviewPricesModal = ({
     Udemy: "ONE_TIME",
   });
 
-  const { data: serverPricesData, isLoading: isLoadingPrices } = useGetCourseReviewPricesQuery(courseId!, {
+  const { data: serverPricesData, isLoading: isLoadingPrices } = useGetReviewQueuePricesQuery(courseId!, {
     skip: !isOpen || !courseId,
   });
 
-  const [savePricesMutation, { isLoading: isSaving }] = useSaveCoursePricesMutation();
+  const [savePricesMutation, { isLoading: isSaving }] = useSaveReviewQueuePricesMutation();
 
-  const serverResults: CoursePriceReviewItem[] = useMemo(() => {
+  const serverResults: CourseDistributionChannel[] = useMemo(() => {
     if (!serverPricesData?.data?.results) return [];
     return Array.isArray(serverPricesData.data.results)
-      ? (serverPricesData.data.results as any[]).flat()
+      ? (serverPricesData.data.results as CourseDistributionChannel[]).flat()
       : [];
   }, [serverPricesData]);
 
@@ -974,7 +934,7 @@ const ReviewPricesModal = ({
     if (serverResults.length > 0) {
       const newPrices: Record<string, string> = { ...learnerPrices };
       const newModels: Record<string, string> = { ...channelModels };
-      serverResults.forEach((item: CoursePriceReviewItem) => {
+      serverResults.forEach((item: CourseDistributionChannel) => {
         const chKey = (item.channel || "").toUpperCase();
         const channelName = chKey.includes("SOLU")
           ? "SoluDesk"
@@ -999,7 +959,7 @@ const ReviewPricesModal = ({
 
   const currentServerItem = useMemo(() => {
     const chKey = activeTab.toUpperCase();
-    return serverResults.find((r: CoursePriceReviewItem) =>
+    return serverResults.find((r: CourseDistributionChannel) =>
       r.channel?.toUpperCase().includes(chKey.includes("SOLU") ? "SOLU" : chKey.includes("COUR") ? "COUR" : "UDEM")
     );
   }, [serverResults, activeTab]);
@@ -1015,7 +975,7 @@ const ReviewPricesModal = ({
   const handleSaveAndContinue = async () => {
     if (courseId) {
       try {
-        const payloadChannels: DistributionChannelPayload[] = activeChannelNames.map((ch) => {
+        const payloadChannels: CourseDistributionChannel[] = activeChannelNames.map((ch) => {
           const chKey = ch.toUpperCase();
           const channelUpper = chKey.includes("SOLU")
             ? "SOLUDESK"
@@ -1043,7 +1003,7 @@ const ReviewPricesModal = ({
             comparable_courses: match?.comparable_courses || [],
           };
         });
-        await savePricesMutation({ id: courseId, body: { distribution_channels: payloadChannels } }).unwrap();
+        await savePricesMutation({ id: courseId, distribution_channels: payloadChannels }).unwrap();
         toast.success("Pricing saved successfully");
       } catch (err) {
         const { message } = normalizeApiError(err as never);
@@ -1375,12 +1335,12 @@ const ReviewAndPublishModal = ({
     [selectedChannels],
   );
 
-  const [publishMutation, { isLoading: isPublishing }] = usePublishCourseMutation();
+  const [publishMutation, { isLoading: isPublishing }] = usePublishReviewCourseMutation();
 
   const handlePublish = async () => {
     if (courseId) {
       try {
-        const payloadChannels: DistributionChannelPayload[] = activeChannelNames.map((ch) => {
+        const payloadChannels: CourseDistributionChannel[] = activeChannelNames.map((ch) => {
           const chKey = ch.toUpperCase();
           const channelUpper = chKey.includes("SOLU")
             ? "SOLUDESK"
@@ -1399,7 +1359,7 @@ const ReviewAndPublishModal = ({
         });
         await publishMutation({
           id: courseId,
-          body: { distribution_channels: payloadChannels },
+          distribution_channels: payloadChannels,
         }).unwrap();
         toast.success("Course published successfully!");
       } catch (err) {

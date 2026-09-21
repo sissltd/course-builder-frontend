@@ -2,33 +2,20 @@
 
 import React from "react";
 import Image from "next/image";
-import { Copy, Timer1, ArrowRight2 } from "iconsax-react";
+import { Copy, ArrowRight2 } from "iconsax-react";
 import { XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";
 import { ReviewerPendingFilters } from "@/modules/reviewer/pending/components/ReviewerPendingFilters";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { cn } from "@/lib/utils";
-
-interface PublishedCourse {
-  courseTitle: string;
-  creator: string;
-  courseId: string;
-  category: string;
-  price: string;
-  channel: string;
-  approvedBy: string;
-}
-
-const publishedCourses: PublishedCourse[] = Array.from({ length: 15 }, () => ({
-  courseTitle: "Machine Learning and Design",
-  creator: "Osaite Emmanuel",
-  courseId: "SLD-e4...3d5",
-  category: "Software Engineering",
-  price: "₦120.00",
-  channel: "Soludesk, Udemy & Coursera",
-  approvedBy: "Osaite Emmanuel",
-}));
+import { format } from "date-fns";
+import { useGetReviewQueuePublishedQuery } from "@/modules/reviewer/api/reviewQueueApi";
+import { useGetStaffQuery } from "@/modules/admin/teams/api/staffApi";
+import {
+  mapToReviewQueueRows,
+  type ReviewQueueRow,
+} from "@/modules/reviewer/types/reviewQueue";
 
 const columns = [
   "Course Title",
@@ -40,23 +27,69 @@ const columns = [
   "Approved by",
 ];
 
-const pages = [1, 2, 3, 4, 5];
-
 const tableGridClassName =
   "grid grid-cols-[minmax(200px,1.4fr)_minmax(140px,1fr)_minmax(160px,1.1fr)_minmax(160px,1.1fr)_minmax(80px,0.6fr)_minmax(240px,1.5fr)_minmax(140px,1fr)]";
 
 export const ReviewerPublishedCoursesView = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 8;
-  const totalPages = Math.ceil(publishedCourses.length / itemsPerPage) || 1;
-  const paginatedCourses = publishedCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+
+  const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+  const [category, setCategory] = React.useState("");
+  const [fromDate, setFromDate] = React.useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = React.useState<Date | undefined>(undefined);
+  const [approvedBy, setApprovedBy] = React.useState("");
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: staffData } = useGetStaffQuery();
+  const approvedByOptions = React.useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (staffData ?? [])
+            .map((member) =>
+              `${member.first_name ?? ""} ${member.last_name ?? ""}`.trim() ||
+              member.email ||
+              "",
+            )
+            .filter(Boolean),
+        ),
+      ),
+    [staffData],
   );
 
+  const { data, isLoading, isFetching } = useGetReviewQueuePublishedQuery({
+    search: debouncedSearch.trim() || undefined,
+    category: category || undefined,
+    approved_by: approvedBy || undefined,
+    date_from: fromDate ? format(fromDate, "yyyy-MM-dd") : undefined,
+    date_to: toDate ? format(toDate, "yyyy-MM-dd") : undefined,
+    page: currentPage,
+    size: itemsPerPage,
+  });
+
+  const paginatedCourses: ReviewQueueRow[] = React.useMemo(
+    () => mapToReviewQueueRows(data?.data?.results),
+    [data?.data?.results],
+  );
+
+  const paginator = data?.data?.paginator;
+  const totalEntries = paginator?.count ?? 0;
+  const totalPages =
+    paginator?.total_pages ?? Math.max(1, Math.ceil(totalEntries / itemsPerPage));
+
   const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
-  
-  const activeCourse = activeCourseIndex !== null ? publishedCourses[activeCourseIndex] : null;
+
+  const activeCourse =
+    activeCourseIndex !== null ? paginatedCourses[activeCourseIndex] : null;
 
   const copyCourseId = async (courseId: string) => {
     try {
@@ -73,8 +106,29 @@ export const ReviewerPublishedCoursesView = () => {
       {/* Filters and Table */}
       <div className="flex w-full flex-col gap-[16px]">
         <ReviewerPendingFilters
+          search={search}
+          onSearchChange={setSearch}
+          category={category}
+          onCategoryChange={(value) => {
+            setCategory(value);
+            setCurrentPage(1);
+          }}
+          fromDate={fromDate}
+          onFromDateChange={(date) => {
+            setFromDate(date);
+            setCurrentPage(1);
+          }}
+          toDate={toDate}
+          onToDateChange={(date) => {
+            setToDate(date);
+            setCurrentPage(1);
+          }}
           secondaryLabel="Approved by"
-          secondaryOptions={["Osaite Emmanuel", "Ada Johnson", "Micheal Chen"]}
+          secondaryOptions={approvedByOptions}
+          onSecondaryChange={(value) => {
+            setApprovedBy(value === "All" ? "" : value);
+            setCurrentPage(1);
+          }}
         />
 
         <div className="flex flex-col gap-[24px]">
@@ -100,7 +154,27 @@ export const ReviewerPublishedCoursesView = () => {
 
               {/* Table Body */}
               <div>
-                {paginatedCourses.map((course, index) => {
+                {(isLoading || isFetching) && paginatedCourses.length === 0 ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className={cn(tableGridClassName, "items-center")}>
+                      {columns.map((column) => (
+                        <div key={column} className="p-[10px]">
+                          <div className="h-[16px] w-[85%] animate-pulse rounded bg-sd-grey-3" />
+                        </div>
+                      ))}
+                    </div>
+                  ))
+                ) : paginatedCourses.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-[64px] text-center">
+                    <p className="text-[16px] font-medium text-sd-grey-12">
+                      No published courses found
+                    </p>
+                    <p className="mt-[6px] text-[14px] text-sd-muted-text">
+                      There are no courses matching the selected filters.
+                    </p>
+                  </div>
+                ) : (
+                  paginatedCourses.map((course, index) => {
                   const globalIdx = (currentPage - 1) * itemsPerPage + index;
                   return (
                     <div
@@ -142,14 +216,15 @@ export const ReviewerPublishedCoursesView = () => {
                         <span className="truncate">{course.price}</span>
                       </div>
                       <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
-                        <span className="truncate">{course.channel}</span>
+                        <span className="truncate">{course.channelSummary}</span>
                       </div>
                       <div className="flex min-h-[44px] items-center border-b border-sd-grey-3 p-[10px] text-[14px] font-normal leading-[20px] text-sd-grey-11">
                         <span className="truncate">{course.approvedBy}</span>
                       </div>
                     </div>
                   );
-                })}
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -157,7 +232,7 @@ export const ReviewerPublishedCoursesView = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between py-[12px]">
             <div className="flex h-[36px] items-center justify-center rounded-[20px] border border-sd-grey-3 px-[16px] text-[12px] font-medium leading-[16px] text-[#4B5563]">
-              Showing {publishedCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, publishedCourses.length)} of {publishedCourses.length} entries
+              Showing {totalEntries === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalEntries)} of {totalEntries} entries
             </div>
 
             <div className="flex items-center gap-[8px]">
@@ -215,9 +290,9 @@ export const ReviewerPublishedCoursesView = () => {
           if (!open) setActiveCourseIndex(null);
         }}
         onPrevious={() => setActiveCourseIndex((c) => (c === null ? null : Math.max(0, c - 1)))}
-        onNext={() => setActiveCourseIndex((c) => (c === null ? null : Math.min(publishedCourses.length - 1, c + 1)))}
+        onNext={() => setActiveCourseIndex((c) => (c === null ? null : Math.min(paginatedCourses.length - 1, c + 1)))}
         canPrevious={activeCourseIndex !== null && activeCourseIndex > 0}
-        canNext={activeCourseIndex !== null && activeCourseIndex < publishedCourses.length - 1}
+        canNext={activeCourseIndex !== null && activeCourseIndex < paginatedCourses.length - 1}
       />
     </div>
   );
@@ -265,7 +340,7 @@ const PublishedCourseInfoDrawer = ({
   canPrevious,
   canNext,
 }: {
-  course: PublishedCourse | null;
+  course: ReviewQueueRow | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onPrevious: () => void;
@@ -284,8 +359,6 @@ const PublishedCourseInfoDrawer = ({
       toast.error(message ?? "Could not copy");
     }
   };
-
-  const fullCourseId = "Td4fJcvnJ88-04924945"; // Match the mockup's long ID
 
   return (
     <SideDrawer
@@ -350,29 +423,29 @@ const PublishedCourseInfoDrawer = ({
           </h2>
           <DrawerDetailRow label="Course Title" value={course.courseTitle} />
           <DrawerDetailRow label="Category" value={course.category} />
-          <DrawerDetailRow label="Difficulty Level" value="Advanced" />
+          <DrawerDetailRow label="Difficulty Level" value={course.difficultyLevel} />
           <DrawerDetailRow
             label="Course ID"
-            value={fullCourseId}
+            value={course.courseId}
             canCopy
-            onCopy={() => void copyText(fullCourseId)}
+            onCopy={() => void copyText(course.id)}
           />
-          <DrawerDetailRow label="Source" value="AI Created" />
+          <DrawerDetailRow label="Source" value={course.sourceLabel} />
         </section>
 
         {/* OWNER'S INFORMATION */}
         <section className="flex flex-col gap-[16px]">
           <h2 className="text-[14px] font-medium uppercase leading-[20px] tracking-[-0.28px] text-sd-grey-12">
-            OWNER'S INFORMATION
+            OWNER&apos;S INFORMATION
           </h2>
           <DrawerDetailRow label="Creator" value={course.creator} />
           <DrawerDetailRow
             label="User ID"
-            value={fullCourseId}
+            value={course.courseId}
             canCopy
-            onCopy={() => void copyText(fullCourseId)}
+            onCopy={() => void copyText(course.id)}
           />
-          <DrawerDetailRow label="Date Created" value="17 May 2026, 08:45PM" />
+          <DrawerDetailRow label="Date Created" value={course.dateCreated} />
         </section>
 
         <div className="flex flex-col gap-[4px]">

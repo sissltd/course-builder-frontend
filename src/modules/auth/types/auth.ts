@@ -1,8 +1,23 @@
+/**
+ * The backend's `UserRoleEnum`, verbatim.
+ *
+ * This is the user's *workflow* role — the seat they sit. It decides their
+ * login workspace, which review seats they may claim, and whether MFA is
+ * mandatory. Their capabilities are a separate axis: see `permissions` on
+ * `UserProfile`. A custom role created through `/admin/roles/` still reports
+ * one of these values as its `base_role`, so gating on this enum alone hides
+ * custom roles — gate on permissions instead.
+ */
 export enum UserRole {
-  SUPER_ADMIN = "SUPER_ADMIN",
-  STAFF = "STAFF",
   COURSE_CREATOR = "COURSE_CREATOR",
-  REVIEWER = "REVIEWER",
+  CREATOR_REVIEWER = "CREATOR_REVIEWER",
+  STAFF_WRITER = "STAFF_WRITER",
+  STAFF_VERIFIER = "STAFF_VERIFIER",
+  STAFF_APPROVER = "STAFF_APPROVER",
+  AI_REVIEWER = "AI_REVIEWER",
+  QA_REVIEWER = "QA_REVIEWER",
+  ADMIN = "ADMIN",
+  SUPER_ADMIN = "SUPER_ADMIN",
 }
 
 export enum UserStatus {
@@ -117,12 +132,38 @@ export interface ProfileCategory {
   name: string;
 }
 
+/**
+ * The role whose *permissions* the user holds — the role card from
+ * `/admin/roles/`. This is what a Super Admin assigned them; `base_role` is
+ * the built-in workflow role that assignment was derived from.
+ */
+export interface AccessRole {
+  id: string;
+  name: string;
+  is_system: boolean;
+  base_role: string;
+}
+
+
+export type AssignedTrack = "CREATOR_TRACK" | "AI_TRACK" | "ALL" | null;
+
 export interface UserProfile extends Omit<User, "category"> {
   full_name: string;
   member_since: string;
   is_verified: boolean;
   badges: string[];
   category: ProfileCategory | null;
+  assigned_track?: AssignedTrack;
+  /** Display name for `role`, e.g. `Writer`. Safe to render as-is. */
+  role_label: string;
+  access_role: AccessRole;
+  /**
+   * Permission codenames the user holds, sorted. The backend's own guidance:
+   * "Use these to decide which controls to show; the API enforces them
+   * regardless." Gate UI on these rather than on `role` — a custom role is
+   * invisible to role checks. See `@/modules/auth/permissions`.
+   */
+  permissions: string[];
 }
 
 export interface UpdateProfileRequest {

@@ -1,14 +1,90 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { toast } from "sonner";
 import { ArrowDown2 } from "iconsax-react";
-import { Switch } from "./Switch";
 import { Button } from "@/components/shared/Button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "./Switch";
+import { normalizeApiError } from "@/lib/api/errors";
+import { useSettingsDraft } from "../hooks/useSettingsDraft";
+import {
+  useGetReviewerQueuePreferencesQuery,
+  useUpdateReviewerQueuePreferencesMutation,
+  QUEUE_SORT_OPTIONS,
+  EFFECTIVE_TRACK_LABELS,
+  type ReviewerQueuePreferences,
+  type ReviewQueueSortOrder,
+} from "../api/reviewerSettingsApi";
 
-export const QueueBehaviourTab = () => {
-  const [autoAdvance, setAutoAdvance] = useState(false);
-  const [trackPreference, setTrackPreference] = useState("both");
+/** Fallback for the window before the query resolves; the toggles default on. */
+const FALLBACK_PREFERENCES: ReviewerQueuePreferences = {
+  id: "",
+  show_ai_track: true,
+  show_creator_track: true,
+  show_both_track: true,
+  effective_track_filter: "ALL",
+  default_sort_order: "ALL",
+  auto_advance_enabled: false,
+};
+
+const TRACK_TOGGLES: Array<{
+  key: "show_ai_track" | "show_creator_track" | "show_both_track";
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "show_ai_track",
+    label: "Show AI track courses",
+    description: "Include APE-produced course in your queue",
+  },
+  {
+    key: "show_creator_track",
+    label: "Show creator track courses",
+    description: "Include human-submitted courses in your queue",
+  },
+  {
+    key: "show_both_track",
+    label: "Show both track",
+    description: "Include all type of courses in your queue",
+  },
+];
+
+type TrackToggleKey = (typeof TRACK_TOGGLES)[number]["key"];
+
+const QueuePreferencesForm = ({ server }: { server: ReviewerQueuePreferences }) => {
+  const [updatePreferences, { isLoading: isSaving }] =
+    useUpdateReviewerQueuePreferencesMutation();
+
+  const { draft, setField, isDirty, reset } = useSettingsDraft(server);
+
+  /**
+   * The effective filter describes the *saved* toggles, so it is read from the
+   * server value — never from the local draft, which the server has not
+   * accepted yet.
+   */
+  const effectiveFilter = server.effective_track_filter;
+  const setTrack = (key: TrackToggleKey, value: boolean) => setField(key, value);
+
+  const handleSave = async () => {
+    if (!isDirty) {
+      toast.info("Nothing to save");
+      return;
+    }
+    try {
+     
+      await updatePreferences({
+        show_ai_track: draft.show_ai_track,
+        show_creator_track: draft.show_creator_track,
+        show_both_track: draft.show_both_track,
+        default_sort_order: draft.default_sort_order,
+        auto_advance_enabled: draft.auto_advance_enabled,
+      }).unwrap();
+      toast.success("Queue behaviour updated");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not update queue behaviour");
+    }
+  };
 
   return (
     <div className="flex w-full flex-col gap-[24px]">
@@ -32,10 +108,20 @@ export const QueueBehaviourTab = () => {
               How courses are ordered when you open the queue
             </span>
           </div>
-          <div className="relative flex w-[160px] items-center">
-            <select className="flex h-[40px] w-full appearance-none rounded-[8px] border border-sd-grey-4 bg-white pl-[16px] pr-[36px] text-[14px] font-normal text-sd-grey-11 outline-none focus:border-sd-blue cursor-pointer">
-              <option value="oldest">Oldest First</option>
-              <option value="newest">Newest First</option>
+          <div className="relative flex w-[240px] items-center">
+            <select
+              value={draft.default_sort_order}
+              disabled={isSaving}
+              onChange={(e) =>
+                setField("default_sort_order", e.target.value as ReviewQueueSortOrder)
+              }
+              className="flex h-[40px] w-full appearance-none rounded-[8px] border border-sd-grey-4 bg-white pl-[16px] pr-[36px] text-[14px] font-normal text-sd-grey-11 outline-none focus:border-sd-blue cursor-pointer disabled:opacity-50"
+            >
+              {QUEUE_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             <ArrowDown2
               size={18}
@@ -56,7 +142,11 @@ export const QueueBehaviourTab = () => {
               Load next course immediately after approval or rejection
             </span>
           </div>
-          <Switch checked={autoAdvance} onChange={setAutoAdvance} />
+          <Switch
+            checked={draft.auto_advance_enabled}
+            disabled={isSaving}
+            onChange={(checked) => setField("auto_advance_enabled", checked)}
+          />
         </div>
       </div>
 
@@ -65,61 +155,82 @@ export const QueueBehaviourTab = () => {
           TRACK PREFERENCE
         </h3>
 
-        <RadioGroup
-          value={trackPreference}
-          onValueChange={setTrackPreference}
-          className="flex flex-col gap-[24px]"
-        >
-          {/* AI track */}
-          <div className="flex items-center justify-between gap-[24px] cursor-pointer" onClick={() => setTrackPreference("ai")}>
-            <div className="flex flex-col gap-[4px]">
-              <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
-                Show AI track courses
-              </span>
-              <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
-                Include APE-produced course in your queue
-              </span>
+        <div className="flex flex-col gap-[24px]">
+          {TRACK_TOGGLES.map((track) => (
+            <div
+              key={track.key}
+              className="flex items-center justify-between gap-[24px]"
+            >
+              <div className="flex flex-col gap-[4px]">
+                <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
+                  {track.label}
+                </span>
+                <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
+                  {track.description}
+                </span>
+              </div>
+              <Switch
+                checked={draft[track.key]}
+                disabled={isSaving}
+                onChange={(checked) => setTrack(track.key, checked)}
+              />
             </div>
-            <RadioGroupItem value="ai" id="track-ai" className="size-[20px] cursor-pointer" />
-          </div>
+          ))}
+        </div>
 
-          {/* Creator track */}
-          <div className="flex items-center justify-between gap-[24px] cursor-pointer" onClick={() => setTrackPreference("creator")}>
-            <div className="flex flex-col gap-[4px]">
-              <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
-                Show creator track courses
-              </span>
-              <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
-                Include human-submitted courses in your queue
-              </span>
-            </div>
-            <RadioGroupItem value="creator" id="track-creator" className="size-[20px] cursor-pointer" />
-          </div>
+        {/* The server derives the effective filter — never re-derive it here. */}
+        <p className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
+          Effective filter:{" "}
+          <span className="font-medium text-sd-grey-12">
+            {EFFECTIVE_TRACK_LABELS[effectiveFilter] ?? effectiveFilter}
+          </span>
+        </p>
 
-          {/* Both track */}
-          <div className="flex items-center justify-between gap-[24px] cursor-pointer" onClick={() => setTrackPreference("both")}>
-            <div className="flex flex-col gap-[4px]">
-              <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
-                Show both track
-              </span>
-              <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
-                Include all type of courses in your queue
-              </span>
-            </div>
-            <RadioGroupItem value="both" id="track-both" className="size-[20px] cursor-pointer" />
+        {/* All three off is a deliberately empty queue — say so, or it reads as a bug. */}
+        {effectiveFilter === "NONE" && (
+          <div className="rounded-[8px] border border-sd-warning-text/30 bg-sd-warning-bg px-[16px] py-[12px] text-[14px] leading-[20px] text-sd-warning-text">
+            Every track is switched off, so your queue will stay empty until you
+            turn one back on.
           </div>
-        </RadioGroup>
+        )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-[12px]">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!isDirty || isSaving}
+          onClick={reset}
+          className="h-[44px] rounded-[8px] px-[24px] text-[14px] font-medium"
+        >
+          Discard
+        </Button>
         <Button
           type="button"
           size="app"
-          className="h-[44px] rounded-[8px] bg-[#0056D2] px-[24px] text-[14px] font-medium text-white hover:bg-[#0047B8]"
+          disabled={!isDirty || isSaving}
+          onClick={handleSave}
+          className="h-[44px] rounded-[8px] bg-[#0056D2] px-[24px] text-[14px] font-medium text-white hover:bg-[#0047B8] disabled:opacity-50"
         >
-          Save changes
+          {isSaving ? "Saving..." : "Save changes"}
         </Button>
       </div>
     </div>
   );
+};
+
+export const QueueBehaviourTab = () => {
+  const { data, isLoading } = useGetReviewerQueuePreferencesQuery();
+
+  if (isLoading) {
+    return (
+      <div className="flex w-full flex-col gap-[24px]">
+        <div className="h-[40px] w-[260px] animate-pulse rounded bg-sd-grey-3" />
+        <div className="h-[160px] w-full animate-pulse rounded-[12px] bg-sd-grey-2" />
+        <div className="h-[260px] w-full animate-pulse rounded-[12px] bg-sd-grey-2" />
+      </div>
+    );
+  }
+
+  return <QueuePreferencesForm server={{ ...FALLBACK_PREFERENCES, ...(data ?? {}) }} />;
 };

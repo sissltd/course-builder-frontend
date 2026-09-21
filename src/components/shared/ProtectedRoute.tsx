@@ -11,51 +11,28 @@ import {
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  /**
+   * The seats this dashboard admits. Pass `seatsForWorkspace(...)` rather than
+   * a hand-written list, so the gate and the seat→workspace map can't disagree.
+   */
   allowedRoles?: string[];
 }
 
-const REVIEWER_ROLES = [
-  "REVIEWER",
-  "STAFF_WRITER",
-  "STAFF_VERIFIER",
-  "STAFF_APPROVER",
-  "CREATOR_REVIEWER",
-  "AI_REVIEWER",
-  "QA_REVIEWER",
-];
-
-const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "STAFF"];
-
+/**
+ * A plain membership test, deliberately.
+ *
+ * This used to also pass any Super Admin, and to treat "any reviewer seat" as
+ * matching if the list contained any reviewer seat. Both were removed when the
+ * seat→workspace map became explicit: the family rule is what would otherwise
+ * keep letting an AI Reviewer — now an admin-dashboard seat — into the reviewer
+ * studio, and Super Admin is already named in the admin list it needs.
+ */
 function checkIsRoleAllowed(role?: string, allowedRoles?: string[]): boolean {
   if (!allowedRoles || allowedRoles.length === 0) return true;
   if (!role) return false;
 
   const userRoleNorm = role.trim().toUpperCase();
-  const allowedNorm = allowedRoles.map((r) => r.trim().toUpperCase());
-
-  // Direct match
-  if (allowedNorm.includes(userRoleNorm)) return true;
-
-  // Super Admin has full platform access
-  if (userRoleNorm === "SUPER_ADMIN") return true;
-
-  // Match if user is any Reviewer variant and allowedRoles accepts Reviewer
-  if (
-    REVIEWER_ROLES.includes(userRoleNorm) &&
-    allowedNorm.some((r) => REVIEWER_ROLES.includes(r))
-  ) {
-    return true;
-  }
-
-  // Match if user is any Admin/Staff variant and allowedRoles accepts Admin/Staff
-  if (
-    ADMIN_ROLES.includes(userRoleNorm) &&
-    allowedNorm.some((r) => ADMIN_ROLES.includes(r))
-  ) {
-    return true;
-  }
-
-  return false;
+  return allowedRoles.some((r) => r.trim().toUpperCase() === userRoleNorm);
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({

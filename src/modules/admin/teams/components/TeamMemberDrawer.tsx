@@ -17,12 +17,12 @@ import {
   LoginCurve,
   Chart,
   TickCircle,
-  ShieldSecurity,
   UserMinus,
   Setting2,
   Refresh,
+  Key,
+  Trash,
 } from "iconsax-react";
-import { FormSelect } from "@/components/form/FormSelect";
 import { toast } from "sonner";
 import type { TeamRow } from "./TeamActionMenu";
 
@@ -34,13 +34,20 @@ interface TeamMemberDrawerProps {
   member: DrawerMember | null;
   isSelf?: boolean;
   isSuperAdmin?: boolean;
+  /** Which lifecycle actions the caller may perform — one permission each. */
+  canFullAccess?: boolean;
+  canResetPassword?: boolean;
+  canDelete?: boolean;
   onReactivate?: (member: DrawerMember) => void;
   onRevoke?: (member: DrawerMember) => void;
   onResend?: (member: DrawerMember) => void;
+  onChangeRole?: (member: DrawerMember) => void;
+  onResetPassword?: (member: DrawerMember) => void;
+  onDeleteAccount?: (member: DrawerMember) => void;
 }
 
 type Tab = "overview" | "activities" | "analytics" | "ip-log" | "settings";
-type ModalAction = "reset-password" | "delete-account" | "blacklist-ip" | null;
+type ModalAction = "blacklist-ip" | null;
 
 const tabs: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
@@ -94,29 +101,11 @@ const ActivityItem = ({ icon, title, desc, time }: { icon: React.ReactNode; titl
 );
 
 const successConfig: Record<NonNullable<ModalAction>, { title: string; description: string }> = {
-  "reset-password": {
-    title: "Password reset!",
-    description: "A password reset link has been sent to the user's email address.",
-  },
-  "delete-account": {
-    title: "Account deleted!",
-    description: "The account has been permanently deleted.",
-  },
   "blacklist-ip": {
     title: "IP blacklisted!",
     description: "The IP address has been blacklisted successfully.",
   },
 };
-
-const roleOptions = [
-  { label: "Super Admin", value: "Super Admin" },
-  { label: "Admin", value: "Admin" },
-  { label: "Creator", value: "Creator" },
-  { label: "Reviewer (Writer)", value: "Reviewer (Writer)" },
-  { label: "Reviewer (Verifier)", value: "Reviewer (Verifier)" },
-  { label: "Reviewer (Approver)", value: "Reviewer (Approver)" },
-  { label: "Contributor", value: "Contributor" },
-];
 
 export const TeamMemberDrawer = ({
   isOpen,
@@ -124,16 +113,26 @@ export const TeamMemberDrawer = ({
   member,
   isSelf = false,
   isSuperAdmin = false,
+  canFullAccess = false,
+  canResetPassword = false,
+  canDelete = false,
   onReactivate,
   onRevoke,
   onResend,
+  onChangeRole,
+  onResetPassword,
+  onDeleteAccount,
 }: TeamMemberDrawerProps) => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [confirmAction, setConfirmAction] = useState<ModalAction>(null);
   const [successAction, setSuccessAction] = useState<ModalAction>(null);
-  const [selectedRole, setSelectedRole] = useState<string>("");
 
   if (!member) return null;
+
+  // Both the caller's own account and the Super Admin seat are refused by every
+  // lifecycle endpoint.
+  const isProtected = isSelf || isSuperAdmin;
+  const isActive = member.invitationStatus === "ACTIVE";
 
   const handleConfirm = () => {
     if (confirmAction) {
@@ -154,17 +153,19 @@ export const TeamMemberDrawer = ({
           <div className="flex gap-[12px] w-full">
             {member.invitationStatus === "REVOKED" ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenChange(false);
-                    onReactivate?.(member);
-                  }}
-                  className="flex-1 h-[44px] bg-[#0063EF] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
-                >
-                  <Refresh variant="Linear" size={18} color="#FDFDFD" />
-                  <span className="text-[14px] font-medium text-[#FDFDFD]">Reactivate Access</span>
-                </button>
+                {canFullAccess && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onReactivate?.(member);
+                    }}
+                    className="flex-1 h-[44px] bg-[#0063EF] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
+                  >
+                    <Refresh variant="Linear" size={18} color="#FDFDFD" />
+                    <span className="text-[14px] font-medium text-[#FDFDFD]">Reactivate Access</span>
+                  </button>
+                )}
                 {onResend && (
                   <button
                     type="button"
@@ -194,36 +195,40 @@ export const TeamMemberDrawer = ({
                     <span className="text-[14px] font-medium text-[#FDFDFD]">Resend Invitation</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenChange(false);
-                    onRevoke?.(member);
-                  }}
-                  className="h-[44px] px-[16px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
-                >
-                  <UserMinus variant="Linear" size={18} color="#D54800" />
-                  <span className="text-[14px] font-medium text-[#D54800]">Revoke</span>
-                </button>
+                {canFullAccess && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onRevoke?.(member);
+                    }}
+                    className="h-[44px] px-[16px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
+                  >
+                    <UserMinus variant="Linear" size={18} color="#D54800" />
+                    <span className="text-[14px] font-medium text-[#D54800]">Revoke</span>
+                  </button>
+                )}
               </>
-            ) : isSelf || isSuperAdmin ? (
+            ) : isProtected ? (
               <div className="w-full py-[10px] px-[14px] bg-[#F5F5F5] rounded-[8px] text-center text-[13px] text-[#606060]">
                 {isSelf
                   ? "You cannot revoke your own account."
                   : "The Super Admin seat is protected and cannot be revoked."}
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenChange(false);
-                  onRevoke?.(member);
-                }}
-                className="flex-1 h-[44px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
-              >
-                <UserMinus variant="Linear" size={18} color="#D54800" />
-                <span className="text-[14px] font-medium text-[#D54800]">Revoke Access</span>
-              </button>
+              canFullAccess && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onRevoke?.(member);
+                  }}
+                  className="flex-1 h-[44px] border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
+                >
+                  <UserMinus variant="Linear" size={18} color="#D54800" />
+                  <span className="text-[14px] font-medium text-[#D54800]">Revoke Access</span>
+                </button>
+              )
             )}
           </div>
         }
@@ -375,37 +380,78 @@ export const TeamMemberDrawer = ({
               <Setting2 variant="Linear" size={20} color="#202020" />
               <span className="text-[16px] font-semibold text-[#202020] leading-[24px]">Settings</span>
             </div>
-            <FormSelect
-              name="role"
-              label="Role"
-              placeholder={member.role}
-              options={roleOptions}
-              value={selectedRole}
-              onValueChange={setSelectedRole}
-            />
+
+            <div className="flex flex-col gap-[6px]">
+              <span className="text-[13px] text-[#606060] leading-[18px]">Role</span>
+              <div className="flex items-center justify-between gap-[12px] rounded-[8px] border border-[#E8E8E8] px-[14px] py-[10px]">
+                <span className="text-[14px] text-[#202020] leading-[20px]">
+                  {member.roleLabel || member.role}
+                </span>
+                {isActive && canFullAccess && !isProtected && onChangeRole && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onChangeRole(member);
+                    }}
+                    className="text-[14px] font-normal text-[#0063EF] hover:underline cursor-pointer shrink-0"
+                  >
+                    Change
+                  </button>
+                )}
+              </div>
+              {isActive && !member.roleId && (
+                <span className="text-[12px] leading-[18px] text-[#B54708]">
+                  This role is no longer on the platform, so it cannot be
+                  re-assigned here.
+                </span>
+              )}
+            </div>
+
+            {isActive && !isProtected && (
+              <div className="flex flex-col gap-[10px] border-t border-[#F0F0F0] pt-[20px]">
+                <span className="text-[13px] text-[#606060] leading-[18px]">
+                  Account actions
+                </span>
+
+                {canResetPassword && onResetPassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onResetPassword(member);
+                    }}
+                    className="h-[44px] w-full border border-sd-grey-4 flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-sd-grey-2 transition-colors cursor-pointer"
+                  >
+                    <Key variant="Linear" size={18} color="#606060" />
+                    <span className="text-[14px] font-medium text-[#606060]">
+                      Send password reset link
+                    </span>
+                  </button>
+                )}
+
+                {canDelete && onDeleteAccount && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onDeleteAccount(member);
+                    }}
+                    className="h-[44px] w-full border border-[#D54800] flex items-center justify-center gap-[8px] rounded-[8px] hover:bg-[#FFF0ED] transition-colors cursor-pointer"
+                  >
+                    <Trash variant="Linear" size={18} color="#D54800" />
+                    <span className="text-[14px] font-medium text-[#D54800]">
+                      Delete account
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </SideDrawer>
 
-      {/* Confirmation Modals */}
-      <ConfirmModal
-        isOpen={confirmAction === "reset-password"}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Reset password?"
-        description="Are you sure you want to reset this user's password? A reset link will be sent to their email."
-        confirmLabel="Yes, reset"
-        variant="primary"
-        onConfirm={handleConfirm}
-      />
-      <ConfirmModal
-        isOpen={confirmAction === "delete-account"}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title="Delete account?"
-        description="This action is permanent and cannot be undone. The user will lose all access to their account."
-        confirmLabel="Yes, delete"
-        variant="danger"
-        onConfirm={handleConfirm}
-      />
+      {/* Confirmation Modal */}
       <ConfirmModal
         isOpen={confirmAction === "blacklist-ip"}
         onOpenChange={(open) => { if (!open) setConfirmAction(null); }}

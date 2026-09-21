@@ -6,10 +6,11 @@ import { ArrowLeft2, ArrowRight2, CloseCircle, Copy } from "iconsax-react";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { cn } from "@/lib/utils";
 import { ReviewerRoute } from "@/lib/routes";
-import type { PendingCourseRow } from "../types";
+import { useGetReviewQueueDetailQuery } from "@/modules/reviewer/api/reviewQueueApi";
+import type { ReviewQueueRow } from "../types";
 
 interface ReviewerCourseInfoDrawerProps {
-  course: PendingCourseRow | null;
+  course: ReviewQueueRow | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onPrevious?: () => void;
@@ -17,6 +18,52 @@ interface ReviewerCourseInfoDrawerProps {
   canPrevious?: boolean;
   canNext?: boolean;
 }
+
+/** Humanises a snake_case API key into a label ("course_title" -> "Course Title"). */
+const humanizeKey = (key: string) =>
+  key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+/**
+ * Renders an arbitrary detail group (`review_information`, `owner_information`,
+ * `price_information`). The group contents are rendered defensively rather than
+ * against a fixed field list so an added backend field shows up instead of
+ * being silently dropped.
+ */
+const DetailGroup = ({
+  title,
+  group,
+}: {
+  title: string;
+  group: Record<string, unknown> | null | undefined;
+}) => {
+  const entries = Object.entries(group ?? {}).filter(
+    ([, value]) => value !== null && value !== undefined && value !== "",
+  );
+
+  if (entries.length === 0) return null;
+
+  return (
+    <section className="flex flex-col gap-[16px] border-b border-sd-grey-3 pb-[20px]">
+      <span className="text-[14px] font-medium leading-[20px] tracking-[-0.28px] text-sd-grey-12">
+        {title}
+      </span>
+
+      {entries.map(([key, value]) => (
+        <DetailRow
+          key={key}
+          label={humanizeKey(key)}
+          value={
+            <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
+              {typeof value === "object" ? JSON.stringify(value) : String(value)}
+            </span>
+          }
+        />
+      ))}
+    </section>
+  );
+};
 
 const DetailRow = ({
   label,
@@ -48,7 +95,24 @@ export const ReviewerCourseInfoDrawer = ({
 }: ReviewerCourseInfoDrawerProps) => {
   const router = useRouter();
 
+  // The row already carries enough to paint the drawer; the detail call fills in
+  // the review/owner/price groups. Hook must run before the null guard below.
+  const { data: detail, isLoading: isLoadingDetail } = useGetReviewQueueDetailQuery(
+    course?.id ?? "",
+    { skip: !isOpen || !course?.id },
+  );
+
   if (!course) return null;
+
+  const reviewInformation = detail?.review_information as
+    | Record<string, unknown>
+    | undefined;
+  const ownerInformation = detail?.owner_information as
+    | Record<string, unknown>
+    | undefined;
+  const priceInformation = detail?.price_information as
+    | Record<string, unknown>
+    | undefined;
 
   const copyCourseId = async () => {
     try {
@@ -194,11 +258,31 @@ export const ReviewerCourseInfoDrawer = ({
             label="Date approved"
             value={
               <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
-                {course.dateApproved}
+                {course.dateReviewed}
+              </span>
+            }
+          />
+          <DetailRow
+            label="Reviewer"
+            value={
+              <span className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
+                {course.reviewer}
               </span>
             }
           />
         </section>
+
+        {isLoadingDetail && !reviewInformation && (
+          <div className="flex flex-col gap-[12px]" aria-label="Loading course detail">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="h-[20px] w-full animate-pulse rounded bg-sd-grey-3" />
+            ))}
+          </div>
+        )}
+
+        <DetailGroup title="REVIEW INFORMATION" group={reviewInformation} />
+        <DetailGroup title="OWNER INFORMATION" group={ownerInformation} />
+        <DetailGroup title="PRICE INFORMATION" group={priceInformation} />
       </div>
     </SideDrawer>
   );

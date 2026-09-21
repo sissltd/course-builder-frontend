@@ -8,7 +8,7 @@ import { ProductionTrendChart } from "./components/ProductionTrendChart";
 import { AverageProductionCost } from "./components/AverageProductionCost";
 import { ApePipeline } from "./components/ApePipeline";
 import { ApePipelineOverview } from "./components/ApePipelineOverview";
-import { AddStaffModal } from "./components/AddStaffModal";
+import { AddStaffModal } from "@/modules/admin/teams/components/AddStaffModal";
 import { useGetAdminOverviewQuery } from "@/redux/slices/adminApi";
 
 export const AdminDashboardView = () => {

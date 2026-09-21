@@ -15,19 +15,19 @@ export const ReviewerDashboardView = () => {
         <div className="flex flex-col gap-[16px]">
           <ReviewerMetricCard
             iconSrc="/assets/reviewer/book-reviewed.svg"
-            value={overview?.courses_reviewed ?? 0}
+            value={overview?.courses_reviewed ?? null}
             label="Courses Reviewed"
             isLoading={isLoading}
           />
           <ReviewerMetricCard
             iconSrc="/assets/reviewer/book-queue.svg"
-            value={overview?.courses_in_queue ?? 0}
+            value={overview?.courses_in_queue ?? null}
             label="Courses in Queue"
             isLoading={isLoading}
           />
           <ReviewerMetricCard
             iconSrc="/assets/reviewer/escalation-resolved.svg"
-            value={overview?.escalations_resolved ?? 0}
+            value={overview?.escalations_resolved ?? null}
             label="Escalation resolved"
             isLoading={isLoading}
           />

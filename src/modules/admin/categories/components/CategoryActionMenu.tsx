@@ -1,14 +1,17 @@
 "use client";
 
 import React from "react";
-import { Archive, Edit2, Trash } from "iconsax-react";
+import { Archive, Edit2, Trash, RefreshCircle } from "iconsax-react";
 import { Button as AppButton } from "@/components/shared/Button";
+import { CategoryStatus } from "@/modules/categories/types";
 
-export type CategoryAction = "edit" | "archive" | "delete";
+export type CategoryAction = "edit" | "archive" | "unarchive" | "delete";
 
 interface CategoryActionMenuProps {
   onClose: () => void;
   onAction: (action: CategoryAction) => void;
+
+  status: CategoryStatus;
 }
 
 interface ActionItem {
@@ -19,31 +22,47 @@ interface ActionItem {
   hoverClassName: string;
 }
 
-const items: ActionItem[] = [
-  {
-    icon: <Edit2 variant="Linear" size={18} color="var(--sd-grey-11)" />,
-    label: "Edit category",
-    action: "edit",
-    colorClassName: "text-sd-grey-11",
-    hoverClassName: "hover:bg-sd-grey-1",
-  },
-  {
-    icon: <Archive variant="Linear" size={18} color="var(--sd-grey-11)" />,
-    label: "Archive category",
-    action: "archive",
-    colorClassName: "text-sd-grey-11",
-    hoverClassName: "hover:bg-sd-grey-1",
-  },
-  {
-    icon: <Trash variant="Linear" size={18} color="var(--sd-danger)" />,
-    label: "Delete category",
-    action: "delete",
-    colorClassName: "text-[var(--sd-danger)]",
-    hoverClassName: "hover:bg-[var(--sd-danger-soft)]",
-  },
-];
+export const CategoryActionMenu = ({
+  onClose,
+  onAction,
+  status,
+}: CategoryActionMenuProps) => {
+  const isArchived = status === CategoryStatus.ARCHIVED;
 
-export const CategoryActionMenu = ({ onClose, onAction }: CategoryActionMenuProps) => {
+  const archiveItem: ActionItem = isArchived
+    ? {
+        icon: <RefreshCircle variant="Linear" size={18} color="var(--sd-grey-11)" />,
+        label: "Unarchive category",
+        action: "unarchive",
+        colorClassName: "text-sd-grey-11",
+        hoverClassName: "hover:bg-sd-grey-1",
+      }
+    : {
+        icon: <Archive variant="Linear" size={18} color="var(--sd-grey-11)" />,
+        label: "Archive category",
+        action: "archive",
+        colorClassName: "text-sd-grey-11",
+        hoverClassName: "hover:bg-sd-grey-1",
+      };
+
+  const items: ActionItem[] = [
+    {
+      icon: <Edit2 variant="Linear" size={18} color="var(--sd-grey-11)" />,
+      label: "Edit category",
+      action: "edit",
+      colorClassName: "text-sd-grey-11",
+      hoverClassName: "hover:bg-sd-grey-1",
+    },
+    archiveItem,
+    {
+      icon: <Trash variant="Linear" size={18} color="var(--sd-danger)" />,
+      label: "Delete category",
+      action: "delete",
+      colorClassName: "text-[var(--sd-danger)]",
+      hoverClassName: "hover:bg-[var(--sd-danger-soft)]",
+    },
+  ];
+
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
@@ -51,7 +70,7 @@ export const CategoryActionMenu = ({ onClose, onAction }: CategoryActionMenuProp
         <div className="flex flex-col gap-[2px]">
           {items.map((item) => (
             <AppButton
-              key={item.label}
+              key={item.action}
               type="button"
               variant="ghost"
               size="sm"

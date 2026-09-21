@@ -11,5 +11,8 @@ export {
   useInviteStaffMutation,
   useReactivateStaffMutation,
   useRevokeStaffMutation,
+  useChangeStaffRoleMutation,
+  useSendStaffPasswordResetMutation,
+  useEraseStaffMutation,
   useAcceptStaffInvitationMutation,
 } from "../api/staffApi";
