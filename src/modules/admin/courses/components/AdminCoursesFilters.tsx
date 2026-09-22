@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CourseViewToggle, type CourseViewMode } from "./CourseViewToggle";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/api/categoriesApi";
+import { useGetCategoryPickerQuery } from "@/modules/categories/api/categoryPickerApi";
 
 interface TriggerProps {
   icon: React.ReactNode;
@@ -108,9 +108,9 @@ export const AdminCoursesFilters = ({
   viewMode,
   setViewMode,
 }: AdminCoursesFiltersProps) => {
-  const { data: categoriesData } = useGetCategoriesQuery();
+  const { data: categoriesData } = useGetCategoryPickerQuery();
   const categories = React.useMemo(() => {
-    return categoriesData?.data?.results ?? [];
+    return categoriesData ?? [];
   }, [categoriesData]);
 
   const [categorySearch, setCategorySearch] = React.useState("");

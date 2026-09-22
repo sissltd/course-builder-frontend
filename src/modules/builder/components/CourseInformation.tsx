@@ -20,7 +20,10 @@ import { setCourseInformation } from "@/redux/slices/courseBuilderSlice";
 import { syncSetCoverVideo, syncUpdateCourseInfo } from "@/redux/slices/builderSync";
 import { useDebouncedCourseSave } from "../hooks/useDebouncedCourseSave";
 import { courseInformationSchema, CourseInformationFormData } from "../utils/schemas";
-import { useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
 import { VideoPlayerModal } from "@/modules/creator/courses/components/VideoPlayerModal";
 
 interface CourseInformationProps {
@@ -32,7 +35,9 @@ export const CourseInformation = ({ onNext, onBack }: CourseInformationProps) =>
   const dispatch = useAppDispatch();
   const info = useAppSelector((state) => state.courseBuilder.courseInformation);
   const { updateAndSave } = useDebouncedCourseSave();
-  const { data: categories } = useGetCategoriesPickerQuery();
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; the dropdown only wants live ones.
+  const categories = selectActivePickerOptions(categoriesResponse);
 
   // Main form
   const methods = useForm<CourseInformationFormData>({

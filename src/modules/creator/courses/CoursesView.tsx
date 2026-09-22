@@ -28,13 +28,16 @@ import { toast } from "sonner";
 import {
   useGetCoursesQuery,
   useDeleteCourseMutation,
-  useGetCategoriesPickerQuery,
 } from "./hooks";
 import type { CourseSummary, CoursesListParams } from "./types";
 import {
   CourseStatus,
   SourceType,
 } from "./types";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
 import { CreatorRoute } from "@/lib/routes";
 import { normalizeApiError } from "@/lib/api/errors";
 
@@ -62,7 +65,9 @@ export const CoursesView = () => {
   const { data: response, isLoading, error } = useGetCoursesQuery(queryParams);
   const [deleteCourse] = useDeleteCourseMutation();
 
-  const { data: categories } = useGetCategoriesPickerQuery();
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; the filter only wants live ones.
+  const categories = selectActivePickerOptions(categoriesResponse);
 
   const courses = response?.data?.results ?? [];
   const paginator = response?.data?.paginator;

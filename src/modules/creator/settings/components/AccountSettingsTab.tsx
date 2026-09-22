@@ -12,7 +12,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
-import { useGetMyProfileQuery, useUpdateMyProfileMutation } from "@/modules/creator/profile/api/profileApi";
+import { useGetMyProfileQuery, useUpdateMyProfileMutation } from "@/modules/auth/api/profileApi";
 import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";

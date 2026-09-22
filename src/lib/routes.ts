@@ -6,6 +6,7 @@ export enum AuthRoute {
   RESET_PASSWORD = "/auth/reset-password",
   VERIFY_EMAIL = "/auth/verify-email",
   ONBOARDING = "/auth/onboarding",
+  ACCEPT_INVITATION = "/accept-invitation",
   SIGNUP_GOOGLE = "/auth/signup-google",
 }
 
@@ -34,6 +35,7 @@ export enum AdminRoute {
   PUBLISHED = "/admin/published",
   RESERVATION = "/admin/reservation",
   CATEGORIES = "/admin/categories",
+  TOPICS = "/admin/topics",
   NOTIFICATIONS = "/admin/notifications",
   ACTIVITY_LOG = "/admin/activity-log",
   SETTINGS = "/admin/settings",
@@ -66,6 +68,7 @@ export enum ReviewerRoute {
   APPROVED_COURSES = "/reviewer/approved-courses",
   IN_REVIEW = "/reviewer/in-review",
   PUBLISHED_COURSES = "/reviewer/published-courses",
+  COURSES = "/reviewer/courses",
   ACTIVITY_LOG = "/reviewer/activity-log",
   NOTIFICATIONS = "/reviewer/notifications",
   SETTINGS = "/reviewer/settings",

@@ -7,9 +7,8 @@ import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { TickCircle } from "iconsax-react";
-import { StaffRole } from "@/modules/admin/teams/types";
-import { useInviteStaffMutation } from "@/modules/admin/teams/api/staffApi";
-import type { InviteStaffRequest as InviteStaffPayload } from "@/modules/admin/teams/types";
+import { useInviteStaffMutation } from "../api/staffApi";
+import { useGetRolesQuery } from "@/modules/admin/roles/api/rolesApi";
 import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";
 
@@ -18,24 +17,45 @@ interface AddStaffModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const roleOptions = [
-  { label: "Writer", value: StaffRole.STAFF_WRITER },
-  { label: "Verifier", value: StaffRole.STAFF_VERIFIER },
-  { label: "Approver", value: StaffRole.STAFF_APPROVER },
-];
-
+/**
+ * Invites a staff member.
+ *
+ * The role list is `GET /admin/roles/`, not a hardcoded trio: the invitation
+ * endpoint accepts `role_id` for a built-in *or* custom role, and `role_id` is
+ * what the backend documents as the preference ("kept for existing clients" is
+ * how it describes the `role` enum). Sending the id is also the only way a role
+ * built on this platform's own Roles screen can ever be assigned.
+ *
+ * Roles are labelled with their base role when they are custom, because two
+ * roles can share a name across different seats.
+ */
 export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
-  const [role, setRole] = React.useState("");
+  const [roleId, setRoleId] = React.useState("");
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
 
+  const { data: roles } = useGetRolesQuery();
   const [inviteStaff, { isLoading }] = useInviteStaffMutation();
 
+  const roleOptions = React.useMemo(
+    () =>
+      (roles ?? []).map((role) => ({
+        label: role.is_system
+          ? role.name
+          : `${role.name} · ${role.base_role_label}`,
+        value: role.id,
+      })),
+    [roles],
+  );
+
+  const selectedRoleLabel =
+    roleOptions.find((option) => option.value === roleId)?.label ?? "selected";
+
   const handleSendInvitation = () => {
-    if (!email || !firstName || !lastName || !role) {
+    if (!email || !firstName || !lastName || !roleId) {
       toast.error("Please fill all fields");
       return;
     }
@@ -48,9 +68,9 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
         email,
         first_name: firstName,
         last_name: lastName,
-        role: role as InviteStaffPayload["role"],
+        role_id: roleId,
       }).unwrap();
-      
+
       setShowConfirm(false);
       setTimeout(() => setShowSuccess(true), 300);
     } catch (err) {
@@ -60,20 +80,21 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
     }
   };
 
-  const handleCancel = () => {
+  const reset = () => {
     setFirstName("");
     setLastName("");
     setEmail("");
-    setRole("");
+    setRoleId("");
+  };
+
+  const handleCancel = () => {
+    reset();
     onOpenChange(false);
   };
 
   const handleDone = () => {
     setShowSuccess(false);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setRole("");
+    reset();
     onOpenChange(false);
   };
 
@@ -119,10 +140,12 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
             <FormSelect
               name="role"
               label="Role"
-              placeholder="Select role"
+              placeholder={
+                roleOptions.length > 0 ? "Select role" : "Loading roles..."
+              }
               options={roleOptions}
-              value={role}
-              onValueChange={setRole}
+              value={roleId}
+              onValueChange={setRoleId}
             />
           </div>
           <div className="flex gap-[12px]">
@@ -132,7 +155,7 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
             <Button
               className="flex-1 h-[44px] text-[14px]"
               onClick={handleSendInvitation}
-              disabled={isLoading || !firstName || !lastName || !email || !role}
+              disabled={isLoading || !firstName || !lastName || !email || !roleId}
             >
               {isLoading ? "Sending..." : "Send invitation"}
             </Button>
@@ -144,7 +167,7 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
         isOpen={showConfirm}
         onOpenChange={setShowConfirm}
         title="Send invitation?"
-        description={`An invitation will be sent to ${email || "this email"} with the role of ${roleOptions.find((r) => r.value === role)?.label || "selected"}.`}
+        description={`An invitation will be sent to ${email || "this email"} with the role of ${selectedRoleLabel}.`}
         confirmLabel={isLoading ? "Sending..." : "Yes, send"}
         variant="primary"
         onConfirm={handleConfirmSend}
@@ -173,3 +196,4 @@ export const AddStaffModal = ({ isOpen, onOpenChange }: AddStaffModalProps) => {
     </>
   );
 };
+

@@ -1,35 +1,26 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import { Copy, CloseCircle } from "iconsax-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import { SideDrawer } from "@/components/shared/SideDrawer";
-import { ReviewerInReviewFilters } from "./components/ReviewerInReviewFilters";
-
-interface InReviewCourse {
-  creator: string;
-  courseTitle: string;
-  courseId: string;
-  fullCourseId: string;
-  category: string;
-  difficultyLevel: string;
-  reviewer: string;
-  dateApproved: string;
-}
-
-const mockInReviewCourses: InReviewCourse[] = Array.from({ length: 13 }, (_, idx) => ({
-  creator: "Osaite Emmanuel",
-  courseTitle: "Machine Learning and Design",
-  courseId: "SLD-e4...3d5",
-  fullCourseId: `SLD-e4453-de73s-a3d5-${idx}`,
-  category: "Software Engineering",
-  difficultyLevel: idx % 3 === 0 ? "Advanced" : "Intermediate",
-  reviewer: "Osaite Emmanuel",
-  dateApproved: "15 May 2026, 03:40PM",
-}));
+import {
+  ReviewerInReviewFilters,
+  ANY_CATEGORY,
+  ANY_DIFFICULTY,
+  ANY_REVIEWER,
+  type ReviewerInReviewFilterValue,
+} from "./components/ReviewerInReviewFilters";
+import { useGetReviewQueueInReviewQuery } from "@/modules/reviewer/api/reviewQueueApi";
+import {
+  mapToReviewQueueRows,
+  formatCourseId,
+  EMPTY_FIELD,
+  type ReviewQueueRow,
+} from "@/modules/reviewer/types/reviewQueue";
 
 const tableGridClassName =
   "grid grid-cols-[minmax(140px,1.1fr)_minmax(180px,1.3fr)_minmax(130px,1fr)_minmax(140px,1.1fr)_minmax(120px,0.9fr)_minmax(140px,1.1fr)_minmax(160px,1.2fr)] gap-[16px] items-center px-[20px] py-[12px]";
@@ -111,7 +102,7 @@ const InReviewCourseInfoDrawer = ({
   canPrevious,
   canNext,
 }: {
-  course: InReviewCourse | null;
+  course: ReviewQueueRow | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onPrevious: () => void;
@@ -195,11 +186,11 @@ const InReviewCourseInfoDrawer = ({
           <DrawerDetailRow label="Reviewer" value={course.reviewer} />
           <DrawerDetailRow
             label="Reviewer ID"
-            value="Td4fJcvnJ88-04924945"
-            canCopy
-            onCopy={() => void copyText("Td4fJcvnJ88-04924945")}
+            value={course.reviewerId ? formatCourseId(course.reviewerId) : EMPTY_FIELD}
+            canCopy={Boolean(course.reviewerId)}
+            onCopy={() => course.reviewerId && void copyText(course.reviewerId)}
           />
-          <DrawerDetailRow label="Last reviewed" value="15 August 2026, 07:32PM" />
+          <DrawerDetailRow label="Last reviewed" value={course.lastReviewedAt} />
         </section>
 
         <div className="h-px w-full bg-sd-grey-3" />
@@ -214,9 +205,9 @@ const InReviewCourseInfoDrawer = ({
           <DrawerDetailRow label="Difficulty Level" value={course.difficultyLevel} />
           <DrawerDetailRow
             label="Course ID"
-            value="Td4fJcvnJ88-04924945"
+            value={course.courseId}
             canCopy
-            onCopy={() => void copyText("Td4fJcvnJ88-04924945")}
+            onCopy={() => void copyText(course.id)}
           />
         </section>
       </div>
@@ -227,15 +218,56 @@ const InReviewCourseInfoDrawer = ({
 export const ReviewerInReviewView = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 8;
-  const totalPages = Math.ceil(mockInReviewCourses.length / itemsPerPage) || 1;
-  const paginatedCourses = mockInReviewCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+
+  const [filters, setFilters] = React.useState<ReviewerInReviewFilterValue>({
+    search: "",
+    category: ANY_CATEGORY,
+    difficulty: ANY_DIFFICULTY,
+    reviewer: ANY_REVIEWER,
+  });
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
+  const handleFilterChange = (patch: Partial<ReviewerInReviewFilterValue>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setCurrentPage(1);
+  };
+
+  const { data, isLoading, isFetching } = useGetReviewQueueInReviewQuery({
+    search: debouncedSearch.trim() || undefined,
+    category: filters.category === ANY_CATEGORY ? undefined : filters.category,
+    difficulty_level:
+      filters.difficulty === ANY_DIFFICULTY ? undefined : filters.difficulty.toUpperCase(),
+    reviewer: filters.reviewer === ANY_REVIEWER ? undefined : filters.reviewer,
+    date_from: filters.fromDate ? format(filters.fromDate, "yyyy-MM-dd") : undefined,
+    date_to: filters.toDate ? format(filters.toDate, "yyyy-MM-dd") : undefined,
+    page: currentPage,
+    size: itemsPerPage,
+  });
+
+  const courses: ReviewQueueRow[] = React.useMemo(
+    () => mapToReviewQueueRows(data?.data?.results),
+    [data?.data?.results],
   );
+
+  const paginator = data?.data?.paginator;
+  const totalEntries = paginator?.count ?? 0;
+  const totalPages =
+    paginator?.total_pages ?? Math.max(1, Math.ceil(totalEntries / itemsPerPage));
+
+  // The API already returns only the current page, so the table renders it as-is.
+  const paginatedCourses = courses;
 
   const [activeCourseIndex, setActiveCourseIndex] = React.useState<number | null>(null);
 
-  const activeCourse = activeCourseIndex !== null ? mockInReviewCourses[activeCourseIndex] : null;
+  const activeCourse = activeCourseIndex !== null ? courses[activeCourseIndex] : null;
 
   const copyCourseId = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -251,7 +283,7 @@ export const ReviewerInReviewView = () => {
   return (
     <div className="flex w-full flex-col gap-[16px]">
       {/* Search & filters row */}
-      <ReviewerInReviewFilters />
+      <ReviewerInReviewFilters value={filters} onChange={handleFilterChange} />
 
       {/* Main Table Content Container */}
       <div className="flex flex-col gap-[20px] w-full">
@@ -284,11 +316,29 @@ export const ReviewerInReviewView = () => {
 
             {/* Table Body Rows */}
             <div className="flex flex-col">
-              {paginatedCourses.map((course, idx) => {
+              {(isLoading || isFetching) && paginatedCourses.length === 0 ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className={cn(tableGridClassName, "border-b border-sd-grey-3/70")}>
+                    {Array.from({ length: 7 }).map((__, cell) => (
+                      <div key={cell} className="h-[16px] w-[85%] animate-pulse rounded bg-sd-grey-3" />
+                    ))}
+                  </div>
+                ))
+              ) : paginatedCourses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-[64px] text-center">
+                  <p className="text-[16px] font-medium text-sd-grey-12">
+                    No courses in review
+                  </p>
+                  <p className="mt-[6px] text-[14px] text-sd-muted-text">
+                    Courses you claim will appear here while they are being reviewed.
+                  </p>
+                </div>
+              ) : (
+                paginatedCourses.map((course, idx) => {
                 const globalIdx = (currentPage - 1) * itemsPerPage + idx;
                 return (
                   <div
-                    key={course.fullCourseId}
+                    key={course.id}
                     onClick={() => setActiveCourseIndex(globalIdx)}
                     className={cn(
                       tableGridClassName,
@@ -308,7 +358,7 @@ export const ReviewerInReviewView = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={(e) => copyCourseId(e, course.fullCourseId)}
+                      onClick={(e) => copyCourseId(e, course.id)}
                       className="text-sd-grey-11 hover:text-sd-blue transition-colors cursor-pointer shrink-0 p-1 rounded-md hover:bg-sd-grey-3/50"
                       aria-label="Copy course ID"
                     >
@@ -325,11 +375,12 @@ export const ReviewerInReviewView = () => {
                     {course.reviewer}
                   </span>
                   <span className="text-[14px] font-normal leading-[20px] text-sd-grey-11 truncate">
-                    {course.dateApproved}
+                    {course.dateReviewed}
                   </span>
                   </div>
                 );
-              })}
+                })
+              )}
             </div>
           </div>
         </div>
@@ -339,7 +390,7 @@ export const ReviewerInReviewView = () => {
           {/* Entries Indicator Pill */}
           <div className="flex h-[36px] items-center justify-center rounded-full border border-sd-grey-3 bg-sd-grey-1 px-[16px] shadow-[0px_2px_4px_rgba(0,0,0,0.01)]">
             <span className="text-[12px] font-normal leading-[16px] text-sd-grey-11">
-              Showing {mockInReviewCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, mockInReviewCourses.length)} of {mockInReviewCourses.length} entries
+              Showing {courses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, courses.length)} of {courses.length} entries
             </span>
           </div>
 
@@ -401,10 +452,10 @@ export const ReviewerInReviewView = () => {
           setActiveCourseIndex((current) => (current !== null ? Math.max(0, current - 1) : null));
         }}
         onNext={() => {
-          setActiveCourseIndex((current) => (current !== null ? Math.min(mockInReviewCourses.length - 1, current + 1) : null));
+          setActiveCourseIndex((current) => (current !== null ? Math.min(courses.length - 1, current + 1) : null));
         }}
         canPrevious={activeCourseIndex !== null && activeCourseIndex > 0}
-        canNext={activeCourseIndex !== null && activeCourseIndex < mockInReviewCourses.length - 1}
+        canNext={activeCourseIndex !== null && activeCourseIndex < courses.length - 1}
       />
     </div>
   );

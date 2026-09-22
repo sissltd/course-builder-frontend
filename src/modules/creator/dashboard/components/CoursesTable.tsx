@@ -5,8 +5,12 @@ import { useRouter } from "next/navigation";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
-import { useGetCoursesQuery, useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
+import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
 import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
 import { format } from "date-fns";
 import { CreatorRoute } from "@/lib/routes";
 
@@ -40,7 +44,9 @@ export const CoursesTable = () => {
     ...(categoryFilter && { category: categoryFilter }),
   });
 
-  const { data: categories } = useGetCategoriesPickerQuery();
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; the filter only wants live ones.
+  const categories = selectActivePickerOptions(categoriesResponse);
 
   const courses: Course[] = (response?.data?.results ?? []).map((c) => ({
     id: c.id,

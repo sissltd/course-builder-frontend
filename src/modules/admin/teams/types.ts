@@ -23,11 +23,17 @@ export enum InvitationStatus {
   REVOKED = "REVOKED",
 }
 
-export enum StaffRole {
-  STAFF_WRITER = "STAFF_WRITER",
-  STAFF_VERIFIER = "STAFF_VERIFIER",
-  STAFF_APPROVER = "STAFF_APPROVER",
-}
+/*
+  The invitable positions are `StaffBaseRole` (see `admin/roles/types`), which is
+  the backend's `InvitableStaffRoleEnum` — the same six values this endpoint
+  accepts. Re-exported rather than redeclared so a role added on the backend
+  cannot drift between the invite dialog and the role builder.
+*/
+export {
+  StaffBaseRole,
+  StaffBaseRole as StaffRole,
+} from "@/modules/admin/roles/types";
+import type { StaffBaseRole } from "@/modules/admin/roles/types";
 
 export interface AdminUser {
   id: string;
@@ -81,12 +87,77 @@ export interface InviteStaffRequest {
   email: string;
   first_name: string;
   last_name: string;
-  role: StaffRole;
+  /**
+   * A built-in position. Send this or `role_id`, **not both** — the endpoint
+   * documents `role_id` as the preference, because only it can name a custom
+   * role built through Admin → Settings → Roles & Permissions.
+   */
+  role?: StaffBaseRole;
+  /** A built-in *or* custom staff role, from `GET /admin/roles/`. */
+  role_id?: string;
+}
+
+/** `POST /auth/staff/{id}/change-role/` */
+export interface ChangeStaffRoleRequest {
+  role_id: string;
+}
+
+/**
+ * `POST /auth/staff/{id}/erase/`.
+ *
+ * Both fields are required. The endpoint refuses with 409 while the member's
+ * wallet still holds a balance or a payout is in flight.
+ */
+export interface EraseAccountRequest {
+  /** Must match the account's email exactly, character for character. */
+  confirm_email: string;
+  /** Kept in the audit log. 1–500 characters. */
+  reason: string;
+}
+
+/**
+ * The generic body the lifecycle actions return — revoke and reactivate instead
+ * return `StaffActionResponse`.
+ */
+export interface SuccessEnvelope {
+  success?: boolean;
+  status: number;
+  message: string;
+  data?: unknown;
+  technical_message?: string | null;
 }
 
 export interface StaffActionResponse {
   detail: string;
   staff: StaffMember;
+}
+
+export interface AcceptStaffInvitationRequest {
+  email: string;
+  token: string;
+  password: string;
+}
+
+export interface AcceptStaffInvitationResponse {
+  access: string;
+  refresh: string;
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    is_active: boolean;
+    created_datetime: string;
+    has_completed_onboarding?: boolean;
+    country?: string;
+    state?: string;
+    address?: string;
+    phone_number?: string;
+    timezone?: string;
+    avatar_url?: string;
+    status?: string;
+  };
 }
 
 export interface PaginatedPaginator {

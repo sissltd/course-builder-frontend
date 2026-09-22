@@ -6,24 +6,18 @@ import { SheetClose } from "@/components/ui/sheet";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { Button as AppButton } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
-import { FormSelect } from "@/components/form/FormSelect";
-import { SquareTerminal } from "lucide-react";
-
-export type CategoryTrackValue = "creator-preferred" | "ai-preferred" | "open" | "archive";
-
-export interface CategoryDetails {
-  id: string;
-  category: string;
-  track: CategoryTrackValue;
-  beginnerPrice: string;
-  intermediatePrice: string;
-  advancedPrice: string;
-}
+import {
+  CATEGORY_STATUS_LABELS,
+  TRACK_PREFERENCE_LABELS,
+  type Category,
+} from "@/modules/categories/types";
+import { formatCategoryDate, formatNaira } from "@/modules/categories/lib/format";
+import { CategoryIcon } from "@/modules/categories/lib/categoryIcons";
 
 interface CategoryDetailsDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  category: CategoryDetails | null;
+  category: Category | null;
   onEdit?: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -31,20 +25,11 @@ interface CategoryDetailsDrawerProps {
   canNext?: boolean;
 }
 
-const trackOptions = [
-  { label: "Creator Preferred", value: "creator-preferred" },
-  { label: "AI Preferred", value: "ai-preferred" },
-  { label: "Open", value: "open" },
-  { label: "Archive", value: "archive" },
-] as const;
-
-const toDrawerPrice = (value: string) => `${value.replace(/^(Beg|Int|Adv)\s/, "")}.00`;
-
-const toTablePrice = (prefix: "Beg" | "Int" | "Adv", value: string) => {
-  const normalizedValue = value.endsWith(".00") ? value.slice(0, -3) : value;
-  return `${prefix} ${normalizedValue}`;
-};
-
+/**
+ * Read-only. The drawer previously held an editable draft that nothing ever
+ * saved; editing is what the footer button (and the row action menu) is for, so
+ * the fields here are display-only.
+ */
 export const CategoryDetailsDrawer = ({
   isOpen,
   onOpenChange,
@@ -55,9 +40,7 @@ export const CategoryDetailsDrawer = ({
   canPrevious = false,
   canNext = false,
 }: CategoryDetailsDrawerProps) => {
-  const [draft, setDraft] = React.useState<CategoryDetails | null>(category);
-
-  if (!draft) return null;
+  if (!category) return null;
 
   return (
     <SideDrawer
@@ -68,7 +51,7 @@ export const CategoryDetailsDrawer = ({
       title={
         <div className="flex items-center justify-between gap-[16px]">
           <span className="text-[22px] font-semibold text-sd-grey-12 leading-[32px] tracking-[-0.44px]">
-            {draft.category}
+            {category.name}
           </span>
           <div className="flex items-center gap-[10px]">
             <AppButton
@@ -122,26 +105,28 @@ export const CategoryDetailsDrawer = ({
         <FormInput
           name="categoryName"
           label="Category name"
-          value={draft.category}
-          onChange={(event) => setDraft((current) => (current ? { ...current, category: event.target.value } : current))}
+          value={category.name}
+          readOnly
           className="h-[42px] bg-white"
         />
 
-        <FormSelect
+        <FormInput
           name="trackPreference"
           label="Track preference"
-          value={draft.track}
-          onValueChange={(value) =>
-            setDraft((current) =>
-              current ? { ...current, track: value as CategoryTrackValue } : current
-            )
+          value={
+            TRACK_PREFERENCE_LABELS[category.track_preference] ??
+            category.track_preference
           }
-          options={trackOptions.map((option) => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          placeholder="Select track"
-          triggerClassName="h-[44px] bg-white text-sd-grey-12"
+          readOnly
+          className="h-[42px] bg-white"
+        />
+
+        <FormInput
+          name="status"
+          label="Status"
+          value={CATEGORY_STATUS_LABELS[category.status] ?? category.status}
+          readOnly
+          className="h-[42px] bg-white"
         />
 
         <div className="flex flex-col gap-[12px]">
@@ -152,40 +137,22 @@ export const CategoryDetailsDrawer = ({
             <FormInput
               name="beginnerPrice"
               label="Beginner"
-              value={toDrawerPrice(draft.beginnerPrice)}
-              onChange={(event) =>
-                setDraft((current) =>
-                  current
-                    ? { ...current, beginnerPrice: toTablePrice("Beg", event.target.value) }
-                    : current
-                )
-              }
+              value={formatNaira(category.creator_price_beginner)}
+              readOnly
               className="h-[42px] bg-white"
             />
             <FormInput
               name="intermediatePrice"
               label="Intermediate"
-              value={toDrawerPrice(draft.intermediatePrice)}
-              onChange={(event) =>
-                setDraft((current) =>
-                  current
-                    ? { ...current, intermediatePrice: toTablePrice("Int", event.target.value) }
-                    : current
-                )
-              }
+              value={formatNaira(category.creator_price_intermediate)}
+              readOnly
               className="h-[42px] bg-white"
             />
             <FormInput
               name="advancedPrice"
               label="Advanced"
-              value={toDrawerPrice(draft.advancedPrice)}
-              onChange={(event) =>
-                setDraft((current) =>
-                  current
-                    ? { ...current, advancedPrice: toTablePrice("Adv", event.target.value) }
-                    : current
-                )
-              }
+              value={formatNaira(category.creator_price_advanced)}
+              readOnly
               className="h-[42px] bg-white"
             />
           </div>
@@ -193,17 +160,33 @@ export const CategoryDetailsDrawer = ({
 
         <div className="flex flex-col gap-[12px]">
           <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
-            Select category icon
+            Total courses
           </span>
-          <AppButton
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-[48px] rounded-[12px] border-sd-grey-6 bg-white text-sd-grey-10 hover:bg-sd-grey-2"
-            aria-label={`${draft.category} icon`}
+          <span className="text-[16px] font-medium leading-[24px] tracking-[-0.32px] text-sd-grey-12">
+            {category.total_courses}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-[12px]">
+          <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
+            Date created
+          </span>
+          <span className="text-[14px] font-normal leading-[20px] tracking-[-0.28px] text-sd-grey-11">
+            {formatCategoryDate(category.created_datetime)}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-[12px]">
+          <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
+            Category icon
+          </span>
+          {/* Read-only; icons are chosen through the footer's Edit category button. */}
+          <div
+            className="flex size-[48px] items-center justify-center rounded-[12px] border border-sd-grey-6 bg-white text-sd-grey-10"
+            aria-label={`${category.name} icon`}
           >
-            <SquareTerminal size={18} strokeWidth={1.7} />
-          </AppButton>
+            <CategoryIcon name={category.icon} size={18} strokeWidth={1.7} />
+          </div>
         </div>
       </div>
     </SideDrawer>

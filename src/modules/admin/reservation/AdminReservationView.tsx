@@ -27,7 +27,7 @@ import type {
   AdminActiveReservation,
   AdminReservationRequestItem,
 } from "@/redux/slices/adminApi";
-import { useGetCategoriesQuery } from "@/modules/creator/courses/hooks";
+import { useGetCategoryPickerQuery } from "@/modules/categories/api/categoryPickerApi";
 import { ReservationDrawer } from "./components/ReservationDrawer";
 import { ReservationRejectModal } from "./components/ReservationRejectModal";
 
@@ -80,7 +80,7 @@ export const AdminReservationView = () => {
     category: selectedCategory !== "all" ? selectedCategory : undefined,
   });
 
-  const { data: categoriesResponse } = useGetCategoriesQuery();
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
 
   // Mutations
   const [approveRequestMutation, { isLoading: isApproving }] =
@@ -105,7 +105,7 @@ export const AdminReservationView = () => {
   // Category filter options
   const categoryOptions = useMemo(() => {
     const defaultOpt = [{ label: "All Categories", value: "all" }];
-    const cats = categoriesResponse?.data?.results ?? [];
+    const cats = categoriesResponse ?? [];
     return [
       ...defaultOpt,
       ...cats.map((c) => ({ label: c.name, value: c.name })),
@@ -634,7 +634,7 @@ export const AdminReservationView = () => {
           selectable
           ignoreRowClickColumns={["actions"]}
           onRowClick={(row) => handleOpenDrawerForRequest(row)}
-          onSelectionChange={(rows) => setSelectedRequestRows(rows)}
+          onSelectionChange={setSelectedRequestRows}
           selectionAction={(selectedCount: number) => (
             <>
               <button

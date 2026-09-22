@@ -54,14 +54,18 @@ export {
 
 export {
   useGetCategoriesQuery,
-  useGetCategoriesPickerQuery,
   useGetCategoryQuery,
-} from "../api/categoriesApi";
+} from "@/modules/categories/api/categoriesApi";
+
+export {
+  useGetCategoryPickerQuery,
+  useGetCategoryPickerQuery as useGetCategoriesPickerQuery,
+} from "@/modules/categories/api/categoryPickerApi";
 
 export {
   useGetTopicsQuery,
   useGetTopicQuery,
-} from "../api/topicsApi";
+} from "@/modules/topics/api/topicsApi";
 
 export {
   useGetCourseVersionsQuery,

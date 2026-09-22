@@ -148,9 +148,27 @@ export function BaseTable<TData, TValue>({
     },
   });
 
+  const onSelectionChangeRef = React.useRef(onSelectionChange);
   React.useEffect(() => {
-    onSelectionChange?.(table.getSelectedRowModel().rows.map((row) => row.original));
-  }, [rowSelection, table, onSelectionChange]);
+    onSelectionChangeRef.current = onSelectionChange;
+  });
+
+  const prevSelectedKeysRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (!onSelectionChangeRef.current) return;
+    const currentKeys = Object.keys(rowSelection)
+      .filter((k) => rowSelection[k])
+      .sort()
+      .join(",");
+
+    if (prevSelectedKeysRef.current === currentKeys) return;
+    prevSelectedKeysRef.current = currentKeys;
+
+    onSelectionChangeRef.current(
+      table.getSelectedRowModel().rows.map((row) => row.original),
+    );
+  }, [rowSelection, table]);
 
   return (
     <div className={cn("w-full bg-sd-grey-1 border border-sd-grey-3 rounded-[20px] p-[16px] flex flex-col gap-[20px]", className)}>

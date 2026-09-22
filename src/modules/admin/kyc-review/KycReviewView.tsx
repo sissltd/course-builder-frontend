@@ -12,6 +12,7 @@ import {
   KycSubmission,
 } from "@/redux/slices/adminApi";
 import { KycReviewDetailsModal } from "./components/KycReviewDetailsModal";
+import { submissionName } from "./lib/format";
 
 export const KycReviewView = () => {
   const [activeTab, setActiveTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
@@ -95,8 +96,9 @@ export const KycReviewView = () => {
                 onClick={() => setSelectedSubmission(row)}
               >
                 <div className="truncate px-[8px] flex flex-col">
-                  <span className="text-sd-grey-12 font-medium">{row.user.first_name} {row.user.last_name}</span>
-                  <span className="text-[12px]">{row.user.email}</span>
+                  {/* The submitted name lives under `user_provided_data`. There
+                      is no `user` object, and no email on this payload. */}
+                  <span className="text-sd-grey-12 font-medium">{submissionName(row)}</span>
                 </div>
                 <div className="truncate px-[8px]">{row.document_type}</div>
                 <div className="truncate px-[8px]">{row.id_number}</div>

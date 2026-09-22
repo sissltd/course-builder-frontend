@@ -9,7 +9,10 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { requestCategorySchema, RequestCategoryFormData } from "../utils/schemas";
 import { useCreateTopicReservationMutation } from "../hooks";
-import { useGetCategoriesPickerQuery } from "@/modules/creator/courses/hooks";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
 
 interface RequestTopicModalProps {
   isOpen: boolean;
@@ -19,7 +22,7 @@ interface RequestTopicModalProps {
 
 export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTopicModalProps) => {
   const [createReservation, { isLoading }] = useCreateTopicReservationMutation();
-  const { data: categories } = useGetCategoriesPickerQuery();
+  const { data: categoriesResponse } = useGetCategoryPickerQuery();
 
   const methods = useForm<RequestCategoryFormData>({
     resolver: zodResolver(requestCategorySchema),
@@ -29,10 +32,11 @@ export const RequestTopicModal = ({ isOpen, onOpenChange, onSuccess }: RequestTo
     },
   });
 
-  const categoryOptions = categories?.map((cat) => ({
+  // Archived categories come back from the picker too; only live ones are offerable.
+  const categoryOptions = selectActivePickerOptions(categoriesResponse).map((cat) => ({
     label: cat.name,
     value: cat.id,
-  })) ?? [];
+  }));
 
   const onSubmit = async (data: RequestCategoryFormData) => {
     try {

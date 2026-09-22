@@ -1,59 +1,108 @@
 "use client";
 
 import React from "react";
-import { SquareTerminal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { TickCircle } from "iconsax-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/shared/Modal";
 import { Button as AppButton } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
+import { normalizeApiError } from "@/lib/api/errors";
+import { useCreateCategoryMutation } from "@/modules/categories/api/categoriesApi";
+import {
+  TRACK_PREFERENCE_OPTIONS,
+  TrackPreference,
+  type CategoryWriteRequest,
+} from "@/modules/categories/types";
+import { CategoryIconPicker } from "./CategoryIconPicker";
 
 interface CreateCategoryModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const trackOptions = [
-  { label: "Creator Preferred", value: "creator-preferred" },
-  { label: "AI Preferred", value: "ai-preferred" },
-  { label: "Open", value: "open" },
-  { label: "Archive", value: "archive" },
-];
+const EMPTY_FORM = {
+  name: "",
+  trackPreference: "" as TrackPreference | "",
+  beginnerPrice: "",
+  intermediatePrice: "",
+  advancedPrice: "",
+  icon: "",
+};
+
+type FormState = typeof EMPTY_FORM;
 
 export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModalProps) => {
-  const [categoryName, setCategoryName] = React.useState("");
-  const [trackPreference, setTrackPreference] = React.useState("");
-  const [beginnerPrice, setBeginnerPrice] = React.useState("₦0.00");
-  const [intermediatePrice, setIntermediatePrice] = React.useState("₦0.00");
-  const [advancedPrice, setAdvancedPrice] = React.useState("₦0.00");
+  const [createCategory, { isLoading }] = useCreateCategoryMutation();
+  const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((current) => ({ ...current, [key]: value }));
 
   const handleClose = () => {
-    setCategoryName("");
-    setTrackPreference("");
-    setBeginnerPrice("₦0.00");
-    setIntermediatePrice("₦0.00");
-    setAdvancedPrice("₦0.00");
+    setForm(EMPTY_FORM);
+    setErrors({});
     onOpenChange(false);
   };
 
-  const handleCreateCategory = () => {
-    toast.success("Category Created successfully", {
-      icon: (
-        <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-bg)]">
-          <TickCircle variant="Bold" size={20} color="var(--sd-success)" />
-        </div>
-      ),
-      classNames: {
-        toast:
-          "min-h-[72px] w-[356px] rounded-[16px] border border-sd-grey-3 bg-white px-[16px] py-[12px] shadow-[0px_8px_20px_0px_rgba(0,0,0,0.14)]",
-        title:
-          "text-[14px] font-normal text-sd-grey-12 leading-[20px] tracking-[-0.28px]",
-        icon: "!mr-[10px] !size-auto",
-      },
-    });
+  /**
+   * Client-side pass first so an obviously incomplete form doesn't cost a round
+   * trip; server field errors then merge over the top.
+   */
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (!form.name.trim()) next.name = "Category name is required";
+    if (!form.beginnerPrice.trim()) next.creator_price_beginner = "Required";
+    if (!form.intermediatePrice.trim()) next.creator_price_intermediate = "Required";
+    if (!form.advancedPrice.trim()) next.creator_price_advanced = "Required";
+    return next;
+  };
 
-    handleClose();
+  const handleCreateCategory = async () => {
+    const localErrors = validate();
+    if (Object.keys(localErrors).length > 0) {
+      setErrors(localErrors);
+      return;
+    }
+
+    const payload: CategoryWriteRequest = {
+      name: form.name.trim(),
+      creator_price_beginner: form.beginnerPrice.trim(),
+      creator_price_intermediate: form.intermediatePrice.trim(),
+      creator_price_advanced: form.advancedPrice.trim(),
+    };
+    if (form.trackPreference) {
+      payload.track_preference = form.trackPreference;
+    }
+    // Optional, so an unset icon is omitted rather than sent as an empty string.
+    if (form.icon) {
+      payload.icon = form.icon;
+    }
+
+    try {
+      await createCategory(payload).unwrap();
+      toast.success("Category created successfully", {
+        icon: (
+          <div className="flex size-[40px] items-center justify-center rounded-full bg-[var(--sd-success-bg)]">
+            <TickCircle variant="Bold" size={20} color="var(--sd-success)" />
+          </div>
+        ),
+        classNames: {
+          toast:
+            "min-h-[72px] w-[356px] rounded-[16px] border border-sd-grey-3 bg-white px-[16px] py-[12px] shadow-[0px_8px_20px_0px_rgba(0,0,0,0.14)]",
+          title:
+            "text-[14px] font-normal text-sd-grey-12 leading-[20px] tracking-[-0.28px]",
+          icon: "!mr-[10px] !size-auto",
+        },
+      });
+      handleClose();
+    } catch (err) {
+      const { fieldErrors, message } = normalizeApiError(err as never);
+      setErrors(fieldErrors);
+      toast.error(message ?? "Could not create category");
+    }
   };
 
   return (
@@ -89,17 +138,25 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
           name="categoryName"
           label="Category name"
           placeholder="Enter name"
-          value={categoryName}
-          onChange={(event) => setCategoryName(event.target.value)}
+          required
+          value={form.name}
+          error={errors.name}
+          disabled={isLoading}
+          onChange={(event) => setField("name", event.target.value)}
           className="h-[42px] bg-white"
         />
 
         <FormSelect
           name="trackPreference"
           label="Track preference"
-          value={trackPreference}
-          onValueChange={setTrackPreference}
-          options={trackOptions}
+          value={form.trackPreference}
+          onValueChange={(value) =>
+            setField("trackPreference", value as TrackPreference)
+          }
+          options={TRACK_PREFERENCE_OPTIONS.map((option) => ({
+            label: option.label,
+            value: option.value,
+          }))}
           placeholder="Select track"
           triggerClassName="h-[44px] bg-white text-sd-grey-12"
         />
@@ -112,22 +169,31 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
             <FormInput
               name="beginnerPrice"
               label="Beginner"
-              value={beginnerPrice}
-              onChange={(event) => setBeginnerPrice(event.target.value)}
+              placeholder="0.00"
+              value={form.beginnerPrice}
+              error={errors.creator_price_beginner}
+              disabled={isLoading}
+              onChange={(event) => setField("beginnerPrice", event.target.value)}
               className="h-[44px] bg-white"
             />
             <FormInput
               name="intermediatePrice"
               label="Intermediate"
-              value={intermediatePrice}
-              onChange={(event) => setIntermediatePrice(event.target.value)}
+              placeholder="0.00"
+              value={form.intermediatePrice}
+              error={errors.creator_price_intermediate}
+              disabled={isLoading}
+              onChange={(event) => setField("intermediatePrice", event.target.value)}
               className="h-[44px] bg-white"
             />
             <FormInput
               name="advancedPrice"
               label="Advanced"
-              value={advancedPrice}
-              onChange={(event) => setAdvancedPrice(event.target.value)}
+              placeholder="0.00"
+              value={form.advancedPrice}
+              error={errors.creator_price_advanced}
+              disabled={isLoading}
+              onChange={(event) => setField("advancedPrice", event.target.value)}
               className="h-[44px] bg-white"
             />
           </div>
@@ -137,15 +203,11 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
           <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
             Select category icon
           </span>
-          <AppButton
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-[48px] rounded-[12px] border-sd-grey-6 bg-white text-sd-grey-10 hover:bg-sd-grey-2"
-            aria-label="Select category icon"
-          >
-            <SquareTerminal size={18} strokeWidth={1.7} />
-          </AppButton>
+          <CategoryIconPicker
+            value={form.icon}
+            onChange={(icon) => setField("icon", icon)}
+            disabled={isLoading}
+          />
         </div>
 
         <div className="flex gap-[12px] pt-[22px]">
@@ -162,10 +224,11 @@ export const CreateCategoryModal = ({ isOpen, onOpenChange }: CreateCategoryModa
             type="button"
             variant="app-primary"
             size="app"
+            disabled={isLoading}
             className="h-[44px] min-w-[133px] rounded-[10px] px-[24px] text-[14px] font-normal tracking-[-0.28px]"
             onClick={handleCreateCategory}
           >
-            Add category
+            {isLoading ? "Adding..." : "Add category"}
           </AppButton>
         </div>
       </div>

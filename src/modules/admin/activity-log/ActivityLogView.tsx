@@ -3,44 +3,28 @@
 import React, { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGetActivityLogQuery, ActivityLogItemApi } from "@/redux/slices/adminApi";
-import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { useGetActivityLogQuery } from "@/redux/slices/adminApi";
+import {
+  groupActivityLogs,
+  type ActivityCategory,
+} from "@/lib/activityLog";
 
-type ActivityLogCategory =
-  | "all"
-  | "approval"
-  | "production"
-  | "publish"
-  | "submission"
-  | "alert"
-  | "configuration";
-
-type ActivityLogTab = {
+/**
+ * The admin screen's own tab set — deliberately narrower than the 13 categories
+ * the API accepts. Omitting `category` is what makes All send no filter.
+ */
+const FILTERS: Array<{
   id: string;
   label: string;
-  filterKey: ActivityLogCategory;
-};
-
-type ActivityLogItem = {
-  id: string;
-  title: string;
-  meta: string;
-  category: Exclude<ActivityLogCategory, "all">;
-};
-
-type ActivityLogGroup = {
-  label: string;
-  items: ActivityLogItem[];
-};
-
-const FILTERS: ActivityLogTab[] = [
-  { id: "all", filterKey: "all", label: "All" },
-  { id: "approval", filterKey: "approval", label: "Approval" },
-  { id: "production", filterKey: "production", label: "Production" },
-  { id: "publish", filterKey: "publish", label: "Publish" },
-  { id: "submission", filterKey: "submission", label: "Submission" },
-  { id: "alert", filterKey: "alert", label: "Alert" },
-  { id: "configuration", filterKey: "configuration", label: "Configuration" },
+  category?: ActivityCategory;
+}> = [
+  { id: "all", label: "All" },
+  { id: "approval", label: "Approval", category: "APPROVAL" },
+  { id: "production", label: "Production", category: "PRODUCTION" },
+  { id: "publish", label: "Publish", category: "PUBLISH" },
+  { id: "submission", label: "Submission", category: "SUBMISSION" },
+  { id: "alert", label: "Alert", category: "ALERT" },
+  { id: "configuration", label: "Configuration", category: "CONFIGURATION" },
 ];
 
 const ActivityLogIcon = () => (
@@ -49,41 +33,16 @@ const ActivityLogIcon = () => (
   </div>
 );
 
-const groupActivityLogs = (results: ActivityLogItemApi[]): ActivityLogGroup[] => {
-  const groups: Record<string, ActivityLogItem[]> = {};
-
-  results.forEach((log) => {
-    const date = parseISO(log.activity_datetime);
-    let label = format(date, "MMM dd, yyyy");
-    if (isToday(date)) label = "Today";
-    else if (isYesterday(date)) label = "Yesterday";
-
-    if (!groups[label]) groups[label] = [];
-
-    const metaTime = isToday(date) ? `Today - ${format(date, "h:mm a")}` : format(date, "MMM dd, h:mm a");
-    const actorName = log.actor ? `${log.actor.first_name} ${log.actor.last_name}`.trim() : "System";
-
-    groups[label].push({
-      id: log.id,
-      title: log.summary || `${log.action} (${log.category})`,
-      meta: `By ${actorName} - ${metaTime}`,
-      category: log.category.toLowerCase() as Exclude<ActivityLogCategory, "all">,
-    });
-  });
-
-  return Object.entries(groups).map(([label, items]) => ({ label, items }));
-};
-
 export const ActivityLogView = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
 
   const activeFilter = useMemo(
-    () => FILTERS.find((filter) => filter.id === activeTab)?.filterKey ?? "all",
+    () => FILTERS.find((filter) => filter.id === activeTab),
     [activeTab]
   );
 
   const { data, isLoading } = useGetActivityLogQuery(
-    activeFilter !== "all" ? { category: activeFilter.toUpperCase() } : undefined
+    activeFilter?.category ? { category: activeFilter.category } : undefined
   );
 
   const displayedGroups = useMemo(() => {

@@ -1,24 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { User, UserTick, Designtools, UserOctagon, Copy, Filter, Sort, TickCircle } from "iconsax-react";
 import { BaseTable } from "@/components/shared/BaseTable";
 import { Modal } from "@/components/shared/Modal";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
-import { AddStaffModal } from "@/modules/admin/dashboard/components/AddStaffModal";
+import { AddStaffModal } from "./components/AddStaffModal";
+import { ChangeRoleModal } from "./components/ChangeRoleModal";
+import { EraseStaffModal } from "./components/EraseStaffModal";
 import { TeamActionMenu, TeamRow } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { normalizeApiError } from "@/lib/api/errors";
 import { useAppSelector } from "@/redux";
+import { usePermissions } from "@/modules/auth/hooks/usePermissions";
+import { PERMISSION } from "@/modules/auth/permissions";
+import { useGetRolesQuery } from "@/modules/admin/roles/api/rolesApi";
+import type { RoleCard } from "@/modules/admin/roles/types";
 import {
   useGetStaffQuery,
   useInviteStaffMutation,
   useReactivateStaffMutation,
   useRevokeStaffMutation,
+  useSendStaffPasswordResetMutation,
 } from "./hooks";
-import { StaffMember, StaffRole } from "./types";
+import { StaffMember } from "./types";
 
 function toInitials(first: string, last: string): string {
   return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
@@ -34,7 +41,27 @@ function formatDateTime(dt: string | null): string {
   });
 }
 
-function staffToRow(s: StaffMember): TeamRow {
+/**
+ * Finds the role a roster row actually holds.
+ *
+ * `StaffMember` carries a base role (`role`, e.g. `STAFF_WRITER`) and a display
+ * label (`role_label`), never a role id — so the exact role is recovered by name.
+ * The label match covers custom roles, whose label is the role's own name; the
+ * fallback to the built-in role for that base role covers an older row or a
+ * label that has since been renamed.
+ *
+ * Matching is deliberately conservative: when neither works, `roleId` stays
+ * undefined and the actions that would have to name a role are withheld rather
+ * than guessed, because sending the wrong one silently rewrites someone's access.
+ */
+function resolveRoleId(member: StaffMember, roles: RoleCard[]): string | undefined {
+  return (
+    roles.find((role) => role.name === member.role_label)?.id ??
+    roles.find((role) => role.is_system && role.base_role === member.role)?.id
+  );
+}
+
+function staffToRow(s: StaffMember, roles: RoleCard[]): TeamRow {
   return {
     id: s.id,
     name: `${s.first_name} ${s.last_name}`,
@@ -44,6 +71,7 @@ function staffToRow(s: StaffMember): TeamRow {
     email: s.email,
     role: s.role,
     roleLabel: s.role_label,
+    roleId: resolveRoleId(s, roles),
     date: formatDateTime(s.created_datetime),
     invitationStatus: s.invitation_status,
     userId: s.id,
@@ -74,18 +102,40 @@ export const TeamsView = () => {
   const [selectedMember, setSelectedMember] = useState<TeamRow | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [actionMember, setActionMember] = useState<TeamRow | null>(null);
-  const [confirmAction, setConfirmAction] = useState<"reactivate" | "revoke" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"reactivate" | "revoke" | "reset-password" | null>(null);
   const [successAction, setSuccessAction] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [changingRole, setChangingRole] = useState<TeamRow | null>(null);
+  const [erasingMember, setErasingMember] = useState<TeamRow | null>(null);
 
   const currentUser = useAppSelector((state) => state.auth.user);
+  const { can } = usePermissions();
+
+  /*
+    Every Teams action is its own permission on the backend, and each endpoint
+    refuses on its own terms — so each control is gated by the one that governs
+    it, rather than by a single "is admin" test.
+  */
+  const canAdd = can(PERMISSION.STAFF_ADD);
+  const canFullAccess = can(PERMISSION.STAFF_FULL_ACCESS);
+  const canResetPassword = can(PERMISSION.STAFF_RESET_PASSWORD);
+  const canDelete = can(PERMISSION.STAFF_DELETE);
 
   const { data: staffData, isLoading } = useGetStaffQuery();
+  const { data: roles } = useGetRolesQuery();
   const [inviteStaff] = useInviteStaffMutation();
   const [reactivateStaff, { isLoading: isReactivating }] = useReactivateStaffMutation();
   const [revokeStaff, { isLoading: isRevoking }] = useRevokeStaffMutation();
+  const [sendPasswordReset, { isLoading: isResettingPassword }] =
+    useSendStaffPasswordResetMutation();
 
-  const rows: TeamRow[] = (staffData ?? []).map(staffToRow);
+  // Roles are read before rows are built: a roster row carries a label, and the
+  // role id behind it is what a re-invite or a role change has to send.
+  const roleList = useMemo(() => roles ?? [], [roles]);
+  const rows: TeamRow[] = useMemo(
+    () => (staffData ?? []).map((member) => staffToRow(member, roleList)),
+    [staffData, roleList],
+  );
 
   const totalStaff = rows.length;
   const totalActive = rows.filter((r) => r.invitationStatus === "ACTIVE").length;
@@ -102,13 +152,33 @@ export const TeamsView = () => {
     setConfirmAction("revoke");
   };
 
+  const handleResetPassword = (member: TeamRow) => {
+    setActionMember(member);
+    setConfirmAction("reset-password");
+  };
+
+  /**
+   * Re-invites by `role_id`, not the base role enum.
+   *
+   * The old version sent `role: member.role`, which is the *base* role — for
+   * anyone holding a custom role that would quietly re-invite them into the
+   * plain built-in one and drop every permission the custom role carried. The
+   * action is withheld upstream when no role resolves, so this never guesses.
+   */
   const handleResend = async (member: TeamRow) => {
+    if (!member.roleId) {
+      toast.error(
+        `The role “${member.roleLabel}” no longer exists, so this invitation cannot be re-sent. Invite them again with a current role.`,
+      );
+      return;
+    }
+
     try {
       await inviteStaff({
         email: member.email,
         first_name: member.firstName,
         last_name: member.lastName,
-        role: (member.role as StaffRole) || StaffRole.STAFF_WRITER,
+        role_id: member.roleId,
       }).unwrap();
       toast.success(`Invitation resent to ${member.email}`);
     } catch (err) {
@@ -137,6 +207,13 @@ export const TeamsView = () => {
         );
         setConfirmAction(null);
         setTimeout(() => setSuccessAction("revoke"), 300);
+      } else if (confirmAction === "reset-password") {
+        await sendPasswordReset(actionMember.id).unwrap();
+        setConfirmAction(null);
+        toast.success(`Password reset link sent to ${actionMember.email}`, {
+          description:
+            "Their password does not change until they use the link, which also signs them out everywhere.",
+        });
       }
     } catch (err: any) {
       setConfirmAction(null);
@@ -280,6 +357,9 @@ export const TeamsView = () => {
               member={row.original}
               isSelf={isSelf}
               isSuperAdmin={isSuperAdmin}
+              canFullAccess={canFullAccess}
+              canResetPassword={canResetPassword}
+              canDelete={canDelete}
               onViewDetails={(m) => {
                 setSelectedMember(m);
                 setIsDrawerOpen(true);
@@ -295,6 +375,9 @@ export const TeamsView = () => {
               onReactivate={(m) => handleReactivate(m)}
               onRevoke={(m) => handleRevoke(m)}
               onResend={(m) => handleResend(m)}
+              onChangeRole={(m) => setChangingRole(m)}
+              onResetPassword={(m) => handleResetPassword(m)}
+              onDeleteAccount={(m) => setErasingMember(m)}
             />
           </div>
         );
@@ -325,9 +408,31 @@ export const TeamsView = () => {
           selectedMember?.role === "SUPER_ADMIN" ||
           selectedMember?.roleLabel === "Super Admin"
         }
+        canFullAccess={canFullAccess}
+        canResetPassword={canResetPassword}
+        canDelete={canDelete}
         onReactivate={(member) => handleReactivate(member)}
         onRevoke={(member) => handleRevoke(member)}
         onResend={(member) => handleResend(member)}
+        onChangeRole={(member) => setChangingRole(member)}
+        onResetPassword={(member) => handleResetPassword(member)}
+        onDeleteAccount={(member) => setErasingMember(member)}
+      />
+      <ChangeRoleModal
+        key={changingRole?.id ?? "change-role"}
+        isOpen={!!changingRole}
+        onOpenChange={(open) => {
+          if (!open) setChangingRole(null);
+        }}
+        member={changingRole}
+      />
+      <EraseStaffModal
+        key={erasingMember?.id ?? "erase-staff"}
+        isOpen={!!erasingMember}
+        onOpenChange={(open) => {
+          if (!open) setErasingMember(null);
+        }}
+        member={erasingMember}
       />
       <div className="flex flex-col gap-[24px]">
         <div className="flex items-start justify-between">
@@ -335,12 +440,14 @@ export const TeamsView = () => {
             <h1 className="text-[24px] font-medium text-[#202020] tracking-[-0.48px] leading-[32px]">Teams</h1>
             <p className="text-[16px] font-normal text-[#606060] leading-[24px]">Manage your teams and their roles</p>
           </div>
-          <button
-            onClick={() => setIsInviteOpen(true)}
-            className="bg-[#0063EF] flex items-center gap-[8px] h-[40px] px-[24px] py-[12px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
-          >
-            <span className="text-[16px] font-normal text-[#FDFDFD] tracking-[-0.32px] leading-[24px]">Invite</span>
-          </button>
+          {canAdd && (
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="bg-[#0063EF] flex items-center gap-[8px] h-[40px] px-[24px] py-[12px] rounded-[8px] hover:bg-[#0052CC] transition-colors cursor-pointer"
+            >
+              <span className="text-[16px] font-normal text-[#FDFDFD] tracking-[-0.32px] leading-[24px]">Invite</span>
+            </button>
+          )}
         </div>
 
         <div className="flex gap-[16px] flex-wrap">
@@ -433,6 +540,21 @@ export const TeamsView = () => {
         cancelLabel="Cancel"
         variant="danger"
         isLoading={isRevoking}
+        onConfirm={handleConfirm}
+      />
+
+      {/* Reset Password Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmAction === "reset-password"}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title="Send a password reset link?"
+        description={`A reset link will be emailed to ${actionMember?.email || "this person"}. Their password does not change until they use it, which also signs them out everywhere.`}
+        confirmLabel={isResettingPassword ? "Sending..." : "Yes, send link"}
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isResettingPassword}
         onConfirm={handleConfirm}
       />
 

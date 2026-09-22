@@ -14,8 +14,6 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/modules/auth/utils/schemas";
 import { useLoginMutation } from "@/modules/auth/api/sessionApi";
-
-
 import { normalizeApiError, getErrorEnvelope } from "@/lib/api/errors";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
@@ -35,13 +33,13 @@ const isSafeInternalPath = (value: string | null): value is string =>
     value &&
       value.startsWith("/") &&
       !value.startsWith("//") &&
-      !value.startsWith("/auth"),
+      (!value.startsWith("/auth") || value.includes("accept-invitation")),
   );
 
 function LoginContent() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
   const { data: session, status } = useSession();
   const googleHandoff = searchParams.get("google") === "1";
   const queryError = searchParams.get("error");
@@ -53,9 +51,20 @@ function LoginContent() {
 
   useEffect(() => {
     routerRef.current = router;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
+  useEffect(() => {
+    const callbackUrl = searchParams.get("callbackUrl");
+    if (callbackUrl && callbackUrl.includes("accept-invitation")) {
+      let target = callbackUrl;
+      try {
+        target = decodeURIComponent(callbackUrl);
+      } catch {
+        // ignore
+      }
+      router.replace(target);
+    }
+  }, [searchParams, router]);
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -407,7 +416,13 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="size-6 animate-spin rounded-full border-2 border-[#0063EF] border-t-transparent" />
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

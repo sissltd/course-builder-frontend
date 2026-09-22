@@ -24,8 +24,13 @@ import { RequestTopicModal } from "@/modules/creator/reservation/components/Requ
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
 import { updateCourseInformation } from "@/redux/slices/courseBuilderSlice";
-import { useCreateCourseMutation, useGetCategoriesPickerQuery, useGetTopicsQuery } from "./hooks";
-import { TopicStatus } from "./types/topic";
+import { useCreateCourseMutation } from "./hooks";
+import {
+  useGetCategoryPickerQuery,
+  selectActivePickerOptions,
+} from "@/modules/categories/api/categoryPickerApi";
+import { useGetTopicsQuery } from "@/modules/topics/api/topicsApi";
+import { TopicStatus } from "@/modules/topics/types";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
 import { toast } from "sonner";
@@ -70,7 +75,9 @@ export default function CreateCourseView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
-  const { data: categories, isLoading: isLoadingCategories } = useGetCategoriesPickerQuery();
+  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoryPickerQuery();
+  // The picker returns archived categories too; only live ones may be chosen.
+  const categories = selectActivePickerOptions(categoriesResponse);
   const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
@@ -457,9 +464,9 @@ export default function CreateCourseView() {
                             ? "bg-sd-grey-2 text-[#202020]" 
                             : "text-[#636363] hover:bg-sd-grey-1 hover:text-[#202020]"
                         )}
-                       >
-                         <span>{c.name}</span>
-                       </button>
+                      >
+                        <span>{c.name}</span>
+                      </button>
                     ))
                   ) : (
                     <p className="text-[12px] text-[#B6B6B6] text-center py-[12px]">No category found</p>

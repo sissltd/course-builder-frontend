@@ -10,6 +10,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { useGetCategoryPickerQuery } from "@/modules/categories/api/categoryPickerApi";
+import { useGetStaffQuery } from "@/modules/admin/teams/api/staffApi";
+import type { StaffMember } from "@/modules/admin/teams/types";
 
 interface TriggerProps {
   icon: React.ReactNode;
@@ -59,28 +62,57 @@ function DropdownShell({ children, className }: { children: React.ReactNode; cla
   );
 }
 
-export const ReviewerInReviewFilters = () => {
-  const categoryOptions = [
-    "All",
-    "Software Engineering",
-    "Artificial Intelligence",
-    "Leadership",
-    "Finance",
-    "Robotics",
-  ];
+export interface ReviewerInReviewFilterValue {
+  search: string;
+  category: string;
+  difficulty: string;
+  reviewer: string;
+  fromDate?: Date;
+  toDate?: Date;
+}
+
+interface ReviewerInReviewFiltersProps {
+  value: ReviewerInReviewFilterValue;
+  onChange: (patch: Partial<ReviewerInReviewFilterValue>) => void;
+}
+
+/** Sentinel shown in the trigger before a filter is chosen. */
+export const ANY_CATEGORY = "All Categories";
+export const ANY_DIFFICULTY = "All";
+export const ANY_REVIEWER = "All Reviewers";
+
+export const ReviewerInReviewFilters = ({
+  value,
+  onChange,
+}: ReviewerInReviewFiltersProps) => {
+  const { search, category, difficulty, reviewer, fromDate, toDate } = value;
+
+  const { data: categoriesData } = useGetCategoryPickerQuery();
+  const { data: staffData } = useGetStaffQuery();
+
+  const categoryOptions = React.useMemo(() => {
+    const names = (categoriesData ?? [])
+      .map((item) => item.name)
+      .filter(Boolean);
+    return [ANY_CATEGORY, ...names];
+  }, [categoriesData]);
+
+  const reviewerOptions = React.useMemo(() => {
+    const names = (staffData ?? [])
+      .map((member: StaffMember) =>
+        `${member.first_name ?? ""} ${member.last_name ?? ""}`.trim() ||
+        member.email ||
+        "",
+      )
+      .filter(Boolean);
+    return [ANY_REVIEWER, ...Array.from(new Set(names))];
+  }, [staffData]);
 
   const difficultyOptions = [
-    "All",
+    ANY_DIFFICULTY,
     "Beginner",
     "Intermediate",
     "Advanced",
-  ];
-
-  const reviewerOptions = [
-    "All",
-    "Osaite Emmanuel",
-    "Ada Johnson",
-    "Micheal Chen",
   ];
 
   const [categoryOpen, setCategoryOpen] = React.useState(false);
@@ -88,12 +120,6 @@ export const ReviewerInReviewFilters = () => {
   const [reviewerOpen, setReviewerOpen] = React.useState(false);
   const [dateOpen, setDateOpen] = React.useState(false);
 
-  const [category, setCategory] = React.useState("Category");
-  const [difficulty, setDifficulty] = React.useState("Intermediate");
-  const [reviewer, setReviewer] = React.useState("Reviewer");
-
-  const [fromDate, setFromDate] = React.useState<Date | undefined>(undefined);
-  const [toDate, setToDate] = React.useState<Date | undefined>(undefined);
   const [activeDateField, setActiveDateField] = React.useState<"from" | "to" | null>(null);
 
   const dateLabel = (date: Date | undefined) =>
@@ -107,6 +133,8 @@ export const ReviewerInReviewFilters = () => {
           <SearchNormal1 size={20} variant="Linear" color="var(--sd-grey-11)" />
           <input
             type="text"
+            value={search}
+            onChange={(event) => onChange({ search: event.target.value })}
             placeholder="Search course title, ID etc"
             className="w-full bg-transparent text-[14px] font-normal text-sd-grey-12 placeholder:text-sd-muted-text outline-none"
           />
@@ -136,7 +164,7 @@ export const ReviewerInReviewFilters = () => {
                   key={option}
                   type="button"
                   onClick={() => {
-                    setCategory(option);
+                    onChange({ category: option });
                     setCategoryOpen(false);
                   }}
                   aria-pressed={category === option}
@@ -165,7 +193,7 @@ export const ReviewerInReviewFilters = () => {
                   key={option}
                   type="button"
                   onClick={() => {
-                    setDifficulty(option);
+                    onChange({ difficulty: option });
                     setDifficultyOpen(false);
                   }}
                   aria-pressed={difficulty === option}
@@ -204,7 +232,7 @@ export const ReviewerInReviewFilters = () => {
                       key={option}
                       type="button"
                       onClick={() => {
-                        setReviewer(option);
+                        onChange({ reviewer: option });
                         setReviewerOpen(false);
                       }}
                       aria-pressed={reviewer === option}
@@ -224,7 +252,7 @@ export const ReviewerInReviewFilters = () => {
                     key={option}
                     type="button"
                     onClick={() => {
-                      setReviewer(option);
+                      onChange({ reviewer: option });
                       setReviewerOpen(false);
                     }}
                     aria-pressed={reviewer === option}
@@ -300,7 +328,7 @@ export const ReviewerInReviewFilters = () => {
                     mode="single"
                     selected={fromDate}
                     onSelect={(date) => {
-                      setFromDate(date);
+                      onChange({ fromDate: date });
                       if (date) {
                         setActiveDateField(null);
                       }
@@ -334,7 +362,7 @@ export const ReviewerInReviewFilters = () => {
                     mode="single"
                     selected={toDate}
                     onSelect={(date) => {
-                      setToDate(date);
+                      onChange({ toDate: date });
                       if (date) {
                         setActiveDateField(null);
                       }

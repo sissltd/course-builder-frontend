@@ -24,6 +24,34 @@ export const submissionColumns = ({
   onReject,
 }: SubmissionColumnOptions): ColumnDef<MieSubmission>[] => [
   {
+    id: "select",
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        checked={table.getIsAllPageRowsSelected()}
+        onChange={(e) => {
+          e.stopPropagation();
+          table.toggleAllPageRowsSelected(!table.getIsAllPageRowsSelected());
+        }}
+        className="size-[18px] cursor-pointer rounded border-sd-grey-4 accent-sd-blue"
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.getIsSelected()}
+        onChange={(e) => {
+          e.stopPropagation();
+          row.toggleSelected(!row.getIsSelected());
+        }}
+        className="size-[18px] cursor-pointer rounded border-sd-grey-4 accent-sd-blue"
+        aria-label="Select row"
+      />
+    ),
+    size: 40,
+  },
+  {
     accessorKey: "title",
     header: "Idea",
     cell: ({ row }) => (
@@ -91,8 +119,6 @@ export const submissionColumns = ({
     header: "Action",
     cell: ({ row }) => {
       const { status } = row.original;
-      // Every state is actionable — the only pointless button is the one that
-      // would re-apply the decision the row already carries.
       const canApprove = status !== SubmissionStatus.APPROVED;
       const canReject = status !== SubmissionStatus.REJECTED;
 

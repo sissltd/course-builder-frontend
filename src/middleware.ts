@@ -16,6 +16,8 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/accept-invitation",
+  "/auth/accept-invitation",
   "/auth/signup-google",
   "/api/auth",
 ];
@@ -24,7 +26,6 @@ const isPublicPath = (pathname: string): boolean =>
   PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
-
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -44,7 +45,12 @@ export async function middleware(req: NextRequest) {
   });
 
   if (isPublicPath(pathname)) {
-    if (isAuthenticated && pathname.startsWith("/auth") && !isGoogleHandoff) {
+    if (
+      isAuthenticated &&
+      pathname.startsWith("/auth") &&
+      !isGoogleHandoff &&
+      !pathname.includes("accept-invitation")
+    ) {
       const dashboard = getDashboardRoute(token?.user?.workspace);
       console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
