@@ -16,7 +16,7 @@ export type Course = {
   title: string;
   category: string;
   qualityScore: number;
-  status: "Approved" | "Draft" | "In review" | "Rejected" | "Needs revision";
+  status: string;
   lastEdited: string;
   isAi?: boolean;
 };
@@ -24,10 +24,14 @@ export type Course = {
 const StatusChip = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
     "Approved": "bg-[#f1f8f2] text-[#3c7e44]",
-    "In review": "bg-[#ebf3fe] text-[#0a60e1]",
+    "Published": "bg-[#f1f8f2] text-[#3c7e44]",
+    "In Review": "bg-[#ebf3fe] text-[#0a60e1]",
+    "Submitted": "bg-[#ebf3fe] text-[#0a60e1]",
+    "QA Verification": "bg-[#ebf3fe] text-[#0a60e1]",
     "Rejected": "bg-[#ffeceb] text-[#fc5049]",
     "Draft": "bg-[#e6e6e6] text-[#202020]",
-    "Needs revision": "bg-[#ffeadc] text-[#d54800]",
+    "Archived": "bg-[#e6e6e6] text-[#202020]",
+    "Needs Revision": "bg-[#ffeadc] text-[#d54800]",
   };
 
   return (
