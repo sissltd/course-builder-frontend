@@ -7,27 +7,13 @@ import { courseColumns, Course } from "../columns/courses";
 import { Filter, Sort } from "iconsax-react";
 import { useGetCoursesQuery } from "@/modules/creator/courses/hooks";
 import { CourseStatus, CourseSource } from "@/modules/creator/courses/types";
+import { getCourseStatusDisplay } from "@/modules/creator/courses/utils/status";
 import {
   useGetCategoryPickerQuery,
   selectActivePickerOptions,
 } from "@/modules/categories/api/categoryPickerApi";
 import { format } from "date-fns";
 import { CreatorRoute } from "@/lib/routes";
-
-const mapCourseStatusToDisplay = (status: CourseStatus): Course["status"] => {
-  const map: Record<CourseStatus, Course["status"]> = {
-    [CourseStatus.DRAFT]: "Draft",
-    [CourseStatus.SUBMITTED]: "Draft",
-    [CourseStatus.IN_REVIEW]: "In review",
-    [CourseStatus.NEEDS_REVISION]: "Needs revision",
-    [CourseStatus.QA_VERIFICATION]: "In review",
-    [CourseStatus.APPROVED]: "Approved",
-    [CourseStatus.PUBLISHED]: "Approved",
-    [CourseStatus.ARCHIVED]: "Draft",
-    [CourseStatus.REJECTED]: "Rejected",
-  };
-  return map[status] ?? "Draft";
-};
 
 export const CoursesTable = () => {
   const router = useRouter();
@@ -53,7 +39,7 @@ export const CoursesTable = () => {
     title: c.title,
     category: c.category?.name ?? "—",
     qualityScore: 0,
-    status: mapCourseStatusToDisplay(c.status),
+    status: getCourseStatusDisplay(c.status).label,
     lastEdited: format(new Date(c.updated_datetime), "d MMM yyyy, hh:mm a"),
     isAi: c.source === CourseSource.AI_GENERATED,
   }));
