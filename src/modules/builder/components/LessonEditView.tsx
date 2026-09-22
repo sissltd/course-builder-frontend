@@ -384,38 +384,19 @@ export const LessonEditView = ({
                 {lesson.type === "text" && <DocumentText size={32} variant="Linear" color="#8C8C8C" />}
               </span>
               <div className="flex flex-col gap-[6px] flex-1">
-                <label
-                  htmlFor={`lesson-title-${lesson.id}`}
-                  className="text-[12px] font-medium text-[#606060]"
-                >
-                  Lesson title <span className="text-[#FF5025]">*</span>
-                </label>
                 <Controller
                   name="title"
                   control={control}
-                  render={({ field, fieldState }) => (
-                    <>
-                      <input
-                        {...field}
-                        id={`lesson-title-${lesson.id}`}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleUpdateField("title", e.target.value);
-                        }}
-                        placeholder="Add lesson title..."
-                        aria-invalid={Boolean(fieldState.error)}
-                        className={`w-full text-[18px] md:text-[22px] font-semibold text-[#202020] rounded-[8px] border bg-white px-[12px] py-[8px] outline-none transition-colors placeholder-[#B6B6B6] ${
-                          fieldState.error
-                            ? "border-[#FF5025] focus:border-[#FF5025]"
-                            : "border-[#D9D9D9] focus:border-[#0063EF]"
-                        }`}
-                      />
-                      {fieldState.error && (
-                        <span className="text-[12px] text-[#FF5025]">
-                          {fieldState.error.message}
-                        </span>
-                      )}
-                    </>
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleUpdateField("title", e.target.value);
+                      }}
+                      placeholder="Add lesson title..."
+                      className="w-full text-[22px] md:text-[28px] font-semibold text-[#202020] border-none outline-none focus:ring-0 placeholder-[#B6B6B6] bg-transparent p-0 leading-tight"
+                    />
                   )}
                 />
                 <div className="flex items-center gap-[12px] mt-[4px]">
