@@ -90,9 +90,7 @@ interface QualityCheckSection {
 
 const isExcludedCheck = (check: QualityCheckResult): boolean => {
   const label = check.criterion.label.toLowerCase();
-  const section = check.criterion.section.toLowerCase();
   if (label.includes("script") && label.includes("words")) return true;
-  if (section.includes("version") || label.includes("version")) return true;
   return false;
 };
 

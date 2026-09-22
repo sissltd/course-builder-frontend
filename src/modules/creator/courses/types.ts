@@ -114,7 +114,7 @@ export interface Course {
   modules: CourseModule[];
   final_assessment: CourseAssessment | null;
   duration_estimate_minutes: number;
-  version: string;
+  version: string | { id: string; label: string; is_active?: boolean } | null;
 }
 
 export interface CreateCourseRequest {
@@ -144,6 +144,7 @@ export interface UpdateCourseRequest {
   duration_hours?: number;
   duration_minutes?: number;
   duration_seconds?: number;
+  version?: string;
 }
 
 export interface PaginatedPaginator {

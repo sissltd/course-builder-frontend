@@ -17,6 +17,7 @@ import {
   replaceModuleId,
   replaceLessonId,
   setQuizQuestionsForLesson,
+  hydrateVersion,
   type Lesson,
 } from "./courseBuilderSlice";
 import { uploadFile } from "@/lib/uploads";
@@ -106,8 +107,17 @@ const buildCourseInfoBody = (info: RootState["courseBuilder"]["courseInformation
   duration_hours: info.hours,
   duration_minutes: info.minutes,
   duration_seconds: info.seconds,
-  version: version || "",
+  ...(version ? { version } : {}),
 });
+
+const extractCourseVersionId = (version: unknown): string => {
+  if (typeof version === "string") return version;
+  if (version && typeof version === "object" && "id" in version) {
+    const id = (version as { id?: unknown }).id;
+    return typeof id === "string" ? id : "";
+  }
+  return "";
+};
 
 const assessmentTitle = (title: string | undefined): string =>
   `${title || "Untitled"} Quiz`;
@@ -189,6 +199,7 @@ export const loadCourse = createAsyncThunk<
     const token = getToken(getState());
     const course = await fetchJson(`/courses/${courseId}/`, token);
     dispatch(setCourseId(courseId));
+    dispatch(hydrateVersion(extractCourseVersionId(course.version)));
     dispatch(setCourseInformation(apiCourseToCourseInfo(course)));
     dispatch(setModules(apiCourseToReduxModules(course)));
     dispatch(
@@ -693,9 +704,13 @@ export const syncSubmitCourse = createAsyncThunk<
   const courseId = state.courseBuilder.courseId;
   if (!courseId) return { success: false };
 
+  if (state.courseBuilder.isDirty) {
+    await dispatch(saveAllDirty());
+  }
+
   dispatch(beginSave());
   try {
-    const token = getToken(state);
+    const token = getToken(getState());
     await fetchJson(`/courses/${courseId}/submit/`, token, {
       method: "POST",
     });

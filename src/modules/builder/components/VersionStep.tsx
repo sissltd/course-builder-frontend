@@ -8,6 +8,7 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { Button } from "@/components/shared/Button";
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { setVersion } from "@/redux/slices/courseBuilderSlice";
+import { syncUpdateCourseInfo } from "@/redux/slices/builderSync";
 import { versionSchema, VersionFormData } from "../utils/schemas";
 import { useGetCourseVersionsQuery } from "@/modules/creator/courses/hooks";
 
@@ -19,6 +20,7 @@ interface VersionStepProps {
 export const VersionStep = ({ onNext, onBack }: VersionStepProps) => {
   const dispatch = useAppDispatch();
   const currentVersion = useAppSelector((state) => state.courseBuilder.version);
+  const courseId = useAppSelector((state) => state.courseBuilder.courseId);
   const { data: versions, isLoading } = useGetCourseVersionsQuery();
 
   const versionOptions = (versions ?? [])
@@ -38,8 +40,15 @@ export const VersionStep = ({ onNext, onBack }: VersionStepProps) => {
 
   const { handleSubmit } = methods;
 
-  const onSubmit = (data: VersionFormData) => {
+  const onSubmit = async (data: VersionFormData) => {
     dispatch(setVersion(data.version));
+    if (courseId) {
+      try {
+        await dispatch(syncUpdateCourseInfo()).unwrap();
+      } catch {
+        // Debounced save will retry; version remains dirty in Redux.
+      }
+    }
     onNext?.();
   };
 

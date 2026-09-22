@@ -13,8 +13,12 @@ export const courseVersionsApi = BaseAPI.injectEndpoints({
         url: "/course-versions/",
         method: "GET",
       }),
-      transformResponse: (response: { data?: { results?: CourseVersion[] } }) =>
-        response?.data?.results ?? [],
+      transformResponse: (
+        response: CourseVersion[] | { data?: { results?: CourseVersion[] } },
+      ) =>
+        Array.isArray(response)
+          ? response
+          : response?.data?.results ?? [],
     }),
   }),
 });

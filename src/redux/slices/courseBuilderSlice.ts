@@ -102,7 +102,7 @@ const initialState: CourseBuilderState = {
     title: "Final Assessment",
     quizQuestions: [],
   },
-  version: "v1.0",
+  version: "",
   activeStep: "information",
   activeModuleIndex: 0,
   editingLesson: null,
@@ -321,6 +321,9 @@ const courseBuilderSlice = createSlice({
       state.version = action.payload;
       state.isDirty = true;
     },
+    hydrateVersion: (state, action: PayloadAction<string>) => {
+      state.version = action.payload;
+    },
     setActiveStep: (state, action: PayloadAction<BuilderStep>) => {
       state.activeStep = action.payload;
     },
@@ -409,6 +412,7 @@ export const {
   addQuizQuestionToModule,
   removeQuizQuestionFromModule,
   setVersion,
+  hydrateVersion,
   setActiveStep,
   setActiveModuleIndex,
   setEditingLesson,
