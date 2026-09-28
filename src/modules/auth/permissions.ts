@@ -54,6 +54,7 @@ export const PERMISSION = {
   MIE_VIEW_PIPELINE: "mie.view_pipeline",
   MIE_MANAGE_CONSOLE: "mie.manage_console",
   PLATFORM_EDIT_SETTINGS: "platform.edit_settings",
+  ACHIEVEMENTS_MANAGE: "achievements.manage",
 
   /*
     The `teams.*` pair governs *non-staff* accounts — Course Creators and

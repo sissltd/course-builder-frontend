@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowDown2, ArrowRight2, PlayCircle, BookSaved, Task } from "iconsax-react";
+import { ArrowDown2, PlayCircle, BookSaved, Task } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import type { AdminCourseDetail } from "@/redux/slices/adminApi";
 
@@ -9,9 +9,21 @@ interface RailProps {
   course?: AdminCourseDetail;
 }
 
-export const ScriptModuleRail = ({ course }: RailProps) => {
+interface ScriptModuleRailProps extends RailProps {
+  selectedModuleIndex: number;
+  selectedLessonIndex: number;
+  onSelectModule: (moduleIndex: number) => void;
+  onSelectLesson: (moduleIndex: number, lessonIndex: number) => void;
+}
+
+export const ScriptModuleRail = ({
+  course,
+  selectedModuleIndex,
+  selectedLessonIndex,
+  onSelectModule,
+  onSelectLesson,
+}: ScriptModuleRailProps) => {
   const [openModuleIndex, setOpenModuleIndex] = React.useState<number>(0);
-  const [activeLesson, setActiveLesson] = React.useState<string>("");
 
   const modules = course?.modules ?? [];
 
@@ -39,7 +51,10 @@ export const ScriptModuleRail = ({ course }: RailProps) => {
           >
             <button
               type="button"
-              onClick={() => setOpenModuleIndex(isOpen ? -1 : idx)}
+              onClick={() => {
+                setOpenModuleIndex(isOpen ? -1 : idx);
+                onSelectModule(idx);
+              }}
               className="flex h-[28px] w-full items-center justify-between gap-[12px] text-left -mx-[4px] px-[4px] rounded-[6px] transition-colors hover:bg-sd-grey-2 cursor-pointer"
             >
               <span className="text-[14px] font-semibold leading-[20px] text-sd-grey-12 truncate">
@@ -58,18 +73,19 @@ export const ScriptModuleRail = ({ course }: RailProps) => {
                 {lessons.length > 0 ? (
                   lessons.map((lesson, lIdx) => {
                     const Icon =
-                      lesson.type === "video"
+                      lesson.lesson_type === "VIDEO"
                         ? PlayCircle
-                        : lesson.type === "quiz"
+                        : lesson.lesson_type === "QUIZ"
                         ? Task
                         : BookSaved;
-                    const isSelected = activeLesson === (lesson.id || String(lIdx));
+                    const isSelected =
+                      selectedModuleIndex === idx && selectedLessonIndex === lIdx;
 
                     return (
                       <button
                         key={lesson.id || lIdx}
                         type="button"
-                        onClick={() => setActiveLesson(lesson.id || String(lIdx))}
+                        onClick={() => onSelectLesson(idx, lIdx)}
                         className={cn(
                           "flex h-[32px] items-center rounded-[6px] px-[8px] text-left transition-colors cursor-pointer",
                           isSelected ? "bg-sd-grey-3 font-medium text-sd-blue" : "hover:bg-sd-grey-2 text-sd-grey-11"
@@ -116,7 +132,7 @@ export const QuizModuleRail = ({ course }: RailProps) => {
     <div className="flex flex-col gap-[12px]">
       {modules.map((module, idx) => {
         const isOpen = openModuleIndex === idx;
-        const quizzes = (module.lessons ?? []).filter((l) => l.type === "quiz" || l.type === "assessment");
+        const quizzes = (module.lessons ?? []).filter((l) => l.lesson_type === "QUIZ");
 
         return (
           <section
@@ -199,7 +215,7 @@ export const MediaModuleRail = ({ course }: RailProps) => {
     <div className="flex flex-col gap-[12px]">
       {modules.map((module, idx) => {
         const isOpen = openModuleIndex === idx;
-        const videoLessons = (module.lessons ?? []).filter((l) => l.type === "video");
+        const videoLessons = (module.lessons ?? []).filter((l) => l.lesson_type === "VIDEO");
 
         return (
           <section

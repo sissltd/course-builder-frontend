@@ -285,6 +285,7 @@ export const CategoriesView = () => {
           category={selectedCategory}
           onEdit={() => {
             if (!selectedCategory) return;
+            setSelectedCategoryId(null);
             openEditModal(selectedCategory);
           }}
           canPrevious={selectedCategoryIndex > 0}

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   SearchNormal1,
   Notification,
@@ -18,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "next-auth/react";
+import { AdminRoute } from "@/lib/routes";
 
 interface AdminHeaderProps {
   title?: string;
@@ -103,17 +105,31 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
               <I24Support variant="Linear" size={20} color="#606060" />
               <span>Help and support</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] relative">
-              <Notification variant="Linear" size={20} color="#606060" />
-              <span>Notifications</span>
-              <span className="ml-auto size-2 bg-red-500 rounded-full" />
+            <DropdownMenuItem asChild>
+              <Link
+                href={AdminRoute.NOTIFICATIONS}
+                className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] relative"
+              >
+                <Notification variant="Linear" size={20} color="#606060" />
+                <span>Notifications</span>
+                <span className="ml-auto size-2 bg-red-500 rounded-full" />
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-              <Setting2 variant="Linear" size={20} color="#606060" />
-              <span>Settings</span>
+            <DropdownMenuItem asChild>
+              <Link
+                href={AdminRoute.SETTINGS}
+                className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]"
+              >
+                <Setting2 variant="Linear" size={20} color="#606060" />
+                <span>Settings</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />
-            <div className="flex items-center gap-[8px] p-[8px]">
+            <Link
+              href={AdminRoute.SETTINGS}
+              aria-label="Open profile settings"
+              className="flex items-center gap-[8px] p-[8px] rounded-[8px] hover:bg-[#F0F0F0] transition-colors"
+            >
               <div className="size-[28px] rounded-full bg-[#7B7272] overflow-hidden relative shrink-0">
                 <Image
                   src={avatarSrc}
@@ -126,7 +142,7 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
                 <span className="text-[14px] font-medium text-[#202020] leading-[20px]">{displayName}</span>
                 <span className="text-[12px] text-[#606060] leading-[16px]">Admin</span>
               </div>
-            </div>
+            </Link>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -140,16 +156,28 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
           </span>
         </button>
 
-        <button className="border border-[#F0F0F0] rounded-[6px] p-[4px] size-[32px] flex items-center justify-center hover:bg-sd-grey-2 transition-colors cursor-pointer relative">
+        <Link
+          href={AdminRoute.NOTIFICATIONS}
+          aria-label="Open notifications"
+          className="border border-[#F0F0F0] rounded-[6px] p-[4px] size-[32px] flex items-center justify-center hover:bg-sd-grey-2 transition-colors cursor-pointer relative"
+        >
           <Notification variant="Linear" size={20} color="#606060" />
           <span className="absolute top-[6px] right-[6px] size-2 bg-red-500 rounded-full border border-white" />
-        </button>
+        </Link>
 
-        <button className="border border-[#F0F0F0] rounded-[6px] p-[4px] size-[32px] flex items-center justify-center hover:bg-sd-grey-2 transition-colors cursor-pointer">
+        <Link
+          href={AdminRoute.SETTINGS}
+          aria-label="Open settings"
+          className="border border-[#F0F0F0] rounded-[6px] p-[4px] size-[32px] flex items-center justify-center hover:bg-sd-grey-2 transition-colors cursor-pointer"
+        >
           <Setting2 variant="Linear" size={20} color="#606060" />
-        </button>
+        </Link>
 
-        <div className="border border-[#F0F0F0] rounded-full p-[4px] size-[32px] flex items-center justify-center cursor-pointer">
+        <Link
+          href={AdminRoute.SETTINGS}
+          aria-label="Open profile settings"
+          className="border border-[#F0F0F0] rounded-full p-[4px] size-[32px] flex items-center justify-center cursor-pointer"
+        >
           <div className="size-[20px] rounded-full bg-[#7B7272] overflow-hidden relative">
             <Image
               src={avatarSrc}
@@ -158,7 +186,7 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
               className="object-cover"
             />
           </div>
-        </div>
+        </Link>
       </div>
     </header>
   );

@@ -7,11 +7,10 @@ import {
   More,
   UserAdd,
   CloseCircle,
-  SearchNormal1,
   TickCircle,
 } from "iconsax-react";
 import { toast } from "sonner";
-import { normalizeApiError } from "@/lib/api/errors";
+import { getErrorStatus, normalizeApiError } from "@/lib/api/errors";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminRoute } from "@/lib/routes";
@@ -21,11 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { SideDrawer } from "@/components/shared/SideDrawer";
 import { AdminCoursesFilters, type AdminCoursesTab } from "./components/AdminCoursesFilters";
 import { AdminCoursesGrid } from "./components/AdminCoursesGrid";
@@ -35,15 +29,34 @@ import {
   useGetAdminCoursesQuery,
   useApproveAdminCourseMutation,
   useRejectAdminCourseMutation,
+  useGetAssignableReviewersQuery,
+  useAssignAdminCourseMutation,
 } from "@/redux/slices/adminApi";
-import type { AdminCourseItem, AdminCoursesListParams } from "@/redux/slices/adminApi";
+import type {
+  AdminCourseItem,
+  AdminCoursesListParams,
+  AssignableReviewer,
+} from "@/redux/slices/adminApi";
 import { useDebouncedValue } from "@/modules/admin/mie-recommendation/hooks/useDebouncedValue";
+import { usePermissions } from "@/modules/auth/hooks/usePermissions";
+import { PERMISSION } from "@/modules/auth/permissions";
 import { CourseRejectModal } from "./components/CourseRejectModal";
+import { AssignReviewerModal } from "./components/AssignReviewerModal";
 
 const isPendingStatus = (status: string) => {
   const s = (status || "").toUpperCase();
   return s === "PENDING" || s === "SUBMITTED" || s === "IN_REVIEW";
 };
+
+/**
+ * The statuses `assign` accepts. Narrower than `isPendingStatus`, which carries
+ * a legacy `PENDING` that is not a `CourseStatus`, and wider in that it has to
+ * include QA verification.
+ */
+const ASSIGNABLE_STATUSES = ["SUBMITTED", "IN_REVIEW", "QA_VERIFICATION"];
+
+const isAssignableStatus = (status: string) =>
+  ASSIGNABLE_STATUSES.includes((status || "").toUpperCase());
 
 const STATUS_PILL: Record<string, { label: string; className: string }> = {
   pending: {
@@ -386,29 +399,19 @@ export const AdminCoursesView = () => {
   // Active course for drawer (tracked by course ID for robustness)
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
 
-  // User assignment popover state
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState("");
+  // Reviewer assignment
+  const [assignCourseId, setAssignCourseId] = useState<string | null>(null);
 
-  const mockReviewers = [
-    "Osaite Emmanuel",
-    "James Nathaniel John",
-    "Osaite Emmanuel",
-    "Nathan James",
-    "Matin Jones",
-    "John Nathan",
-  ];
+  const { can } = usePermissions();
+  const canAssign = can(PERMISSION.COURSES_ASSIGN);
 
-  const filteredReviewers = mockReviewers.filter((name) =>
-    name.toLowerCase().includes(userSearchQuery.toLowerCase())
-  );
+  const {
+    data: assignableReviewers,
+    isFetching: isLoadingReviewers,
+    refetch: refetchAssignableReviewers,
+  } = useGetAssignableReviewersQuery(assignCourseId ?? "", { skip: !assignCourseId });
 
-  const getAvatarBg = (name: string) => {
-    if (name.startsWith("O")) return "bg-[#16A34A]"; // Green
-    if (name.startsWith("J")) return "bg-[#2563EB]"; // Blue
-    if (name.startsWith("N")) return "bg-[#9333EA]"; // Purple
-    return "bg-[#2563EB]";
-  };
+  const [assignCourseMutation, { isLoading: isAssigning }] = useAssignAdminCourseMutation();
 
   // Checkbox multi-selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -566,10 +569,33 @@ export const AdminCoursesView = () => {
     }
   };
 
-  const handleAssignUser = (userName: string) => {
-    toast.success(`Assigned ${selectedIds.size} courses to ${userName}`);
-    setSelectedIds(new Set());
-    setAssignOpen(false);
+  const assignCourse = courses.find((course) => course.id === assignCourseId) ?? null;
+
+  const handleAssignReviewer = async (reviewer: AssignableReviewer, replace: boolean) => {
+    if (!assignCourseId) return;
+    try {
+      await assignCourseMutation({
+        id: assignCourseId,
+        body: { reviewer_id: reviewer.id, replace },
+      }).unwrap();
+      toast.success(
+        replace
+          ? `${reviewer.full_name} now holds the seat`
+          : `Assigned the course to ${reviewer.full_name}`,
+      );
+      setAssignCourseId(null);
+    } catch (err) {
+      /*
+        A seat taken between the list loading and the submit is the one case
+        worth re-reading rather than only reporting: the refreshed list marks
+        the new holder, so choosing again offers the replace step.
+      */
+      if (getErrorStatus(err as never) === 409) {
+        void refetchAssignableReviewers();
+      }
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? `Could not assign the course to ${reviewer.full_name}`);
+    }
   };
 
   const [approveCourseMutation] = useApproveAdminCourseMutation();
@@ -909,6 +935,15 @@ export const AdminCoursesView = () => {
                               >
                                 View details
                               </DropdownMenuItem>
+                              {canAssign && isAssignableStatus(course.status) && (
+                                <DropdownMenuItem
+                                  onClick={() => setAssignCourseId(course.id)}
+                                  className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                >
+                                  <UserAdd size={16} variant="Linear" color="#0063EF" />
+                                  Assign reviewer
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -1125,6 +1160,15 @@ export const AdminCoursesView = () => {
                                 >
                                   View details
                                 </DropdownMenuItem>
+                                {canAssign && isAssignableStatus(course.status) && (
+                                  <DropdownMenuItem
+                                    onClick={() => setAssignCourseId(course.id)}
+                                    className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer gap-[8px]"
+                                  >
+                                    <UserAdd size={16} variant="Linear" color="#0063EF" />
+                                    Assign reviewer
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem className="text-[14px] font-normal text-sd-grey-11 hover:bg-sd-grey-2 p-[8px] rounded-[8px] cursor-pointer">
                                   Edit course
                                 </DropdownMenuItem>
@@ -1222,72 +1266,30 @@ export const AdminCoursesView = () => {
             <span>Approve course</span>
           </button>
 
-          <Popover open={assignOpen} onOpenChange={setAssignOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex h-[40px] items-center gap-[8px] rounded-[12px] bg-[#EAECEF] hover:bg-[#DFE2E6] px-[20px] text-[16px] font-medium text-[#202020] transition-colors cursor-pointer border-0"
-              >
-                <UserAdd size={20} variant="Linear" color="#0063EF" className="shrink-0" />
-                <span>Assign course</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="center"
-              side="top"
-              sideOffset={12}
-              className="w-[280px] bg-sd-grey-1 border border-sd-grey-3 rounded-[16px] p-[12px] shadow-[0px_8px_32px_rgba(0,0,0,0.12)]"
+          {canAssign && (
+            <button
+              type="button"
+              disabled={selectedIds.size !== 1}
+              title={
+                selectedIds.size === 1
+                  ? undefined
+                  : "Select a single course to assign a reviewer"
+              }
+              onClick={() => {
+                const [onlyId] = Array.from(selectedIds);
+                setAssignCourseId(onlyId);
+              }}
+              className={cn(
+                "flex h-[40px] items-center gap-[8px] rounded-[12px] bg-[#EAECEF] px-[20px] text-[16px] font-medium text-[#202020] transition-colors border-0",
+                selectedIds.size === 1
+                  ? "hover:bg-[#DFE2E6] cursor-pointer"
+                  : "opacity-50 cursor-not-allowed",
+              )}
             >
-              <div className="flex flex-col gap-[8px]">
-                {/* Search user */}
-                <label className="flex h-[36px] items-center gap-[10px] rounded-[8px] border border-sd-grey-6 bg-sd-grey-1 px-[12px] mb-[4px]">
-                  <SearchNormal1 size={16} variant="Linear" color="var(--sd-grey-11)" />
-                  <input
-                    type="text"
-                    value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                    placeholder="Search user"
-                    className="w-full bg-transparent text-[14px] font-normal text-sd-grey-12 placeholder:text-sd-muted-text outline-none"
-                  />
-                </label>
-
-                {/* Scrollable List */}
-                <div className="flex flex-col max-h-[220px] overflow-y-auto gap-[4px] pr-[4px]">
-                  {filteredReviewers.length === 0 ? (
-                    <div className="text-[12px] text-sd-grey-11 text-center py-4">
-                      No users found.
-                    </div>
-                  ) : (
-                    filteredReviewers.map((name, idx) => (
-                      <button
-                        key={`${name}-${idx}`}
-                        type="button"
-                        onClick={() => handleAssignUser(name)}
-                        className="flex items-center gap-[12px] rounded-[8px] p-[8px] text-left hover:bg-sd-grey-2 cursor-pointer w-full transition-colors"
-                      >
-                        <div
-                          className={cn(
-                            "flex size-[32px] shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white",
-                            getAvatarBg(name)
-                          )}
-                        >
-                          {name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[14px] font-normal leading-[20px] text-sd-grey-12 truncate">
-                            {name}
-                          </span>
-                          <span className="text-[12px] font-normal leading-[16px] text-sd-grey-11">
-                            Reviewer (Verifier)
-                          </span>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              <UserAdd size={20} variant="Linear" color="#0063EF" className="shrink-0" />
+              <span>Assign course</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -1328,6 +1330,21 @@ export const AdminCoursesView = () => {
         courseCount={isBulkReject ? selectedIds.size : undefined}
         isLoading={isRejecting}
         onConfirm={handleConfirmReject}
+      />
+
+      {/* Assign Reviewer Modal */}
+      <AssignReviewerModal
+        key={assignCourseId ?? "assign-reviewer"}
+        isOpen={!!assignCourseId}
+        onOpenChange={(open) => {
+          if (!open) setAssignCourseId(null);
+        }}
+        courseTitle={assignCourse?.courseTitle}
+        seat={assignableReviewers?.[0]?.seat}
+        reviewers={assignableReviewers ?? []}
+        isLoadingReviewers={isLoadingReviewers}
+        isAssigning={isAssigning}
+        onAssign={handleAssignReviewer}
       />
     </div>
   );

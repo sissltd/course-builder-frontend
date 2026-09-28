@@ -46,7 +46,12 @@ export const ADMIN_SETTINGS_TABS: AdminSettingsTabDef[] = [
   },
   { id: "platform", label: "Platform", Icon: Eye },
   { id: "payments", label: "Payments", Icon: CreditCard },
-  { id: "achievement-awards", label: "Achievement badge", Icon: Award },
+  {
+    id: "achievement-awards",
+    label: "Achievement badge",
+    Icon: Award,
+    permission: PERMISSION.ACHIEVEMENTS_MANAGE,
+  },
   { id: "security", label: "Security", Icon: Shield },
 ];
 

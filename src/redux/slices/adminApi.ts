@@ -481,7 +481,11 @@ export interface AdminCourseItem {
   date_approved?: string | null;
 }
 
-export type CourseSourceType = "CREATOR_UPLOADED" | "AI_GENERATED" | "DEVELOPER_API";
+export type CourseSourceType =
+  | "CREATOR_UPLOADED"
+  | "AI_GENERATED"
+  | "DOCUMENT_IMPORTED"
+  | "DEVELOPER_API";
 
 export interface AdminCoursesListParams {
   category?: string;
@@ -528,49 +532,235 @@ export interface AdminCourseVersion {
   label: string;
 }
 
+export type CourseDifficultyLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+export type CourseStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "IN_REVIEW"
+  | "NEEDS_REVISION"
+  | "QA_VERIFICATION"
+  | "APPROVED"
+  | "PUBLISHED"
+  | "ARCHIVED"
+  | "REJECTED";
+
+export type LessonType = "VIDEO" | "QUIZ" | "TEXT";
+
+export type QualityStatus = "NOT_RUN" | "PASS" | "WARNING" | "FAIL";
+
+export type AssessmentLevel = "LESSON" | "MODULE" | "COURSE";
+
+export type QuizQuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "ESSAY";
+
+export interface CourseAssessmentSummary {
+  total_questions?: number;
+  total_points?: number;
+  single_choice_count?: number;
+  multiple_choice_count?: number;
+  essay_count?: number;
+}
+
+export interface CourseQuizQuestion {
+  type?: QuizQuestionType | string;
+  question: string;
+  points?: number;
+  options?: Array<
+    | string
+    | {
+        label?: string;
+        text?: string;
+        value?: string;
+        explanation?: string;
+        is_correct?: boolean;
+      }
+  >;
+  correct_index?: number | null;
+  correct_indices?: number[];
+  expected_answer?: string;
+  explanation?: string;
+}
+
+export interface CourseAssessment {
+  id: string;
+  level: AssessmentLevel | string;
+  title: string;
+  questions: CourseQuizQuestion[];
+  summary: CourseAssessmentSummary;
+}
+
+export interface CourseLessonRequirement {
+  id: string;
+  lesson: string;
+  text: string;
+  order: number;
+}
+
+export interface CourseLessonImage {
+  id: string;
+  lesson: string;
+  image: string;
+  caption: string;
+  source_type: CourseSourceType | string;
+  order: number;
+}
+
+export interface CourseLessonContentBlock {
+  id: string;
+  lesson: string;
+  order: number;
+  block_type: string;
+  text_content: string;
+  media_url: string;
+  quiz: string | null;
+}
+
 export interface AdminCourseModuleLesson {
   id: string;
   title: string;
-  type: "video" | "text" | "quiz" | string;
-  duration_seconds: number | null;
-  content: string | null;
   order: number;
+  lesson_type: LessonType | string;
+  script: string;
+  video_url: string;
+  embedded_link: string;
+  video_script_file: string;
+  learning_objectives: string[];
+  duration_minutes: number;
+  lesson_requirement: string;
+  assessment: CourseAssessment | null;
+  content_blocks: CourseLessonContentBlock[];
+  images: CourseLessonImage[];
+  requirements: CourseLessonRequirement[];
 }
 
 export interface AdminCourseModule {
   id: string;
   title: string;
-  description: string;
   order: number;
+  description: string;
+  learning_objectives: string[];
   lessons: AdminCourseModuleLesson[];
+  assessment: CourseAssessment | null;
+  locked_by: string | null;
+  lock_expires_at: string | null;
+  is_locked: boolean;
+  collaboration_locked_by: string | null;
+  collaboration_locked_at: string | null;
+  collaboration_locked: boolean;
+}
+
+export interface CourseMediaAsset {
+  id: string;
+  lesson: string | null;
+  kind: "VIDEO" | "AUDIO" | "SUBTITLE" | "THUMBNAIL" | "PREVIEW_VIDEO" | string;
+  url: string;
+  mime_type: string;
+  duration_seconds: number | null;
+  resolution: string;
+  subtitle_url: string;
+  caption_accuracy_percent: string | null;
+  audio_lufs: string | null;
+  audio_video_drift_ms: number | null;
+  accessibility: Record<string, unknown> | null;
+  verification: Record<string, unknown> | null;
+  verified_at: string | null;
+  verified_by: AdminCourseCreator | null;
+}
+
+export interface CourseQualityFinding {
+  id: string;
+  code: string;
+  severity: "INFO" | "WARNING" | "ERROR" | string;
+  message: string;
+  module: string | null;
+  lesson: string | null;
+  evidence: Record<string, unknown> | null;
+  resolved_at: string | null;
+  created_datetime: string;
+}
+
+export interface CourseQualityCheckRun {
+  id: string;
+  provider: string;
+  overall_score: number | null;
+  risk_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | string;
+  status: QualityStatus | string;
+  plagiarism_status: QualityStatus | string;
+  plagiarism_score: string | null;
+  duplicate_status: QualityStatus | string;
+  duplicate_score: string | null;
+  raw_report: Record<string, unknown> | null;
+  findings: CourseQualityFinding[];
+  created_datetime: string;
+}
+
+export interface CourseReviewAssignment {
+  id: string;
+  stage: string;
+  reviewer: AdminCourseCreator | null;
+  claimed_at: string | null;
+  completed_at: string | null;
+}
+
+export interface CourseDistribution {
+  id: string;
+  channel: string;
+  channel_label: string;
+  approval_rate: string;
+  learner_price: string;
+  mie_suggestion: string | null;
+  model: string;
+  learner_fee: string;
+  creator_payout_fixed: string | null;
+  course_fee_percent: string | null;
+  promotional_pricing: string | null;
+  platform_revenue_per_enrollment: string | null;
+  mie_explanation: string;
+  comparable_courses: Array<{
+    course_title: string;
+    difficulty_level: CourseDifficultyLevel | string;
+    learner_price: string;
+  }>;
+  status: string;
+  external_course_id: string;
+  failure_reason: string;
+  published_at: string | null;
 }
 
 export interface AdminCourseDetail {
   id: string;
   title: string;
+  description: string;
   category: AdminCourseCategory | null;
   topic: AdminCourseTopic | null;
-  source: string;
-  status: string;
-  creator_price_snapshot: string | null;
-  submitted_at: string | null;
-  created_datetime: string;
-  updated_datetime: string;
-  description: string;
-  difficulty_level: string;
+  difficulty_level: CourseDifficultyLevel | string;
+  source_type: CourseSourceType | string;
+  quality_score: number | null;
   learning_objectives: string[];
   tags: string[];
   planned_duration_seconds: number;
+  status: CourseStatus | string;
+  creator_price_snapshot: string | null;
   preview_video_url: string;
   thumbnail_url: string;
   terms_accepted_at: string | null;
+  submitted_at: string | null;
   approved_at: string | null;
   published_at: string | null;
   rejected_at: string | null;
   modules: AdminCourseModule[];
-  final_assessment: unknown | null;
+  final_assessment: CourseAssessment | null;
+  media_assets: CourseMediaAsset[];
+  quality_check_runs: CourseQualityCheckRun[];
+  quality_findings: CourseQualityFinding[];
+  review_assignments: CourseReviewAssignment[];
+  review_comments: CourseReviewComment[];
+  qa_video_samples: unknown[];
+  distribution_channels: CourseDistribution[];
   duration_estimate_minutes: number;
   version: AdminCourseVersion | string | null;
+  created_datetime: string;
+  updated_datetime: string;
 }
 
 export interface ApproveCourseRequest {
@@ -584,24 +774,61 @@ export interface CourseReviewCommentAuthor {
   first_name?: string;
   last_name?: string;
   email?: string;
+  name?: string;
+}
+
+export type ReviewStage = "CONTENT" | "QA" | string;
+export type ReviewSeverity = "ERROR" | "WARNING" | "INFO" | string;
+
+/**
+ * A review seat a course can be waiting on, per the backend's seat enum —
+ * `CONTENT` (First Review), `SECOND_REVIEW`, `VERIFICATION` and `QA`.
+ *
+ * Wider than `ReviewStage`, which only ever names the two gates a comment
+ * belongs to. `assignable-reviewers` and `assign` both carry this set.
+ */
+export type ReviewSeat = "CONTENT" | "SECOND_REVIEW" | "VERIFICATION" | "QA" | string;
+
+export interface AssignableReviewer {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  seat: ReviewSeat;
+  is_available: boolean;
+  holds_seat: boolean;
+}
+
+export interface AssignCourseRequest {
+  reviewer_id: string;
+  replace?: boolean;
+}
+
+export interface AssignCourseResult {
+  course_id: string;
+  seat: ReviewSeat;
+  reviewer_id: string;
 }
 
 export interface CourseReviewComment {
   id: string;
-  stage: "CONTENT" | "QA" | string;
-  lesson?: string | null;
-  severity: "ERROR" | "WARNING" | "INFO" | string;
+  reviewer: CourseReviewCommentAuthor | string | null;
+  stage: ReviewStage;
+  module: string | null;
+  lesson: string | null;
+  severity: ReviewSeverity;
   reason_code: string;
   comment: string;
-  created_datetime?: string;
-  author?: CourseReviewCommentAuthor | string | null;
+  resolved_at: string | null;
+  created_datetime: string;
 }
 
 export interface AddCourseCommentRequest {
-  stage: "CONTENT" | "QA" | string;
+  stage: ReviewStage;
+  module?: string | null;
   lesson?: string | null;
-  severity: "ERROR" | "WARNING" | "INFO" | string;
-  reason_code: string;
+  severity?: ReviewSeverity;
+  reason_code?: string;
   comment: string;
 }
 
@@ -1058,6 +1285,52 @@ export const adminApi = BaseAPI.injectEndpoints({
         { type: "AdminCourse", id },
       ] as any,
     }),
+    /**
+     * The reviewers who could take the seat this course is waiting on. Not
+     * paginated, and empty when nobody qualifies.
+     *
+     * Unavailable reviewers are returned rather than omitted, carrying
+     * `is_available: false` — assigning one is a 400, so the picker lists them
+     * disabled instead of pretending they are not there.
+     */
+    getAssignableReviewers: builder.query<AssignableReviewer[], string>({
+      query: (id) => ({
+        url: `/admin/courses/${id}/assignable-reviewers/`,
+        method: "GET",
+      }),
+      transformResponse: (response: any): AssignableReviewer[] => {
+        if (Array.isArray(response)) return response as AssignableReviewer[];
+        return (response?.data ?? []) as AssignableReviewer[];
+      },
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+    }),
+    /**
+     * Puts a reviewer in the seat the course is waiting on, as if they had
+     * claimed it, and notifies them.
+     *
+     * A seat someone else already holds is a 409 unless `replace` is true; with
+     * `replace` the previous holder is notified. Assigning the current holder
+     * again changes nothing.
+     */
+    assignAdminCourse: builder.mutation<
+      AssignCourseResult,
+      { id: string; body: AssignCourseRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `/admin/courses/${id}/assign/`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: any): AssignCourseResult => {
+        return (response && typeof response === "object" && "data" in response && response.data)
+          ? (response.data as AssignCourseResult)
+          : (response as AssignCourseResult);
+      },
+      invalidatesTags: (result, error, { id }) => [
+        "AdminCourse",
+        { type: "AdminCourse", id },
+      ] as any,
+    }),
     getAdminCourseComments: builder.query<CourseCommentsResponse, CourseCommentsParams>({
       query: ({ courseId, page, size }) => ({
         url: `/admin/courses/${courseId}/comments/`,
@@ -1300,6 +1573,8 @@ export const {
   useGetAdminCourseDetailQuery,
   useApproveAdminCourseMutation,
   useClaimAdminCourseMutation,
+  useGetAssignableReviewersQuery,
+  useAssignAdminCourseMutation,
   useGetAdminCourseCommentsQuery,
   useAddAdminCourseCommentMutation,
   useContentApproveAdminCourseMutation,
@@ -1338,6 +1613,7 @@ export {
   useSuspendUserMutation,
   useDeactivateUserMutation,
   useReinstateUserMutation,
+  useSendUserPasswordResetMutation,
+  useEraseUserMutation,
 } from "@/modules/admin/teams/api/usersApi";
 export type { AdminUser, UsersListParams } from "@/modules/admin/teams/types";
-
