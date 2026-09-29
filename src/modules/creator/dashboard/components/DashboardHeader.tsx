@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { CreatorRoute } from "@/lib/routes";
+import { CreatorRoute, WebsiteRoute } from "@/lib/routes";
 import { signOut, useSession } from "next-auth/react";
 import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
@@ -172,14 +172,20 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-[180px] bg-white border border-[#F0F0F0] rounded-[16px] p-[8px]  mt-[8px]" align="start">
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Documentation</span>
+              <DropdownMenuItem asChild>
+                <Link href={`${CreatorRoute.HELP}?tab=knowledge-base`} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Documentation</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Help Center</span>
+              <DropdownMenuItem asChild>
+                <Link href={`${CreatorRoute.HELP}?tab=support`} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Help Center</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Send Feedback</span>
+              <DropdownMenuItem asChild>
+                <Link href={WebsiteRoute.CONTACT} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Send Feedback</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

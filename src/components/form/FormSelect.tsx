@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { useFormContext, useController } from "react-hook-form";
+import { useFormContext, useController, useFormState } from "react-hook-form";
+import type { Control, FieldValues } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -54,24 +55,81 @@ interface FormSelectProps {
   onValueChange?: (value: string) => void;
 }
 
-export const FormSelect = ({ name, label, error: externalError, hint, required, options = [], placeholder = "Select an option", triggerClassName, containerClassName, disabled, searchable = false, searchPlaceholder = "Search...", emptyText = "No results found.", clearable = false, clearLabel = "None", icon, prefix, suffix, triggerValue, hasMore = false, isLoadingMore = false, onLoadMore, value: externalValue, onValueChange: externalOnValueChange }: FormSelectProps) => {
-  const isControlled = externalValue !== undefined;
-  let fieldValue = isControlled ? externalValue : "";
-  let fieldOnChange = externalOnValueChange || (() => {});
-  let fieldError = externalError;
+export const FormSelect = (props: FormSelectProps) => {
+  // `useFormContext` returns null without a `FormProvider` rather than
+  // throwing, so calling it is safe; `useController` does need a real control.
+  // The two modes are separate components because a try/catch around a
+  // conditional hook call breaks the rules of hooks.
+  const control = useFormContext()?.control;
 
-  try {
-    const { control, formState: { errors } } = useFormContext();
-    const { field } = useController({ name, control });
-    fieldValue = isControlled ? externalValue : (field.value ?? "");
-    fieldOnChange = isControlled
-      ? (val: string) => externalOnValueChange?.(val)
-      : (val: string) => {
-          field.onChange(val);
-          externalOnValueChange?.(val);
-        };
-    fieldError = fieldError || (errors[name]?.message as string | undefined);
-  } catch {}
+  return control ? (
+    <ConnectedSelect {...props} control={control} />
+  ) : (
+    <StandaloneSelect {...props} />
+  );
+};
+
+type ConnectorProps = FormSelectProps & {
+  control?: Control<FieldValues>;
+};
+
+const ConnectedSelect = ({
+  control,
+  value: externalValue,
+  onValueChange,
+  error: externalError,
+  ...props
+}: ConnectorProps) => {
+  const { field } = useController({ control, name: props.name });
+  const { errors } = useFormState({ control });
+  const isControlled = externalValue !== undefined;
+
+  return (
+    <SelectView
+      {...props}
+      error={
+        externalError ?? (errors[props.name]?.message as string | undefined)
+      }
+      value={isControlled ? externalValue : ((field.value as string) ?? "")}
+      onValueChange={(next) => {
+        if (!isControlled) field.onChange(next === "none" ? "" : next);
+        onValueChange?.(next);
+      }}
+    />
+  );
+};
+
+const StandaloneSelect = ({
+  value = "",
+  onValueChange,
+  ...props
+}: ConnectorProps) => (
+  <SelectView
+    {...props}
+    value={value}
+    onValueChange={onValueChange ?? (() => {})}
+  />
+);
+
+type SelectViewProps = Omit<
+  ConnectorProps,
+  "control" | "onValueChange" | "value"
+> & {
+  value: string;
+  onValueChange: (value: string) => void;
+};
+
+const SelectView = ({
+  label, error: externalError, hint, required, options = [],
+  placeholder = "Select an option", triggerClassName, containerClassName,
+  disabled, searchable = false, searchPlaceholder = "Search...",
+  emptyText = "No results found.", clearable = false, clearLabel = "None", icon,
+  prefix, suffix, triggerValue, hasMore = false, isLoadingMore = false,
+  onLoadMore, value, onValueChange,
+}: SelectViewProps) => {
+  const fieldValue = value;
+  const fieldOnChange = onValueChange;
+  const fieldError = externalError;
 
   const [open, setOpen] = useState(false);
   const [triggerWidth, setTriggerWidth] = useState<number>(0);

@@ -16,10 +16,24 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/auth/change-email/confirm",
   "/accept-invitation",
   "/auth/accept-invitation",
   "/auth/signup-google",
   "/api/auth",
+];
+
+/**
+ * Auth routes a signed-in caller must still be allowed to *land on*.
+ *
+ * The confirmation link for an email change is opened from the new inbox, and
+ * the caller may well already have a session. Without this carve-out the
+ * authed-redirect below would bounce them to their dashboard before the token
+ * was ever spent, and the email would silently never change.
+ */
+const AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN = [
+  "accept-invitation",
+  "change-email",
 ];
 
 const isPublicPath = (pathname: string): boolean =>
@@ -49,7 +63,9 @@ export async function middleware(req: NextRequest) {
       isAuthenticated &&
       pathname.startsWith("/auth") &&
       !isGoogleHandoff &&
-      !pathname.includes("accept-invitation")
+      !AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN.some((segment) =>
+        pathname.includes(segment),
+      )
     ) {
       const dashboard = getDashboardRoute(token?.user?.workspace);
       console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);

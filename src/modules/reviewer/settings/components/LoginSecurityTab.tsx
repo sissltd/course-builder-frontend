@@ -7,8 +7,7 @@ import { FormInput } from "@/components/form/FormInput";
 import { useForm, FormProvider } from "react-hook-form";
 import { normalizeApiError } from "@/lib/api/errors";
 import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
-import { useChangePasswordMutation } from "@/modules/auth/api/accountApi";
-import { useChangeEmailMutation } from "../api/reviewerSettingsApi";
+import { useChangePasswordMutation, useChangeEmailMutation } from "@/modules/auth/api/accountApi";
 
 interface EmailFormValues {
   new_email: string;

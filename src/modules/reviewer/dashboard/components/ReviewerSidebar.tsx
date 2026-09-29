@@ -200,7 +200,11 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
 
   const handleLogout = async () => {
     try {
-      const refreshToken = (session as any)?.refreshToken;
+      // The session callback never copies `refreshToken` across, so this is
+      // always undefined today; kept as a declared-but-optional read rather
+      // than an `any` cast.
+      const refreshToken = (session as { refreshToken?: string } | undefined)
+        ?.refreshToken;
       if (refreshToken) {
         try {
           await logoutApi({ refresh: refreshToken }).unwrap();

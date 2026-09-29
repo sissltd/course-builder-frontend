@@ -58,14 +58,29 @@ function Carousel({
     },
     plugins
   )
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false)
-  const [canScrollNext, setCanScrollNext] = React.useState(false)
+  const [scrollFlags, setScrollFlags] = React.useState({
+    canScrollPrev: false,
+    canScrollNext: false,
+  })
 
   const onSelect = React.useCallback((api: CarouselApi) => {
     if (!api) return
-    setCanScrollPrev(api.canScrollPrev())
-    setCanScrollNext(api.canScrollNext())
+    setScrollFlags({
+      canScrollPrev: api.canScrollPrev(),
+      canScrollNext: api.canScrollNext(),
+    })
   }, [])
+
+  // Seed the flags as soon as the API exists. Doing this during render rather
+  // than in the effect below means the arrows are correct on the very first
+  // paint, including for a carousel that starts on a later slide.
+  const [seededApi, setSeededApi] = React.useState<CarouselApi | null>(null)
+  if (api && seededApi !== api) {
+    setSeededApi(api)
+    onSelect(api)
+  }
+
+  const { canScrollPrev, canScrollNext } = scrollFlags
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev()
@@ -93,14 +108,15 @@ function Carousel({
     setApi(api)
   }, [api, setApi])
 
+  // Subscribes only — the initial state is seeded during render above.
   React.useEffect(() => {
     if (!api) return
-    onSelect(api)
     api.on("reInit", onSelect)
     api.on("select", onSelect)
 
     return () => {
       api?.off("select", onSelect)
+      api?.off("reInit", onSelect)
     }
   }, [api, onSelect])
 

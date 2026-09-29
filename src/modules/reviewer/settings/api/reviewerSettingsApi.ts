@@ -115,18 +115,6 @@ export const EFFECTIVE_TRACK_LABELS: Record<EffectiveTrackFilter, string> = {
   NONE: "Nothing — every track is switched off",
 };
 
-// ─── Login & security ─────────────────────────────────────────────────────────
-
-/**
- * Schema (`components.schemas.ChangeEmailRequestRequest`): identity is proven
- * with the current password before the confirmation link goes to `new_email`.
- * Both fields are required — a body of `{ email }` would 400.
- */
-export interface ChangeEmailRequest {
-  new_email: string;
-  password: string;
-}
-
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const reviewerSettingsApi = BaseAPI.injectEndpoints({
@@ -171,21 +159,11 @@ export const reviewerSettingsApi = BaseAPI.injectEndpoints({
       invalidatesTags: ["ReviewerSettings"],
     }),
 
-    changeEmail: builder.mutation<{ detail: string }, ChangeEmailRequest>({
-      query: (body) => ({
-        url: "/auth/change-email/",
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: ["UserProfile"],
-    }),
-
     /**
      * Both exports stream `text/csv` as an attachment, so they are fetched as
      * blobs and saved client-side. The audit export is scoped to the caller
      * server-side, so there is nothing to filter here.
-     */
-    exportActivityLog: builder.query<Blob, void>({
+     */    exportActivityLog: builder.query<Blob, void>({
       query: () => ({
         url: "/users/me/activity-log/export/",
         method: "GET",
@@ -210,7 +188,6 @@ export const {
   useUpdateReviewerAvailabilityMutation,
   useGetReviewerQueuePreferencesQuery,
   useUpdateReviewerQueuePreferencesMutation,
-  useChangeEmailMutation,
   useLazyExportActivityLogQuery,
   useLazyExportAuditLogQuery,
 } = reviewerSettingsApi;

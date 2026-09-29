@@ -36,6 +36,7 @@ interface AdminDashboardLayoutProps {
 
 export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [renderedPath, setRenderedPath] = useState("");
   const pathname = usePathname();
   const router = useRouter();
   const { canAny, isLoading: isPermissionsLoading } = usePermissions();
@@ -63,9 +64,13 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
   */
   const fallback = isPermissionsLoading ? null : firstAllowedAdminRoute(canAny);
 
-  useEffect(() => {
+  // Navigating away should leave the mobile sidebar closed. Adjusting during
+  // render (rather than in an effect) avoids a frame where the new route is
+  // already showing with the old open sidebar.
+  if (renderedPath !== pathname) {
+    setRenderedPath(pathname);
     setSidebarOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (isBlocked && fallback && fallback !== pathname) router.replace(fallback);

@@ -1,5 +1,6 @@
 import React from "react";
-import { useFormContext, useController } from "react-hook-form";
+import { useFormContext, useController, useFormState } from "react-hook-form";
+import type { Control, FieldValues } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -32,36 +33,81 @@ interface FormInputProps {
   inputRef?: React.Ref<HTMLInputElement>;
 }
 
-export const FormInput = ({ name, label, error: externalError, hint, required, placeholder, type = "text", className, containerClassName, leftElement, rightElement, disabled, readOnly, autoFocus, isSuccess, isFilled, value: externalValue, onChange: externalOnChange, onBlur: externalOnBlur, onKeyDown, onFocus: externalOnFocus, maxLength, min, max, inputRef }: FormInputProps) => {
-  let fieldValue = externalValue ?? "";
-  let fieldOnChange = externalOnChange || (() => {});
-  let fieldOnBlur = externalOnBlur || (() => {});
-  let fieldRef: any = undefined;
-  let fieldError = externalError;
+export const FormInput = (props: FormInputProps) => {
+  // `useFormContext` returns null without a `FormProvider` rather than
+  // throwing, so calling it is safe; `useController` does need a real control.
+  // The two modes are therefore separate components � a try/catch around a
+  // conditional hook call would break the rules of hooks.
+  const control = useFormContext()?.control;
 
-  try {
-    const { control, formState: { errors } } = useFormContext();
-    const { field } = useController({ name, control });
-    fieldValue = field.value ?? "";
-    fieldOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      field.onChange(e);
-      externalOnChange?.(e);
-    };
-    fieldOnBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      field.onBlur();
-      externalOnBlur?.(e);
-    };
-    fieldRef = field.ref;
-    fieldError = fieldError || (errors[name]?.message as string | undefined);
-  } catch {
-  }
+  return control ? (
+    <ConnectedInput {...props} control={control} />
+  ) : (
+    <StandaloneInput {...props} />
+  );
+};
 
+type ConnectorProps = FormInputProps & {
+  control?: Control<FieldValues>;
+};
+
+const ConnectedInput = ({ control, onChange, onBlur, ...props }: ConnectorProps) => {
+  const { field } = useController({ control, name: props.name });
+  const { errors } = useFormState({ control });
+
+  return (
+    <InputView
+      {...props}
+      value={(field.value as string) ?? ""}
+      viewRef={field.ref}
+      onChange={(e) => {
+        field.onChange(e);
+        onChange?.(e);
+      }}
+      onBlur={(e) => {
+        field.onBlur();
+        onBlur?.(e);
+      }}
+      viewError={
+        (errors[props.name]?.message as string | undefined) ?? props.error
+      }
+    />
+  );
+};
+
+const StandaloneInput = ({ value, onChange, onBlur, ...props }: ConnectorProps) => (
+  <InputView
+    {...props}
+    value={value ?? ""}
+    onChange={onChange ?? (() => {})}
+    onBlur={onBlur ?? (() => {})}
+  />
+);
+
+type InputViewProps = Omit<
+  ConnectorProps,
+  "control" | "value" | "onChange" | "onBlur"
+> & {
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (event: React.FocusEvent<HTMLInputElement>) => void;
+  viewError?: string;
+  viewRef?: React.Ref<HTMLInputElement>;
+};
+
+const InputView = ({
+  name, label, error: externalError, hint, required, placeholder, type = "text",
+  className, containerClassName, leftElement, rightElement, disabled, readOnly,
+  autoFocus, isSuccess, isFilled, inputRef, value, onChange, onBlur, viewError,
+  viewRef, onKeyDown, onFocus, maxLength, min, max,
+}: InputViewProps) => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const hasValue = isFilled || (fieldValue !== undefined && fieldValue !== "");
+  const hasValue = isFilled || (value !== undefined && value !== "");
+  const fieldError = viewError ?? externalError;
 
   return (
     <div className={cn("flex flex-col gap-[6px] w-full", containerClassName)}>
@@ -85,7 +131,7 @@ export const FormInput = ({ name, label, error: externalError, hint, required, p
           </div>
         )}
         <Input
-          ref={inputRef ?? fieldRef}
+          ref={inputRef ?? viewRef}
           type={inputType}
           placeholder={placeholder}
           disabled={disabled}
@@ -96,14 +142,14 @@ export const FormInput = ({ name, label, error: externalError, hint, required, p
           max={max}
           onFocus={(e) => {
             setIsFocused(true);
-            externalOnFocus?.(e);
+            onFocus?.(e);
           }}
           onBlur={(e) => {
             setIsFocused(false);
-            fieldOnBlur(e);
+            onBlur(e);
           }}
-          value={fieldValue}
-          onChange={fieldOnChange}
+          value={value}
+          onChange={onChange}
           onKeyDown={onKeyDown}
           className={cn(
             "h-[44px] bg-sd-grey-1 border-sd-grey-6 px-[16px] py-[12px] text-body-sm placeholder:text-sd-grey-9 tracking-[-0.28px] focus-visible:ring-0 focus-visible:outline-none transition-all",

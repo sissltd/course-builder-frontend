@@ -5,7 +5,7 @@ import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
 import { LoadingState } from "@/modules/auth/components/LoadingState";
-import { AuthRoute, WebsiteRoute } from "@/lib/routes";
+import { AuthRoute, CreatorRoute, WebsiteRoute } from "@/lib/routes";
 import { AuthInput } from "@/modules/auth/components/AuthInput";
 import { AuthButton } from "@/modules/auth/components/AuthButton";
 import Link from "next/link";
@@ -27,6 +27,10 @@ import {
   GOOGLE_AUTH_PENDING_STORAGE_KEY,
   GOOGLE_CALLBACK_URL_STORAGE_KEY,
 } from "@/modules/auth/utils/storage";
+import {
+  readPendingInvitation,
+  savePendingInvitation,
+} from "@/modules/auth/utils/pendingInvitation";
 
 const isSafeInternalPath = (value: string | null): value is string =>
   Boolean(
@@ -35,6 +39,28 @@ const isSafeInternalPath = (value: string | null): value is string =>
       !value.startsWith("//") &&
       (!value.startsWith("/auth") || value.includes("accept-invitation")),
   );
+
+/**
+ * An invite link that arrives while signed out has to survive the detour
+ * through registration, which drops the query string. Remember it so the
+ * post-signup handoff can resume it.
+ */
+function stashInviteFromCallback(callbackUrl: string | null): void {
+  if (!callbackUrl) return;
+  if (callbackUrl.includes("invite_id") || callbackUrl.includes("accept-invitation")) {
+    try {
+      const parsed = new URL(callbackUrl, "http://localhost");
+      const inviteId =
+        parsed.searchParams.get("invite_id") ??
+        parsed.searchParams.get("token") ??
+        undefined;
+      if (inviteId) savePendingInvitation(inviteId, parsed.searchParams.get("email") ?? undefined);
+    } catch {
+      const inviteId = callbackUrl.match(/[?&](?:invite_id|token)=([^&]+)/i)?.[1];
+      if (inviteId) savePendingInvitation(inviteId);
+    }
+  }
+}
 
 function LoginContent() {
   const router = useRouter();
@@ -48,6 +74,10 @@ function LoginContent() {
   const [login, { isLoading }] = useLoginMutation();
   const googleAuthHandled = useRef(false);
   const routerRef = useRef(router);
+
+  useEffect(() => {
+    stashInviteFromCallback(searchParams.get("callbackUrl"));
+  }, [searchParams]);
 
   useEffect(() => {
     routerRef.current = router;
@@ -149,9 +179,13 @@ function LoginContent() {
         const workspace =
           session.user.workspace ??
           getWorkspaceForRole(session.role ?? session.user.role);
+        const pendingInvite = readPendingInvitation();
+        const inviteTarget = pendingInvite
+          ? `${CreatorRoute.INVITATIONS}?invite_id=${encodeURIComponent(pendingInvite.inviteId)}`
+          : null;
         const target = isSafeInternalPath(storedCallback)
           ? storedCallback
-          : getDashboardRoute(workspace);
+          : inviteTarget ?? getDashboardRoute(workspace);
 
         console.log("[GoogleLogin] useEffect: redirecting to", target);
         routerRef.current.replace(target);
@@ -255,10 +289,15 @@ function LoginContent() {
       const callbackUrl = new URLSearchParams(window.location.search).get(
         "callbackUrl",
       );
+      const pendingInvite = readPendingInvitation();
+      const inviteTarget = pendingInvite
+        ? `${CreatorRoute.INVITATIONS}?invite_id=${encodeURIComponent(pendingInvite.inviteId)}`
+        : null;
+
       router.push(
         isSafeInternalPath(callbackUrl)
           ? callbackUrl
-          : getDashboardRoute(workspace),
+          : inviteTarget ?? getDashboardRoute(workspace),
       );
       router.refresh();
     } catch (error) {

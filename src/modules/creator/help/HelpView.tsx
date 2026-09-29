@@ -4,6 +4,7 @@ import React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SettingsLayout } from "@/components/shared/SettingsLayout";
 import { FullscreenLayout } from "@/components/shared/FullscreenLayout";
+import { CreatorRoute, WebsiteRoute } from "@/lib/routes";
 import { HelpTabNav, type HelpTab } from "./components/HelpTabNav";
 import { NewToSoludeskTab } from "./components/NewToSoludeskTab";
 import {
@@ -46,7 +47,7 @@ export const HelpView = () => {
         params.set(key, value);
       }
     });
-    router.push(`/creator/help?${params.toString()}`);
+    router.push(`${CreatorRoute.HELP}?${params.toString()}`);
   };
 
   const handleTabChange = (newTab: HelpTab) => {
@@ -81,6 +82,12 @@ export const HelpView = () => {
     updateParams({ tab: "new-to-soludesk", category: null, article: null, view: null });
   };
 
+  // There is no in-app ticketing surface yet, so both support actions hand off
+  // to the public contact page rather than dead-ending on an undefined handler.
+  const handleContactSupport = () => {
+    router.push(WebsiteRoute.CONTACT);
+  };
+
   const renderMainContent = () => {
     switch (tab) {
       case "new-to-soludesk":
@@ -90,7 +97,13 @@ export const HelpView = () => {
           <KnowledgeBaseTab onCategorySelect={handleCategorySelect} />
         );
       case "support":
-        return <SupportTab onRequestAppeal={handleRequestAppeal} />;
+        return (
+          <SupportTab
+            onContactSupport={handleContactSupport}
+            onCreateTicket={handleContactSupport}
+            onRequestAppeal={handleRequestAppeal}
+          />
+        );
       default:
         return null;
     }

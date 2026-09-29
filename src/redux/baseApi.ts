@@ -21,6 +21,10 @@ const PUBLIC_ENDPOINTS = [
   "/auth/resend-verification",
   "/auth/forgot-password",
   "/auth/reset-password",
+  // The token in the request body is the credential for confirming an email
+  // change, so this must not carry a bearer token — and it must never trip the
+  // 401 path below, which would sign the caller out mid-confirmation.
+  "/auth/change-email/confirm",
   "/auth/token/refresh",
   "/auth/reviewer/login",
   "/auth/staff/invitations/accept",

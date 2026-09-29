@@ -158,10 +158,15 @@ export default function BuilderView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingLesson, editingQuiz, activeStep]);
 
-  // Auto-close sidebar when entering lesson/quiz/preview editing
-  React.useEffect(() => {
+  // Auto-close sidebar when entering lesson/quiz/preview editing. Adjusted
+  // during render rather than in an effect so the sidebar is already shut on
+  // the frame the editor opens.
+  const editingMode = `${JSON.stringify(editingLesson ?? null)}|${JSON.stringify(editingQuiz ?? null)}|${showingPreview}`;
+  const [lastEditingMode, setLastEditingMode] = React.useState(editingMode);
+  if (lastEditingMode !== editingMode) {
+    setLastEditingMode(editingMode);
     setSidebarOpen(false);
-  }, [editingLesson, editingQuiz, showingPreview]);
+  }
 
   useEffect(() => {
     if (isDirty && courseId) {

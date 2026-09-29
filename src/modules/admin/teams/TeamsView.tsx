@@ -12,7 +12,8 @@ import { TeamActionMenu, TeamRow } from "./components/TeamActionMenu";
 import { TeamMemberDrawer } from "./components/TeamMemberDrawer";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { normalizeApiError } from "@/lib/api/errors";
+import { getErrorStatus, normalizeApiError } from "@/lib/api/errors";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { useAppSelector } from "@/redux";
 import { usePermissions } from "@/modules/auth/hooks/usePermissions";
 import { PERMISSION } from "@/modules/auth/permissions";
@@ -215,13 +216,13 @@ export const TeamsView = () => {
             "Their password does not change until they use the link, which also signs them out everywhere.",
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       setConfirmAction(null);
       const { message } = normalizeApiError(err as never);
 
       if (
         confirmAction === "reactivate" &&
-        err?.status === 400 &&
+        getErrorStatus(err as FetchBaseQueryError) === 400 &&
         (!message || message.toLowerCase().includes("invitation"))
       ) {
         toast.error(

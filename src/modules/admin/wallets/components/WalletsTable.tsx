@@ -43,7 +43,7 @@ export const WalletsTable = () => {
   const wallets = useMemo(() => (data?.data?.results ?? []).flat(), [data]);
   const paginator = data?.data?.paginator;
 
-  const columns: ColumnDef<WalletItem, any>[] = [
+  const columns: ColumnDef<WalletItem>[] = [
     {
       id: "creator",
       header: "Creator",

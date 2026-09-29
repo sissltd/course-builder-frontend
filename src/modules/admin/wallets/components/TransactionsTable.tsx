@@ -71,7 +71,7 @@ export const TransactionsTable = ({ userFilter }: TransactionsTableProps) => {
   const transactions = useMemo(() => (data?.data?.results ?? []).flat(), [data]);
   const paginator = data?.data?.paginator;
 
-  const columns: ColumnDef<TransactionItem, any>[] = [
+  const columns: ColumnDef<TransactionItem>[] = [
     {
       id: "reference",
       header: "Reference",
