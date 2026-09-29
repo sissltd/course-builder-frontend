@@ -274,6 +274,7 @@ export const BaseAPI = createApi({
     "ReviewerSettings",
     "CategoryPicker",
     "GenerationJob",
+    "AchievementBadge",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

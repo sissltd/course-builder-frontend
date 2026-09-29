@@ -4,6 +4,8 @@ import type {
   UsersListParams,
   SuspendUserRequest,
   DeactivateUserRequest,
+  EraseAccountRequest,
+  SuccessEnvelope,
   PaginatedResponse,
 } from "../types";
 
@@ -95,6 +97,43 @@ export const usersApi = BaseAPI.injectEndpoints({
         { type: "AdminUser", id },
       ],
     }),
+
+    /**
+     * Emails a non-staff account a password reset link — the same one Forgot
+     * password sends. Their password does not change until they use it, which
+     * also signs them out everywhere, so nothing here needs invalidating.
+     *
+     * A second request inside the resend cooldown is a 400, and an account of
+     * the other kind (staff) is a 404 — the two families have separate routes.
+     */
+    sendUserPasswordReset: builder.mutation<SuccessEnvelope, string>({
+      query: (id) => ({
+        url: `/users/admin/${id}/send-password-reset/`,
+        method: "POST",
+      }),
+    }),
+
+    /**
+     * Permanently deletes a non-staff account.
+     *
+     * Irreversible, and refused while the wallet still holds a balance or a
+     * payout is in progress (409). The account row survives so courses, payouts,
+     * reviews and audit logs stay intact, re-attributed to an anonymous user.
+     */
+    eraseUser: builder.mutation<
+      SuccessEnvelope,
+      { id: string; body: EraseAccountRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `/users/admin/${id}/erase/`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        "AdminUser",
+        { type: "AdminUser", id },
+      ],
+    }),
   }),
 });
 
@@ -104,4 +143,6 @@ export const {
   useSuspendUserMutation,
   useDeactivateUserMutation,
   useReinstateUserMutation,
+  useSendUserPasswordResetMutation,
+  useEraseUserMutation,
 } = usersApi;

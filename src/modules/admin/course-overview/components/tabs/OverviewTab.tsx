@@ -13,6 +13,7 @@ import {
   ArrowDown2,
   ArrowRight2,
   VideoPlay,
+  Lock,
 } from "iconsax-react";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -120,11 +121,12 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
 
   const totalAssessments = React.useMemo(() => {
     if (!course?.modules) return 0;
-    const quizCount = course.modules.reduce(
-      (acc, m) => acc + (m.lessons?.filter((l) => l.type === "quiz" || l.type === "assessment")?.length ?? 0),
-      0
-    );
-    return quizCount + (course.final_assessment ? 1 : 0);
+    return course.modules.reduce((acc, m) => {
+      const quizLessons = (m.lessons ?? []).filter((l) => l.lesson_type === "QUIZ").length;
+      const lessonAssessments = (m.lessons ?? []).filter((l) => Boolean(l.assessment)).length;
+      const moduleAssessment = m.assessment ? 1 : 0;
+      return acc + quizLessons + lessonAssessments + moduleAssessment;
+    }, 0) + (course.final_assessment ? 1 : 0);
   }, [course]);
 
   const dynamicStatCards = [
@@ -174,12 +176,39 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
   const hasVideo = Boolean(course?.preview_video_url);
   const hasThumbnail = Boolean(course?.thumbnail_url);
 
+  const lockedModules = (course?.modules ?? []).filter(
+    (module) => module.is_locked || module.collaboration_locked
+  );
+
   return (
     <div ref={containerRef} className="relative flex flex-col gap-[20px]">
       {/* Course Title */}
       <h1 className="text-[20px] font-bold leading-[28px] text-sd-grey-12">
         {course?.title || "No course title provided"}
       </h1>
+
+      {lockedModules.length > 0 && (
+        <div className="flex items-start gap-[10px] rounded-[8px] border border-sd-warning-bg bg-sd-warning-bg p-[12px]">
+          <Lock size={18} variant="Linear" color="#592D18" className="mt-[1px] shrink-0" />
+          <div className="flex flex-col gap-[4px]">
+            <span className="text-[13px] font-semibold leading-[18px] text-[#592D18]">
+              {lockedModules.length === 1
+                ? "1 module is locked"
+                : `${lockedModules.length} modules are locked`}
+            </span>
+            <span className="text-[12px] leading-[16px] text-[#592D18]">
+              {lockedModules
+                .map(
+                  (module) =>
+                    `${module.title || "Untitled module"}${
+                      module.locked_by ? ` (${module.locked_by})` : ""
+                    }${module.lock_expires_at ? ` until ${new Date(module.lock_expires_at).toLocaleString()}` : ""}`
+                )
+                .join(" · ")}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px]">
@@ -320,6 +349,11 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
             {course.modules.map((module: AdminCourseModule, index: number) => {
               const isOpen = Boolean(openModules[index]);
               const moduleLessons = module.lessons ?? [];
+              const moduleAssessments = [
+                ...moduleLessons.filter((l) => l.lesson_type === "QUIZ"),
+                ...moduleLessons.filter((l) => Boolean(l.assessment)),
+                ...(module.assessment ? [module.assessment] : []),
+              ];
 
               return (
                 <div key={module.id || index} className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 overflow-hidden">
@@ -347,8 +381,8 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
                         <span className="flex items-center gap-[4px]">
                           <Task size={14} variant="Linear" color="currentColor" />
                           <span>
-                            {moduleLessons.filter((l) => l.type === "quiz" || l.type === "assessment").length > 0
-                              ? `${moduleLessons.filter((l) => l.type === "quiz" || l.type === "assessment").length} Assessments`
+                            {moduleAssessments.length > 0
+                              ? `${moduleAssessments.length} Assessments`
                               : "No assessments"}
                           </span>
                         </span>
@@ -371,13 +405,13 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
                       {moduleLessons.length > 0 ? (
                         moduleLessons.map((lesson, lIdx) => {
                           const Icon =
-                            lesson.type === "video"
+                            lesson.lesson_type === "VIDEO"
                               ? VideoPlay
-                              : lesson.type === "quiz" || lesson.type === "assessment"
+                              : lesson.lesson_type === "QUIZ"
                               ? Task
                               : BookOpen;
-                          const dur = lesson.duration_seconds
-                            ? `${Math.floor(lesson.duration_seconds / 60)}m`
+                          const dur = lesson.duration_minutes
+                            ? `${lesson.duration_minutes}m`
                             : "No duration";
 
                           return (
@@ -394,7 +428,7 @@ export const OverviewTab = ({ course, onAddComment }: OverviewTabProps) => {
                                   <div className="flex items-center gap-[8px] text-[12px] leading-[16px] text-sd-reviewer-muted">
                                     <span>{dur}</span>
                                     <span>•</span>
-                                    <span className="capitalize">{lesson.type || "Lesson"}</span>
+                                    <span className="capitalize">{lesson.lesson_type?.toLowerCase() || "Lesson"}</span>
                                   </div>
                                 </div>
                               </div>

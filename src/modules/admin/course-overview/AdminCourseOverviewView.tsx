@@ -20,7 +20,6 @@ import { InfoRow } from "./components/SharedUI";
 import {
   useGetAdminCourseDetailQuery,
   useClaimAdminCourseMutation,
-  useApproveAdminCourseMutation,
   useGetAdminCourseCommentsQuery,
   useAddAdminCourseCommentMutation,
   useContentApproveAdminCourseMutation,
@@ -50,6 +49,27 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
   const [activeTab, setActiveTab] = React.useState<TabKey>("overview");
   const [generalComment, setGeneralComment] = React.useState("");
   const [rejectModalOpen, setRejectModalOpen] = React.useState(false);
+  const [selectedScriptModuleIndex, setSelectedScriptModuleIndex] = React.useState(0);
+  const [selectedScriptLessonIndex, setSelectedScriptLessonIndex] = React.useState(0);
+  const tabContentRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToTabContent = () => {
+    window.requestAnimationFrame(() => {
+      tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const handleSelectScriptModule = (moduleIndex: number) => {
+    setSelectedScriptModuleIndex(moduleIndex);
+    setSelectedScriptLessonIndex(0);
+    scrollToTabContent();
+  };
+
+  const handleSelectScriptLesson = (moduleIndex: number, lessonIndex: number) => {
+    setSelectedScriptModuleIndex(moduleIndex);
+    setSelectedScriptLessonIndex(lessonIndex);
+    scrollToTabContent();
+  };
 
   // Endpoint 2: Retrieve full course details
   const { data: course, isLoading, error } = useGetAdminCourseDetailQuery(courseId);
@@ -152,27 +172,31 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
     }
   };
 
+  const submitGeneralComment = async () => {
+    const text = generalComment.trim();
+    if (!text || isAddingComment) return;
+    try {
+      await addCommentMutation({
+        courseId,
+        body: {
+          stage: course?.status === "QA_VERIFICATION" ? "QA" : "CONTENT",
+          severity: "INFO",
+          reason_code: "REVIEW_NOTE",
+          comment: text,
+        },
+      }).unwrap();
+      setGeneralComment("");
+      toast.success("Review note added");
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not add comment");
+    }
+  };
+
   const handleGeneralKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      const text = generalComment.trim();
-      if (!text) return;
-      try {
-        await addCommentMutation({
-          courseId,
-          body: {
-            stage: course?.status === "QA_VERIFICATION" ? "QA" : "CONTENT",
-            severity: "INFO",
-            reason_code: "REVIEW_NOTE",
-            comment: text,
-          },
-        }).unwrap();
-        setGeneralComment("");
-        toast.success("Review note added");
-      } catch (err) {
-        const { message } = normalizeApiError(err as never);
-        toast.error(message ?? "Could not add comment");
-      }
+      await submitGeneralComment();
     }
   };
 
@@ -191,11 +215,12 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
     if (source === "CREATOR_UPLOADED" || source === "CREATOR") return "Creator Uploaded";
     if (source === "AI_GENERATED" || source === "AI") return "AI Generated";
     if (source === "DEVELOPER_API") return "Developer API";
+    if (source === "DOCUMENT_IMPORTED") return "Document Imported";
     return source;
   };
 
   const creatorDetails = [
-    { label: "Source", value: formatSource(course?.source) },
+    { label: "Source", value: formatSource(course?.source_type) },
     {
       label: "Date created",
       value: course?.created_datetime ? format(new Date(course.created_datetime), "dd MMM yyyy") : "No creation date",
@@ -241,7 +266,13 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
   const renderTabContent = () => {
     switch (activeTab) {
       case "script":
-        return <ScriptTab course={course} />;
+        return (
+          <ScriptTab
+            course={course}
+            selectedModuleIndex={selectedScriptModuleIndex}
+            selectedLessonIndex={selectedScriptLessonIndex}
+          />
+        );
       case "quizzes":
         return <QuizzesTab course={course} />;
       case "media":
@@ -292,7 +323,13 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
       <div className="grid min-h-[calc(100vh-59px)] grid-cols-1 md:grid-cols-[237px_minmax(0,1fr)_326px] flex-1">
         <aside className="border-b border-sd-grey-3 bg-sd-grey-1 px-[18px] py-[16px] md:border-b-0 md:border-r">
           {activeTab === 'script' ? (
-            <ScriptModuleRail course={course} />
+            <ScriptModuleRail
+              course={course}
+              selectedModuleIndex={selectedScriptModuleIndex}
+              selectedLessonIndex={selectedScriptLessonIndex}
+              onSelectModule={handleSelectScriptModule}
+              onSelectLesson={handleSelectScriptLesson}
+            />
           ) : activeTab === 'quizzes' ? (
             <QuizModuleRail course={course} />
           ) : activeTab === 'media' ? (
@@ -348,6 +385,7 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
           </div>
 
           <div
+            ref={tabContentRef}
             className={cn(
               "flex-1",
               activeTab === "script"
@@ -388,6 +426,17 @@ export const AdminCourseOverviewView = ({ courseId }: AdminCourseOverviewViewPro
                 className="min-h-[96px] w-full resize-none rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 px-[12px] py-[10px] text-[14px] leading-[20px] text-sd-grey-12 outline-none placeholder:text-sd-muted-text disabled:opacity-50"
                 placeholder={isAddingComment ? "Adding comment..." : "Add comment on this course (Press Enter to add)"}
               />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!generalComment.trim()}
+                  isLoading={isAddingComment}
+                  onClick={submitGeneralComment}
+                >
+                  Send
+                </Button>
+              </div>
             </section>
 
             <div className="flex flex-col gap-[12px] max-h-[350px] overflow-y-auto pr-1">

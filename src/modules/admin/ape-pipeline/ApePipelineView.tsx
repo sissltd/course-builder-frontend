@@ -3,14 +3,29 @@
 import React from "react";
 import { Timer1, Data, TickCircle, CloseCircle, Refresh2 } from "iconsax-react";
 import { AdminStatCard } from "@/modules/admin/dashboard/components/AdminStatCard";
+import { Button as AppButton } from "@/components/shared/Button";
 import { PipelineProgressBar } from "./components/PipelineProgressBar";
 import { useGetAdminPipelineQuery } from "@/redux/slices/adminApi";
+import { toast } from "sonner";
 
 export const ApePipelineView = () => {
-  const { data, isLoading, isError, refetch } = useGetAdminPipelineQuery();
+  const { data, isLoading, isFetching, refetch } = useGetAdminPipelineQuery();
 
   const stages = data?.stages || [];
   const providers = data?.providers || [];
+
+  const handleRefresh = async () => {
+    try {
+      const refreshed = await refetch().unwrap();
+      if (refreshed.active_jobs === 0) {
+        toast.info("Pipeline refreshed. There are no active jobs.");
+        return;
+      }
+      toast.success("Pipeline status updated");
+    } catch {
+      toast.error("Could not refresh the pipeline");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -23,13 +38,23 @@ export const ApePipelineView = () => {
             Monitor automated course generation jobs, stage progress, and external AI providers.
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          className="flex items-center gap-[6px] px-[12px] py-[6px] text-[13px] text-[#0A60E1] bg-[#EBF3FF] hover:bg-[#D9E9FF] rounded-[6px] cursor-pointer transition-colors"
+        <AppButton
+          type="button"
+          variant="ghost"
+          size="default"
+          onClick={handleRefresh}
+          disabled={isFetching}
+          aria-busy={isFetching}
+          className="flex items-center gap-[6px] px-[12px] py-[6px] text-[13px] text-[#0A60E1] bg-[#EBF3FF] hover:bg-[#D9E9FF] rounded-[6px] cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Refresh2 size={16} />
-          <span>Refresh Pipeline</span>
-        </button>
+          <Refresh2
+            size={16}
+            variant="Linear"
+            color="currentColor"
+            className={isFetching ? "animate-spin" : undefined}
+          />
+          <span>{isFetching ? "Refreshing..." : "Refresh Pipeline"}</span>
+        </AppButton>
       </div>
 
       <div className="flex gap-[16px] flex-wrap">

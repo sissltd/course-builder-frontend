@@ -14,9 +14,38 @@ export const MediaTab = ({ course }: MediaTabProps) => {
   const videoLessons = React.useMemo(() => {
     if (!course?.modules) return [];
     return course.modules.flatMap(
-      (m) => (m.lessons ?? []).filter((l) => l.type === "video")
+      (m) => (m.lessons ?? []).filter((l) => l.lesson_type === "VIDEO")
     );
   }, [course]);
+
+  const mediaAssets = course?.media_assets ?? [];
+
+  const previewAsset = React.useMemo(
+    () => mediaAssets.find((asset) => asset.kind === "PREVIEW_VIDEO") ?? null,
+    [mediaAssets]
+  );
+
+  const subtitleAsset = React.useMemo(
+    () =>
+      mediaAssets.find((asset) => asset.kind === "SUBTITLE" || Boolean(asset.subtitle_url)) ?? null,
+    [mediaAssets]
+  );
+
+  const videoAsset =
+    previewAsset ?? mediaAssets.find((asset) => asset.kind === "VIDEO") ?? null;
+
+  const resolution = videoAsset?.resolution || "Not specified";
+  const audioLufs = videoAsset?.audio_lufs;
+  const audioQuality = audioLufs
+    ? `${audioLufs} LUFS`
+    : videoAsset?.audio_video_drift_ms != null
+    ? `Drift ${videoAsset.audio_video_drift_ms}ms`
+    : "Not specified";
+  const captionsValue = subtitleAsset
+    ? subtitleAsset.caption_accuracy_percent
+      ? `Uploaded (${subtitleAsset.caption_accuracy_percent}% accuracy)`
+      : "Uploaded"
+    : "No captions uploaded";
 
   const hasVideo = Boolean(course?.preview_video_url);
   const hasThumbnail = Boolean(course?.thumbnail_url);
@@ -108,11 +137,11 @@ export const MediaTab = ({ course }: MediaTabProps) => {
           </span>
           <span className="flex items-center gap-[6px]">
             <Monitor size={16} variant="Linear" color="var(--sd-reviewer-muted)" />
-            <span>Resolution: <span className="font-normal text-sd-reviewer-muted ml-[2px]">{hasVideo ? "1080p (Standard)" : "No video"}</span></span>
+            <span>Resolution: <span className="font-normal text-sd-reviewer-muted ml-[2px]">{hasVideo ? resolution : "No video"}</span></span>
           </span>
           <span className="flex items-center gap-[6px]">
             <VolumeHigh size={16} variant="Linear" color="var(--sd-reviewer-muted)" />
-            <span>Audio Quality: <span className="font-normal text-sd-reviewer-muted ml-[2px]">{hasVideo ? "Standard" : "No audio"}</span></span>
+            <span>Audio Quality: <span className="font-normal text-sd-reviewer-muted ml-[2px]">{hasVideo ? audioQuality : "No audio"}</span></span>
           </span>
         </div>
       </div>
@@ -136,8 +165,8 @@ export const MediaTab = ({ course }: MediaTabProps) => {
                   </span>
                 </div>
                 <span className="text-[12px] text-sd-reviewer-muted">
-                  {lesson.duration_seconds
-                    ? `${Math.floor(lesson.duration_seconds / 60)} mins`
+                  {lesson.duration_minutes
+                    ? `${lesson.duration_minutes} mins`
                     : "No duration specified"}
                 </span>
               </div>
@@ -146,6 +175,45 @@ export const MediaTab = ({ course }: MediaTabProps) => {
         ) : (
           <p className="mt-[10px] text-[14px] leading-[22px] text-sd-reviewer-muted italic">
             No video lessons included in course modules.
+          </p>
+        )}
+      </div>
+
+      {/* Media Assets */}
+      <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-[18px]">
+        <h2 className="text-[16px] font-semibold leading-[24px] text-sd-grey-12">
+          Media Assets ({mediaAssets.length})
+        </h2>
+        {mediaAssets.length > 0 ? (
+          <div className="mt-[12px] flex flex-col gap-[8px]">
+            {mediaAssets.map((asset, idx) => (
+              <div
+                key={asset.id || idx}
+                className="flex items-center justify-between gap-[16px] rounded-[8px] border border-sd-grey-3 bg-sd-grey-2/60 p-[12px]"
+              >
+                <div className="flex min-w-0 flex-col gap-[4px]">
+                  <span className="truncate text-[14px] font-medium text-sd-grey-12">
+                    {asset.kind}
+                  </span>
+                  <span className="truncate text-[12px] text-sd-reviewer-muted">
+                    {[asset.mime_type, asset.resolution, asset.duration_seconds != null ? `${asset.duration_seconds}s` : null]
+                      .filter(Boolean)
+                      .join(" · ") || "No properties reported"}
+                  </span>
+                </div>
+                <span
+                  className={`shrink-0 rounded-[4px] px-[8px] py-[2px] text-[10px] font-semibold uppercase ${
+                    asset.verified_at ? "bg-[#EAFBF3] text-[#16A34A]" : "bg-sd-grey-3 text-sd-grey-11"
+                  }`}
+                >
+                  {asset.verified_at ? "Verified" : "Unverified"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-[10px] text-[14px] leading-[22px] text-sd-reviewer-muted italic">
+            No media assets have been recorded for this course.
           </p>
         )}
       </div>
@@ -162,7 +230,7 @@ export const MediaTab = ({ course }: MediaTabProps) => {
             { label: "Video Lessons", value: videoLessons.length > 0 ? `${videoLessons.length} lessons` : "No video lessons", status: videoLessons.length > 0 ? "Pass" : "Missing" },
             { label: "Duration", value: durationStr, status: course?.planned_duration_seconds ? "Pass" : "Missing" },
             { label: "Course Status", value: course?.status || "No status", status: "Pass" },
-            { label: "SRT Captions", value: "No captions uploaded", status: "Missing" },
+            { label: "SRT Captions", value: captionsValue, status: subtitleAsset ? "Pass" : "Missing" },
           ].map((prop) => (
             <div key={prop.label} className="flex items-center justify-between rounded-[8px] border border-sd-grey-3 bg-sd-grey-1 p-[12px]">
               <div className="flex flex-col gap-[4px]">

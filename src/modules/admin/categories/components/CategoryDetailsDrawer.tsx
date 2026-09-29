@@ -180,13 +180,16 @@ export const CategoryDetailsDrawer = ({
           <span className="text-[14px] font-normal text-sd-grey-12 tracking-[-0.28px] leading-[20px]">
             Category icon
           </span>
-          {/* Read-only; icons are chosen through the footer's Edit category button. */}
-          <div
-            className="flex size-[48px] items-center justify-center rounded-[12px] border border-sd-grey-6 bg-white text-sd-grey-10"
-            aria-label={`${category.name} icon`}
+          <AppButton
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onEdit}
+            className="size-[48px] rounded-[12px] border-sd-grey-6 bg-white text-sd-grey-10 hover:bg-sd-grey-2"
+            aria-label={`Edit ${category.name} icon`}
           >
             <CategoryIcon name={category.icon} size={18} strokeWidth={1.7} />
-          </div>
+          </AppButton>
         </div>
       </div>
     </SideDrawer>
