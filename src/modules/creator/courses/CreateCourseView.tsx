@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,6 +34,13 @@ import { TopicStatus } from "@/modules/topics/types";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
 import { toast } from "sonner";
+import {
+  buildMethodEntryHref,
+  clampCreateCourseStep,
+  CREATE_COURSE_STEP_PARAM,
+  createCourseStepHref,
+  parseCreateCourseStep,
+} from "./utils/createCourseNavigation";
 
 const RightArrowIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -71,21 +78,31 @@ const VIDEOS = [
   { id: 3, title: "How to import a course", desc: "This video will guide you on how to create your course from an existing document.", duration: "30min", thumb: "/assets/courses/video-thumb-3.png", isCompleted: false },
 ];
 
+// A guide counts as watched once this much of it has played through.
+const VIDEO_COMPLETION_THRESHOLD = 90;
+
 export default function CreateCourseView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoryPickerQuery();
   // The picker returns archived categories too; only live ones may be chosen.
   const categories = selectActivePickerOptions(categoriesResponse);
-  const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
+  // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
+  const step = parseCreateCourseStep(
+    searchParams.get(CREATE_COURSE_STEP_PARAM),
+  );
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
 
+  const [selectedVideoId, setSelectedVideoId] = useState<number | null>(1);
   const [activeVideo, setActiveVideo] = useState<typeof VIDEOS[0] | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  // Bumped on every play so the player remounts with a clean timeline.
+  const [playbackKey, setPlaybackKey] = useState(0);
   const [completedVideos, setCompletedVideos] = useState<number[]>([1]); // Video 1 is completed by default in design
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -125,8 +142,19 @@ export default function CreateCourseView() {
   );
   const topics = topicsResponse?.data?.results || [];
 
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => Math.max(0, s - 1));
+  // Every wizard step lives in the URL, so each one is deep-linkable,
+  // survives a refresh and works with browser Back/Forward.
+  const goToStep = useCallback(
+    (next: number) => {
+      router.push(createCourseStepHref(clampCreateCourseStep(next)));
+    },
+    [router],
+  );
+
+  const nextStep = () => goToStep(step + 1);
+  const prevStep = () => goToStep(step - 1);
+  // The first step has nowhere to go inside the wizard — exit to the list.
+  const handleExitWizard = () => router.push(CreatorRoute.COURSES);
 
   const filteredCategories = (categories ?? []).filter(c =>
     c.name.toLowerCase().includes(searchCategory.toLowerCase())
@@ -136,11 +164,27 @@ export default function CreateCourseView() {
     t.name.toLowerCase().includes(searchTopic.toLowerCase())
   );
 
-  const handleVideoClick = (video: typeof VIDEOS[0]) => {
+  const markVideoCompleted = (videoId: number) => {
+    setCompletedVideos((current) =>
+      current.includes(videoId) ? current : [...current, videoId],
+    );
+  };
+
+  // Selecting a card never opens the player — the explicit play control does.
+  const handleVideoSelect = (video: typeof VIDEOS[0]) => {
+    setSelectedVideoId(video.id);
+  };
+
+  const handleVideoPlay = (video: typeof VIDEOS[0]) => {
+    setSelectedVideoId(video.id);
     setActiveVideo(video);
+    setPlaybackKey((key) => key + 1);
     setIsPlayerOpen(true);
-    if (!completedVideos.includes(video.id)) {
-        setCompletedVideos([...completedVideos, video.id]);
+  };
+
+  const handleVideoProgress = (videoId: number, percent: number) => {
+    if (percent >= VIDEO_COMPLETION_THRESHOLD) {
+      markVideoCompleted(videoId);
     }
   };
 
@@ -155,9 +199,9 @@ export default function CreateCourseView() {
     const isValid = await trigger(["creationMethod"]);
     if (isValid) {
       if (method === "ai") {
-        router.push(CreatorRoute.COURSES_AI_CREATE);
+        router.push(buildMethodEntryHref(CreatorRoute.COURSES_AI_CREATE));
       } else if (method === "import") {
-        router.push(CreatorRoute.COURSES_IMPORT);
+        router.push(buildMethodEntryHref(CreatorRoute.COURSES_IMPORT));
       } else {
         nextStep();
       }
@@ -219,18 +263,43 @@ export default function CreateCourseView() {
         <div className="flex flex-col gap-[20px]">
           {VIDEOS.map((video) => {
             const isDone = completedVideos.includes(video.id);
+            const isSelected = selectedVideoId === video.id;
             return (
-              <div 
-                key={video.id} 
-                onClick={() => handleVideoClick(video)}
-                className="rounded-[16px] border border-[#d9d9d9] bg-[#f8f8f8] flex items-stretch overflow-hidden hover:border-sd-blue transition-all cursor-pointer group min-h-[120px]"
+              <div
+                key={video.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                onClick={() => handleVideoSelect(video)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleVideoSelect(video);
+                  }
+                }}
+                data-selected={isSelected ? "true" : "false"}
+                className={cn(
+                  "rounded-[16px] border bg-[#f8f8f8] flex items-stretch overflow-hidden transition-all cursor-pointer group min-h-[120px] outline-none",
+                  isSelected
+                    ? "border-sd-blue ring-1 ring-sd-blue"
+                    : "border-[#d9d9d9] hover:border-sd-blue/50"
+                )}
               >
                 <div className="w-[150px] relative shrink-0">
                   <Image src={video.thumb} alt={video.title} fill className="object-cover" />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                    <div className="size-[32px] rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white">
+                    <button
+                      type="button"
+                      aria-label={`Play ${video.title}`}
+                      data-testid={`video-play-${video.id}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleVideoPlay(video);
+                      }}
+                      className="size-[32px] rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                    >
                         <Play size={16} variant="Bold" color="currentColor"/>
-                    </div>
+                    </button>
                   </div>
                 </div>
                 <div className="flex-1 flex flex-col p-[12px] gap-[8px]">
@@ -255,24 +324,32 @@ export default function CreateCourseView() {
           })}
         </div>
 
-        <div className="flex items-center gap-[16px]">
-          <Button 
-            type="button"
-            variant="app-outline" 
-            className="flex-1 h-[44px] text-sd-blue border-sd-blue"
-            onClick={() => router.back()}
-          >
-            Back
-          </Button>
-          <Button 
-            type="button"
-            variant="app-primary" 
-            className={cn("flex-1 h-[44px]", !isAllVideosCompleted && "bg-[#CECECE] border-[#CECECE] text-[#636363] hover:bg-[#CECECE] cursor-not-allowed")}
-            disabled={!isAllVideosCompleted}
-            onClick={nextStep}
-          >
-            Continue
-          </Button>
+        <div className="flex flex-col gap-[12px]">
+          <p className="text-[14px] leading-[20px] text-[#636363]">
+            {isAllVideosCompleted
+              ? "All guide videos are completed. You can continue."
+              : `Watch all ${VIDEOS.length} guide videos to continue — ${completedVideos.length} of ${VIDEOS.length} completed.`}
+          </p>
+
+          <div className="flex items-center gap-[16px]">
+            <Button 
+              type="button"
+              variant="app-outline" 
+              className="flex-1 h-[44px] text-sd-blue border-sd-blue"
+              onClick={handleExitWizard}
+            >
+              Back
+            </Button>
+            <Button 
+              type="button"
+              variant="app-primary" 
+              className={cn("flex-1 h-[44px]", !isAllVideosCompleted && "bg-[#CECECE] border-[#CECECE] text-[#636363] hover:bg-[#CECECE] cursor-not-allowed")}
+              disabled={!isAllVideosCompleted}
+              onClick={nextStep}
+            >
+              Continue
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -693,11 +770,18 @@ export default function CreateCourseView() {
         {step === 6 && renderStep6()}
 
         {activeVideo && (
-          <VideoPlayerModal 
+          <VideoPlayerModal
+            key={`${activeVideo.id}-${playbackKey}`}
             isOpen={isPlayerOpen}
             onOpenChange={setIsPlayerOpen}
             title={activeVideo.title}
             thumbnail={activeVideo.thumb}
+            onEnded={() => markVideoCompleted(activeVideo.id)}
+            onComplete={() => markVideoCompleted(activeVideo.id)}
+            isCompleted={completedVideos.includes(activeVideo.id)}
+            onProgress={(percent) =>
+              handleVideoProgress(activeVideo.id, percent)
+            }
           />
         )}
 

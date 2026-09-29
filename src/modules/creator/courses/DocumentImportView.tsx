@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +37,11 @@ import {
 } from "./types/documentImport";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
+import {
+  CREATE_COURSE_STEP_PARAM,
+  resolveReturnHref,
+  RETURN_FROM_PARAM,
+} from "./utils/createCourseNavigation";
 import { cn } from "@/lib/utils";
 import { LessonContentType } from "./types/lesson";
 
@@ -54,6 +59,20 @@ type ImportStep = "form" | "file" | "parsing" | "review" | "creating" | "done";
 
 export default function DocumentImportView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // The create-course wizard hands over an explicit in-app return target so
+  // Back lands on the method selection step instead of remounting step 0.
+  const returnHref = resolveReturnHref({
+    from: searchParams.get(RETURN_FROM_PARAM),
+    step: searchParams.get(CREATE_COURSE_STEP_PARAM),
+  });
+  const handleWizardBack = useCallback(() => {
+    if (returnHref) {
+      router.push(returnHref);
+      return;
+    }
+    router.back();
+  }, [router, returnHref]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<ImportStep>("form");
@@ -351,7 +370,7 @@ export default function DocumentImportView() {
               type="button"
               variant="app-outline"
               className="flex-1 h-[44px] text-sd-blue border-sd-blue"
-              onClick={() => router.back()}
+              onClick={handleWizardBack}
             >
               Back
             </Button>
