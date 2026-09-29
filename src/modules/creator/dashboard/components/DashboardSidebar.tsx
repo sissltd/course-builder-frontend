@@ -6,10 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
-import { signOut, useSession } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { 
   Home2, 
   Book, 
@@ -52,7 +50,6 @@ interface DashboardSidebarProps {
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
   const { data: kycSubmission } = useGetMyKycQuery();
@@ -74,10 +71,9 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
       user?.email ?? "user",
     )}`;
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   return (

@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import { Eye, EyeSlash } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { ChangeEmailFlow } from "./ChangeEmailFlow";
 import { useSession } from "next-auth/react";
 import { useChangePasswordMutation } from "@/modules/auth/api/accountApi";
+import { useLogoutAllMutation } from "@/modules/auth/api/sessionApi";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { normalizeApiError } from "@/lib/api/errors";
 import { toast } from "sonner";
 
@@ -58,12 +61,34 @@ export const LoginSecurityTab = () => {
   const { data: session } = useSession();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
+  const [isLogoutAllOpen, setIsLogoutAllOpen] = useState(false);
+  const [logoutAll, { isLoading: isLoggingOutAll }] = useLogoutAllMutation();
+  const logout = useLogout();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const email = session?.user?.email ?? "";
+
+  /**
+   * Blacklists every outstanding refresh token, ending the session on every
+   * device — the response to a suspected compromise. Access tokens already
+   * issued keep working until they expire, so this device is signed out
+   * explicitly rather than relying on the blacklist.
+   */
+  const handleLogoutAll = async () => {
+    try {
+      await logoutAll().unwrap();
+      setIsLogoutAllOpen(false);
+      toast.success("Signed out of all devices.");
+    } catch (error) {
+      const { message } = normalizeApiError(error as never);
+      toast.error(message ?? "Could not sign out of all devices.");
+      return;
+    }
+    await logout();
+  };
 
   const handleSavePassword = async () => {
     if (!currentPassword) {
@@ -168,10 +193,47 @@ export const LoginSecurityTab = () => {
         </div>
       </div>
 
+      <div className="h-px bg-[#F0F0F0]" />
+
+      {/* Sessions Section */}
+      <div className="flex flex-col gap-[16px]">
+        <p className="text-[16px] font-semibold text-[#202020] tracking-[-0.32px]">
+          Sessions
+        </p>
+        <div className="flex flex-col gap-[8px]">
+          <p className="text-[14px] text-[#636363] leading-[20px]">
+            Sign out everywhere if you think your account has been compromised.
+          </p>
+          <p className="text-[14px] text-[#636363] leading-[20px]">
+            This ends your session on every device, including this one.
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            variant="app-outline"
+            className="h-[44px] px-[24px] text-[14px]"
+            onClick={() => setIsLogoutAllOpen(true)}
+          >
+            Log out of all devices
+          </Button>
+        </div>
+      </div>
+
       <ChangeEmailFlow
         isOpen={isChangeEmailOpen}
         onOpenChange={setIsChangeEmailOpen}
         onSuccess={() => {}}
+      />
+
+      <ConfirmModal
+        isOpen={isLogoutAllOpen}
+        onOpenChange={setIsLogoutAllOpen}
+        variant="danger"
+        title="Log out of all devices?"
+        description="Every session on every device will be ended. You will need to log in again here."
+        confirmLabel="Log out everywhere"
+        isLoading={isLoggingOutAll}
+        onConfirm={handleLogoutAll}
       />
     </div>
   );

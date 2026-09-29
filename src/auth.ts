@@ -8,10 +8,13 @@ import type {
   UserRole,
   UserStatus,
 } from "@/modules/auth/types/auth";
-import { decodeJwtPayload, getAccessTokenExpiresAt } from "@/modules/auth/utils/token";
+import {
+  decodeJwtPayload,
+  getAccessTokenExpiresAt,
+  shouldRefreshAccessToken,
+} from "@/modules/auth/utils/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
 async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
   console.log("[GoogleAuth] exchangeGoogleToken: calling POST /auth/login/google/", {
@@ -283,10 +286,11 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      if (
-        token.accessTokenExpiresAt &&
-        Date.now() < token.accessTokenExpiresAt - REFRESH_BEFORE_EXPIRY_MS
-      ) {
+      // Inside the refresh window (5 min before a 25 min expiry) the access
+      // token is rotated. This callback only runs when the session is read, so
+      // `SESSION_REFRESH_INTERVAL_MS` in AuthProvider is what actually paces
+      // this — it polls well inside the window so the swap always beats expiry.
+      if (!shouldRefreshAccessToken(token.accessTokenExpiresAt)) {
         return token;
       }
 

@@ -29,10 +29,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { CreatorRoute, WebsiteRoute } from "@/lib/routes";
-import { signOut, useSession } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { useGetNotificationsQuery } from "@/redux/slices/notificationApi";
 
 interface DashboardHeaderProps {
@@ -51,7 +49,6 @@ function formatDateTime(date: Date): string {
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [now, setNow] = useState(() => new Date());
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -70,10 +67,9 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
       user?.email ?? "user",
     )}`;
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   const { data: notificationsResponse } = useGetNotificationsQuery({ size: 5 });

@@ -3,11 +3,14 @@
 import React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/shared/Button";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { FormInput } from "@/components/form/FormInput";
 import { useForm, FormProvider } from "react-hook-form";
 import { normalizeApiError } from "@/lib/api/errors";
 import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
 import { useChangePasswordMutation, useChangeEmailMutation } from "@/modules/auth/api/accountApi";
+import { useLogoutAllMutation } from "@/modules/auth/api/sessionApi";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 
 interface EmailFormValues {
   new_email: string;
@@ -25,6 +28,26 @@ export const LoginSecurityTab = () => {
   const [changeEmail, { isLoading: isChangingEmail }] = useChangeEmailMutation();
   const [changePassword, { isLoading: isChangingPassword }] =
     useChangePasswordMutation();
+  const [logoutAll, { isLoading: isLoggingOutAll }] = useLogoutAllMutation();
+  const [isLogoutAllOpen, setIsLogoutAllOpen] = React.useState(false);
+  const logout = useLogout();
+
+  /**
+   * Blacklists every outstanding refresh token, ending the session on every
+   * device. Access tokens already issued keep working until they expire, so
+   * this device is signed out explicitly rather than relying on the blacklist.
+   */
+  const handleLogoutAll = async () => {
+    try {
+      await logoutAll().unwrap();
+      setIsLogoutAllOpen(false);
+    } catch (err) {
+      const { message } = normalizeApiError(err as never);
+      toast.error(message ?? "Could not sign out of all devices.");
+      return;
+    }
+    await logout();
+  };
 
   const emailMethods = useForm<EmailFormValues>({
     defaultValues: { new_email: "", password: "" },
@@ -169,6 +192,41 @@ export const LoginSecurityTab = () => {
           </div>
         </form>
       </FormProvider>
+
+      <div className="h-px bg-sd-grey-4" />
+
+      <div className="flex flex-col gap-[24px]">
+        <div className="flex flex-col gap-[8px]">
+          <h3 className="text-[16px] font-normal leading-[24px] tracking-[-0.32px] text-sd-grey-12">
+            Sessions
+          </h3>
+          <p className="text-[14px] font-normal leading-[24px] tracking-[-0.28px] text-sd-grey-11">
+            Sign out everywhere if you think your account has been compromised.
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isLoggingOutAll}
+            className="h-[40px] rounded-[8px] border-[#0056D2] px-[20px] text-[14px] font-medium text-[#0056D2] hover:bg-[#0056D2]/5 disabled:opacity-50"
+            onClick={() => setIsLogoutAllOpen(true)}
+          >
+            {isLoggingOutAll ? "Signing out..." : "Log out of all devices"}
+          </Button>
+        </div>
+      </div>
+
+      <ConfirmModal
+        isOpen={isLogoutAllOpen}
+        onOpenChange={setIsLogoutAllOpen}
+        variant="danger"
+        title="Log out of all devices?"
+        description="Every session on every device will be ended. You will need to log in again here."
+        confirmLabel="Log out everywhere"
+        isLoading={isLoggingOutAll}
+        onConfirm={handleLogoutAll}
+      />
     </div>
   );
 };
