@@ -4,6 +4,8 @@ export {
   useSuspendUserMutation,
   useDeactivateUserMutation,
   useReinstateUserMutation,
+  useSendUserPasswordResetMutation,
+  useEraseUserMutation,
 } from "../api/usersApi";
 
 export {

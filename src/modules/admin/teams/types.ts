@@ -103,9 +103,9 @@ export interface ChangeStaffRoleRequest {
 }
 
 /**
- * `POST /auth/staff/{id}/erase/`.
+ * `POST /auth/staff/{id}/erase/` and `POST /users/admin/{id}/erase/`.
  *
- * Both fields are required. The endpoint refuses with 409 while the member's
+ * Both fields are required. The endpoint refuses with 409 while the account's
  * wallet still holds a balance or a payout is in flight.
  */
 export interface EraseAccountRequest {

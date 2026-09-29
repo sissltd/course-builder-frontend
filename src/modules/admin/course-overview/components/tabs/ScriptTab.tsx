@@ -1,19 +1,39 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
-import { Play, PlayCircle, Clock, Sound, Trash, More, InfoCircle, VideoPlay } from "iconsax-react";
-import { ScriptSectionCard, ScriptField, ScriptObjectiveItem } from "../SharedUI";
+import { PlayCircle, Clock, Trash, More, VideoPlay } from "iconsax-react";
+import { ScriptSectionCard, ScriptField, ScriptObjectiveItem, AssessmentCard } from "../SharedUI";
 import type { AdminCourseDetail } from "@/redux/slices/adminApi";
 
 interface ScriptTabProps {
   course?: AdminCourseDetail;
+  selectedModuleIndex?: number;
+  selectedLessonIndex?: number;
 }
 
-export const ScriptTab = ({ course }: ScriptTabProps) => {
+const RichTextBody = ({ html, fallback }: { html?: string; fallback: string }) => {
+  if (!html?.trim()) {
+    return (
+      <p className="mt-[12px] text-[14px] leading-[22px] text-sd-reviewer-muted">
+        {fallback}
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className="mt-[12px] text-[14px] leading-[22px] text-sd-reviewer-muted [&_a]:text-sd-blue [&_a]:underline [&_blockquote]:my-[12px] [&_blockquote]:border-l-4 [&_blockquote]:border-sd-blue [&_blockquote]:bg-sd-grey-2 [&_blockquote]:px-[16px] [&_blockquote]:py-[8px] [&_h1]:mb-[12px] [&_h1]:text-[22px] [&_h1]:font-semibold [&_h1]:leading-[28px] [&_h1]:text-sd-grey-12 [&_h2]:mb-[10px] [&_h2]:text-[18px] [&_h2]:font-semibold [&_h2]:leading-[24px] [&_h2]:text-sd-grey-12 [&_h3]:mb-[8px] [&_h3]:text-[16px] [&_h3]:font-semibold [&_h3]:leading-[22px] [&_h3]:text-sd-grey-12 [&_hr]:my-[16px] [&_img]:my-[12px] [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-[8px] [&_li]:mb-[4px] [&_ol]:my-[10px] [&_ol]:list-decimal [&_ol]:pl-[24px] [&_p]:mb-[10px] [&_pre]:my-[12px] [&_pre]:overflow-x-auto [&_pre]:rounded-[8px] [&_pre]:bg-sd-grey-2 [&_pre]:p-[12px] [&_ul]:my-[10px] [&_ul]:list-disc [&_ul]:pl-[24px] [&>*:last-child]:mb-0"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
+export const ScriptTab = ({
+  course,
+  selectedModuleIndex = 0,
+  selectedLessonIndex = 0,
+}: ScriptTabProps) => {
   const modules = course?.modules ?? [];
-  const [selectedModuleIndex, setSelectedModuleIndex] = React.useState(0);
-  const [selectedLessonIndex, setSelectedLessonIndex] = React.useState(0);
 
   if (modules.length === 0) {
     return (
@@ -33,13 +53,20 @@ export const ScriptTab = ({ course }: ScriptTabProps) => {
   const moduleLessons = currentModule?.lessons ?? [];
   const currentLesson = moduleLessons[selectedLessonIndex] || moduleLessons[0];
 
-  const durationStr = currentLesson?.duration_seconds
-    ? `${Math.floor(currentLesson.duration_seconds / 60)}mins`
+  const durationStr = currentLesson?.duration_minutes
+    ? `${currentLesson.duration_minutes}mins`
     : course?.planned_duration_seconds
     ? `${Math.floor(course.planned_duration_seconds / 60)}mins`
     : "No duration specified";
 
   const hasVideo = Boolean(course?.preview_video_url);
+
+  const objectives =
+    currentLesson?.learning_objectives?.length
+      ? currentLesson.learning_objectives
+      : currentModule?.learning_objectives?.length
+      ? currentModule.learning_objectives
+      : course?.learning_objectives ?? [];
 
   return (
     <div className="flex flex-col gap-[40px]">
@@ -82,7 +109,8 @@ export const ScriptTab = ({ course }: ScriptTabProps) => {
             </ScriptField>
 
             <ScriptField label="Objective" className="min-h-[64px]">
-              {course?.learning_objectives?.[0] || "No objective specified for this module."}
+              {currentModule?.learning_objectives?.join("\n") ||
+                "No objective specified for this module."}
             </ScriptField>
           </div>
         </div>
@@ -139,10 +167,32 @@ export const ScriptTab = ({ course }: ScriptTabProps) => {
 
           <ScriptSectionCard className="p-[16px]">
             <h2 className="text-[18px] font-semibold leading-[24px] text-sd-grey-12">Script</h2>
-            <p className="mt-[12px] text-[14px] leading-[22px] text-sd-reviewer-muted">
-              {currentLesson.content || "No script content written for this lesson yet."}
-            </p>
+            <RichTextBody
+              html={currentLesson.script}
+              fallback="No script content written for this lesson yet."
+            />
           </ScriptSectionCard>
+
+          <ScriptSectionCard className="p-[16px]">
+            <h2 className="text-[18px] font-semibold leading-[24px] text-sd-grey-12">
+              Lesson Requirement
+            </h2>
+            <RichTextBody
+              html={currentLesson.lesson_requirement}
+              fallback="No lesson requirement specified."
+            />
+          </ScriptSectionCard>
+
+          {currentLesson.assessment && (
+            <ScriptSectionCard className="p-[16px]">
+              <h2 className="text-[18px] font-semibold leading-[24px] text-sd-grey-12">
+                Assessment
+              </h2>
+              <div className="mt-[16px]">
+                <AssessmentCard assessment={currentLesson.assessment} />
+              </div>
+            </ScriptSectionCard>
+          )}
         </>
       ) : (
         <div className="rounded-[12px] border border-sd-grey-3 bg-sd-grey-1 p-6 text-center text-[14px] text-sd-reviewer-muted">
@@ -154,13 +204,13 @@ export const ScriptTab = ({ course }: ScriptTabProps) => {
       <ScriptSectionCard className="p-[16px]">
         <h2 className="text-[18px] font-semibold leading-[24px] text-sd-grey-12">Objective</h2>
         <div className="mt-[16px] flex flex-col gap-[8px]">
-          {course?.learning_objectives && course.learning_objectives.length > 0 ? (
-            course.learning_objectives.map((item, idx) => (
+          {objectives.length > 0 ? (
+            objectives.map((item, idx) => (
               <ScriptObjectiveItem key={idx} number={`0${idx + 1}`} text={item} />
             ))
           ) : (
             <p className="text-[14px] text-sd-reviewer-muted italic p-2">
-              No learning objectives specified for this course.
+              No learning objectives specified for this lesson, module or course.
             </p>
           )}
         </div>

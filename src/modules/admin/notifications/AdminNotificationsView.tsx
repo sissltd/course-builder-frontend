@@ -5,8 +5,14 @@ import Image from "next/image";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button as AppButton } from "@/components/shared/Button";
-import { useGetNotificationsQuery, NotificationItem as ApiNotificationItem } from "@/redux/slices/notificationApi";
+import { Modal } from "@/components/shared/Modal";
+import {
+  useGetNotificationsQuery,
+  useToggleNotificationReadMutation,
+  NotificationItem as ApiNotificationItem,
+} from "@/redux/slices/notificationApi";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { toast } from "sonner";
 
 type AdminNotificationItem = {
   id: string;
@@ -91,36 +97,170 @@ const groupNotifications = (notifications: ApiNotificationItem[]): AdminNotifica
 
 export const AdminNotificationsView = () => {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
+  const [selectedNotification, setSelectedNotification] =
+    useState<AdminNotificationItem | null>(null);
+  const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [toggleNotificationRead] = useToggleNotificationReadMutation();
   const { data, isLoading } = useGetNotificationsQuery(
     activeTab === "unread" ? { is_read: false } : undefined
   );
 
+  const notifications = useMemo(
+    () =>
+      (data?.data?.results ?? []).map((notification) =>
+        locallyReadIds.has(notification.id)
+          ? { ...notification, is_read: true }
+          : notification,
+      ),
+    [data, locallyReadIds],
+  );
+
   const groups = useMemo(() => {
-    if (!data?.data?.results) return [];
-    return groupNotifications(data.data.results);
-  }, [data]);
+    const visibleNotifications =
+      activeTab === "unread"
+        ? notifications.filter((notification) => !notification.is_read)
+        : notifications;
+    return groupNotifications(visibleNotifications);
+  }, [activeTab, notifications]);
 
   const unreadCount = useMemo(
-    () => (data?.data?.results || []).filter((item) => !item.is_read).length,
-    [data]
+    () => notifications.filter((item) => !item.is_read).length,
+    [notifications]
   );
 
   const displayedGroups = groups;
 
-  const handleMarkAsRead = (id: string) => {
-    // TODO: implement mark as read mutation
+  const setIdsAsLocallyRead = (ids: string[]) => {
+    setLocallyReadIds((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    setSelectedNotification((current) =>
+      current && ids.includes(current.id) ? { ...current, isRead: true } : current,
+    );
   };
 
-  const handleMarkAllAsRead = () => {
-    // TODO: implement mark all as read mutation
+  const restoreUnreadIds = (ids: string[]) => {
+    setLocallyReadIds((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    setSelectedNotification((current) =>
+      current && ids.includes(current.id) ? { ...current, isRead: false } : current,
+    );
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    if (pendingIds.has(id)) return;
+
+    setIdsAsLocallyRead([id]);
+    setPendingIds((current) => new Set(current).add(id));
+
+    try {
+      await toggleNotificationRead({
+        notification_id: id,
+        read_status: true,
+      }).unwrap();
+      toast.success("Notification marked as read");
+    } catch {
+      restoreUnreadIds([id]);
+      toast.error("Could not mark the notification as read");
+    } finally {
+      setPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const unreadIds = notifications
+      .filter((notification) => !notification.is_read)
+      .map((notification) => notification.id);
+
+    if (unreadIds.length === 0) return;
+
+    setIsMarkingAll(true);
+    setIdsAsLocallyRead(unreadIds);
+
+    const results = await Promise.allSettled(
+      unreadIds.map((id) =>
+        toggleNotificationRead({
+          notification_id: id,
+          read_status: true,
+        }).unwrap(),
+      ),
+    );
+    const failedIds = results.flatMap((result, index) =>
+      result.status === "rejected" ? [unreadIds[index]] : [],
+    );
+
+    if (failedIds.length > 0) {
+      restoreUnreadIds(failedIds);
+      toast.error(
+        failedIds.length === unreadIds.length
+          ? "Could not mark notifications as read"
+          : "Some notifications could not be marked as read",
+      );
+    } else {
+      toast.success("All notifications marked as read");
+    }
+
+    setIsMarkingAll(false);
   };
 
   return (
-    <div className="min-h-[calc(100vh-140px)]">
+    <>
+      <Modal
+        isOpen={selectedNotification !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedNotification(null);
+        }}
+        title={selectedNotification?.title}
+        className="sm:max-w-[560px]"
+      >
+        {selectedNotification && (
+          <div className="flex flex-col gap-[20px]">
+            <p className="whitespace-pre-wrap text-[14px] font-normal text-sd-grey-11 leading-[22px] tracking-[-0.28px]">
+              {selectedNotification.body}
+            </p>
+            <div className="flex items-center justify-between gap-[16px]">
+              <span className="text-[13px] text-sd-grey-9">
+                {selectedNotification.time}
+              </span>
+              {!selectedNotification.isRead && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="app"
+                  disabled={pendingIds.has(selectedNotification.id)}
+                  className="h-[40px] rounded-[10px] border-sd-grey-3 bg-white px-[16px] text-[14px] font-normal text-sd-grey-11"
+                  onClick={() => void handleMarkAsRead(selectedNotification.id)}
+                >
+                  {pendingIds.has(selectedNotification.id)
+                    ? "Marking..."
+                    : "Mark as read"}
+                </AppButton>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <div className="min-h-[calc(100vh-140px)]">
       <div className="flex w-full items-start justify-between gap-[24px] pt-[42px] pl-[clamp(24px,22vw,257px)] pr-[clamp(24px,18vw,258px)]">
         <div className="flex items-center gap-[12px]">
-          <button
+          <AppButton
             type="button"
+            variant="ghost"
+            size="default"
             onClick={() => setActiveTab("all")}
             className={cn(
               "flex h-[40px] items-center rounded-[10px] border px-[16px] text-[16px] font-normal leading-[24px] tracking-[-0.32px] transition-colors cursor-pointer",
@@ -130,9 +270,11 @@ export const AdminNotificationsView = () => {
             )}
           >
             All
-          </button>
-          <button
+          </AppButton>
+          <AppButton
             type="button"
+            variant="ghost"
+            size="default"
             onClick={() => setActiveTab("unread")}
             className={cn(
               "flex h-[40px] items-center rounded-[10px] border px-[16px] text-[16px] font-normal leading-[24px] tracking-[-0.32px] transition-colors cursor-pointer",
@@ -142,7 +284,7 @@ export const AdminNotificationsView = () => {
             )}
           >
             Unread ({unreadCount})
-          </button>
+          </AppButton>
         </div>
 
         {activeTab === "unread" && unreadCount > 0 && (
@@ -151,17 +293,22 @@ export const AdminNotificationsView = () => {
             variant="outline"
             size="app"
             className="h-[44px] rounded-[10px] border-sd-grey-3 bg-white px-[18px] text-[14px] font-normal text-sd-grey-12"
-            onClick={handleMarkAllAsRead}
+            disabled={isMarkingAll}
+            onClick={() => void handleMarkAllAsRead()}
           >
             <div className="mr-[12px] flex items-center">
               <Check size={22} strokeWidth={2.25} color="var(--sd-grey-12)" />
             </div>
-            Mark all as read
+            {isMarkingAll ? "Marking all..." : "Mark all as read"}
           </AppButton>
         )}
       </div>
 
-      {displayedGroups.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center pt-[176px]">
+          <span className="text-[14px] text-sd-grey-11">Loading notifications...</span>
+        </div>
+      ) : displayedGroups.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="w-full pt-[34px] pl-[clamp(24px,22vw,257px)]">
@@ -176,31 +323,39 @@ export const AdminNotificationsView = () => {
                 <div className="flex flex-col gap-[34px]">
                   {group.items.map((item) => (
                     <div key={item.id} className="flex items-start justify-between gap-[24px]">
-                      <div className="flex items-start gap-[14px]">
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="default"
+                        className="h-auto items-start gap-[14px] rounded-[8px] p-0 text-left hover:bg-transparent active:scale-100"
+                        aria-label={`Open notification: ${item.title}`}
+                        onClick={() => setSelectedNotification(item)}
+                      >
                         <NotificationIcon type={item.type} isRead={item.isRead} />
 
                         <div className="flex max-w-[430px] flex-col gap-[8px] pt-[2px]">
-                          <h3 className="text-[16px] font-semibold text-sd-grey-12 leading-[24px] tracking-[-0.32px]">
+                          <span className="text-[16px] font-semibold text-sd-grey-12 leading-[24px] tracking-[-0.32px]">
                             {item.title}
-                          </h3>
-                          <p className="text-[14px] font-normal text-sd-grey-11 leading-[20px] tracking-[-0.28px]">
+                          </span>
+                          <span className="text-[14px] font-normal text-sd-grey-11 leading-[20px] tracking-[-0.28px]">
                             {item.body}
-                          </p>
-                          <p className="text-[14px] font-normal text-sd-grey-11 leading-[20px] tracking-[-0.28px]">
+                          </span>
+                          <span className="text-[14px] font-normal text-sd-grey-11 leading-[20px] tracking-[-0.28px]">
                             {item.time}
-                          </p>
+                          </span>
                         </div>
-                      </div>
+                      </AppButton>
 
                       {!item.isRead && (
                         <AppButton
                           type="button"
                           variant="outline"
                           size="app"
+                          disabled={pendingIds.has(item.id)}
                           className="h-[40px] min-w-[116px] rounded-[10px] border-sd-grey-3 bg-white px-[16px] text-[14px] font-normal text-sd-grey-11"
-                          onClick={() => handleMarkAsRead(item.id)}
+                          onClick={() => void handleMarkAsRead(item.id)}
                         >
-                          Mark as read
+                          {pendingIds.has(item.id) ? "Marking..." : "Mark as read"}
                         </AppButton>
                       )}
                     </div>
@@ -211,6 +366,7 @@ export const AdminNotificationsView = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

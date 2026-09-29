@@ -4,8 +4,10 @@ import React from "react";
 import { Timer1, Data, Warning2, Clock, Refresh2 } from "iconsax-react";
 import { AdminStatCard } from "@/modules/admin/dashboard/components/AdminStatCard";
 import { BaseTable } from "@/components/shared/BaseTable";
+import { Button as AppButton } from "@/components/shared/Button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useGetAdminSystemHealthQuery, SystemServiceItem } from "@/redux/slices/adminApi";
+import { toast } from "sonner";
 
 const statusBadge = (status: string | null | undefined) => {
   if (!status) {
@@ -115,9 +117,18 @@ const columns: ColumnDef<SystemServiceItem>[] = [
 ];
 
 export const SystemHealthView = () => {
-  const { data, isLoading, isError, refetch } = useGetAdminSystemHealthQuery();
+  const { data, isLoading, isFetching, refetch } = useGetAdminSystemHealthQuery();
 
   const services = data?.services || [];
+
+  const handleRefresh = async () => {
+    try {
+      await refetch().unwrap();
+      toast.success("System health status updated");
+    } catch {
+      toast.error("Could not refresh system health status");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -132,13 +143,23 @@ export const SystemHealthView = () => {
             </span>
           )}
         </div>
-        <button
-          onClick={() => refetch()}
-          className="flex items-center gap-[6px] px-[12px] py-[6px] text-[13px] text-[#0A60E1] bg-[#EBF3FF] hover:bg-[#D9E9FF] rounded-[6px] cursor-pointer transition-colors"
+        <AppButton
+          type="button"
+          variant="ghost"
+          size="default"
+          onClick={handleRefresh}
+          disabled={isFetching}
+          aria-busy={isFetching}
+          className="flex items-center gap-[6px] px-[12px] py-[6px] text-[13px] text-[#0A60E1] bg-[#EBF3FF] hover:bg-[#D9E9FF] rounded-[6px] cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Refresh2 size={16} />
-          <span>Refresh Status</span>
-        </button>
+          <Refresh2
+            size={16}
+            variant="Linear"
+            color="currentColor"
+            className={isFetching ? "animate-spin" : undefined}
+          />
+          <span>{isFetching ? "Refreshing..." : "Refresh Status"}</span>
+        </AppButton>
       </div>
 
       <div className="flex gap-[16px] flex-wrap">

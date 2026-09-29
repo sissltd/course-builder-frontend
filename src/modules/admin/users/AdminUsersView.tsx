@@ -24,13 +24,18 @@ import {
   useSuspendUserMutation,
   useDeactivateUserMutation,
   useReinstateUserMutation,
+  useSendUserPasswordResetMutation,
 } from "@/redux/slices/adminApi";
 import type { AdminUser, UsersListParams } from "@/modules/admin/teams/types";
+import { usePermissions } from "@/modules/auth/hooks/usePermissions";
+import { PERMISSION } from "@/modules/auth/permissions";
+import { useAppSelector } from "@/redux";
 import { useDebouncedValue } from "@/modules/admin/mie-recommendation/hooks/useDebouncedValue";
 import { UserActionMenu } from "./components/UserActionMenu";
 import { UserDrawer } from "./components/UserDrawer";
 import { SuspendUserModal } from "./components/SuspendUserModal";
 import { DeactivateUserModal } from "./components/DeactivateUserModal";
+import { EraseUserModal } from "./components/EraseUserModal";
 
 interface UserTableRow {
   id: string;
@@ -127,11 +132,27 @@ export const AdminUsersView = () => {
   const [suspendingUser, setSuspendingUser] = useState<AdminUser | null>(null);
   const [deactivatingUser, setDeactivatingUser] = useState<AdminUser | null>(null);
   const [reinstatingUser, setReinstatingUser] = useState<AdminUser | null>(null);
+  const [resettingUser, setResettingUser] = useState<AdminUser | null>(null);
+  const [erasingUser, setErasingUser] = useState<AdminUser | null>(null);
+
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const { can } = usePermissions();
+
+  /*
+    Each lifecycle action is its own permission on the backend, and each
+    endpoint refuses on its own terms — so each control is gated by the one
+    that governs it, rather than by a single "is admin" test. `can()` fails
+    closed, so these stay hidden until the profile resolves.
+  */
+  const canResetPassword = can(PERMISSION.TEAMS_RESET_PASSWORD);
+  const canDeleteAccount = can(PERMISSION.TEAMS_DELETE_ACCOUNT);
 
   // Mutations
   const [suspendUser, { isLoading: isSuspending }] = useSuspendUserMutation();
   const [deactivateUser, { isLoading: isDeactivating }] = useDeactivateUserMutation();
   const [reinstateUser, { isLoading: isReinstating }] = useReinstateUserMutation();
+  const [sendPasswordReset, { isLoading: isResettingPassword }] =
+    useSendUserPasswordResetMutation();
 
   // API Query Params
   const queryParams = useMemo<UsersListParams>(() => {
@@ -239,6 +260,32 @@ export const AdminUsersView = () => {
 
   const handleStartReinstate = (user: AdminUser) => {
     setReinstatingUser(user);
+  };
+
+  const handleStartResetPassword = (user: AdminUser) => {
+    setResettingUser(user);
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!resettingUser) return;
+    try {
+      await sendPasswordReset(resettingUser.id).unwrap();
+      setResettingUser(null);
+      toast.success(`Password reset link sent to ${resettingUser.email}`, {
+        description:
+          "Their password does not change until they use the link, which also signs them out everywhere.",
+      });
+    } catch (err) {
+      const error = err as ApiFailure;
+      const msg =
+        error?.data?.message ||
+        formatApiErrors(error?.data?.errors, "Failed to send password reset link");
+      toast.error(msg);
+    }
+  };
+
+  const handleStartErase = (user: AdminUser) => {
+    setErasingUser(user);
   };
 
   const handleConfirmReinstate = async () => {
@@ -388,19 +435,34 @@ export const AdminUsersView = () => {
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="relative flex justify-center" onClick={(e) => e.stopPropagation()}>
-          <UserActionMenu
-            user={row.original.raw}
-            onViewDetails={() => handleOpenDrawer(row.original.raw)}
-            onCopyId={(id) => handleCopy(id, "User ID")}
-            onCopyEmail={(email) => handleCopy(email, "Email")}
-            onSuspend={() => handleStartSuspend(row.original.raw)}
-            onDeactivate={() => handleStartDeactivate(row.original.raw)}
-            onReinstate={() => handleStartReinstate(row.original.raw)}
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const target = row.original.raw;
+        const isSelf =
+          currentUser?.id === target.id ||
+          currentUser?.email?.toLowerCase() === target.email.toLowerCase();
+        const isSuperAdmin =
+          target.role === "SUPER_ADMIN" || target.role_label === "Super Admin";
+
+        return (
+          <div className="relative flex justify-center" onClick={(e) => e.stopPropagation()}>
+            <UserActionMenu
+              user={target}
+              isSelf={isSelf}
+              isSuperAdmin={isSuperAdmin}
+              canResetPassword={canResetPassword}
+              canDelete={canDeleteAccount}
+              onViewDetails={() => handleOpenDrawer(target)}
+              onCopyId={(id) => handleCopy(id, "User ID")}
+              onCopyEmail={(email) => handleCopy(email, "Email")}
+              onSuspend={() => handleStartSuspend(target)}
+              onDeactivate={() => handleStartDeactivate(target)}
+              onReinstate={() => handleStartReinstate(target)}
+              onSendPasswordReset={handleStartResetPassword}
+              onDeleteAccount={handleStartErase}
+            />
+          </div>
+        );
+      },
       size: 50,
     },
   ];
@@ -598,6 +660,35 @@ export const AdminUsersView = () => {
         isLoading={isReinstating}
         onConfirm={handleConfirmReinstate}
         icon={<TickCircle variant="Bold" size={48} color="#008500" />}
+      />
+
+      {/* Send Password Reset Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!resettingUser}
+        onOpenChange={(open) => {
+          if (!open) setResettingUser(null);
+        }}
+        title="Send a password reset link?"
+        description={`A reset link will be emailed to ${resettingUser?.email || "this person"}. Their password does not change until they use it, which also signs them out everywhere.`}
+        confirmLabel={isResettingPassword ? "Sending..." : "Yes, send link"}
+        cancelLabel="Cancel"
+        variant="primary"
+        isLoading={isResettingPassword}
+        onConfirm={handleConfirmResetPassword}
+      />
+
+      {/* Erase Account Modal */}
+      <EraseUserModal
+        isOpen={!!erasingUser}
+        onOpenChange={(open) => {
+          if (!open) setErasingUser(null);
+        }}
+        user={erasingUser}
+        onErased={() => {
+          if (selectedUser?.id === erasingUser?.id) {
+            setIsDrawerOpen(false);
+          }
+        }}
       />
     </>
   );
