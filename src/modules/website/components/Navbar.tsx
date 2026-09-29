@@ -2,6 +2,7 @@
 
 import { CloseSquare, HambergerMenu } from "iconsax-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -9,13 +10,27 @@ import { Button } from "@/components/shared/Button";
 import { AuthRoute } from "@/lib/routes";
 import { NAV_LINKS } from "@/modules/website/data/content";
 import { PageContainer } from "@/modules/website/components/PageContainer";
+import {
+  getDashboardRoute,
+  getWorkspaceForRole,
+} from "@/modules/auth/utils/workspace";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
+
+  const isAuthenticated = status === "authenticated";
+  const ctaHref = isAuthenticated
+    ? getDashboardRoute(
+        session?.user?.workspace ?? getWorkspaceForRole(session?.user?.role),
+      )
+    : AuthRoute.LOGIN;
+  const ctaLabel = isAuthenticated ? "Dashboard" : "Log in";
+  const ctaLoading = status === "loading";
 
   return (
     <header className="sticky top-0 z-50 bg-[#FDFDFF]">
@@ -47,11 +62,23 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link href={AuthRoute.LOGIN}>
-            <Button variant="app-outline" size="app" className="h-[36px] px-6 text-[14px]">
-              Log in
-            </Button>
-          </Link>
+          {ctaLoading ? (
+            <div
+              aria-hidden="true"
+              data-testid="navbar-cta-skeleton-desktop"
+              className="h-[36px] min-w-[120px] animate-pulse rounded-[8px] border border-sd-blue/40 bg-sd-blue/5"
+            />
+          ) : (
+            <Link href={ctaHref}>
+              <Button
+                variant="app-outline"
+                size="app"
+                className="h-[36px] px-6 text-[14px]"
+              >
+                {ctaLabel}
+              </Button>
+            </Link>
+          )}
           <Link href={AuthRoute.REGISTER}>
             <Button variant="app-primary" size="app" className="h-[36px] px-6 text-[14px]">
               Contact sales
@@ -95,11 +122,19 @@ export function Navbar() {
               ))}
             </ul>
             <div className="mt-4 flex flex-col gap-3">
-              <Link href={AuthRoute.LOGIN} onClick={closeMenu}>
-                <Button variant="app-outline" size="app" className="w-full text-[14px]">
-                  Log in
-                </Button>
-              </Link>
+              {ctaLoading ? (
+                <div
+                  aria-hidden="true"
+                  data-testid="navbar-cta-skeleton-mobile"
+                  className="h-[44px] w-full animate-pulse rounded-[8px] border border-sd-blue/40 bg-sd-blue/5"
+                />
+              ) : (
+                <Link href={ctaHref} onClick={closeMenu}>
+                  <Button variant="app-outline" size="app" className="w-full text-[14px]">
+                    {ctaLabel}
+                  </Button>
+                </Link>
+              )}
               <Link href={AuthRoute.REGISTER} onClick={closeMenu}>
                 <Button variant="app-primary" size="app" className="w-full text-[14px]">
                   Contact sales
