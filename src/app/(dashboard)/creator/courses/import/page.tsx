@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import DocumentImportView from "@/modules/creator/courses/DocumentImportView";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function DocumentImportPage() {
-  return <DocumentImportView />;
+  return (
+    <Suspense>
+      <DocumentImportView />
+    </Suspense>
+  );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import CreateCourseView from "@/modules/creator/courses/CreateCourseView";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function CreateCoursePage() {
-  return <CreateCourseView />;
+  return (
+    <Suspense>
+      <CreateCourseView />
+    </Suspense>
+  );
 }

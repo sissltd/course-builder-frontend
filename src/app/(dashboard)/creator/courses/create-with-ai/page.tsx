@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AiCourseGenerationView from "@/modules/creator/courses/AiCourseGenerationView";
 import type { Metadata } from "next";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function AiCourseCreationPage() {
-  return <AiCourseGenerationView />;
+  return (
+    <Suspense>
+      <AiCourseGenerationView />
+    </Suspense>
+  );
 }
