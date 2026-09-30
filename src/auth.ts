@@ -3,7 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import type { User as AuthUser } from "next-auth";
 import type {
+  AuthTokens,
   LoginResponse,
+  LoginTokensResponse,
   User,
   UserRole,
   UserStatus,
@@ -16,7 +18,9 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
+async function exchangeGoogleToken(
+  idToken: string,
+): Promise<LoginTokensResponse> {
   console.log("[GoogleAuth] exchangeGoogleToken: calling POST /auth/login/google/", {
     hasIdToken: Boolean(idToken),
     tokenPrefix: idToken ? idToken.substring(0, 20) + "..." : "null",
@@ -64,13 +68,26 @@ async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
   }
 
   const result = (await response.json()) as LoginResponse;
+
+  // A Google sign-in carries no password to challenge, so an MFA prompt here is
+  // not something the client flow can currently answer. Fail loudly rather than
+  // handing a token-less session downstream and breaking the same way the
+  // password login used to.
+  if ("mfa_required" in result) {
+    const error = new Error(
+      "Multi-factor authentication is required for this Google account, which is not supported yet.",
+    ) as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+
   console.log("[GoogleAuth] exchangeGoogleToken: SUCCESS", {
     hasAccess: Boolean(result.access),
     hasRefresh: Boolean(result.refresh),
     userId: result.user?.id,
     userRole: result.role,
   });
-  return result;
+  return result as LoginTokensResponse;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -341,7 +358,7 @@ async function refreshAccessToken(token: {
       throw new Error("Refresh failed");
     }
 
-    const data = (await response.json()) as LoginResponse;
+    const data = (await response.json()) as AuthTokens;
 
     return {
       ...token,

@@ -30,6 +30,9 @@ interface FormInputProps {
   maxLength?: number;
   min?: string;
   max?: string;
+  /** Hints the on-screen keyboard, e.g. "numeric" for one-time codes. */
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
   inputRef?: React.Ref<HTMLInputElement>;
 }
 
@@ -99,7 +102,7 @@ const InputView = ({
   name, label, error: externalError, hint, required, placeholder, type = "text",
   className, containerClassName, leftElement, rightElement, disabled, readOnly,
   autoFocus, isSuccess, isFilled, inputRef, value, onChange, onBlur, viewError,
-  viewRef, onKeyDown, onFocus, maxLength, min, max,
+  viewRef, onKeyDown, onFocus, maxLength, min, max, inputMode, autoComplete,
 }: InputViewProps) => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
@@ -137,6 +140,8 @@ const InputView = ({
           disabled={disabled}
           readOnly={readOnly}
           autoFocus={autoFocus}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
           maxLength={maxLength}
           min={min}
           max={max}

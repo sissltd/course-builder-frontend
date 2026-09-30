@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { useChangePasswordMutation } from "@/modules/auth/api/accountApi";
 import { useLogoutAllMutation } from "@/modules/auth/api/sessionApi";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
+import { MfaSection } from "@/modules/auth/components/MfaSection";
 import { normalizeApiError } from "@/lib/api/errors";
 import { toast } from "sonner";
 
@@ -192,6 +193,10 @@ export const LoginSecurityTab = () => {
           </Button>
         </div>
       </div>
+
+      <div className="h-px bg-[#F0F0F0]" />
+
+      <MfaSection />
 
       <div className="h-px bg-[#F0F0F0]" />
 

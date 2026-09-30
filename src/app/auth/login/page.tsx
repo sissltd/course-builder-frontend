@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { SocialLogin } from "@/modules/auth/components/SocialLogin";
@@ -31,6 +31,8 @@ import {
   readPendingInvitation,
   savePendingInvitation,
 } from "@/modules/auth/utils/pendingInvitation";
+import type { LoginTokensResponse } from "@/modules/auth/types/auth";
+import { useVerifyMfaChallengeMutation } from "@/modules/auth/api/mfaApi";
 
 const isSafeInternalPath = (value: string | null): value is string =>
   Boolean(
@@ -69,9 +71,13 @@ function LoginContent() {
   const { data: session, status } = useSession();
   const googleHandoff = searchParams.get("google") === "1";
   const queryError = searchParams.get("error");
-  const [step, setStep] = useState<"email" | "password">("email");
+  const [step, setStep] = useState<"email" | "password" | "mfa">("email");
   const [formError, setFormError] = useState<string | null>(null);
   const [login, { isLoading }] = useLoginMutation();
+  const [verifyChallenge, { isLoading: isVerifyingMfa }] =
+    useVerifyMfaChallengeMutation();
+  const [mfaCode, setMfaCode] = useState("");
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const googleAuthHandled = useRef(false);
   const routerRef = useRef(router);
 
@@ -255,22 +261,21 @@ function LoginContent() {
     }
   };
 
-  const handleLoginSubmit = handleSubmit(async (data) => {
-    setFormError(null);
-    try {
-      const result = await login({
-        email: data.email,
-        password: data.password,
-      }).unwrap();
-
-      const workspace = getWorkspaceForRole(result.role);
+  /**
+   * Everything that happens once a token pair exists: establish the NextAuth
+   * session, seed Redux, then route. Shared by the password path and the MFA
+   * challenge path so the session bootstrap cannot drift between them.
+   */
+  const completeSignIn = useCallback(
+    async (tokens: LoginTokensResponse) => {
+      const workspace = getWorkspaceForRole(tokens.role);
       const signInResult = await signIn("credentials", {
-        accessToken: result.access,
-        refreshToken: result.refresh,
-        user: JSON.stringify(result.user),
+        accessToken: tokens.access,
+        refreshToken: tokens.refresh,
+        user: JSON.stringify(tokens.user),
         workspace,
-        role: result.role,
-        mfaEnrollmentOverdue: String(result.mfa_enrollment_overdue ?? false),
+        role: tokens.role,
+        mfaEnrollmentOverdue: String(tokens.mfa_enrollment_overdue ?? false),
         redirect: false,
       });
 
@@ -281,8 +286,8 @@ function LoginContent() {
 
       dispatch(
         setCredentials({
-          user: result.user,
-          accessToken: result.access,
+          user: tokens.user,
+          accessToken: tokens.access,
         }),
       );
 
@@ -300,6 +305,56 @@ function LoginContent() {
           : inviteTarget ?? getDashboardRoute(workspace),
       );
       router.refresh();
+    },
+    [dispatch, router],
+  );
+
+  const enterMfaChallenge = useCallback((token: string) => {
+    setChallengeToken(token);
+    setMfaCode("");
+    setFormError(null);
+    setStep("mfa");
+  }, []);
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = mfaCode.trim();
+    if (!challengeToken || !code) {
+      setFormError("Enter the code from your authenticator app.");
+      return;
+    }
+
+    setFormError(null);
+    try {
+      const tokens = await verifyChallenge({
+        challenge_token: challengeToken,
+        code,
+      }).unwrap();
+      await completeSignIn(tokens);
+    } catch (error) {
+      const { message } = normalizeApiError(error as never);
+      setFormError(
+        message ?? "That code was not accepted. Check it and try again.",
+      );
+    }
+  };
+
+  const handleLoginSubmit = handleSubmit(async (data) => {
+    setFormError(null);
+    try {
+      const result = await login({
+        email: data.email,
+        password: data.password,
+      }).unwrap();
+
+      // The password was accepted but a second factor is enforced. There are no
+      // tokens on this shape, so it must not fall through to completeSignIn.
+      if ("mfa_required" in result) {
+        enterMfaChallenge(result.challenge_token);
+        return;
+      }
+
+      await completeSignIn(result);
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(error as never);
 
@@ -341,12 +396,20 @@ function LoginContent() {
   }
 
   return (
-    <AuthLayout showNav={step === "password"} showLogo={step !== "password"}>
+    <AuthLayout showNav={step !== "email"} showLogo={step === "email"}>
       <AuthHeader
-        title="Log in your account"
-        description="Enter the required information to access your account"
-        linkPrefix="Don’t have an account?"
-        linkText="Create one"
+        title={
+          step === "mfa"
+            ? "Two-factor authentication"
+            : "Log in your account"
+        }
+        description={
+          step === "mfa"
+            ? "Enter the 6-digit code from your authenticator app to finish signing in"
+            : "Enter the required information to access your account"
+        }
+        linkPrefix={step === "email" ? "Don’t have an account?" : undefined}
+        linkText={step === "email" ? "Create one" : undefined}
         linkHref={AuthRoute.REGISTER}
       />
 
@@ -402,6 +465,46 @@ function LoginContent() {
                 </div>
               </form>
             </>
+          )}
+
+          {step === "mfa" && (
+            <form
+              onSubmit={handleMfaSubmit}
+              className="flex flex-col gap-[32px] w-full max-w-[400px]"
+            >
+              <AuthInput
+                name="mfaCode"
+                label="Verification code"
+                placeholder="000000"
+                value={mfaCode}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setMfaCode(next);
+                }}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                autoFocus
+                required
+              />
+              <div className="flex flex-col gap-[16px] w-full">
+                <AuthButton type="submit" disabled={isVerifyingMfa}>
+                  {isVerifyingMfa ? "Verifying..." : "Verify and continue"}
+                </AuthButton>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChallengeToken(null);
+                    setMfaCode("");
+                    setFormError(null);
+                    setStep("password");
+                  }}
+                  className="text-center text-body-sm text-sd-grey-12 font-medium hover:underline"
+                >
+                  Use a different account
+                </button>
+              </div>
+            </form>
           )}
 
           {step === "password" && (

@@ -11,6 +11,7 @@ import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
 import { useChangePasswordMutation, useChangeEmailMutation } from "@/modules/auth/api/accountApi";
 import { useLogoutAllMutation } from "@/modules/auth/api/sessionApi";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
+import { MfaSection } from "@/modules/auth/components/MfaSection";
 
 interface EmailFormValues {
   new_email: string;
@@ -192,6 +193,10 @@ export const LoginSecurityTab = () => {
           </div>
         </form>
       </FormProvider>
+
+      <div className="h-px bg-sd-grey-4" />
+
+      <MfaSection />
 
       <div className="h-px bg-sd-grey-4" />
 

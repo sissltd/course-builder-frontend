@@ -269,6 +269,7 @@ export const BaseAPI = createApi({
     "NotificationPreferences",
     "Quiz",
     "QuizQuestion",
+    "Mfa",
     "KycSubmission",
     "ReviewerOverview",
     "ReviewerActivity",
