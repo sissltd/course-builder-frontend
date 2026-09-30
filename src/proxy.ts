@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { getDashboardRoute } from "@/modules/auth/utils/workspace";
+import { AuthRoute } from "@/lib/routes";
 
 const PUBLIC_PATHS = [
   "/",
@@ -41,7 +42,7 @@ const isPublicPath = (pathname: string): boolean =>
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({
     req,
@@ -50,13 +51,6 @@ export async function middleware(req: NextRequest) {
 
   const isGoogleHandoff = req.nextUrl.searchParams.get("google") === "1";
   const isAuthenticated = Boolean(token?.user);
-
-  console.log("[Middleware]", pathname, {
-    isAuthenticated,
-    isGoogleHandoff,
-    hasToken: Boolean(token),
-    hasUser: Boolean(token?.user),
-  });
 
   if (isPublicPath(pathname)) {
     if (
@@ -68,15 +62,12 @@ export async function middleware(req: NextRequest) {
       )
     ) {
       const dashboard = getDashboardRoute(token?.user?.workspace);
-      console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
-    console.log("[Middleware] public path, next");
     return NextResponse.next();
   }
 
   if (!token) {
-    console.log("[Middleware] no token, path not public → redirect to login");
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         {
@@ -93,7 +84,7 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    const loginUrl = new URL("/auth/login", req.nextUrl);
+    const loginUrl = new URL(AuthRoute.LOGIN, req.nextUrl);
     loginUrl.searchParams.set(
       "callbackUrl",
       `${pathname}${req.nextUrl.search}`,
@@ -101,7 +92,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  console.log("[Middleware] authenticated, next");
   return NextResponse.next();
 }
 
