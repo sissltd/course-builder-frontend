@@ -17,11 +17,18 @@ import { TypedUseSelectorHook, useDispatch, useSelector, useStore } from "react-
 import { rootReducer } from "./root-reducer";
 import BaseAPI from "./baseApi";
 import { errorToastMiddleware } from "./errorToastMiddleware";
+import { PERSIST_ROOT_KEY } from "./persistedAuth";
 
 const persistConfig = {
-  key: "root",
+  key: PERSIST_ROOT_KEY,
   storage,
-  whitelist: ["courseBuilder", "auth"],
+  // `auth` is deliberately absent. A persisted access token is at best stale by
+  // the time it is rehydrated and at worst already rotated out, so the first
+  // request after a reload went out with it, drew a 401, and — before the
+  // session resolved — could cost the user their session. The slice is
+  // re-seeded from the session within milliseconds instead, and dashboard
+  // routes already gate their render on `useSession`.
+  whitelist: ["courseBuilder"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

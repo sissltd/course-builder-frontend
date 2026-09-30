@@ -48,3 +48,19 @@ export function shouldRefreshAccessToken(
   if (!expiresAt) return false;
   return now >= expiresAt - ACCESS_TOKEN_REFRESH_WINDOW_MS;
 }
+
+/**
+ * True once the token can no longer authenticate anything.
+ *
+ * This is what separates "proactively rotate, and it did not work" from "this
+ * session is over". Only the second one is allowed to end the session: a
+ * refresh call that fails while minutes of validity remain has told us nothing
+ * about the caller.
+ */
+export function isAccessTokenExpired(
+  expiresAt: number | undefined,
+  now: number = Date.now(),
+): boolean {
+  if (!expiresAt) return true;
+  return now >= expiresAt;
+}
