@@ -254,13 +254,13 @@ export const InvitationsView = () => {
             label: "Status",
             icon: <Sort size={20} variant="Linear" color="#606060" />,
             options: [
-              { label: "All", value: "" },
               { label: STATUS_LABELS.PENDING, value: WorkspaceCollaboratorStatus.PENDING },
               { label: STATUS_LABELS.ACTIVE, value: WorkspaceCollaboratorStatus.ACTIVE },
               { label: STATUS_LABELS.REMOVED, value: WorkspaceCollaboratorStatus.REMOVED },
             ],
             value: statusFilter,
             clearable: true,
+            clearLabel: "All statuses",
             onValueChange: (value) => {
               setStatusFilter(value as WorkspaceCollaboratorStatus | "");
               setPage(1);
@@ -270,7 +270,6 @@ export const InvitationsView = () => {
             label: "Role",
             icon: <Sort size={20} variant="Linear" color="#606060" />,
             options: [
-              { label: "All", value: "" },
               { label: ROLE_LABELS.ADMIN, value: WorkspaceCollaboratorRole.ADMIN },
               { label: ROLE_LABELS.AUTHOR, value: WorkspaceCollaboratorRole.AUTHOR },
               {
@@ -279,6 +278,7 @@ export const InvitationsView = () => {
               },
             ],
             clearable: true,
+            clearLabel: "All roles",
             onValueChange: (value) => {
               setRoleFilter(value as WorkspaceCollaboratorRole | "");
               setPage(1);
