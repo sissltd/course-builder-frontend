@@ -27,6 +27,7 @@ const pageTitles: Record<string, string> = {
   [AdminRoute.SETTINGS]: "Settings",
   [AdminRoute.KYC_REVIEW]: "KYC Review",
   [AdminRoute.WALLETS]: "Wallets",
+  [AdminRoute.SUPPORT]: "Support",
   [AdminRoute.USERS]: "Users",
 };
 

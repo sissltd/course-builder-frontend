@@ -44,7 +44,25 @@ export enum AdminRoute {
   COURSE_OVERVIEW = "/admin/course-overview",
   KYC_REVIEW = "/admin/kyc-review",
   WALLETS = "/admin/wallets",
+  SUPPORT = "/admin/support",
+  /**
+   * Next's dynamic segment for the support request detail page. Not a URL you
+   * navigate to directly — build one with `adminSupportDetailRoute`, so the
+   * segment is never hand-written as a literal at a call site.
+   */
+  SUPPORT_DETAIL = "/admin/support/[id]",
 }
+
+/**
+ * The admin support request detail page for one id.
+ *
+ * Lives beside the enum rather than in a component so the `[id]` segment has a
+ * single owner: a literal `` `${AdminRoute.SUPPORT}/${id}` `` at a call site
+ * would satisfy the same route but would no longer be traceable to a member,
+ * which is exactly what the "no hardcoded route strings" rule exists to prevent.
+ */
+export const adminSupportDetailRoute = (id: string): string =>
+  AdminRoute.SUPPORT_DETAIL.replace("[id]", encodeURIComponent(id));
 
 export enum CreatorRoute {
   DASHBOARD = "/creator/dashboard",
@@ -62,6 +80,7 @@ export enum CreatorRoute {
   PROFILE = "/creator/profile",
   SETTINGS = "/creator/settings",
   HELP = "/creator/help",
+  SUPPORT = "/creator/support",
   KYC = "/creator/kyc",
 }
 

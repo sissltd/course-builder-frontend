@@ -101,9 +101,14 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[220px] bg-white border border-[#F0F0F0] rounded-[16px] p-[8px] mt-[8px]" align="end">
-            <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-              <I24Support variant="Linear" size={20} color="#606060" />
-              <span>Help and support</span>
+            <DropdownMenuItem asChild>
+              <Link
+                href={AdminRoute.SUPPORT}
+                className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]"
+              >
+                <I24Support variant="Linear" size={20} color="#606060" />
+                <span>Help and support</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link
@@ -149,12 +154,16 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
 
       {/* Desktop: full actions */}
       <div className="hidden md:flex items-center gap-[12px]">
-        <button className="flex items-center gap-[8px] border border-[#F0F0F0] rounded-[6px] px-[8px] py-[4px] h-[32px] hover:bg-sd-grey-2 transition-colors cursor-pointer">
+        <Link
+          href={AdminRoute.SUPPORT}
+          aria-label="Open the support queue"
+          className="flex items-center gap-[8px] border border-[#F0F0F0] rounded-[6px] px-[8px] py-[4px] h-[32px] hover:bg-sd-grey-2 transition-colors"
+        >
           <I24Support variant="Linear" size={20} color="#606060" />
           <span className="text-[12px] font-normal text-[#606060] tracking-[-0.28px] leading-[16px]">
             Help and support
           </span>
-        </button>
+        </Link>
 
         <Link
           href={AdminRoute.NOTIFICATIONS}
