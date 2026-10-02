@@ -5,13 +5,6 @@ import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useCreateInviteMutation } from "@/modules/creator/collaborators/api/courseInvitesApi";
 import { CollaboratorRole } from "@/modules/creator/collaborators/types";
 
@@ -27,7 +20,6 @@ export const InviteCollaboratorModal = ({
   courseId,
 }: InviteCollaboratorModalProps) => {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<CollaboratorRole>(CollaboratorRole.COLLABORATOR);
   const [error, setError] = useState("");
 
   const [createInvite, { isLoading }] = useCreateInviteMutation();
@@ -45,10 +37,9 @@ export const InviteCollaboratorModal = ({
       await createInvite({
         course_id: courseId,
         email: email.trim(),
-        role,
+        role: CollaboratorRole.COLLABORATOR,
       }).unwrap();
       setEmail("");
-      setRole(CollaboratorRole.COLLABORATOR);
       onClose();
     } catch {
       setError("Failed to send invite. Check the email and try again.");
@@ -97,28 +88,6 @@ export const InviteCollaboratorModal = ({
           {error && (
             <p className="text-[12px] text-[#FF5025]">{error}</p>
           )}
-        </div>
-
-        <div className="flex flex-col gap-[6px]">
-          <Label className="text-[14px] font-normal text-[#202020]">
-            Role
-          </Label>
-          <Select
-            value={role}
-            onValueChange={(val) => setRole(val as CollaboratorRole)}
-          >
-            <SelectTrigger className="h-[44px] bg-white border border-[#E0E0E0] px-[16px] py-[12px] text-[14px] focus:ring-0 focus:outline-none focus:border-[1.5px] focus:border-[#0063EF]">
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={CollaboratorRole.COLLABORATOR}>
-                Collaborator
-              </SelectItem>
-              <SelectItem value={CollaboratorRole.ADMIN}>
-                Admin
-              </SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </form>
     </Modal>
