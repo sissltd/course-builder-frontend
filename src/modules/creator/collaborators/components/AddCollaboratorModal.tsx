@@ -15,11 +15,6 @@ import { CollaboratorRole } from "../types";
 
 const COURSE_PAGE_SIZE = 20;
 
-const ROLE_OPTIONS = [
-  { label: "Collaborator", value: CollaboratorRole.COLLABORATOR },
-  { label: "Admin", value: CollaboratorRole.ADMIN },
-];
-
 interface AddCollaboratorModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,9 +50,6 @@ export const AddCollaboratorModal = ({
   const [hasMore, setHasMore] = useState(false);
   const [courseId, setCourseId] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<CollaboratorRole>(
-    CollaboratorRole.COLLABORATOR,
-  );
 
   const handleLoadMore = useCallback(async () => {
     const nextPage = page + 1;
@@ -105,7 +97,6 @@ export const AddCollaboratorModal = ({
     setHasMore(false);
     setCourseId("");
     setEmail("");
-    setRole(CollaboratorRole.COLLABORATOR);
   };
 
   const handleClose = () => {
@@ -128,7 +119,7 @@ export const AddCollaboratorModal = ({
       await createInvite({
         course_id: courseId,
         email: trimmedEmail,
-        role,
+        role: CollaboratorRole.COLLABORATOR,
       }).unwrap();
       toast.success(`${trimmedEmail} was invited to the course.`);
       onAdded?.();
@@ -187,15 +178,6 @@ export const AddCollaboratorModal = ({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           hint="They will receive an invitation and can accept it once they sign up."
-        />
-
-        <FormSelect
-          name="role"
-          label="Role"
-          placeholder="Select role"
-          options={ROLE_OPTIONS}
-          value={role}
-          onValueChange={(value) => setRole(value as CollaboratorRole)}
         />
 
         <div className="flex gap-[12px]">
