@@ -62,6 +62,10 @@ export const accountApi = BaseAPI.injectEndpoints({
      * The token in the body is the credential here, so this is callable
      * signed-out — see `PUBLIC_ENDPOINTS` in the base query, which keeps the
      * bearer header off this call.
+     *
+     * This is the call that actually moves the address, so it invalidates the
+     * cached profile; otherwise a signed-in caller keeps reading the old email
+     * out of Redux until they hard-refresh.
      */
     confirmChangeEmail: builder.mutation<
       { detail: string },
@@ -72,6 +76,7 @@ export const accountApi = BaseAPI.injectEndpoints({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["UserProfile"],
     }),
   }),
 });

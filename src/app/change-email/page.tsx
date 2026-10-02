@@ -8,11 +8,16 @@ export const metadata: Metadata = {
 };
 
 /**
- * Legacy confirmation path — links may already be sitting in inboxes, so it
- * keeps working and delegates to the same view as the root `/change-email`
- * route the backend actually emails. No confirm logic lives here.
+ * The URL the backend actually emails —
+ * `/change-email?email=…&token=…` — so it has to exist at the site root.
+ *
+ * `searchParams` is read on the server, so no `useSearchParams` and no
+ * `Suspense` boundary: the view does its own work in a client effect. It is
+ * listed in `PUBLIC_PATHS` because the link is opened from the new inbox and
+ * the caller may or may not have a session. `email` is display-only — the
+ * confirm endpoint is token-only.
  */
-export default async function ConfirmEmailChangePage({
+export default async function ChangeEmailPage({
   searchParams,
 }: {
   searchParams: Promise<{ email?: string; token?: string }>;

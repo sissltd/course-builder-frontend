@@ -19,6 +19,11 @@ import {
 
 interface ConfirmEmailChangeViewProps {
   token: string;
+  /**
+   * The pending address, straight from the emailed link. Display only — the
+   * confirm endpoint is token-only, so it never enters the request body.
+   */
+  email?: string;
 }
 
 type ConfirmState =
@@ -29,7 +34,7 @@ type ConfirmState =
 /**
  * Lands from the emailed confirmation link. The token in the URL is the whole
  * credential, so this works whether or not the caller has a session — which is
- * why the route is exempt from the authed-redirect in `middleware.ts`.
+ * why the route is exempt from the authed-redirect in `proxy.ts`.
  *
  * The token is single-use, so the confirmation fires once on mount and is never
  * retried: a remount with a spent token must show the "already used" state
@@ -37,6 +42,7 @@ type ConfirmState =
  */
 export default function ConfirmEmailChangeView({
   token,
+  email = "",
 }: ConfirmEmailChangeViewProps) {
   const { data: session } = useSession();
   const [confirmChangeEmail] = useConfirmChangeEmailMutation();
@@ -75,13 +81,18 @@ export default function ConfirmEmailChangeView({
     ? getDashboardRoute(session.user.workspace)
     : getDashboardRoute(getWorkspaceForRole(session?.user?.role));
   const isSignedIn = Boolean(session?.user);
+  const pendingAddress = email.trim();
 
   if (state.status === "confirming") {
     return (
       <AuthLayout showNav={false} showLogo showSidebar>
         <AuthHeader
           title="Confirm your new email"
-          description="Applying the change, please wait..."
+          description={
+            pendingAddress
+              ? `Applying the change to ${pendingAddress}, please wait...`
+              : "Applying the change, please wait..."
+          }
         />
         <div className="w-full flex flex-col items-center gap-[16px]">
           <LoadingState />
@@ -99,7 +110,11 @@ export default function ConfirmEmailChangeView({
           </div>
           <AuthHeader
             title="Email address changed"
-            description={state.message}
+            description={
+              pendingAddress
+                ? `${state.message} You can sign in with ${pendingAddress} from now on.`
+                : state.message
+            }
           />
           <div className="flex flex-col gap-[16px] w-full">
             <AuthButton

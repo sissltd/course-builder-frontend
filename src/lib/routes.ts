@@ -5,6 +5,7 @@ export enum AuthRoute {
   FORGOT_PASSWORD = "/auth/forgot-password",
   RESET_PASSWORD = "/auth/reset-password",
   VERIFY_EMAIL = "/auth/verify-email",
+  CHANGE_EMAIL = "/change-email",
   CHANGE_EMAIL_CONFIRM = "/auth/change-email/confirm",
   ONBOARDING = "/auth/onboarding",
   ACCEPT_INVITATION = "/accept-invitation",
