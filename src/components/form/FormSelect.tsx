@@ -28,6 +28,18 @@ interface FormSelectOption {
   searchValue?: string;
 }
 
+// Radix throws while mounting an item with an empty value, so an option that
+// means "no selection" (`value: ""`) is rendered under this sentinel instead
+// and mapped back to `""` when it is picked.
+const EMPTY_OPTION_VALUE = "__empty_option__";
+const CLEAR_OPTION_VALUE = "none";
+
+const toItemValue = (value: string) =>
+  value === "" ? EMPTY_OPTION_VALUE : value;
+
+const fromItemValue = (value: string) =>
+  value === EMPTY_OPTION_VALUE ? "" : value;
+
 interface FormSelectProps {
   name: string;
   label?: string;
@@ -148,10 +160,10 @@ const SelectView = ({
     <Select
       value={fieldValue}
       onValueChange={(val) => {
-        if (val === "none") {
+        if (val === CLEAR_OPTION_VALUE) {
           fieldOnChange("");
         } else {
-          fieldOnChange(val);
+          fieldOnChange(fromItemValue(val));
         }
       }}
       disabled={disabled}
@@ -171,12 +183,12 @@ const SelectView = ({
       </SelectTrigger>
       <SelectContent position="popper" className="bg-white border border-[#F0F0F0] rounded-[16px] w-[var(--radix-select-trigger-width)] min-w-[176px] p-[8px] pl-[16px]">
         {clearable && (
-          <SelectItem value="none" className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
+          <SelectItem value={CLEAR_OPTION_VALUE} className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
             <span className="truncate min-w-0 w-full">{clearLabel}</span>
           </SelectItem>
         )}
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] [&_svg]:hidden">
+          <SelectItem key={option.value} value={toItemValue(option.value)} className="flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] [&_svg]:hidden">
             <span className="truncate min-w-0 w-full">{option.label}</span>
           </SelectItem>
         ))}
@@ -222,7 +234,7 @@ const SelectView = ({
               <CommandGroup>
                 {clearable && (
                   <CommandItem
-                    value="none"
+                    value={CLEAR_OPTION_VALUE}
                     onSelect={() => {
                       fieldOnChange("");
                       setOpen(false);
