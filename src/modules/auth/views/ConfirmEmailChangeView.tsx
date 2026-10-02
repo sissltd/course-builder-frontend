@@ -82,6 +82,13 @@ export default function ConfirmEmailChangeView({
     : getDashboardRoute(getWorkspaceForRole(session?.user?.role));
   const isSignedIn = Boolean(session?.user);
   const pendingAddress = email.trim();
+  /*
+   * The link is opened from the *new* inbox, so the common caller is signed
+   * out — the CTA still needs somewhere to go. A surviving session goes
+   * straight to its workspace; everyone else goes to log in with the address
+   * the change just moved onto the account.
+   */
+  const primaryDestination = isSignedIn ? workspace : AuthRoute.LOGIN;
 
   if (state.status === "confirming") {
     return (
@@ -117,22 +124,9 @@ export default function ConfirmEmailChangeView({
             }
           />
           <div className="flex flex-col gap-[16px] w-full">
-            <AuthButton
-              onClick={() =>
-                isSignedIn ? window.location.assign(workspace) : undefined
-              }
-              disabled={!isSignedIn}
-            >
+            <AuthButton onClick={() => window.location.assign(primaryDestination)}>
               {isSignedIn ? "Go to Dashboard" : "Go to Log In"}
             </AuthButton>
-            {!isSignedIn && (
-              <Link
-                href={AuthRoute.LOGIN}
-                className="text-center text-body-sm text-sd-grey-12 font-medium hover:underline"
-              >
-                Log in with your new email address
-              </Link>
-            )}
           </div>
         </div>
       </AuthLayout>
