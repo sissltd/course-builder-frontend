@@ -49,6 +49,10 @@ export const PERMISSION = {
   CREATORS_VIEW_PROFILE: "creators.view_profile",
   CREATORS_APPROVE_ACCOUNT: "creators.approve_account",
 
+  // Support
+  /** Gates `GET /support/requests/` — the admin support queue and its detail. */
+  SUPPORT_MANAGE_REQUESTS: "support.manage_requests",
+
   // Platform
   AUDIT_VIEW: "audit.view",
   MIE_VIEW_PIPELINE: "mie.view_pipeline",

@@ -9,6 +9,7 @@ import {
   Global,
   Graph,
   Hashtag,
+  I24Support,
   Home2,
   Notification,
   People,
@@ -119,6 +120,20 @@ export const ADMIN_ACCESS: readonly AdminAccessEntry[] = [
     icon: Wallet,
     group: "admin",
     permissions: [PERMISSION.CREATORS_VIEW_WALLET],
+  },
+  {
+    /*
+      Reads `GET /support/requests/`, which is gated on
+      `support.manage_requests`. The row also covers `/admin/support/[id]`,
+      because `adminAccessForPath` matches this prefix before it ever reaches a
+      sub-page entry — a request's detail page carries the same permission as
+      the queue it was opened from, so no `ADMIN_SUB_PAGE_ACCESS` row is needed.
+    */
+    name: "Support",
+    href: AdminRoute.SUPPORT,
+    icon: I24Support,
+    group: "admin",
+    permissions: [PERMISSION.SUPPORT_MANAGE_REQUESTS],
   },
 
   {

@@ -1,34 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { Call } from "iconsax-react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
-import { Country } from "country-state-city";
 import { FormInput } from "@/components/form/FormInput";
 import { FormSelect } from "@/components/form/FormSelect";
 import { FormTextarea } from "@/components/form/FormTextarea";
-
-const contactSchema = z.object({
-  firstName: z.string().min(2, "Enter your first name"),
-  lastName: z.string().min(2, "Enter your last name"),
-  email: z.string().email("Enter a valid email address"),
-  country: z.string().min(1, "Select your country/region"),
-  message: z.string().min(10, "Enter a message"),
-});
-
-type ContactFormData = z.infer<typeof contactSchema>;
-
-const COUNTRY_OPTIONS = Country.getAllCountries().map((country) => ({
-  label: country.name,
-  value: country.isoCode,
-}));
+import { COUNTRY_OPTIONS } from "@/lib/countries";
+import { normalizeApiError } from "@/lib/api/errors";
+import { useSendContactMessageMutation } from "@/modules/support/hooks";
+import { SUPPORT_FIELD_MAP } from "@/modules/support/types";
+import { describeContactError } from "@/modules/support/utils/errors";
+import {
+  contactSchema,
+  type ContactFormData,
+} from "@/modules/support/utils/validation";
 
 export function ContactHero() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendContactMessage, { isLoading: isSending }] =
+    useSendContactMessageMutation();
 
   const methods = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -42,14 +35,47 @@ export function ContactHero() {
     },
   });
 
-  const onSubmit = methods.handleSubmit(async () => {
-    setIsSubmitting(true);
+  /**
+   * `POST /support/contact/` — public and IP rate-limited, so a 429 says "come
+   * back later" rather than reading as a failed send. Everything else defers to
+   * the backend's own message, with per-field rejections filed against their
+   * inputs rather than repeated in a toast.
+   */
+  const onSubmit = methods.handleSubmit(async (values) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await sendContactMessage({
+        first_name: values.firstName.trim(),
+        last_name: values.lastName.trim(),
+        email: values.email.trim(),
+        // The endpoint takes the two-letter ISO code, which is what the shared
+        // country options already carry as their value.
+        country: values.country,
+        message: values.message.trim(),
+      }).unwrap();
+
       toast.success("Thanks for reaching out! We'll get back to you soon.");
       methods.reset();
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      const typed = err as Parameters<typeof normalizeApiError>[0];
+      const { fieldErrors } = normalizeApiError(typed, SUPPORT_FIELD_MAP);
+
+      if (fieldErrors.firstName) {
+        methods.setError("firstName", { message: fieldErrors.firstName });
+      }
+      if (fieldErrors.lastName) {
+        methods.setError("lastName", { message: fieldErrors.lastName });
+      }
+      if (fieldErrors.email) {
+        methods.setError("email", { message: fieldErrors.email });
+      }
+      if (fieldErrors.country) {
+        methods.setError("country", { message: fieldErrors.country });
+      }
+      if (fieldErrors.message) {
+        methods.setError("message", { message: fieldErrors.message });
+      }
+
+      toast.error(describeContactError(err).message);
     }
   });
 
@@ -112,10 +138,10 @@ export function ContactHero() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSending}
               className="flex h-[44px] w-full items-center justify-center rounded-[8px] bg-[#0063EF] text-[14px] tracking-[-0.28px] text-[#FDFDFD] transition-colors hover:bg-[#0057d4] disabled:opacity-60"
             >
-              {isSubmitting ? "Sending..." : "Submit"}
+              {isSending ? "Sending..." : "Submit"}
             </button>
           </form>
         </FormProvider>

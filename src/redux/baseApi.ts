@@ -33,6 +33,11 @@ const PUBLIC_ENDPOINTS = [
   "/auth/staff/invitations/accept",
   "/auth/login/google",
   "/auth/signup/google",
+  // Public contact form — reachable signed out, so it must not carry a bearer
+  // token. Spelled in full because the match below is `includes()`, not
+  // `startsWith()`: a bare "/support" would strip auth from the authenticated
+  // ticket/appeal/queue endpoints too.
+  "/support/contact/",
 ];
 
 const isPublicEndpoint = (url: string): boolean =>
@@ -292,6 +297,9 @@ export const BaseAPI = createApi({
     "CategoryPicker",
     "GenerationJob",
     "AchievementBadge",
+    "SupportRequest",
+    "SupportTicket",
+    "SupportAppeal",
   ],
   keepUnusedDataFor: 300,
   refetchOnMountOrArgChange: 30,

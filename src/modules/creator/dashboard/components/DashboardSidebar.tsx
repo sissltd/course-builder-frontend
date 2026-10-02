@@ -20,6 +20,7 @@ import {
   Setting2,
   Send,
   I24Support,
+  MessageQuestion,
   CloseCircle,
   Logout,
 } from "iconsax-react";
@@ -41,6 +42,9 @@ const bottomLinks = [
   { name: "Profile", href: CreatorRoute.PROFILE, icon: User },
   { name: "Settings", href: CreatorRoute.SETTINGS, icon: Setting2 },
   { name: "Help", href: CreatorRoute.HELP, icon: I24Support },
+  // Deliberately not gated on KYC or account status: a suspended creator can
+  // still sign in, and appealing is often why they are back.
+  { name: "Support", href: CreatorRoute.SUPPORT, icon: MessageQuestion },
 ];
 
 interface DashboardSidebarProps {
