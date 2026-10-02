@@ -21,6 +21,7 @@ const PUBLIC_ENDPOINTS = [
   "/auth/resend-verification",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/change-email/confirm",
   "/auth/token/refresh",
   "/auth/reviewer/login",
   "/auth/staff/invitations/accept",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { getDashboardRoute } from "@/modules/auth/utils/workspace";
+import { AuthRoute } from "@/lib/routes";
 
 const PUBLIC_PATHS = [
   "/",
@@ -16,6 +17,7 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  AuthRoute.CHANGE_EMAIL_CONFIRM,
   "/accept-invitation",
   "/auth/accept-invitation",
   "/auth/signup-google",
@@ -26,6 +28,11 @@ const isPublicPath = (pathname: string): boolean =>
   PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
+
+const AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN = [
+  "accept-invitation",
+  "change-email",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -49,7 +56,9 @@ export async function middleware(req: NextRequest) {
       isAuthenticated &&
       pathname.startsWith("/auth") &&
       !isGoogleHandoff &&
-      !pathname.includes("accept-invitation")
+      !AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN.some((segment) =>
+        pathname.includes(segment),
+      )
     ) {
       const dashboard = getDashboardRoute(token?.user?.workspace);
       console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);
@@ -77,7 +86,7 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    const loginUrl = new URL("/auth/login", req.nextUrl);
+    const loginUrl = new URL(AuthRoute.LOGIN, req.nextUrl);
     loginUrl.searchParams.set(
       "callbackUrl",
       `${pathname}${req.nextUrl.search}`,

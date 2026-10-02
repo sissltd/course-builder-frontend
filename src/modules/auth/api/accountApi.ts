@@ -6,6 +6,8 @@ import type {
   VerifyEmailRequest,
   VerifyEmailResponse,
   ChangePasswordRequest,
+  ChangeEmailRequest,
+  ConfirmChangeEmailRequest,
 } from "@/modules/auth/types/auth";
 
 export const accountApi = BaseAPI.injectEndpoints({
@@ -44,6 +46,24 @@ export const accountApi = BaseAPI.injectEndpoints({
         body,
       }),
     }),
+    changeEmail: builder.mutation<{ detail: string }, ChangeEmailRequest>({
+      query: (body) => ({
+        url: "/auth/change-email/",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["UserProfile"],
+    }),
+    confirmChangeEmail: builder.mutation<
+      { detail: string },
+      ConfirmChangeEmailRequest
+    >({
+      query: (body) => ({
+        url: "/auth/change-email/confirm/",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -52,4 +72,6 @@ export const {
   useVerifyEmailMutation,
   useResendVerificationMutation,
   useChangePasswordMutation,
+  useChangeEmailMutation,
+  useConfirmChangeEmailMutation,
 } = accountApi;

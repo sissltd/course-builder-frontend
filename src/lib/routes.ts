@@ -5,6 +5,7 @@ export enum AuthRoute {
   FORGOT_PASSWORD = "/auth/forgot-password",
   RESET_PASSWORD = "/auth/reset-password",
   VERIFY_EMAIL = "/auth/verify-email",
+  CHANGE_EMAIL_CONFIRM = "/auth/change-email/confirm",
   ONBOARDING = "/auth/onboarding",
   ACCEPT_INVITATION = "/accept-invitation",
   SIGNUP_GOOGLE = "/auth/signup-google",
@@ -64,6 +65,7 @@ export enum CreatorRoute {
 
 export enum ReviewerRoute {
   DASHBOARD = "/reviewer/dashboard",
+  HELP = "/reviewer/help",
   PENDING = "/reviewer/pending",
   APPROVED_COURSES = "/reviewer/approved-courses",
   IN_REVIEW = "/reviewer/in-review",

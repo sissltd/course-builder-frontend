@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Timer1 } from "iconsax-react";
 import { ReviewerSettingsTabNav, ReviewerSettingsTab } from "./components/ReviewerSettingsTabNav";
 import { AccountTab } from "./components/AccountTab";
 import { AvailabilityTab } from "./components/AvailabilityTab";
@@ -36,16 +35,12 @@ export const ReviewerSettingsView = () => {
 
   return (
     <div className="flex h-full w-full flex-col">
-
-
-      <div className="flex min-h-[calc(100vh-140px)] w-full flex-1 overflow-hidden">
-        {/* Sidebar Nav */}
-        <div className="w-full shrink-0 border-r border-sd-grey-3 px-[16px] py-[24px] md:w-[324px]">
+      <div className="flex min-h-[calc(100vh-140px)] w-full min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="w-full min-w-0 shrink-0 border-b border-sd-grey-3 py-[12px] md:w-[324px] md:border-b-0 md:border-r md:px-[16px] md:py-[24px]">
           <ReviewerSettingsTabNav active={activeTab} onChange={setActiveTab} />
         </div>
-        
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-auto px-[40px] py-[40px]">
+
+        <div className="min-w-0 flex-1 overflow-auto px-[4px] py-[24px] sm:px-[16px] md:px-[40px] md:py-[40px]">
           <div className="w-full max-w-[640px]">
             {TAB_CONTENT[activeTab]}
           </div>

@@ -138,6 +138,9 @@ const REVIEWER_SUB_PAGE_ACCESS: readonly {
   permissions?: readonly Permission[];
 }[] = [
   {
+    prefix: ReviewerRoute.HELP,
+  },
+  {
     prefix: ReviewerRoute.REVIEW_QUEUE,
     permissions: QUEUE_PERMISSIONS,
   },

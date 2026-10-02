@@ -141,6 +141,15 @@ export interface ChangePasswordRequest {
   new_password: string;
 }
 
+export interface ChangeEmailRequest {
+  new_email: string;
+  password: string;
+}
+
+export interface ConfirmChangeEmailRequest {
+  token: string;
+}
+
 export interface ProfileCategory {
   id: string;
   name: string;

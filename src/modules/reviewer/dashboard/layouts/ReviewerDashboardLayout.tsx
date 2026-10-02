@@ -15,6 +15,7 @@ import {
 
 const titleMap: Record<string, string> = {
   [ReviewerRoute.DASHBOARD]: "REVIEWER DASHBOARD",
+  [ReviewerRoute.HELP]: "HELP AND SUPPORT",
   [ReviewerRoute.PENDING]: "PENDING",
   [ReviewerRoute.APPROVED_COURSES]: "APPROVED",
   [ReviewerRoute.IN_REVIEW]: "IN REVIEW",

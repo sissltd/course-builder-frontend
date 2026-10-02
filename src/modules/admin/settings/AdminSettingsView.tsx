@@ -41,11 +41,11 @@ export const AdminSettingsView = () => {
   }, [can, activeTab]);
 
   return (
-    <div className="flex min-h-[calc(100vh-132px)] w-full overflow-hidden">
-      <div className="w-full shrink-0 border-r border-sd-grey-3 px-[16px] py-[20px] md:w-[324px]">
+    <div className="flex min-h-[calc(100vh-132px)] w-full min-w-0 flex-col overflow-hidden md:flex-row">
+      <div className="w-full min-w-0 shrink-0 border-b border-sd-grey-3 py-[12px] md:w-[324px] md:border-b-0 md:border-r md:px-[16px] md:py-[20px]">
         <AdminSettingsTabNav active={resolvedTab} onChange={setActiveTab} />
       </div>
-      <div className="flex-1 overflow-auto px-[34px] py-[40px]">
+      <div className="min-w-0 flex-1 overflow-auto px-[4px] py-[24px] sm:px-[16px] md:px-[34px] md:py-[40px]">
         <div className={resolvedTab === "permissions" ? "w-full max-w-[820px]" : resolvedTab === "achievement-awards" ? "w-full max-w-[760px]" : "w-full max-w-[640px]"}>
           {TAB_CONTENT[resolvedTab]}
         </div>

@@ -34,6 +34,7 @@ import { useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
 import { useGetNotificationsQuery } from "@/redux/slices/notificationApi";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
 
 interface DashboardHeaderProps {
   onToggleSidebar?: () => void;
@@ -101,21 +102,13 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
         {/* Mobile: search icon + more popover */}
         <div className="flex md:hidden items-center gap-[8px]">
           {isSearchExpanded ? (
-            <div className="flex items-center gap-2 px-[12px] py-[6px] bg-[#FCFDFF] border border-[#0063EF] rounded-full h-[36px] w-[200px] transition-all duration-300 animate-in fade-in slide-in-from-right-2">
-              <SearchNormal1 size={18} color="#606060" variant="Linear" />
-              <input 
-                type="text" 
-                placeholder="Courses" 
-                autoFocus
-                className="w-full bg-transparent outline-none text-[14px] text-[#202020] placeholder:text-[#B6B6B6]"
-              />
-              <button 
-                onClick={() => setIsSearchExpanded(false)}
-                className="text-[#606060] hover:text-[#202020] transition-colors flex items-center justify-center cursor-pointer"
-              >
-                <span className="text-[20px] leading-none">&times;</span>
-              </button>
-            </div>
+            <GlobalSearch
+              workspace="creator"
+              placeholder="Search courses"
+              autoFocus
+              onClose={() => setIsSearchExpanded(false)}
+              className="w-[200px] animate-in fade-in slide-in-from-right-2"
+            />
           ) : (
             <button 
               onClick={() => setIsSearchExpanded(true)}
@@ -187,21 +180,13 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
           {/* Search & Notifications */}
           <div className="flex items-center gap-[12px]">
             {isSearchExpanded ? (
-              <div className="flex items-center gap-2 px-[12px] py-[6px] bg-[#FCFDFF] border border-[#0063EF] rounded-full h-[36px] w-[240px] transition-all duration-300 animate-in fade-in slide-in-from-right-2">
-                <SearchNormal1 size={18} color="#606060" variant="Linear" />
-                <input 
-                  type="text" 
-                  placeholder="Courses" 
-                  autoFocus
-                  className="w-full bg-transparent outline-none text-[14px] text-[#202020] placeholder:text-[#B6B6B6]"
-                />
-                <button 
-                  onClick={() => setIsSearchExpanded(false)}
-                  className="text-[#606060] hover:text-[#202020] transition-colors flex items-center justify-center cursor-pointer"
-                >
-                  <span className="text-[20px] leading-none">&times;</span>
-                </button>
-              </div>
+              <GlobalSearch
+                workspace="creator"
+                placeholder="Search courses"
+                autoFocus
+                onClose={() => setIsSearchExpanded(false)}
+                className="w-[240px] animate-in fade-in slide-in-from-right-2"
+              />
             ) : (
               <button 
                 onClick={() => setIsSearchExpanded(true)}
