@@ -86,6 +86,7 @@ export enum CreatorRoute {
 
 export enum ReviewerRoute {
   DASHBOARD = "/reviewer/dashboard",
+  HELP = "/reviewer/help",
   PENDING = "/reviewer/pending",
   APPROVED_COURSES = "/reviewer/approved-courses",
   IN_REVIEW = "/reviewer/in-review",

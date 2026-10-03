@@ -17,7 +17,7 @@ const PUBLIC_PATHS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
-  "/auth/change-email/confirm",
+  AuthRoute.CHANGE_EMAIL_CONFIRM,
   AuthRoute.CHANGE_EMAIL,
   "/accept-invitation",
   "/auth/accept-invitation",

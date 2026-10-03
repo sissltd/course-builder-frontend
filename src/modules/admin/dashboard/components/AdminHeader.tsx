@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "next-auth/react";
 import { AdminRoute } from "@/lib/routes";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
 
 interface AdminHeaderProps {
   title?: string;
@@ -52,21 +53,13 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
       </button>
 
       {isSearchOpen ? (
-        <div className="flex-1 flex items-center gap-[8px] bg-[#FCFDFF] border border-[#0063EF] rounded-full px-[12px] py-[8px] h-[36px] md:hidden animate-in fade-in slide-in-from-right-2">
-          <SearchNormal1 variant="Linear" size={18} color="#606060" />
-          <input
-            type="text"
-            placeholder="Search admin"
-            autoFocus
-            className="w-full bg-transparent outline-none text-[14px] text-[#202020] placeholder:text-[#B6B6B6]"
-          />
-          <button
-            onClick={() => setIsSearchOpen(false)}
-            className="text-[#606060] hover:text-[#202020] transition-colors cursor-pointer shrink-0 text-[20px] leading-none"
-          >
-            &times;
-          </button>
-        </div>
+        <GlobalSearch
+          workspace="admin"
+          placeholder="Search admin"
+          autoFocus
+          onClose={() => setIsSearchOpen(false)}
+          className="flex-1 animate-in fade-in slide-in-from-right-2 md:hidden"
+        />
       ) : (
         <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px] min-w-[100px]">
           {title}
@@ -75,24 +68,24 @@ export const AdminHeader = ({ title, onToggleSidebar }: AdminHeaderProps) => {
 
       {/* Desktop: center search bar */}
       <div className="hidden md:flex flex-1 justify-center">
-        <div className="flex items-center gap-[8px] bg-[#FCFDFF] border border-[#F0F0F0] rounded-full px-[12px] py-[8px] h-[36px] w-[264px]">
-          <SearchNormal1 variant="Linear" size={18} color="#606060" />
-          <input
-            type="text"
-            placeholder="Search admin"
-            className="w-full bg-transparent outline-none text-[14px] text-[#202020] placeholder:text-[#B6B6B6]"
-          />
-        </div>
+        <GlobalSearch
+          workspace="admin"
+          placeholder="Search admin"
+          className="w-[264px]"
+        />
       </div>
 
       {/* Mobile: collapsed actions */}
       <div className="flex md:hidden items-center gap-[8px] ml-auto">
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          className="p-2 hover:bg-sd-grey-2 rounded-lg transition-colors cursor-pointer"
-        >
-          <SearchNormal1 variant="Linear" size={20} color="#202020" />
-        </button>
+        {!isSearchOpen && (
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-2 hover:bg-sd-grey-2 rounded-lg transition-colors cursor-pointer"
+            aria-label="Open search"
+          >
+            <SearchNormal1 variant="Linear" size={20} color="#202020" />
+          </button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -7,7 +7,7 @@ import { FormSelect } from "@/components/form/FormSelect";
 import { FormPhoneInput } from "@/components/form/FormPhoneInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash, ArrowDown2 } from "iconsax-react";
+import { Trash } from "iconsax-react";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { Country as CountryInfo, State } from "country-state-city";
 import {
@@ -15,6 +15,7 @@ import {
   isSupportedCountry,
 } from "react-phone-number-input";
 import { normalizeApiError } from "@/lib/api/errors";
+import { getTimezoneOptions } from "@/lib/timezones";
 import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 import {
   useGetMyProfileQuery,
@@ -140,6 +141,11 @@ const AccountForm = ({ profile }: { profile: UserProfile }) => {
         searchValue: state.name,
       })),
     [country],
+  );
+
+  const timezoneOptions = React.useMemo(
+    () => getTimezoneOptions(profile.timezone),
+    [profile.timezone],
   );
 
   /**
@@ -313,7 +319,7 @@ const AccountForm = ({ profile }: { profile: UserProfile }) => {
               </span>
             </div>
             <div className="flex items-center justify-center rounded-[8px] border border-sd-grey-4 bg-sd-grey-1 px-[16px] py-[6px] text-[14px] font-normal text-sd-grey-11">
-              {profile.role ?? "—"}
+              {profile.role_label || profile.access_role?.name || profile.role}
             </div>
           </div>
 
@@ -384,17 +390,13 @@ const AccountForm = ({ profile }: { profile: UserProfile }) => {
             }}
           />
 
-          <FormInput
+          <FormSelect
             name="timezone"
             label="Timezone"
-            rightElement={
-              <ArrowDown2
-                size={18}
-                variant="Linear"
-                color="var(--sd-grey-11)"
-                className="pointer-events-none"
-              />
-            }
+            placeholder="Select timezone"
+            searchable
+            searchPlaceholder="Search city, country, or timezone"
+            options={timezoneOptions}
           />
 
           <div className="flex justify-end">

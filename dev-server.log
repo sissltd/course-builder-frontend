@@ -187,7 +187,7 @@ redux-persist failed to create sync storage. falling back to noop storage.
  POST /api/auth/_log 404 in 392ms (next.js: 44ms, proxy.ts: 20ms, application-code: 328ms)
  POST /api/auth/_log 404 in 196ms (next.js: 70ms, proxy.ts: 13ms, application-code: 113ms)
 [browser] Image with src "/assets/dashboard/landing-loader.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -196,7 +196,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -214,7 +214,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -223,7 +223,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -273,7 +273,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -282,7 +282,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -300,7 +300,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -309,7 +309,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -366,7 +366,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -375,7 +375,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -401,7 +401,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -410,7 +410,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -464,7 +464,7 @@ Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (f
 }
 [Middleware] public path, next
 [browser] Image with src "/images/products/contact/hero-vector.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -473,7 +473,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -492,7 +492,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 301ms (next.js: 36ms, proxy.ts: 16ms, application-code: 249ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -501,7 +501,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -551,7 +551,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 161ms (next.js: 36ms, proxy.ts: 14ms, application-code: 112ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -560,7 +560,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -587,7 +587,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 [Middleware] public path, next
  GET /api/auth/session 404 in 253ms (next.js: 35ms, proxy.ts: 14ms, application-code: 204ms)
  POST /api/auth/_log 404 in 140ms (next.js: 44ms, proxy.ts: 17ms, application-code: 79ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -596,7 +596,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -637,7 +637,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -661,7 +661,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -685,7 +685,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -712,7 +712,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
  GET /images/products/creators/SoluDesks-logo.png 404 in 293ms (next.js: 119ms, application-code: 174ms)
 ⨯ The requested resource isn't a valid image for /images/products/creators/SoluDesks-logo.png received null
  GET /api/auth/session 404 in 619ms (next.js: 29ms, proxy.ts: 8ms, application-code: 582ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -721,7 +721,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -748,7 +748,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 [Middleware] public path, next
 [browser] Image with src "/images/products/creators/topics-bg.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
  GET /api/auth/session 404 in 208ms (next.js: 57ms, proxy.ts: 10ms, application-code: 140ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -757,7 +757,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -822,7 +822,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -831,7 +831,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -857,7 +857,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -866,7 +866,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -917,7 +917,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 122ms (next.js: 25ms, proxy.ts: 6ms, application-code: 91ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -926,7 +926,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -944,7 +944,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -953,7 +953,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1010,7 +1010,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1019,7 +1019,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1038,7 +1038,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 145ms (next.js: 24ms, proxy.ts: 7ms, application-code: 114ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1047,7 +1047,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1105,7 +1105,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -1129,7 +1129,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -1153,7 +1153,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -1194,7 +1194,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1203,7 +1203,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1229,7 +1229,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1238,7 +1238,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1297,7 +1297,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1306,7 +1306,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1325,7 +1325,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 136ms (next.js: 28ms, proxy.ts: 15ms, application-code: 93ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1334,7 +1334,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1385,7 +1385,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 265ms (next.js: 36ms, proxy.ts: 17ms, application-code: 212ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1394,7 +1394,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1420,7 +1420,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 145ms (next.js: 31ms, proxy.ts: 9ms, application-code: 105ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1429,7 +1429,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1487,7 +1487,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1496,7 +1496,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1515,7 +1515,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 144ms (next.js: 31ms, proxy.ts: 10ms, application-code: 103ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1524,7 +1524,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1582,7 +1582,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1591,7 +1591,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1610,7 +1610,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 164ms (next.js: 25ms, proxy.ts: 8ms, application-code: 130ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1619,7 +1619,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1677,7 +1677,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1686,7 +1686,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1705,7 +1705,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 130ms (next.js: 27ms, proxy.ts: 9ms, application-code: 94ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1714,7 +1714,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1765,7 +1765,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 227ms (next.js: 34ms, proxy.ts: 10ms, application-code: 183ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1774,7 +1774,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1800,7 +1800,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 267ms (next.js: 36ms, proxy.ts: 8ms, application-code: 223ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1809,7 +1809,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1861,7 +1861,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 [Middleware] public path, next
  GET /api/auth/session 404 in 276ms (next.js: 39ms, proxy.ts: 13ms, application-code: 224ms)
  GET /api/auth/session 404 in 130ms (next.js: 29ms, proxy.ts: 10ms, application-code: 91ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1870,7 +1870,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1895,7 +1895,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1904,7 +1904,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1962,7 +1962,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1971,7 +1971,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -1990,7 +1990,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 208ms (next.js: 25ms, proxy.ts: 6ms, application-code: 177ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -1999,7 +1999,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2057,7 +2057,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2066,7 +2066,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2085,7 +2085,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 143ms (next.js: 25ms, proxy.ts: 10ms, application-code: 108ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2094,7 +2094,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2175,7 +2175,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: true
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2184,7 +2184,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2203,7 +2203,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 282ms (next.js: 51ms, proxy.ts: 18ms, application-code: 213ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2212,7 +2212,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2326,7 +2326,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2335,7 +2335,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2353,7 +2353,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2362,7 +2362,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2415,7 +2415,7 @@ Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (f
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2424,7 +2424,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2443,7 +2443,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 320ms (next.js: 35ms, proxy.ts: 33ms, application-code: 252ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2452,7 +2452,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2510,7 +2510,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2519,7 +2519,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2538,7 +2538,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 260ms (next.js: 52ms, proxy.ts: 20ms, application-code: 187ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2547,7 +2547,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2612,7 +2612,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2621,7 +2621,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2639,7 +2639,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2648,7 +2648,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2683,7 +2683,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -2707,7 +2707,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -2731,7 +2731,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -2765,7 +2765,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 369ms (next.js: 30ms, proxy.ts: 10ms, application-code: 329ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2774,7 +2774,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2802,7 +2802,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 [Middleware] public path, next
  GET /api/auth/session 404 in 210ms (next.js: 63ms, proxy.ts: 9ms, application-code: 139ms)
 [browser] Image with src "/images/products/creators/topics-ellipse.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2811,7 +2811,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2876,7 +2876,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2885,7 +2885,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2903,7 +2903,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2912,7 +2912,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2962,7 +2962,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -2971,7 +2971,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -2997,7 +2997,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3006,7 +3006,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3056,7 +3056,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3065,7 +3065,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3084,7 +3084,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 128ms (next.js: 26ms, proxy.ts: 7ms, application-code: 95ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3093,7 +3093,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3142,7 +3142,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Benjamin Ben-benajmin2sq@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -3166,7 +3166,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -3191,7 +3191,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at performWorkOnRoot (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9159:25)
     at performWorkOnRootViaSchedulerTask (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
-[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 
+[browser] Encountered two children with the same key, `Osaite Emmanuel-emmanuelosaite@gmail.com`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4104:33)
     at runWithFiberInDEV (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
     at warnOnInvalidKey (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4103:21)
@@ -3233,7 +3233,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3242,7 +3242,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3268,7 +3268,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3277,7 +3277,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3329,7 +3329,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 [Middleware] public path, next
  GET /api/auth/session 404 in 192ms (next.js: 26ms, proxy.ts: 19ms, application-code: 147ms)
  GET /api/auth/session 404 in 94ms (next.js: 21ms, proxy.ts: 6ms, application-code: 67ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3338,7 +3338,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3370,7 +3370,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3379,7 +3379,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3438,7 +3438,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 166ms (next.js: 50ms, proxy.ts: 16ms, application-code: 99ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3447,7 +3447,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3472,7 +3472,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3481,7 +3481,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3532,7 +3532,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3541,7 +3541,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3560,7 +3560,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 481ms (next.js: 72ms, proxy.ts: 9ms, application-code: 400ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3569,7 +3569,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3631,7 +3631,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3640,7 +3640,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3658,7 +3658,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3667,7 +3667,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3726,7 +3726,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
 }
 [Middleware] public path, next
  GET /api/auth/session 404 in 108ms (next.js: 23ms, proxy.ts: 6ms, application-code: 80ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3735,7 +3735,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3760,7 +3760,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3769,7 +3769,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3820,7 +3820,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3829,7 +3829,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3848,7 +3848,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
  GET /api/auth/session 404 in 145ms (next.js: 28ms, proxy.ts: 9ms, application-code: 108ms)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3857,7 +3857,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3923,7 +3923,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3932,7 +3932,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -3950,7 +3950,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -3959,7 +3959,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4010,7 +4010,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4019,7 +4019,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4045,7 +4045,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4054,7 +4054,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4113,7 +4113,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4122,7 +4122,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4140,7 +4140,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4149,7 +4149,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4200,7 +4200,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4209,7 +4209,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4235,7 +4235,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4244,7 +4244,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4303,7 +4303,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   hasUser: false
 }
 [Middleware] public path, next
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4312,7 +4312,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)
@@ -4330,7 +4330,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
     at Generator.throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12239:29)
     at asyncGeneratorStep (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12551:21)
     at _throw (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12566:17) (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
-[browser] [next-auth][error][CLIENT_FETCH_ERROR] 
+[browser] [next-auth][error][CLIENT_FETCH_ERROR]
 https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCTYPE "... is not valid JSON {
   error: {
     message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
@@ -4339,7 +4339,7 @@ https://next-auth.js.org/errors#client_fetch_error Unexpected token '<', "<!DOCT
   },
   message: [32m`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`[39m,
   url: [32m'/api/auth/session'[39m
-} 
+}
     at Object.error (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13119:17)
     at _callee$ (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:13152:47)
     at <unknown> (file://C:/Users/Dominion Banjo/Desktop/Work/CourseBuilder/.teamshare-worktrees/task-55441da8-b41f/.next/dev/static/chunks/node_modules_0m-5io9._.js:12466:26)

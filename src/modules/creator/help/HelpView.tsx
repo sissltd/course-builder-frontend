@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SettingsLayout } from "@/components/shared/SettingsLayout";
 import { FullscreenLayout } from "@/components/shared/FullscreenLayout";
-import { CreatorRoute } from "@/lib/routes";
 import {
   ContactSupportModal,
   CreateTicketModal,
@@ -20,6 +19,7 @@ import { KnowledgeBaseCategoryPage } from "./components/KnowledgeBaseCategoryPag
 import { ArticleDetailPage } from "./components/ArticleDetailPage";
 import { AppealFormPage } from "./components/AppealFormPage";
 import { AppealSuccessModal } from "./components/AppealSuccessModal";
+import { CreatorRoute, ReviewerRoute } from "@/lib/routes";
 
 const categoryLabels: Record<KnowledgeBaseCategory, string> = {
   "course-creation": "Course creation",
@@ -31,7 +31,11 @@ const categoryLabels: Record<KnowledgeBaseCategory, string> = {
   onboarding: "Onboarding & getting started",
 };
 
-export const HelpView = () => {
+interface HelpViewProps {
+  baseRoute?: CreatorRoute.HELP | ReviewerRoute.HELP;
+}
+
+export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -57,7 +61,7 @@ export const HelpView = () => {
         params.set(key, value);
       }
     });
-    router.push(`${CreatorRoute.HELP}?${params.toString()}`);
+    router.push(`${baseRoute}?${params.toString()}`);
   };
 
   const handleTabChange = (newTab: HelpTab) => {

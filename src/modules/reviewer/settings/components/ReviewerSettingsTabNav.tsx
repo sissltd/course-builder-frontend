@@ -34,7 +34,7 @@ interface ReviewerSettingsTabNavProps {
 }
 
 export const ReviewerSettingsTabNav = ({ active, onChange }: ReviewerSettingsTabNavProps) => (
-  <nav className="flex w-full flex-col gap-[6px]">
+  <nav className="no-scrollbar flex w-full gap-[6px] overflow-x-auto px-[4px] md:flex-col md:overflow-visible md:px-0">
     {tabs.map(({ id, label, Icon }) => {
       const isActive = active === id;
       return (
@@ -43,7 +43,7 @@ export const ReviewerSettingsTabNav = ({ active, onChange }: ReviewerSettingsTab
           type="button"
           onClick={() => onChange(id)}
           className={cn(
-            "flex h-[44px] w-full items-center gap-[12px] rounded-[10px] px-[14px] text-left transition-colors cursor-pointer",
+            "flex h-[44px] w-auto shrink-0 items-center gap-[8px] rounded-[10px] px-[12px] text-left transition-colors cursor-pointer md:w-full md:gap-[12px] md:px-[14px]",
             isActive ? "bg-sd-grey-3" : "hover:bg-sd-grey-2"
           )}
         >

@@ -46,10 +46,6 @@ export const accountApi = BaseAPI.injectEndpoints({
         body,
       }),
     }),
-    /**
-     * Only *requests* the change: the confirmation link goes to `new_email` and
-     * the session keeps working on the old address until that link is opened.
-     */
     changeEmail: builder.mutation<{ detail: string }, ChangeEmailRequest>({
       query: (body) => ({
         url: "/auth/change-email/",
@@ -58,15 +54,6 @@ export const accountApi = BaseAPI.injectEndpoints({
       }),
       invalidatesTags: ["UserProfile"],
     }),
-    /**
-     * The token in the body is the credential here, so this is callable
-     * signed-out — see `PUBLIC_ENDPOINTS` in the base query, which keeps the
-     * bearer header off this call.
-     *
-     * This is the call that actually moves the address, so it invalidates the
-     * cached profile; otherwise a signed-in caller keeps reading the old email
-     * out of Redux until they hard-refresh.
-     */
     confirmChangeEmail: builder.mutation<
       { detail: string },
       ConfirmChangeEmailRequest

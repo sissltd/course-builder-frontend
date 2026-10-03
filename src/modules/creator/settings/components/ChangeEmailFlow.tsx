@@ -7,7 +7,6 @@ import { z } from "zod";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { DirectInbox, TickCircle } from "iconsax-react";
-
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
@@ -27,18 +26,11 @@ type ChangeEmailFormData = z.infer<typeof changeEmailSchema>;
 interface ChangeEmailFlowProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Fired once the confirmation link has actually been sent. */
   onSuccess?: () => void;
 }
 
 type Stage = "form" | "sent";
 
-/**
- * Two stages, because that is all the API does. `POST /auth/change-email/`
- * proves identity with the current password and mails a confirmation link; the
- * email is not applied until that link is opened. There is deliberately no
- * "enter the code we sent you" step — the token travels in the link.
- */
 export const ChangeEmailFlow = ({
   isOpen,
   onOpenChange,
@@ -48,7 +40,6 @@ export const ChangeEmailFlow = ({
   const [changeEmail, { isLoading }] = useChangeEmailMutation();
   const [stage, setStage] = useState<Stage>("form");
   const [sentTo, setSentTo] = useState("");
-
   const currentEmail = session?.user?.email ?? "";
 
   const methods = useForm<ChangeEmailFormData>({
@@ -56,7 +47,6 @@ export const ChangeEmailFlow = ({
     mode: "onBlur",
     defaultValues: { new_email: "", password: "" },
   });
-
   const { handleSubmit, reset, setError } = methods;
 
   const close = () => {
@@ -67,7 +57,9 @@ export const ChangeEmailFlow = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    if (data.new_email.trim().toLowerCase() === currentEmail.toLowerCase()) {
+    const newEmail = data.new_email.trim();
+
+    if (newEmail.toLowerCase() === currentEmail.toLowerCase()) {
       setError("new_email", {
         message: "This is already your current email address.",
       });
@@ -75,14 +67,16 @@ export const ChangeEmailFlow = ({
     }
 
     try {
-      const { detail } = await changeEmail({
-        new_email: data.new_email.trim(),
+      const result = await changeEmail({
+        new_email: newEmail,
         password: data.password,
       }).unwrap();
 
-      setSentTo(data.new_email.trim());
+      setSentTo(newEmail);
       setStage("sent");
-      toast.success(detail || "Confirmation link sent — check your new inbox.");
+      toast.success(
+        result.detail || "Confirmation link sent — check your new inbox.",
+      );
       onSuccess?.();
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(error as never);
@@ -108,7 +102,7 @@ export const ChangeEmailFlow = ({
         showCloseButton={false}
       >
         <FormProvider {...methods}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-[20px] mt-[8px]">
+          <form onSubmit={onSubmit} className="mt-[8px] flex flex-col gap-[20px]">
             <FormInput
               name="new_email"
               label="New email address"
@@ -132,7 +126,8 @@ export const ChangeEmailFlow = ({
               <Button
                 type="button"
                 variant="app-outline"
-                className="flex-1 h-[44px]"
+                className="h-[44px] flex-1"
+                disabled={isLoading}
                 onClick={close}
               >
                 Cancel
@@ -140,7 +135,7 @@ export const ChangeEmailFlow = ({
               <Button
                 type="submit"
                 variant="app-primary"
-                className="flex-1 h-[44px]"
+                className="h-[44px] flex-1"
                 isLoading={isLoading}
               >
                 Send confirmation link
@@ -158,38 +153,40 @@ export const ChangeEmailFlow = ({
         title="Check your new inbox"
         showCloseButton={false}
       >
-        <div className="flex flex-col items-center text-center gap-[24px] py-[8px]">
-          <div className="size-[72px] rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#0063EF]">
+        <div className="flex flex-col items-center gap-[24px] py-[8px] text-center">
+          <div className="flex size-[72px] items-center justify-center rounded-full bg-[#EBF3FF] text-[#0063EF]">
             <DirectInbox size={36} variant="Bold" color="currentColor" />
           </div>
           <div className="flex flex-col gap-[8px]">
             <p className="text-[20px] font-semibold text-[#202020]">
               Confirmation link sent
             </p>
-            <p className="text-[14px] text-[#606060] leading-[20px]">
+            <p className="text-[14px] leading-[20px] text-[#606060]">
               {sentTo
                 ? `Open the link we sent to ${sentTo} to finish changing your email address.`
                 : "Open the link we sent to finish changing your email address."}
             </p>
-            <p className="text-[14px] text-[#606060] leading-[20px]">
+            <p className="text-[14px] leading-[20px] text-[#606060]">
               Your current email still works until the link is opened.
             </p>
           </div>
-          <div className="flex gap-[12px] w-full">
+          <div className="flex w-full gap-[12px]">
             <Button
+              type="button"
               variant="app-outline"
-              className="flex-1 h-[44px]"
-              onClick={() => {
-                setStage("form");
-              }}
+              className="h-[44px] flex-1"
+              onClick={() => setStage("form")}
             >
               Use a different address
             </Button>
             <Button
+              type="button"
               variant="app-primary"
-              className="flex-1 h-[44px]"
+              className="h-[44px] flex-1"
               onClick={close}
-              leftIcon={<TickCircle size={18} variant="Bold" color="currentColor" />}
+              leftIcon={
+                <TickCircle size={18} variant="Bold" color="currentColor" />
+              }
             >
               Done
             </Button>

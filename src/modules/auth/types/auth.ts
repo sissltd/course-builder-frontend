@@ -187,23 +187,11 @@ export interface ChangePasswordRequest {
   new_password: string;
 }
 
-/**
- * Starting a two-step email change. Identity is proven with the account's
- * *current* password, then a confirmation link goes to `new_email` — nothing
- * about the account changes on this call alone.
- *
- * Both fields are required: a body of `{ new_email }` would 400.
- */
 export interface ChangeEmailRequest {
   new_email: string;
   password: string;
 }
 
-/**
- * Applying a pending email change. The token is the only credential, so this
- * works for a signed-out caller opening the link from their new inbox. The
- * token is single-use — replaying this fails.
- */
 export interface ConfirmChangeEmailRequest {
   token: string;
 }

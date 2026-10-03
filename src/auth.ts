@@ -345,4 +345,3 @@ async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
     inFlightRefreshes.delete(refreshToken);
   }
 }
-
