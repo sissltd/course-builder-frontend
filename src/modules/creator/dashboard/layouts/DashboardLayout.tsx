@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
@@ -13,8 +13,17 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [renderedPath, setRenderedPath] = useState("");
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Navigating away should leave the mobile sidebar closed. Adjusting during
+  // render (rather than in an effect) avoids a frame where the new route is
+  // already showing with the old open sidebar.
+  if (renderedPath !== pathname) {
+    setRenderedPath(pathname);
+    setSidebarOpen(false);
+  }
 
   const isKyc = pathname === CreatorRoute.KYC;
   const isBuilder = pathname.startsWith(CreatorRoute.COURSES_BUILDER);
@@ -26,10 +35,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       searchParams.get("view") === "appeal" ||
       searchParams.get("view") === "appeal-success");
   const hideSidebarAndHeader = isKyc || isBuilder || isCreateCourse || isHelpSubPage;
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
 
   return (
     <div

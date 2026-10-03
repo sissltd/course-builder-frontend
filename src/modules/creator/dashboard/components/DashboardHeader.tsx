@@ -28,11 +28,9 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { CreatorRoute } from "@/lib/routes";
-import { signOut, useSession } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { CreatorRoute, WebsiteRoute } from "@/lib/routes";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { useGetNotificationsQuery } from "@/redux/slices/notificationApi";
 import { GlobalSearch } from "@/components/shared/GlobalSearch";
 
@@ -52,7 +50,6 @@ function formatDateTime(date: Date): string {
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [now, setNow] = useState(() => new Date());
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -71,10 +68,9 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
       user?.email ?? "user",
     )}`;
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   const { data: notificationsResponse } = useGetNotificationsQuery({ size: 5 });
@@ -165,14 +161,20 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-[180px] bg-white border border-[#F0F0F0] rounded-[16px] p-[8px]  mt-[8px]" align="start">
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Documentation</span>
+              <DropdownMenuItem asChild>
+                <Link href={`${CreatorRoute.HELP}?tab=knowledge-base`} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Documentation</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Help Center</span>
+              <DropdownMenuItem asChild>
+                <Link href={`${CreatorRoute.HELP}?tab=support`} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Help Center</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <span>Send Feedback</span>
+              <DropdownMenuItem asChild>
+                <Link href={WebsiteRoute.CONTACT} className="flex items-center gap-[8px] p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
+                  <span>Send Feedback</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

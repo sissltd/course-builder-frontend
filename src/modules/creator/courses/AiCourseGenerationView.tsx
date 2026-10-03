@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -37,6 +37,11 @@ import {
 } from "./types/aiGeneration";
 import { TopicStatus } from "./types/topic";
 import { normalizeApiError } from "@/lib/api/errors";
+import {
+  CREATE_COURSE_STEP_PARAM,
+  resolveReturnHref,
+  RETURN_FROM_PARAM,
+} from "./utils/createCourseNavigation";
 import { cn } from "@/lib/utils";
 import {
   TickCircle,
@@ -203,6 +208,20 @@ function GenerationError({ job, onRetry, onBack }: GenerationErrorProps) {
 
 export default function AiCourseGenerationView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // The create-course wizard hands over an explicit in-app return target so
+  // Back lands on the method selection step instead of remounting step 0.
+  const returnHref = resolveReturnHref({
+    from: searchParams.get(RETURN_FROM_PARAM),
+    step: searchParams.get(CREATE_COURSE_STEP_PARAM),
+  });
+  const handleWizardBack = useCallback(() => {
+    if (returnHref) {
+      router.push(returnHref);
+      return;
+    }
+    router.back();
+  }, [router, returnHref]);
   const dispatch = useAppDispatch();
   const activeJobId = useAppSelector(selectActiveJobId);
   const isMinimized = useAppSelector(selectIsMinimized);
@@ -405,7 +424,7 @@ export default function AiCourseGenerationView() {
               type="button"
               variant="app-outline"
               className="flex-1 h-[44px] text-sd-blue border-sd-blue"
-              onClick={() => router.back()}
+              onClick={handleWizardBack}
             >
               Back
             </Button>

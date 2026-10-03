@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # AGENTS.md — Norocio Frontend
 
 Rules for working in this repository. Strict rules are mandatory; breaking them is a defect in the work.
-
+Do not run the dev server no e2e test unit only dont start dev server or call backend api for any reasons work on files modify veriyf no errors and complete task
 ## Figma fidelity (strict)
 
 The Figma design is the source of truth for every pixel. Never guess, approximate, or trust pre-existing code over the design.

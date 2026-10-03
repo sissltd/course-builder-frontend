@@ -6,14 +6,16 @@ import { collaboratorColumns } from "../columns/collaborators";
 import { Sort } from "iconsax-react";
 import { useGetCollaboratorsQuery } from "../hooks";
 import { CollaboratorRole } from "../types";
-import { CloseCircle } from "iconsax-react";
+import { CloseCircle, UserAdd } from "iconsax-react";
 import { Button } from "@/components/shared/Button";
+import { AddCollaboratorModal } from "./AddCollaboratorModal";
 
 export const CollaboratorsTable = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<CollaboratorRole | "">("");
   const [dateFrom, setDateFrom] = useState<string | undefined>(undefined);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const { data: response, error } = useGetCollaboratorsQuery({
     page,
@@ -45,6 +47,7 @@ export const CollaboratorsTable = () => {
   }
 
   return (
+    <>
     <BaseTable
       title="Collaborators"
       columns={collaboratorColumns}
@@ -95,8 +98,21 @@ export const CollaboratorsTable = () => {
         }
         setPage(1);
       }}
+      toolbarAction={
+        <Button
+          variant="app-primary"
+          className="h-[40px] px-[20px] text-[14px]"
+          leftIcon={<UserAdd size={18} variant="Bold" color="currentColor" />}
+          onClick={() => setIsAddOpen(true)}
+        >
+          Add collaborator
+        </Button>
+      }
       showHeader={false}
       showPagination
     />
+
+    <AddCollaboratorModal isOpen={isAddOpen} onOpenChange={setIsAddOpen} />
+    </>
   );
 };

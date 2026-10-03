@@ -24,7 +24,7 @@ interface ProductionApprovalChartProps {
     approved?: number;
     produced?: number;
     rejected?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   }>;
   isLoading?: boolean;
 }
@@ -81,9 +81,25 @@ export const ProductionApprovalChart = ({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
-                onMouseMove={(e: any) => {
-                  if (e?.activePayload) {
-                    const d = e.activePayload[0]?.payload;
+                onMouseMove={(state) => {
+                  // Recharts types the handler as `MouseHandlerDataParam`, which
+                  // does not declare `activePayload` even though the chart state
+                  // carries it at runtime.
+                  const payload = (
+                    state as
+                      | {
+                          activePayload?: ReadonlyArray<{
+                            payload?: {
+                              approved?: number;
+                              produced?: number;
+                              rejected?: number;
+                            };
+                          }>;
+                        }
+                      | null
+                  )?.activePayload;
+                  if (payload) {
+                    const d = payload[0]?.payload;
                     if (d) {
                       setActiveTooltip({
                         approved: d.approved,

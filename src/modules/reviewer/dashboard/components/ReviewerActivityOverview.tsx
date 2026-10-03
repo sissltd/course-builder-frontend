@@ -137,27 +137,27 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 };
 
 export const ReviewerActivityOverview = () => {
-  const [isMounted, setIsMounted] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<ReviewerPeriod>("this_week");
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const { data, isLoading } = useGetReviewerActivityOverviewQuery(selectedPeriod);
 
   const selectedOption = PERIOD_OPTIONS.find((opt) => opt.value === selectedPeriod);
 
+  // The chart is only meaningful once there is something to draw, so it is
+  // derived rather than gated behind a mount flag in an effect.
+  const series = data?.series;
   const chartData = useMemo(() => {
-    if (!data?.series || data.series.length === 0) {
+    if (!series || series.length === 0) {
       return [];
     }
-    return data.series.map((item) => ({
+    return series.map((item) => ({
       ...item,
       label: formatXAxis(item.date, selectedPeriod),
       displayDate: formatTooltipDate(item.date),
     }));
-  }, [data?.series, selectedPeriod]);
+  }, [series, selectedPeriod]);
+
+  const isChartPending = isLoading || chartData.length === 0;
 
   return (
     <section className="relative flex flex-col justify-between min-h-[296px] w-full rounded-[10px] border border-sd-grey-3 bg-sd-grey-1 overflow-hidden px-[18px] py-[21px]">
@@ -236,7 +236,7 @@ export const ReviewerActivityOverview = () => {
       </div>
 
       <div className="mt-[20px] h-[195px] w-full">
-        {isLoading || !isMounted ? (
+        {isChartPending ? (
           <div className="flex h-full w-full items-center justify-center rounded-[8px] bg-sd-grey-2/50 animate-pulse">
             <span className="text-[13px] text-sd-reviewer-muted">
               Loading activity chart...

@@ -85,7 +85,7 @@ export const WithdrawalsTable = () => {
   const withdrawals = useMemo(() => (data?.data?.results ?? []).flat(), [data]);
   const paginator = data?.data?.paginator;
 
-  const columns: ColumnDef<WithdrawalItem, any>[] = [
+  const columns: ColumnDef<WithdrawalItem>[] = [
     {
       id: "creator",
       header: "Creator",

@@ -1,5 +1,25 @@
 import { BaseAPI } from "../baseApi";
 
+/**
+ * Most admin endpoints answer with a `{ status, message, data }` envelope while
+ * a few return the resource bare. These two helpers type that duality once so
+ * each `transformResponse` states its own result type instead of reaching for
+ * `any`.
+ */
+type DataEnvelope<T> = { data?: T } | T;
+
+function unwrapData<T>(response: unknown): T {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    response.data !== undefined
+  ) {
+    return response.data as T;
+  }
+  return response as T;
+}
+
 export interface AdminOverviewResponse {
   users: {
     PENDING_VERIFICATION: number;
@@ -80,14 +100,14 @@ export interface AdminAnalyticsResponse {
       day?: string;
       cost?: string | number;
       amount?: string | number;
-      [key: string]: any;
+      [key: string]: unknown;
     }>;
     by_category: Array<{
       category?: string;
       name?: string;
       cost?: string | number;
       amount?: string | number;
-      [key: string]: any;
+      [key: string]: unknown;
     }>;
   };
   earnings: {
@@ -181,7 +201,7 @@ export interface ActivityLogItemApi {
     last_name: string;
     email: string;
   };
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   activity_datetime: string;
 }
 
@@ -865,7 +885,7 @@ export interface ReviewActionResponse {
   };
   action: "APPROVE" | "REJECT" | string;
   stage: "CONTENT" | "QA" | string;
-  feedback: Record<string, any>;
+  feedback: Record<string, unknown>;
   created_datetime: string;
 }
 
@@ -1102,7 +1122,7 @@ export const adminApi = BaseAPI.injectEndpoints({
           results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
         },
       }),
-      providesTags: ["AdminCourse"] as any,
+      providesTags: ["AdminCourse"],
     }),
     getPendingCourses: builder.query<AdminCoursesResponse, AdminCoursesListParams | void>({
       query: (params) => ({
@@ -1124,7 +1144,7 @@ export const adminApi = BaseAPI.injectEndpoints({
           results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
         },
       }),
-      providesTags: ["AdminCourse"] as any,
+      providesTags: ["AdminCourse"],
     }),
     getApprovedCourses: builder.query<AdminCoursesResponse, AdminCoursesListParams | void>({
       query: (params) => ({
@@ -1146,16 +1166,16 @@ export const adminApi = BaseAPI.injectEndpoints({
           results: (response?.data?.results ?? []).flat() as AdminCourseItem[],
         },
       }),
-      providesTags: ["AdminCourse"] as any,
+      providesTags: ["AdminCourse"],
     }),
     getAdminOverview: builder.query<AdminOverviewResponse, void>({
       query: () => ({
         url: "/admin/overview/",
         method: "GET",
       }),
-      transformResponse: (response: any) =>
-        (response?.data !== undefined ? response.data : response) as AdminOverviewResponse,
-      providesTags: ["AdminOverview"] as any,
+      transformResponse: (response: DataEnvelope<AdminOverviewResponse>): AdminOverviewResponse =>
+        unwrapData(response),
+      providesTags: ["AdminOverview"],
     }),
     getAdminAnalytics: builder.query<AdminAnalyticsResponse, AdminAnalyticsParams | void>({
       query: (params) => ({
@@ -1163,27 +1183,27 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params?.period ? { period: params.period } : undefined,
       }),
-      transformResponse: (response: any) =>
-        (response?.data !== undefined ? response.data : response) as AdminAnalyticsResponse,
-      providesTags: ["AdminAnalytics"] as any,
+      transformResponse: (response: DataEnvelope<AdminAnalyticsResponse>): AdminAnalyticsResponse =>
+        unwrapData(response),
+      providesTags: ["AdminAnalytics"],
     }),
     getAdminSystemHealth: builder.query<AdminSystemHealthResponse, void>({
       query: () => ({
         url: "/admin/system-health/",
         method: "GET",
       }),
-      transformResponse: (response: any) =>
-        (response?.data !== undefined ? response.data : response) as AdminSystemHealthResponse,
-      providesTags: ["AdminSystemHealth"] as any,
+      transformResponse: (response: DataEnvelope<AdminSystemHealthResponse>): AdminSystemHealthResponse =>
+        unwrapData(response),
+      providesTags: ["AdminSystemHealth"],
     }),
     getAdminPipeline: builder.query<AdminPipelineResponse, void>({
       query: () => ({
         url: "/admin/pipeline/",
         method: "GET",
       }),
-      transformResponse: (response: any) =>
-        (response?.data !== undefined ? response.data : response) as AdminPipelineResponse,
-      providesTags: ["AdminPipeline"] as any,
+      transformResponse: (response: DataEnvelope<AdminPipelineResponse>): AdminPipelineResponse =>
+        unwrapData(response),
+      providesTags: ["AdminPipeline"],
     }),
     getActivityLog: builder.query<ActivityLogResponse, ActivityLogParams | void>({
       query: (params) => ({
@@ -1191,7 +1211,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["ActivityLog"] as any,
+      providesTags: ["ActivityLog"],
     }),
     getKycReviewList: builder.query<KycListResponse, KycListParams | void>({
       query: (params) => ({
@@ -1199,21 +1219,21 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["KycReview"] as any,
+      providesTags: ["KycReview"],
     }),
     getKycReviewDetail: builder.query<KycSubmission, string>({
       query: (id) => ({
         url: `/users/kyc-review/${id}/`,
         method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: "KycReview", id }] as any,
+      providesTags: (result, error, id) => [{ type: "KycReview", id }],
     }),
     approveKyc: builder.mutation<void, string>({
       query: (id) => ({
         url: `/users/kyc-review/${id}/approve/`,
         method: "POST",
       }),
-      invalidatesTags: ["KycReview"] as any,
+      invalidatesTags: ["KycReview"],
     }),
     rejectKyc: builder.mutation<void, { id: string; rejection_reason: string }>({
       query: ({ id, rejection_reason }) => ({
@@ -1221,7 +1241,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "POST",
         body: { rejection_reason },
       }),
-      invalidatesTags: ["KycReview"] as any,
+      invalidatesTags: ["KycReview"],
     }),
     getAdminWallets: builder.query<WalletListResponse, WalletListParams | void>({
       query: (params) => ({
@@ -1229,7 +1249,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["AdminWallet"] as any,
+      providesTags: ["AdminWallet"],
     }),
     getAdminTransactions: builder.query<TransactionListResponse, TransactionListParams | void>({
       query: (params) => ({
@@ -1237,7 +1257,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["AdminTransaction"] as any,
+      providesTags: ["AdminTransaction"],
     }),
     getAdminWithdrawals: builder.query<WithdrawalListResponse, WithdrawalListParams | void>({
       query: (params) => ({
@@ -1245,19 +1265,15 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["AdminWithdrawal"] as any,
+      providesTags: ["AdminWithdrawal"],
     }),
     getAdminCourseDetail: builder.query<AdminCourseDetail, string>({
       query: (id) => ({
         url: `/admin/courses/${id}/`,
         method: "GET",
       }),
-      transformResponse: (response: any) => {
-        return (response && typeof response === "object" && "data" in response && response.data)
-          ? response.data
-          : response;
-      },
-      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+      transformResponse: (response) => unwrapData<AdminCourseDetail>(response),
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }],
     }),
     approveAdminCourse: builder.mutation<void, { id: string; feedback?: { summary?: string } }>({
       query: ({ id, feedback }) => ({
@@ -1268,22 +1284,18 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     claimAdminCourse: builder.mutation<AdminCourseDetail, string>({
       query: (id) => ({
         url: `/admin/courses/${id}/claim/`,
         method: "POST",
       }),
-      transformResponse: (response: any) => {
-        return (response && typeof response === "object" && "data" in response && response.data)
-          ? response.data
-          : response;
-      },
+      transformResponse: (response) => unwrapData<AdminCourseDetail>(response),
       invalidatesTags: (result, error, id) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     /**
      * The reviewers who could take the seat this course is waiting on. Not
@@ -1298,11 +1310,9 @@ export const adminApi = BaseAPI.injectEndpoints({
         url: `/admin/courses/${id}/assignable-reviewers/`,
         method: "GET",
       }),
-      transformResponse: (response: any): AssignableReviewer[] => {
-        if (Array.isArray(response)) return response as AssignableReviewer[];
-        return (response?.data ?? []) as AssignableReviewer[];
-      },
-      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+      transformResponse: (response: DataEnvelope<AssignableReviewer[]>) =>
+        Array.isArray(response) ? response : (response.data ?? []),
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }],
     }),
     /**
      * Puts a reviewer in the seat the course is waiting on, as if they had
@@ -1321,15 +1331,12 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "POST",
         body,
       }),
-      transformResponse: (response: any): AssignCourseResult => {
-        return (response && typeof response === "object" && "data" in response && response.data)
-          ? (response.data as AssignCourseResult)
-          : (response as AssignCourseResult);
-      },
+      transformResponse: (response: DataEnvelope<AssignCourseResult>) =>
+        unwrapData(response),
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     getAdminCourseComments: builder.query<CourseCommentsResponse, CourseCommentsParams>({
       query: ({ courseId, page, size }) => ({
@@ -1356,7 +1363,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       }),
       providesTags: (result, error, { courseId }) => [
         { type: "AdminCourseComment", id: courseId },
-      ] as any,
+      ],
     }),
     addAdminCourseComment: builder.mutation<
       CourseReviewComment,
@@ -1370,7 +1377,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { courseId }) => [
         { type: "AdminCourseComment", id: courseId },
         { type: "AdminCourse", id: courseId },
-      ] as any,
+      ],
     }),
     contentApproveAdminCourse: builder.mutation<
       ReviewActionResponse,
@@ -1384,7 +1391,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     contentRejectAdminCourse: builder.mutation<
       ReviewActionResponse,
@@ -1398,7 +1405,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     qaApproveAdminCourse: builder.mutation<
       ReviewActionResponse,
@@ -1412,22 +1419,18 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     qaClaimAdminCourse: builder.mutation<AdminCourseDetail, string>({
       query: (id) => ({
         url: `/admin/courses/${id}/qa-claim/`,
         method: "POST",
       }),
-      transformResponse: (response: any) => {
-        return response && typeof response === "object" && "data" in response && response.data
-          ? response.data
-          : response;
-      },
+      transformResponse: (response) => unwrapData<AdminCourseDetail>(response),
       invalidatesTags: (result, error, id) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     qaRejectAdminCourse: builder.mutation<
       ReviewActionResponse,
@@ -1441,7 +1444,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     rejectAdminCourse: builder.mutation<
       ReviewActionResponse,
@@ -1455,9 +1458,9 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
-    publishCourse: builder.mutation<any, { id: string; body: PublishCourseRequest }>({
+    publishCourse: builder.mutation<{ detail?: string }, { id: string; body: PublishCourseRequest }>({
       query: ({ id, body }) => ({
         url: `/admin/courses/${id}/publish/`,
         method: "POST",
@@ -1466,7 +1469,7 @@ export const adminApi = BaseAPI.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         "AdminCourse",
         { type: "AdminCourse", id },
-      ] as any,
+      ],
     }),
     getCourseReviewPrices: builder.query<CourseReviewPricesResponse, string>({
       query: (id) => ({
@@ -1487,7 +1490,7 @@ export const adminApi = BaseAPI.injectEndpoints({
           results: (response?.data?.results ?? []).flat() as CoursePriceReviewItem[],
         },
       }),
-      providesTags: (result, error, id) => [{ type: "AdminCourse", id }] as any,
+      providesTags: (result, error, id) => [{ type: "AdminCourse", id }],
     }),
     saveCoursePrices: builder.mutation<
       CourseReviewPricesResponse,
@@ -1498,7 +1501,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "AdminCourse", id }] as any,
+      invalidatesTags: (result, error, { id }) => [{ type: "AdminCourse", id }],
     }),
     getActiveReservations: builder.query<
       AdminActiveReservationsResponse,
@@ -1509,22 +1512,22 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["TopicReservation"] as any,
+      providesTags: ["TopicReservation"],
     }),
     getActiveReservationDetail: builder.query<AdminActiveReservation, string>({
       query: (id) => ({
         url: `/admin/reservations/active/${id}/`,
         method: "GET",
       }),
-      transformResponse: (response: any) => (response?.data ? response.data : response),
-      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }] as any,
+      transformResponse: (response) => unwrapData<AdminActiveReservation>(response),
+      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }],
     }),
-    releaseActiveReservation: builder.mutation<any, { id: string }>({
+    releaseActiveReservation: builder.mutation<{ detail?: string }, { id: string }>({
       query: ({ id }) => ({
         url: `/admin/reservations/active/${id}/release/`,
         method: "POST",
       }),
-      invalidatesTags: ["TopicReservation"] as any,
+      invalidatesTags: ["TopicReservation"],
     }),
     getReservationRequests: builder.query<
       AdminReservationRequestsResponse,
@@ -1535,25 +1538,25 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "GET",
         params: params || undefined,
       }),
-      providesTags: ["TopicReservation"] as any,
+      providesTags: ["TopicReservation"],
     }),
     getReservationRequestDetail: builder.query<AdminReservationRequestItem, string>({
       query: (id) => ({
         url: `/admin/reservations/requests/${id}/`,
         method: "GET",
       }),
-      transformResponse: (response: any) => (response?.data ? response.data : response),
-      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }] as any,
+      transformResponse: (response) => unwrapData<AdminReservationRequestItem>(response),
+      providesTags: (_result, _error, id) => [{ type: "TopicReservation", id }],
     }),
-    approveReservationRequest: builder.mutation<any, { id: string }>({
+    approveReservationRequest: builder.mutation<{ detail?: string }, { id: string }>({
       query: ({ id }) => ({
         url: `/admin/reservations/requests/${id}/approve/`,
         method: "POST",
       }),
-      invalidatesTags: ["TopicReservation"] as any,
+      invalidatesTags: ["TopicReservation"],
     }),
     rejectReservationRequest: builder.mutation<
-      any,
+      { detail?: string },
       { id: string; body?: RejectReservationRequestPayload }
     >({
       query: ({ id, body }) => ({
@@ -1561,7 +1564,7 @@ export const adminApi = BaseAPI.injectEndpoints({
         method: "POST",
         body: body || {},
       }),
-      invalidatesTags: ["TopicReservation"] as any,
+      invalidatesTags: ["TopicReservation"],
     }),
   }),
 });

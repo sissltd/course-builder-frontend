@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import type { BarRectangleItem } from "recharts";
 
 interface ProductionTrendChartProps {
   productionTrend?: Array<{ date: string; count: number }>;
@@ -35,7 +36,7 @@ export const ProductionTrendChart = ({
 }: ProductionTrendChartProps) => {
   const chartData = React.useMemo(() => {
     if (productionTrend && productionTrend.length > 0) {
-      return productionTrend.map((item) => {
+      return productionTrend.map((item, index) => {
         const d = new Date(item.date);
         const dayLabel = isNaN(d.getTime())
           ? item.date
@@ -43,10 +44,11 @@ export const ProductionTrendChart = ({
         return {
           day: dayLabel,
           value: item.count,
+          index,
         };
       });
     }
-    return fallbackDays;
+    return fallbackDays.map((day, index) => ({ ...day, index }));
   }, [productionTrend]);
 
   const totalCount = React.useMemo(() => {
@@ -100,8 +102,12 @@ export const ProductionTrendChart = ({
                 dataKey="value"
                 radius={[4, 4, 0, 0]}
                 barSize={32}
-                shape={(props: any) => {
-                  const { x, y, width, height, index } = props;
+                shape={(props: BarRectangleItem) => {
+                  const { x, y, width, height } = props;
+                  // The bar index rides in the datum — `BarRectangleItem` does
+                  // not carry an `index` of its own.
+                  const index =
+                    (props.payload as { index?: number } | undefined)?.index ?? 0;
                   const fill = index % 2 === 0 ? "#0063EF" : "#FF8A00";
                   return (
                     <rect x={x} y={y} width={width} height={height} fill={fill} rx={4} />

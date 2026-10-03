@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { AuthLayout } from "@/modules/auth/components/AuthLayout";
 import { AuthHeader } from "@/modules/auth/components/AuthHeader";
 import { AuthInput } from "@/modules/auth/components/AuthInput";
@@ -14,7 +14,9 @@ import {
 } from "@/modules/auth/utils/schemas";
 import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 import { useAcceptStaffInvitationMutation } from "@/modules/admin/teams/hooks";
-import { normalizeApiError } from "@/lib/api/errors";
+import { getErrorStatus, normalizeApiError } from "@/lib/api/errors";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { User } from "@/modules/auth/types/auth";
 import { toast } from "sonner";
 import { AuthRoute, WebsiteRoute } from "@/lib/routes";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -26,6 +28,10 @@ import {
   getWorkspaceForRole,
 } from "@/modules/auth/utils/workspace";
 import { DirectInbox, ShieldSecurity, Warning2, TickCircle } from "iconsax-react";
+import {
+  clearPendingInvitation,
+  savePendingInvitation,
+} from "@/modules/auth/utils/pendingInvitation";
 
 interface AcceptInvitationViewProps {
   initialEmail?: string;
@@ -95,6 +101,22 @@ export default function AcceptInvitationView({
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
 
+  /**
+   * A staff invitation is accepted by setting the password in this form, but
+   * the caller may not have an account yet and detour through registration
+   * first. Persist the invite so the registration flow can hand it straight
+   * back afterwards.
+   */
+  React.useEffect(() => {
+    if (!token) return;
+    savePendingInvitation(token, email);
+  }, [token, email]);
+
+  /** Clear on both outcomes so a spent invite is never replayed. */
+  const clearStoredInvitation = useCallback(() => {
+    clearPendingInvitation();
+  }, []);
+
   const onSubmit = handleSubmit(async (data) => {
     if (!email || !token) {
       toast.error("Invitation token or email is missing. Please check your invitation email.");
@@ -109,6 +131,7 @@ export default function AcceptInvitationView({
       }).unwrap();
 
       setIsSuccess(true);
+      clearStoredInvitation();
       toast.success(`Welcome, ${result.user.first_name}! Your staff account is activated.`);
 
       const workspace = getWorkspaceForRole(result.user.role);
@@ -127,10 +150,13 @@ export default function AcceptInvitationView({
         console.warn("Session sign-in warning:", signInResult.error);
       }
 
-      // Store in Redux auth state
+      // Store in Redux auth state. The accept-invitation response carries a
+      // subset of the user fields (`role` is a plain string, no country or
+      // timezone), so it is widened explicitly rather than through `any`; the
+      // authoritative session is established by the `signIn` call above.
       dispatch(
         setCredentials({
-          user: result.user as any,
+          user: result.user as unknown as User,
           accessToken: result.access,
         })
       );
@@ -141,9 +167,10 @@ export default function AcceptInvitationView({
         router.push(targetDashboard);
         router.refresh();
       }, 1200);
-    } catch (error: any) {
-      if (error?.status === 404) {
+    } catch (error) {
+      if (getErrorStatus(error as FetchBaseQueryError) === 404) {
         setIsExpiredOrInvalid(true);
+        clearStoredInvitation();
         toast.error(
           "This invitation link is invalid, has expired, or has already been used. Please request a new invitation from your administrator."
         );

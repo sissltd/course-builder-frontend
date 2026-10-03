@@ -109,11 +109,57 @@ export interface GoogleSignupRequest {
   terms_accepted: boolean;
 }
 
-export interface LoginResponse extends AuthTokens {
+/**
+ * What `/auth/login/` returns once the password is accepted.
+ *
+ * A discriminated union rather than optional fields: the MFA challenge shape
+ * carries no `access`/`refresh` at all, so typing those as optional would leave
+ * `result.access` looking like a `string` while it is actually `undefined` —
+ * which is exactly how MFA logins used to break.
+ */
+export interface LoginTokensResponse extends AuthTokens {
   user: User;
   role: UserRole;
   workspace: string;
   mfa_enrollment_overdue?: boolean;
+}
+
+/** HTTP 200 from `/auth/login/` when a second factor is enforced. */
+export interface MfaChallengeResponse {
+  mfa_required: true;
+  challenge_token: string;
+}
+
+export type LoginResponse = LoginTokensResponse | MfaChallengeResponse;
+
+export interface VerifyMfaChallengeRequest {
+  challenge_token: string;
+  code: string;
+}
+
+/** Redeeming a challenge yields the same payload as a direct login. */
+export type VerifyMfaChallengeResponse = LoginTokensResponse;
+
+// ─── MFA enrollment ──────────────────────────────────────────────────────────
+
+export interface MfaEnrollResponse {
+  secret: string;
+  otpauth_uri: string;
+  /** A bare base64 PNG — prefix it with `data:image/png;base64,` to render. */
+  qr_code_base64: string;
+}
+
+/** Every MFA mutation beyond the challenge takes just a live TOTP code. */
+export interface MfaCodeRequest {
+  code: string;
+}
+
+/**
+ * Shown exactly once, at enrollment or regeneration. There is no endpoint that
+ * returns them again — only a regenerate, which invalidates the old batch.
+ */
+export interface MfaRecoveryCodesResponse {
+  recovery_codes: string[];
 }
 
 export interface RefreshRequest {

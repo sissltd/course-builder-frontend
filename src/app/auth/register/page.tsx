@@ -18,6 +18,7 @@ import { PasswordStrength } from "@/modules/auth/components/PasswordStrength";
 import { useSignupMutation } from "@/modules/auth/api/accountApi";
 import { normalizeApiError } from "@/lib/api/errors";
 import { REGISTER_EMAIL_STORAGE_KEY, GOOGLE_AUTH_PENDING_STORAGE_KEY } from "@/modules/auth/utils/storage";
+import { readPendingInvitation } from "@/modules/auth/utils/pendingInvitation";
 import { toast } from "sonner";
 import { Country, isSupportedCountry } from "react-phone-number-input";
 import { Country as CountryMeta } from "country-state-city";
@@ -76,6 +77,18 @@ export default function RegisterPage() {
     }
   }, [selectedCountry, phoneValue]);
 
+  /**
+   * Someone who arrived from an invite link and still needs an account should
+   * not have to retype the address the invitation was sent to.
+   */
+  useEffect(() => {
+    const pending = readPendingInvitation();
+    const invitedEmail = pending?.invitedEmail;
+    if (invitedEmail && !methods.getValues("email")) {
+      methods.setValue("email", invitedEmail, { shouldValidate: false });
+    }
+  }, [methods]);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isEmailValid = await trigger("email");
@@ -105,6 +118,17 @@ export default function RegisterPage() {
         terms_accepted: data.agreeToTerms,
       }).unwrap();
       sessionStorage.setItem(REGISTER_EMAIL_STORAGE_KEY, data.email);
+
+      // The account exists now, so a pending invitation can be picked straight
+      // back up rather than being left to expire behind a success screen.
+      const pendingInvite = readPendingInvitation();
+      if (pendingInvite) {
+        router.push(
+          `${AuthRoute.ACCEPT_INVITATION}?token=${encodeURIComponent(pendingInvite.inviteId)}&email=${encodeURIComponent(data.email)}`,
+        );
+        return;
+      }
+
       router.push(AuthRoute.REGISTER_SUCCESS);
     } catch (error) {
       const { fieldErrors, message } = normalizeApiError(

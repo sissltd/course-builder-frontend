@@ -9,6 +9,28 @@ import type {
   PaginatedResponse,
 } from "../types";
 
+/**
+ * The list endpoint nests results one level deeper than `PaginatedResponse`
+ * declares, so the transform has to flatten it.
+ */
+type UsersListEnvelope = PaginatedResponse<AdminUser[][] | AdminUser[]>;
+
+type AdminUserEnvelope = { data?: AdminUser } | AdminUser;
+
+/** Most reads come wrapped in `data`; a few return the resource bare. */
+function unwrapData<T>(response: { data?: T } | T): T {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    response.data !== undefined &&
+    !Array.isArray(response.data)
+  ) {
+    return response.data as T;
+  }
+  return response as T;
+}
+
 export const usersApi = BaseAPI.injectEndpoints({
   endpoints: (builder) => ({
     getUsers: builder.query<
@@ -16,7 +38,7 @@ export const usersApi = BaseAPI.injectEndpoints({
       UsersListParams | void
     >({
       query: (params) => {
-        const cleanParams: Record<string, any> = {};
+        const cleanParams: Record<string, string | number | boolean> = {};
         if (params) {
           if (params.search?.trim()) cleanParams.search = params.search.trim();
           if (params.role) cleanParams.role = params.role;
@@ -33,11 +55,11 @@ export const usersApi = BaseAPI.injectEndpoints({
           params: Object.keys(cleanParams).length > 0 ? cleanParams : undefined,
         };
       },
-      transformResponse: (response: any) => ({
+      transformResponse: (response: UsersListEnvelope) => ({
         ...response,
         data: {
           ...response?.data,
-          results: ((response?.data?.results ?? []) as any).flat() as AdminUser[],
+          results: (response?.data?.results ?? []).flat() as AdminUser[],
         },
       }),
       providesTags: ["AdminUser"],
@@ -48,12 +70,7 @@ export const usersApi = BaseAPI.injectEndpoints({
         url: `/users/admin/${id}/`,
         method: "GET",
       }),
-      transformResponse: (response: any) => {
-        if (response && response.data && typeof response.data === "object" && !Array.isArray(response.data)) {
-          return response.data as AdminUser;
-        }
-        return response as AdminUser;
-      },
+      transformResponse: (response: AdminUserEnvelope) => unwrapData(response),
       providesTags: (_result, _error, id) => [{ type: "AdminUser", id }],
     }),
 

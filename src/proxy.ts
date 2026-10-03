@@ -18,10 +18,24 @@ const PUBLIC_PATHS = [
   "/auth/reset-password",
   "/auth/verify-email",
   AuthRoute.CHANGE_EMAIL_CONFIRM,
+  AuthRoute.CHANGE_EMAIL,
   "/accept-invitation",
   "/auth/accept-invitation",
   "/auth/signup-google",
   "/api/auth",
+];
+
+/**
+ * Auth routes a signed-in caller must still be allowed to *land on*.
+ *
+ * The confirmation link for an email change is opened from the new inbox, and
+ * the caller may well already have a session. Without this carve-out the
+ * authed-redirect below would bounce them to their dashboard before the token
+ * was ever spent, and the email would silently never change.
+ */
+const AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN = [
+  "accept-invitation",
+  "change-email",
 ];
 
 const isPublicPath = (pathname: string): boolean =>
@@ -29,12 +43,7 @@ const isPublicPath = (pathname: string): boolean =>
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-const AUTH_PATHS_REACHABLE_WHILE_SIGNED_IN = [
-  "accept-invitation",
-  "change-email",
-];
-
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({
     req,
@@ -43,13 +52,6 @@ export async function middleware(req: NextRequest) {
 
   const isGoogleHandoff = req.nextUrl.searchParams.get("google") === "1";
   const isAuthenticated = Boolean(token?.user);
-
-  console.log("[Middleware]", pathname, {
-    isAuthenticated,
-    isGoogleHandoff,
-    hasToken: Boolean(token),
-    hasUser: Boolean(token?.user),
-  });
 
   if (isPublicPath(pathname)) {
     if (
@@ -61,15 +63,12 @@ export async function middleware(req: NextRequest) {
       )
     ) {
       const dashboard = getDashboardRoute(token?.user?.workspace);
-      console.log("[Middleware] public+authed+notGoogleHandoff → redirect to", dashboard);
       return NextResponse.redirect(new URL(dashboard, req.nextUrl));
     }
-    console.log("[Middleware] public path, next");
     return NextResponse.next();
   }
 
   if (!token) {
-    console.log("[Middleware] no token, path not public → redirect to login");
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         {
@@ -94,7 +93,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  console.log("[Middleware] authenticated, next");
   return NextResponse.next();
 }
 

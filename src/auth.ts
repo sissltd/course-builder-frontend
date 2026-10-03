@@ -3,54 +3,32 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import type { User as AuthUser } from "next-auth";
 import type {
+  AuthTokens,
   LoginResponse,
+  LoginTokensResponse,
   User,
   UserRole,
   UserStatus,
 } from "@/modules/auth/types/auth";
-import { decodeJwtPayload, getAccessTokenExpiresAt } from "@/modules/auth/utils/token";
+import {
+  getAccessTokenExpiresAt,
+  isAccessTokenExpired,
+  shouldRefreshAccessToken,
+} from "@/modules/auth/utils/token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
-async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
-  console.log("[GoogleAuth] exchangeGoogleToken: calling POST /auth/login/google/", {
-    hasIdToken: Boolean(idToken),
-    tokenPrefix: idToken ? idToken.substring(0, 20) + "..." : "null",
-    apiBase: API_BASE_URL,
-  });
-  console.log("[GoogleAuth] exchangeGoogleToken: Google id_token (raw):", idToken);
-
-  try {
-    const claims = decodeJwtPayload<{
-      aud?: string;
-      iss?: string;
-      email?: string;
-    }>(idToken);
-    console.log("[GoogleAuth] id_token claims", {
-      aud: claims.aud,
-      iss: claims.iss,
-      email: claims.email,
-      expectedAudience: process.env.GOOGLE_CLIENT_ID,
-    });
-  } catch (err) {
-    console.warn("[GoogleAuth] could not decode id_token claims", err);
-  }
-
+async function exchangeGoogleToken(
+  idToken: string,
+): Promise<LoginTokensResponse> {
   const response = await fetch(`${API_BASE_URL}/auth/login/google/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id_token: idToken }),
   });
 
-  console.log("[GoogleAuth] exchangeGoogleToken: response status", response.status, response.statusText);
-
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    console.error("[GoogleAuth] exchangeGoogleToken: FAILED", {
-      status: response.status,
-      body: errorBody,
-    });
     const error = new Error("Google login failed") as Error & {
       status: number;
       body: unknown;
@@ -61,14 +39,22 @@ async function exchangeGoogleToken(idToken: string): Promise<LoginResponse> {
   }
 
   const result = (await response.json()) as LoginResponse;
-  console.log("[GoogleAuth] exchangeGoogleToken: SUCCESS", {
-    hasAccess: Boolean(result.access),
-    hasRefresh: Boolean(result.refresh),
-    userId: result.user?.id,
-    userRole: result.role,
-  });
-  return result;
+
+  // A Google sign-in carries no password to challenge, so an MFA prompt here is
+  // not something the client flow can currently answer. Fail loudly rather than
+  // handing a token-less session downstream and breaking the same way the
+  // password login used to.
+  if ("mfa_required" in result) {
+    const error = new Error(
+      "Multi-factor authentication is required for this Google account, which is not supported yet.",
+    ) as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+
+  return result as LoginTokensResponse;
 }
+
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -127,44 +113,29 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      console.log("[GoogleAuth] redirect callback: url=", url, "baseUrl=", baseUrl);
       if (url.startsWith("/")) {
-        console.log("[GoogleAuth] redirect: relative URL, returning", `${baseUrl}${url}`);
         return `${baseUrl}${url}`;
       }
       try {
         const parsed = new URL(url);
         if (parsed.origin === baseUrl) {
-          console.log("[GoogleAuth] redirect: same origin, returning", url);
           return url;
         }
       } catch {
-        console.log("[GoogleAuth] redirect: malformed URL, falling through");
+        // Malformed URL — fall through to the login page below.
       }
-      console.log("[GoogleAuth] redirect: external/unknown, redirecting to login");
       return `${baseUrl}/auth/login`;
     },
     async jwt({ token, user, account }) {
-      console.log("[GoogleAuth] jwt callback: provider=", account?.provider, {
-        hasUser: Boolean(user),
-        hasAccount: Boolean(account),
-        hasIdToken: Boolean(account?.id_token),
-        tokenKeys: Object.keys(token),
-      });
-
       if (account?.provider === "google") {
-        console.log("[GoogleAuth] jwt callback: Google provider detected, id_token present:", Boolean(account.id_token));
-        console.log("[GoogleAuth] jwt callback: Google id_token (raw):", account.id_token);
         token.googleErrorShown = undefined;
 
         if (!account.id_token) {
-          console.error("[GoogleAuth] jwt callback: NO id_token from Google provider");
           token.googleError = "Google sign in failed. Please try again.";
           return token;
         }
 
         try {
-          console.log("[GoogleAuth] jwt callback: calling exchangeGoogleToken...");
           const result = await exchangeGoogleToken(account.id_token);
           token.user = {
             id: result.user.id,
@@ -195,7 +166,6 @@ export const authOptions: NextAuthOptions = {
           token.googleSignupRequired = undefined;
           token.googleIdToken = undefined;
           token.googleError = undefined;
-          console.log("[GoogleAuth] jwt callback: token populated successfully, user:", token.user?.id, "role:", token.role);
           return token;
         } catch (err) {
           const googleError = err as {
@@ -203,13 +173,7 @@ export const authOptions: NextAuthOptions = {
             body?: { errors?: Array<{ message?: string }> };
           };
           const errorMsg = googleError.body?.errors?.[0]?.message ?? "";
-          console.error("[GoogleAuth] jwt callback: exchangeGoogleToken FAILED", {
-            status: googleError.status,
-            errorMsg,
-            fullError: JSON.stringify(err).substring(0, 500),
-          });
           if (googleError.status === 400 && errorMsg.includes("No account is linked")) {
-            console.log("[GoogleAuth] jwt callback: No linked account — marking googleSignupRequired");
             token.googleSignupRequired = true;
             token.googleIdToken = account.id_token;
             token.googleError = undefined;
@@ -225,7 +189,6 @@ export const authOptions: NextAuthOptions = {
             googleError.status === 503
               ? "Google sign-in is temporarily unavailable. Please try again in a few minutes."
               : errorMsg || "Google sign in failed. Please try again.";
-          console.log("[GoogleAuth] jwt callback: returning token with googleError:", token.googleError);
           return token;
         }
       }
@@ -283,22 +246,17 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      if (
-        token.accessTokenExpiresAt &&
-        Date.now() < token.accessTokenExpiresAt - REFRESH_BEFORE_EXPIRY_MS
-      ) {
+      // Inside the refresh window (5 min before a 25 min expiry) the access
+      // token is rotated. This callback only runs when the session is read, so
+      // `SESSION_REFRESH_INTERVAL_MS` in AuthProvider is what actually paces
+      // this — it polls well inside the window so the swap always beats expiry.
+      if (!shouldRefreshAccessToken(token.accessTokenExpiresAt)) {
         return token;
       }
 
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      console.log("[GoogleAuth] session callback: hasUser=", Boolean(token.user), {
-        googleError: token.googleError,
-        googleSignupRequired: token.googleSignupRequired,
-        accessTokenPresent: Boolean(token.accessToken),
-        error: token.error,
-      });
       if (token.user) {
         session.user = token.user;
       }
@@ -327,17 +285,7 @@ async function refreshAccessToken(token: {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh: token.refreshToken }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Refresh failed");
-    }
-
-    const data = (await response.json()) as LoginResponse;
+    const data = await refreshTokens(token.refreshToken);
 
     return {
       ...token,
@@ -347,6 +295,53 @@ async function refreshAccessToken(token: {
       error: undefined,
     };
   } catch {
-    return { ...token, error: "RefreshAccessTokenError" };
+    // The refresh is *proactive* — it runs while the current access token may
+    // still have minutes left. Marking the session dead the moment it failed
+    // turned any backend hiccup into a hard sign-out and a trip to the login
+    // page. Only report an error once the token has genuinely expired; until
+    // then keep the live one and let the next session read try again.
+    if (isAccessTokenExpired(token.accessTokenExpiresAt)) {
+      return { ...token, error: "RefreshAccessTokenError" };
+    }
+
+    return { ...token, error: undefined };
+  }
+}
+
+/**
+ * Single-flight rotation, keyed by refresh token.
+ *
+ * The session is read from three places at once — the 5 minute poll in
+ * `AuthProvider`, `SessionProvider`'s window-focus refetch, and the reactive
+ * retry in `baseApi`. Refresh tokens rotate on use, so letting those race meant
+ * the loser got a rejected refresh and reported the session as broken. Sharing
+ * one in-flight promise makes them all observe the same successful rotation.
+ */
+const inFlightRefreshes = new Map<string, Promise<AuthTokens>>();
+
+async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
+  const existing = inFlightRefreshes.get(refreshToken);
+  if (existing) return existing;
+
+  const pending = (async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Refresh failed");
+    }
+
+    return (await response.json()) as AuthTokens;
+  })();
+
+  inFlightRefreshes.set(refreshToken, pending);
+
+  try {
+    return await pending;
+  } finally {
+    inFlightRefreshes.delete(refreshToken);
   }
 }

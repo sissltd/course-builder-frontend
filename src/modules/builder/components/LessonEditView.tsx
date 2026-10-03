@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Trash,
   Add,
@@ -33,14 +33,180 @@ interface LessonEditViewProps {
   onUpdateLesson: (updated: Lesson) => void;
   onBack: () => void;
 }
+type GeneralBlockKind =
+  | "h1" | "h2" | "h3" | "para"
+  | "bold" | "italic" | "under"
+  | "alignLeft" | "alignCenter" | "alignRight"
+  | "bulletList" | "orderedList" | "blockquote"
+  | "code" | "codeBlock" | "divider"
+  | "link" | "image" | "video" | "embed";
+
+/** Toolbar entries hold no behaviour � only a kind, dispatched on click. */
+  const GENERAL_BLOCKS: { label: string; icon: React.ReactNode; kind: GeneralBlockKind }[] = [
+    {
+      label: "H1",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M20 18l-2-2-2 2" /></svg>
+      ),
+      kind: "h1",
+    },
+    {
+      label: "H2",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M16 18h4" /><path d="M18 14v4" /></svg>
+      ),
+      kind: "h2",
+    },
+    {
+      label: "H3",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M16 14h4" /><path d="M18 10v8" /></svg>
+      ),
+      kind: "h3",
+    },
+    {
+      label: "Para",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 0 8H6z" /><path d="M6 12h6a4 4 0 0 1 0 8H6z" /></svg>
+      ),
+      kind: "para",
+    },
+    {
+      label: "Bold",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /></svg>
+      ),
+      kind: "bold",
+    },
+    {
+      label: "Italic",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="4" x2="10" y2="4" /><line x1="14" y1="20" x2="5" y2="20" /><line x1="15" y1="4" x2="9" y2="20" /></svg>
+      ),
+      kind: "italic",
+    },
+    {
+      label: "Under",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v7a6 6 0 0 0 12 0V3" /><line x1="4" y1="21" x2="20" y2="21" /></svg>
+      ),
+      kind: "under",
+    },
+    {
+      label: "AL",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="15" y2="12" /><line x1="3" y1="18" x2="18" y2="18" /></svg>
+      ),
+      kind: "alignLeft",
+    },
+    {
+      label: "AC",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="4" y1="18" x2="20" y2="18" /></svg>
+      ),
+      kind: "alignCenter",
+    },
+    {
+      label: "AR",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="6" y1="18" x2="21" y2="18" /></svg>
+      ),
+      kind: "alignRight",
+    },
+    {
+      label: "List",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="9" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="9" y1="18" x2="21" y2="18" /><circle cx="4" cy="6" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="18" r="1" fill="currentColor" /></svg>
+      ),
+      kind: "bulletList",
+    },
+    {
+      label: "Num",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line x1="10" y1="18" x2="21" y2="18" /><path d="M4 6h1v4" /><path d="M4 10h2" /><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" /></svg>
+      ),
+      kind: "orderedList",
+    },
+    {
+      label: "Quote",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1-1-2-2-2H4c-1 0-2 1-2 2v6c0 1 1 2 2 2" /><path d="M15 21c3 0 7-1 7-8V5c0-1-1-2-2-2h-4c-1 0-2 1-2 2v6c0 1 1 2 2 2" /></svg>
+      ),
+      kind: "blockquote",
+    },
+    {
+      label: "Code",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
+      ),
+      kind: "code",
+    },
+    {
+      label: "CodeB",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /></svg>
+      ),
+      kind: "codeBlock",
+    },
+    {
+      label: "Div",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /></svg>
+      ),
+      kind: "divider",
+    },
+    {
+      label: "Link",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+      ),
+      kind: "link",
+    },
+    {
+      label: "Img",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+      ),
+      kind: "image",
+    },
+    {
+      label: "Vid",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+      ),
+      kind: "video",
+    },
+    {
+      label: "Embed",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+      ),
+      kind: "embed",
+    },
+  ];
+
 
 export const LessonEditView = ({
+
   lesson,
   onUpdateLesson,
   onBack,
 }: LessonEditViewProps) => {
   const editorRef = useRef<RichTextEditorHandle>(null);
   const mainEditorRef = useRef<RichTextEditorHandle>(null);
+  /**
+   * The editor instance is mirrored into state so the toolbar can act on it
+   * without reading a ref during render. The handle ref is still set, because
+   * `RichTextEditor` is a forwardRef imperative handle.
+   */
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const setMainEditor = useCallback(
+    (handle: RichTextEditorHandle | null) => {
+      mainEditorRef.current = handle;
+      setEditor(handle?.editor ?? null);
+    },
+    [],
+  );
   const dispatch = useAppDispatch();
 
   const editingLesson = useAppSelector((s) => s.courseBuilder.editingLesson);
@@ -53,19 +219,19 @@ export const LessonEditView = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { upload, isUploading, progress, result, error: uploadError, reset: resetUpload } = useUploadFile();
 
-  const openMediaModal = (
-    type: "image" | "video" | "embed",
-    onUrl: (url: string) => void,
-  ) => {
-    setMediaModalType(type);
-    pendingMediaCallbackRef.current = onUrl;
-    setMediaModalOpen(true);
-  };
+  const openMediaModal = useCallback(
+    (type: "image" | "video" | "embed", onUrl: (url: string) => void) => {
+      setMediaModalType(type);
+      pendingMediaCallbackRef.current = onUrl;
+      setMediaModalOpen(true);
+    },
+    [],
+  );
 
-  const handleMediaConfirm = (url: string, source: string) => {
+  const handleMediaConfirm = useCallback((url: string, _source: string) => {
     pendingMediaCallbackRef.current?.(url);
     pendingMediaCallbackRef.current = null;
-  };
+  }, []);
 
   const getVideoDuration = (file: File): Promise<number | null> =>
     new Promise((resolve) => {
@@ -210,163 +376,74 @@ export const LessonEditView = ({
     onBack();
   };
 
-  const exec = (fn: (editor: Editor) => void) => {
-    const ed = mainEditorRef.current?.editor;
-    if (ed) {
-      fn(ed);
-    }
-  };
+  const exec = React.useCallback(
+    (fn: (editor: Editor) => void) => {
+      if (editor) {
+        fn(editor);
+      }
+    },
+    [editor],
+  );
 
-  const GENERAL_BLOCKS = [
-    {
-      label: "H1",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M20 18l-2-2-2 2" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleHeading({ level: 1 }).run()),
+  /**
+   * All toolbar behaviour lives here rather than in the block definitions, so
+   * the editor handle and the pending-media ref are only ever touched from a
+   * real click handler.
+   */
+  const handleBlockClick = React.useCallback(
+    (kind: GeneralBlockKind) => {
+      switch (kind) {
+        case "h1": return exec((e) => e.chain().focus().toggleHeading({ level: 1 }).run());
+        case "h2": return exec((e) => e.chain().focus().toggleHeading({ level: 2 }).run());
+        case "h3": return exec((e) => e.chain().focus().toggleHeading({ level: 3 }).run());
+        case "para": return exec((e) => e.chain().focus().setParagraph().run());
+        case "bold": return exec((e) => e.chain().focus().toggleBold().run());
+        case "italic": return exec((e) => e.chain().focus().toggleItalic().run());
+        case "under": return exec((e) => e.chain().focus().toggleUnderline().run());
+        case "alignLeft": return exec((e) => e.chain().focus().setTextAlign("left").run());
+        case "alignCenter": return exec((e) => e.chain().focus().setTextAlign("center").run());
+        case "alignRight": return exec((e) => e.chain().focus().setTextAlign("right").run());
+        case "bulletList": return exec((e) => e.chain().focus().toggleBulletList().run());
+        case "orderedList": return exec((e) => e.chain().focus().toggleOrderedList().run());
+        case "blockquote": return exec((e) => e.chain().focus().toggleBlockquote().run());
+        case "code": return exec((e) => e.chain().focus().toggleCode().run());
+        case "codeBlock": return exec((e) => e.chain().focus().toggleCodeBlock().run());
+        case "divider": return exec((e) => e.chain().focus().setHorizontalRule().run());
+        case "link":
+          return openMediaModal("embed", (url) =>
+            exec((e) => e.chain().focus().setLink({ href: url }).run()),
+          );
+        case "image":
+          return openMediaModal("image", (url) =>
+            exec((e) => e.chain().focus().setImage({ src: url }).run()),
+          );
+        case "video":
+          return openMediaModal("video", (url) =>
+            exec((e) =>
+              e
+                .chain()
+                .insertContent(
+                  `<iframe src="${url}" frameborder="0" allowfullscreen class="w-full aspect-video rounded-[8px]"></iframe>`,
+                )
+                .run(),
+            ),
+          );
+        case "embed":
+          return openMediaModal("embed", (url) =>
+            exec((e) =>
+              e
+                .chain()
+                .insertContent(
+                  `<a href="${url}" target="_blank" class="text-[#0A60E1] underline">${url}</a>`,
+                )
+                .run(),
+            ),
+          );
+      }
     },
-    {
-      label: "H2",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M16 18h4" /><path d="M18 14v4" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleHeading({ level: 2 }).run()),
-    },
-    {
-      label: "H3",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16" /><path d="M18 4v16" /><path d="M6 12h12" /><path d="M16 14h4" /><path d="M18 10v8" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleHeading({ level: 3 }).run()),
-    },
-    {
-      label: "Para",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 0 8H6z" /><path d="M6 12h6a4 4 0 0 1 0 8H6z" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().setParagraph().run()),
-    },
-    {
-      label: "Bold",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleBold().run()),
-    },
-    {
-      label: "Italic",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="4" x2="10" y2="4" /><line x1="14" y1="20" x2="5" y2="20" /><line x1="15" y1="4" x2="9" y2="20" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleItalic().run()),
-    },
-    {
-      label: "Under",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v7a6 6 0 0 0 12 0V3" /><line x1="4" y1="21" x2="20" y2="21" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleUnderline().run()),
-    },
-    {
-      label: "AL",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="15" y2="12" /><line x1="3" y1="18" x2="18" y2="18" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().setTextAlign("left").run()),
-    },
-    {
-      label: "AC",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="4" y1="18" x2="20" y2="18" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().setTextAlign("center").run()),
-    },
-    {
-      label: "AR",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="6" y1="18" x2="21" y2="18" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().setTextAlign("right").run()),
-    },
-    {
-      label: "List",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="9" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="9" y1="18" x2="21" y2="18" /><circle cx="4" cy="6" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="18" r="1" fill="currentColor" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleBulletList().run()),
-    },
-    {
-      label: "Num",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line x1="10" y1="18" x2="21" y2="18" /><path d="M4 6h1v4" /><path d="M4 10h2" /><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleOrderedList().run()),
-    },
-    {
-      label: "Quote",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1-1-2-2-2H4c-1 0-2 1-2 2v6c0 1 1 2 2 2" /><path d="M15 21c3 0 7-1 7-8V5c0-1-1-2-2-2h-4c-1 0-2 1-2 2v6c0 1 1 2 2 2" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleBlockquote().run()),
-    },
-    {
-      label: "Code",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleCode().run()),
-    },
-    {
-      label: "CodeB",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().toggleCodeBlock().run()),
-    },
-    {
-      label: "Div",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /></svg>
-      ),
-      action: () => exec((e) => e.chain().focus().setHorizontalRule().run()),
-    },
-    {
-      label: "Link",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-      ),
-      action: () => {
-        openMediaModal("embed", (url) => exec((e) => e.chain().focus().setLink({ href: url }).run()));
-      },
-    },
-    {
-      label: "Img",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-      ),
-      action: () => {
-        openMediaModal("image", (url) => exec((e) => e.chain().focus().setImage({ src: url }).run()));
-      },
-    },
-    {
-      label: "Vid",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
-      ),
-      action: () => {
-        openMediaModal("video", (url) => exec((e) => e.chain().focus().insertContent(`<iframe src="${url}" frameborder="0" allowfullscreen class="w-full aspect-video rounded-[8px]"></iframe>`).run()));
-      },
-    },
-    {
-      label: "Embed",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A60E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-      ),
-      action: () => {
-        openMediaModal("embed", (url) => exec((e) => e.chain().focus().insertContent(`<a href="${url}" target="_blank" class="text-[#0A60E1] underline">${url}</a>`).run()));
-      },
-    },
-  ];
+    [exec, openMediaModal],
+  );
+
 
   return (
     <FormProvider {...methods}>
@@ -598,7 +675,7 @@ export const LessonEditView = ({
           {lesson.type === "text" && (
           <div className="w-full">
             <RichTextEditor
-              ref={mainEditorRef}
+              ref={setMainEditor}
               content={lesson.content || ""}
               onChange={(html) => handleUpdateField("content", html)}
               placeholder="Start writing your lesson content here..."
@@ -879,7 +956,7 @@ export const LessonEditView = ({
                 <button
                   key={idx}
                   type="button"
-                  onClick={block.action}
+                  onClick={() => handleBlockClick(block.kind)}
                   className="h-[78px] w-[92px] shrink-0 border border-[#F0F0F0] rounded-[8px] hover:border-[#D9D9D9] hover:shadow-sm bg-white cursor-pointer flex flex-col items-center justify-center gap-[8px] transition-all"
                 >
                   <span className="flex items-center justify-center size-[24px] text-[#0A60E1]">

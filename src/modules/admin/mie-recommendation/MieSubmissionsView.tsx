@@ -81,10 +81,22 @@ export const MieSubmissionsView = () => {
 
   // Any filter change re-slices the result set, so page 2 of the old set is
   // meaningless — go back to the first page before the next request goes out.
-  React.useEffect(() => {
+  // Adjusted during render rather than in an effect so the very first request
+  // after a filter change already asks for page 1.
+  const filterSignature = [
+    activeStatus,
+    search,
+    payoutFilter,
+    developerFilter,
+    selectedDate,
+  ].join("|");
+  const [lastFilterSignature, setLastFilterSignature] =
+    React.useState(filterSignature);
+  if (lastFilterSignature !== filterSignature) {
+    setLastFilterSignature(filterSignature);
     resetPage();
     setSelectedRows([]);
-  }, [activeStatus, search, payoutFilter, developerFilter, selectedDate, resetPage]);
+  }
 
   const queryParams: MieSubmissionsListParams = {
     page,

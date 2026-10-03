@@ -63,6 +63,7 @@ export const accountApi = BaseAPI.injectEndpoints({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["UserProfile"],
     }),
   }),
 });

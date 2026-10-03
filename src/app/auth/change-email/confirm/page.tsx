@@ -1,17 +1,28 @@
 import type { Metadata } from "next";
+
 import ConfirmEmailChangeView from "@/modules/auth/views/ConfirmEmailChangeView";
 
 export const metadata: Metadata = {
-  title: "Confirm your new email | SoluDeskss",
-  description: "Confirm the change to your account email address.",
+  title: "Confirm your new email | SoluDesks",
+  description: "Confirm the change to your account's email address.",
 };
 
+/**
+ * Legacy confirmation path — links may already be sitting in inboxes, so it
+ * keeps working and delegates to the same view as the root `/change-email`
+ * route the backend actually emails. No confirm logic lives here.
+ */
 export default async function ConfirmEmailChangePage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ email?: string; token?: string }>;
 }) {
-  const { token } = await searchParams;
+  const params = await searchParams;
 
-  return <ConfirmEmailChangeView token={token ?? ""} />;
+  return (
+    <ConfirmEmailChangeView
+      email={params.email ?? ""}
+      token={params.token ?? ""}
+    />
+  );
 }

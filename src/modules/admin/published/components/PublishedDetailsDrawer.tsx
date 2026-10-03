@@ -62,7 +62,7 @@ export const PublishedDetailsDrawer = ({ isOpen, onOpenChange, course }: Publish
 
       {/* OWNER'S INFORMATION */}
       <div className="flex flex-col gap-[16px] py-[20px] border-b border-[#E8E8E8]">
-        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px]">OWNER'S INFORMATION</span>
+        <span className="text-[14px] font-medium text-[#202020] tracking-[-0.28px] leading-[20px]">OWNER&apos;S INFORMATION</span>
         <InfoRow label="Creator" value={course.creator} />
         <InfoRow label="User ID" value={course.creatorId} onCopy={() => navigator.clipboard.writeText(course.creatorId)} />
         <InfoRow label="Date Created" value={course.dateCreated} />

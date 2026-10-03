@@ -6,8 +6,7 @@ import { useAppDispatch } from "@/redux";
 import { clearAuth, setCredentials } from "@/redux/slices/authSlice";
 import { useRouter } from "next/navigation";
 import { AuthRoute } from "@/lib/routes";
-
-const SESSION_REFRESH_INTERVAL_MS = 25 * 60 * 1000;
+import { SESSION_REFRESH_INTERVAL_MS } from "@/modules/auth/utils/token";
 
 function AuthSessionSync() {
   const dispatch = useAppDispatch();

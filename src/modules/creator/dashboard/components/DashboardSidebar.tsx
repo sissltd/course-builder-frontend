@@ -6,10 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { CreatorRoute } from "@/lib/routes";
-import { signOut, useSession } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { 
   Home2, 
   Book, 
@@ -20,7 +18,9 @@ import {
   Notification,
   User,
   Setting2,
+  Send,
   I24Support,
+  MessageQuestion,
   CloseCircle,
   Logout,
 } from "iconsax-react";
@@ -32,6 +32,7 @@ const sidebarLinks = [
   { name: "My Courses", href: CreatorRoute.COURSES, icon: Book },
   { name: "Draft", href: CreatorRoute.DRAFTS, icon: Notepad },
   { name: "Collaborators", href: CreatorRoute.COLLABORATORS, icon: Profile2User },
+  { name: "Invitations", href: CreatorRoute.INVITATIONS, icon: Send },
   { name: "Wallet", href: CreatorRoute.WALLET, icon: Wallet },
   { name: "Reservation", href: CreatorRoute.RESERVATION, icon: Edit },
   { name: "Notifications", href: CreatorRoute.NOTIFICATIONS, icon: Notification },
@@ -41,6 +42,9 @@ const bottomLinks = [
   { name: "Profile", href: CreatorRoute.PROFILE, icon: User },
   { name: "Settings", href: CreatorRoute.SETTINGS, icon: Setting2 },
   { name: "Help", href: CreatorRoute.HELP, icon: I24Support },
+  // Deliberately not gated on KYC or account status: a suspended creator can
+  // still sign in, and appealing is often why they are back.
+  { name: "Support", href: CreatorRoute.SUPPORT, icon: MessageQuestion },
 ];
 
 interface DashboardSidebarProps {
@@ -50,7 +54,6 @@ interface DashboardSidebarProps {
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
   const { data: kycSubmission } = useGetMyKycQuery();
@@ -72,10 +75,9 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
       user?.email ?? "user",
     )}`;
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   return (

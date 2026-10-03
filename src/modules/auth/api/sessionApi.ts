@@ -2,6 +2,7 @@ import { BaseAPI } from "@/redux/baseApi";
 import type {
   LoginRequest,
   LoginResponse,
+  LoginTokensResponse,
   LogoutRequest,
   RefreshRequest,
   RefreshResponse,
@@ -25,7 +26,7 @@ export const sessionApi = BaseAPI.injectEndpoints({
         body,
       }),
     }),
-    googleSignup: builder.mutation<LoginResponse, GoogleSignupRequest>({
+    googleSignup: builder.mutation<LoginTokensResponse, GoogleSignupRequest>({
       query: (body) => ({
         url: "/auth/signup/google/",
         method: "POST",

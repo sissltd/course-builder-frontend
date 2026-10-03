@@ -16,6 +16,20 @@ export enum WorkspaceCollaboratorRole {
   COLLABORATOR = "COLLABORATOR",
 }
 
+/**
+ * A roster entry's lifecycle, which is *not* the same ladder as a course
+ * invite's (`InviteStatus`): a workspace collaborator is never declined, only
+ * invited, accepted into an active seat, or soft-deleted by its owner.
+ *
+ * REMOVED is a soft delete — `removed_at` is stamped and the row is kept so the
+ * past course audit trail stays intact.
+ */
+export enum WorkspaceCollaboratorStatus {
+  PENDING = "PENDING",
+  ACTIVE = "ACTIVE",
+  REMOVED = "REMOVED",
+}
+
 export interface CollaboratorModule {
   id: string;
   title: string;
@@ -86,34 +100,61 @@ export interface CourseInvitesListParams {
   size?: number;
 }
 
+/**
+ * One row of the workspace roster. This is account-level, not course-scoped:
+ * everyone the caller works with across their workspace.
+ *
+ * `name`/`email` describe the *person's account*, so they are null until the
+ * invitee actually registers — `invited_email` is what the roster knows from
+ * the moment the invitation is sent.
+ */
 export interface WorkspaceCollaborator {
   id: string;
+  name: string | null;
+  email: string | null;
   owner: string;
   user: string | null;
   invited_email: string;
   role: WorkspaceCollaboratorRole;
+  role_label: string;
   sex: string | null;
   country_of_origin: string | null;
-  status: InviteStatus;
+  status: WorkspaceCollaboratorStatus;
   removed_at: string | null;
+  date_added: string;
   created_datetime: string;
 }
 
+/** Invite someone by email — they need no account yet. */
 export interface CreateWorkspaceCollaboratorRequest {
   invited_email: string;
   role: WorkspaceCollaboratorRole;
   sex?: string;
   country_of_origin?: string;
+  status?: WorkspaceCollaboratorStatus;
 }
 
+/** Role or demographic fields only; the roster entry itself is addressed by id. */
 export interface UpdateWorkspaceCollaboratorRequest {
   invited_email?: string;
   role?: WorkspaceCollaboratorRole;
   sex?: string;
   country_of_origin?: string;
+  status?: WorkspaceCollaboratorStatus;
 }
 
+/**
+ * Removed people are hidden from the list by default, so callers that want to
+ * surface them must pass `status: REMOVED` explicitly.
+ */
 export interface WorkspaceCollaboratorsListParams {
+  role?: WorkspaceCollaboratorRole;
+  status?: WorkspaceCollaboratorStatus;
+  search?: string;
+  /** Course category, a uuid. */
+  category?: string;
+  date_from?: string;
+  date_to?: string;
   ordering?: string;
   page?: number;
   size?: number;

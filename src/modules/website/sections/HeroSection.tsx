@@ -1,10 +1,25 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { Button } from "@/components/shared/Button";
 import { AuthRoute } from "@/lib/routes";
+import {
+  getDashboardRoute,
+  getWorkspaceForRole,
+} from "@/modules/auth/utils/workspace";
 
 export function HeroSection() {
+  const { data: session, status } = useSession();
+
+  const isAuthenticated = status === "authenticated";
+  const isLoading = status === "loading";
+  const dashboardHref = getDashboardRoute(
+    session?.user?.workspace ?? getWorkspaceForRole(session?.user?.role),
+  );
+
   return (
     <section className="bg-[#FDFDFF]">
       <div className="flex w-full flex-col items-center pt-[40px]">
@@ -26,16 +41,32 @@ export function HeroSection() {
         </p>
 
         <div className="mt-10 flex items-center gap-3">
-          <Link href={AuthRoute.REGISTER}>
-            <Button variant="app-primary" size="app" className="h-[44px] px-6 text-[14px]">
-              Create account
-            </Button>
-          </Link>
-          <Link href={AuthRoute.LOGIN}>
-            <Button variant="app-outline" size="app" className="h-[44px] px-6 text-[14px]">
-              Log in
-            </Button>
-          </Link>
+          {isLoading ? (
+            <div
+              aria-hidden="true"
+              data-testid="hero-cta-skeleton"
+              className="h-[44px] w-[168px] animate-pulse rounded-[8px] border border-sd-blue/40 bg-sd-blue/5"
+            />
+          ) : isAuthenticated ? (
+            <Link href={dashboardHref}>
+              <Button variant="app-primary" size="app" className="h-[44px] px-6 text-[14px]">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href={AuthRoute.REGISTER}>
+                <Button variant="app-primary" size="app" className="h-[44px] px-6 text-[14px]">
+                  Create account
+                </Button>
+              </Link>
+              <Link href={AuthRoute.LOGIN}>
+                <Button variant="app-outline" size="app" className="h-[44px] px-6 text-[14px]">
+                  Log in
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

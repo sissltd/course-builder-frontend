@@ -1,5 +1,6 @@
 export {
   useGetCoursesQuery,
+  useLazyGetCoursesQuery,
   useGetCourseQuery,
   useCreateCourseMutation,
   useUpdateCourseMutation,

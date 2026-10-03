@@ -7,7 +7,8 @@ import PhoneInput, {
   getCountryCallingCode,
 } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { useController, useFormContext } from "react-hook-form";
+import { useController, useFormContext, useFormState } from "react-hook-form";
+import type { Control, FieldValues } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -155,8 +156,82 @@ interface FormPhoneInputProps {
   onCountryChange?: (country?: Country) => void;
 }
 
-export const FormPhoneInput = ({
-  name,
+export const FormPhoneInput = (props: FormPhoneInputProps) => {
+  // `useFormContext` returns null without a `FormProvider` rather than
+  // throwing, so calling it is safe; `useController` does need a real control.
+  // The two modes are separate components because a try/catch around a
+  // conditional hook call breaks the rules of hooks.
+  const control = useFormContext()?.control;
+
+  return control ? (
+    <ConnectedPhoneInput {...props} control={control} />
+  ) : (
+    <StandalonePhoneInput {...props} />
+  );
+};
+
+type ConnectorProps = FormPhoneInputProps & {
+  control?: Control<FieldValues>;
+};
+
+const ConnectedPhoneInput = ({
+  control,
+  onChange,
+  onBlur,
+  onCountryChange,
+  error: externalError,
+  ...props
+}: ConnectorProps) => {
+  const { field } = useController({ control, name: props.name });
+  const { errors } = useFormState({ control });
+
+  return (
+    <PhoneInputView
+      {...props}
+      error={
+        externalError ?? (errors[props.name]?.message as string | undefined)
+      }
+      value={(field.value as Value) ?? ""}
+      onChange={(next) => {
+        field.onChange(next ?? "");
+        onChange?.(next);
+      }}
+      onBlur={() => {
+        field.onBlur();
+        onBlur?.();
+      }}
+      onCountryChange={onCountryChange ?? (() => {})}
+    />
+  );
+};
+
+const StandalonePhoneInput = ({
+  value,
+  onChange,
+  onBlur,
+  onCountryChange,
+  ...props
+}: ConnectorProps) => (
+  <PhoneInputView
+    {...props}
+    value={value ?? ""}
+    onChange={onChange ?? (() => {})}
+    onBlur={onBlur ?? (() => {})}
+    onCountryChange={onCountryChange ?? (() => {})}
+  />
+);
+
+type PhoneInputViewProps = Omit<
+  ConnectorProps,
+  "control" | "value" | "onChange" | "onBlur" | "onCountryChange"
+> & {
+  value: Value;
+  onChange: (value?: Value) => void;
+  onBlur: () => void;
+  onCountryChange: (country?: Country) => void;
+};
+
+const PhoneInputView = ({
   label,
   error: externalError,
   hint,
@@ -170,40 +245,14 @@ export const FormPhoneInput = ({
   autoFocus,
   isSuccess,
   isFilled,
-  value: externalValue,
-  onChange: externalOnChange,
-  onBlur: externalOnBlur,
-  onCountryChange: externalOnCountryChange,
-}: FormPhoneInputProps) => {
-  let fieldValue = externalValue ?? "";
-  let fieldOnChange = externalOnChange || (() => {});
-  let fieldOnBlur = externalOnBlur || (() => {});
-  let fieldOnCountryChange = externalOnCountryChange || (() => {});
-  let fieldError = externalError;
-
-  try {
-    const {
-      control,
-      formState: { errors },
-    } = useFormContext();
-    const { field } = useController({ name, control });
-    fieldValue = field.value ?? "";
-    fieldOnChange = (value?: Value) => {
-      field.onChange(value ?? "");
-      externalOnChange?.(value);
-    };
-    fieldOnBlur = () => {
-      field.onBlur();
-      externalOnBlur?.();
-    };
-    fieldOnCountryChange = (country?: Country) => {
-      externalOnCountryChange?.(country);
-    };
-    fieldError = fieldError || (errors[name]?.message as string | undefined);
-  } catch {}
-
+  value,
+  onChange,
+  onBlur,
+  onCountryChange,
+}: PhoneInputViewProps) => {
   const [isFocused, setIsFocused] = React.useState(false);
-  const hasValue = isFilled || (fieldValue !== undefined && fieldValue !== "");
+  const hasValue = isFilled || (value !== undefined && value !== "");
+  const fieldError = externalError;
 
   return (
     <div className={cn("flex flex-col gap-[6px] w-full", containerClassName)}>
@@ -230,18 +279,18 @@ export const FormPhoneInput = ({
         }}
         countrySelectComponent={PhoneCountrySelect}
         addInternationalOption={false}
-        value={fieldValue}
-        onChange={fieldOnChange}
+        value={value}
+        onChange={onChange}
         defaultCountry={defaultCountry}
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}
         autoFocus={autoFocus}
-        onCountryChange={fieldOnCountryChange}
+        onCountryChange={onCountryChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
           setIsFocused(false);
-          fieldOnBlur();
+          onBlur();
         }}
       />
       {fieldError ? (

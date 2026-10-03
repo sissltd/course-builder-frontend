@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
-import { useLogoutMutation } from "@/modules/auth/api/sessionApi";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { useGetMyProfileQuery } from "@/modules/auth/api/profileApi";
 import { usePermissions } from "@/modules/auth/hooks/usePermissions";
 import { useGetReviewerOverviewQuery } from "../hooks";
@@ -130,7 +127,6 @@ const OVERVIEW_ENTRY = REVIEWER_ACCESS.find(
 export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -150,7 +146,7 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
     skip: !canReadOverview,
   });
   const { data: pendingData } = useGetReviewQueuePendingQuery();
-  const [logoutApi, { isLoading: isLoggingOut }] = useLogoutMutation();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const pendingCount =
     overview?.queue?.SUBMITTED ??
@@ -198,23 +194,14 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
     ((profile?.first_name?.[0] || user?.first_name?.[0] || "R") +
       (profile?.last_name?.[0] || user?.last_name?.[0] || "V")).toUpperCase();
 
+  const logout = useLogout();
   const handleLogout = async () => {
+    setIsSigningOut(true);
     try {
-      const refreshToken = (session as any)?.refreshToken;
-      if (refreshToken) {
-        try {
-          await logoutApi({ refresh: refreshToken }).unwrap();
-        } catch {
-          // ignore error if token already expired
-        }
-      }
-      await serverLogout();
-    } catch {
-      // fallback
-    } finally {
-      dispatch(clearAuth());
       toast.success("Signed out successfully");
-      await signOut({ callbackUrl: "/auth/login" });
+      await logout();
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -300,12 +287,12 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
               <button
                 type="button"
                 onClick={handleLogout}
-                disabled={isLoggingOut}
+                disabled={isSigningOut}
                 className="flex h-[36px] items-center gap-[8px] px-[8px] py-[8px] rounded-[8px] hover:bg-sd-grey-11 transition-colors cursor-pointer w-full text-left"
               >
                 <Logout variant="Linear" size={20} color="var(--sd-reviewer-muted)" />
                 <span className="text-[14px] font-normal text-sd-reviewer-muted tracking-[-0.28px] leading-[20px]">
-                  {isLoggingOut ? "Signing out..." : "Sign out"}
+                  {isSigningOut ? "Signing out..." : "Sign out"}
                 </span>
               </button>
             </div>
@@ -380,7 +367,7 @@ export const ReviewerSidebar = ({ isOpen, onClose }: ReviewerSidebarProps) => {
                   className="flex items-center gap-[8px] px-[10px] py-[8px] text-[13px] text-[#D54800] hover:bg-[#FFF0ED] rounded-[6px] cursor-pointer font-medium"
                 >
                   <Logout size={16} variant="Linear" color="#D54800" />
-                  <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
+                  <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

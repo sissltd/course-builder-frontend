@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { useFormContext, useController } from "react-hook-form";
+import { useFormContext, useController, useFormState } from "react-hook-form";
+import type { Control, FieldValues } from "react-hook-form";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,18 @@ interface FormSelectOption {
   value: string;
   searchValue?: string;
 }
+
+// Radix throws while mounting an item with an empty value, so an option that
+// means "no selection" (`value: ""`) is rendered under this sentinel instead
+// and mapped back to `""` when it is picked.
+const EMPTY_OPTION_VALUE = "__empty_option__";
+const CLEAR_OPTION_VALUE = "none";
+
+const toItemValue = (value: string) =>
+  value === "" ? EMPTY_OPTION_VALUE : value;
+
+const fromItemValue = (value: string) =>
+  value === EMPTY_OPTION_VALUE ? "" : value;
 
 interface FormSelectProps {
   name: string;
@@ -54,24 +67,81 @@ interface FormSelectProps {
   onValueChange?: (value: string) => void;
 }
 
-export const FormSelect = ({ name, label, error: externalError, hint, required, options = [], placeholder = "Select an option", triggerClassName, containerClassName, disabled, searchable = false, searchPlaceholder = "Search...", emptyText = "No results found.", clearable = false, clearLabel = "None", icon, prefix, suffix, triggerValue, hasMore = false, isLoadingMore = false, onLoadMore, value: externalValue, onValueChange: externalOnValueChange }: FormSelectProps) => {
-  const isControlled = externalValue !== undefined;
-  let fieldValue = isControlled ? externalValue : "";
-  let fieldOnChange = externalOnValueChange || (() => {});
-  let fieldError = externalError;
+export const FormSelect = (props: FormSelectProps) => {
+  // `useFormContext` returns null without a `FormProvider` rather than
+  // throwing, so calling it is safe; `useController` does need a real control.
+  // The two modes are separate components because a try/catch around a
+  // conditional hook call breaks the rules of hooks.
+  const control = useFormContext()?.control;
 
-  try {
-    const { control, formState: { errors } } = useFormContext();
-    const { field } = useController({ name, control });
-    fieldValue = isControlled ? externalValue : (field.value ?? "");
-    fieldOnChange = isControlled
-      ? (val: string) => externalOnValueChange?.(val)
-      : (val: string) => {
-          field.onChange(val);
-          externalOnValueChange?.(val);
-        };
-    fieldError = fieldError || (errors[name]?.message as string | undefined);
-  } catch {}
+  return control ? (
+    <ConnectedSelect {...props} control={control} />
+  ) : (
+    <StandaloneSelect {...props} />
+  );
+};
+
+type ConnectorProps = FormSelectProps & {
+  control?: Control<FieldValues>;
+};
+
+const ConnectedSelect = ({
+  control,
+  value: externalValue,
+  onValueChange,
+  error: externalError,
+  ...props
+}: ConnectorProps) => {
+  const { field } = useController({ control, name: props.name });
+  const { errors } = useFormState({ control });
+  const isControlled = externalValue !== undefined;
+
+  return (
+    <SelectView
+      {...props}
+      error={
+        externalError ?? (errors[props.name]?.message as string | undefined)
+      }
+      value={isControlled ? externalValue : ((field.value as string) ?? "")}
+      onValueChange={(next) => {
+        if (!isControlled) field.onChange(next === "none" ? "" : next);
+        onValueChange?.(next);
+      }}
+    />
+  );
+};
+
+const StandaloneSelect = ({
+  value = "",
+  onValueChange,
+  ...props
+}: ConnectorProps) => (
+  <SelectView
+    {...props}
+    value={value}
+    onValueChange={onValueChange ?? (() => {})}
+  />
+);
+
+type SelectViewProps = Omit<
+  ConnectorProps,
+  "control" | "onValueChange" | "value"
+> & {
+  value: string;
+  onValueChange: (value: string) => void;
+};
+
+const SelectView = ({
+  label, error: externalError, hint, required, options = [],
+  placeholder = "Select an option", triggerClassName, containerClassName,
+  disabled, searchable = false, searchPlaceholder = "Search...",
+  emptyText = "No results found.", clearable = false, clearLabel = "None", icon,
+  prefix, suffix, triggerValue, hasMore = false, isLoadingMore = false,
+  onLoadMore, value, onValueChange,
+}: SelectViewProps) => {
+  const fieldValue = value;
+  const fieldOnChange = onValueChange;
+  const fieldError = externalError;
 
   const [open, setOpen] = useState(false);
   const [triggerWidth, setTriggerWidth] = useState<number>(0);
@@ -90,10 +160,10 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
     <Select
       value={fieldValue}
       onValueChange={(val) => {
-        if (val === "none") {
+        if (val === CLEAR_OPTION_VALUE) {
           fieldOnChange("");
         } else {
-          fieldOnChange(val);
+          fieldOnChange(fromItemValue(val));
         }
       }}
       disabled={disabled}
@@ -113,12 +183,12 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
       </SelectTrigger>
       <SelectContent position="popper" className="bg-white border border-[#F0F0F0] rounded-[16px] w-[var(--radix-select-trigger-width)] min-w-[176px] p-[8px] pl-[16px]">
         {clearable && (
-          <SelectItem value="none" className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
+          <SelectItem value={CLEAR_OPTION_VALUE} className="text-muted-foreground italic flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] hover:bg-[#F0F0F0] cursor-pointer [&_svg]:hidden">
             <span className="truncate min-w-0 w-full">{clearLabel}</span>
           </SelectItem>
         )}
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] [&_svg]:hidden">
+          <SelectItem key={option.value} value={toItemValue(option.value)} className="flex items-center gap-[20px] p-[8px] pr-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] [&_svg]:hidden">
             <span className="truncate min-w-0 w-full">{option.label}</span>
           </SelectItem>
         ))}
@@ -164,7 +234,7 @@ export const FormSelect = ({ name, label, error: externalError, hint, required, 
               <CommandGroup>
                 {clearable && (
                   <CommandItem
-                    value="none"
+                    value={CLEAR_OPTION_VALUE}
                     onSelect={() => {
                       fieldOnChange("");
                       setOpen(false);

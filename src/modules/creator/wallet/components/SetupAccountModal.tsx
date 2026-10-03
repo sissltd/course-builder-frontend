@@ -28,7 +28,7 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
   const [accountNumber, setAccountNumber] = useState("");
   const [verifiedName, setVerifiedName] = useState("");
   const verifyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const verifiedKeyRef = useRef("");
+  const [verifiedKey, setVerifiedKey] = useState("");
 
   const { data: banks = [] } = useGetBanksQuery();
   const [verifyAccount, { isLoading: isVerifying }] = useVerifyBankAccountMutation();
@@ -49,10 +49,10 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
           bank_code: bankCode,
           account_number: accNumber,
         }).unwrap();
-        verifiedKeyRef.current = `${bankCode}-${accNumber}`;
+        setVerifiedKey(`${bankCode}-${accNumber}`);
         setVerifiedName(result.account_name);
       } catch (err) {
-        verifiedKeyRef.current = "";
+        setVerifiedKey("");
         setVerifiedName("");
         const { message } = normalizeApiError(err as never);
         toast.error(message ?? "Could not verify account. Check bank and account number.");
@@ -72,7 +72,7 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
   }, [selectedBankCode, accountNumber, runVerification]);
 
   const currentKey = `${selectedBankCode}-${accountNumber}`;
-  const accountName = currentKey === verifiedKeyRef.current ? verifiedName : "";
+  const accountName = currentKey === verifiedKey ? verifiedName : "";
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +98,7 @@ export const SetupAccountModal = ({ isOpen, onOpenChange, onSuccess }: SetupAcco
     setSelectedBankCode("");
     setAccountNumber("");
     setVerifiedName("");
-    verifiedKeyRef.current = "";
+    setVerifiedKey("");
     onOpenChange(false);
   };
 

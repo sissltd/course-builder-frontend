@@ -13,6 +13,20 @@ const initialState: AuthState = {
   isAuthenticated: false,
 };
 
+/**
+ * `setCredentials` runs on every session read, and the session is read on the
+ * 5 minute poll, on window focus, and after every token rotation. Always
+ * writing a fresh `user` object gave the slice a new identity each time and
+ * re-rendered every `state.auth` subscriber for no change at all.
+ */
+const isSameUser = (a: User | null, b: User | null): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+
+  const keys = Object.keys(b) as (keyof User)[];
+  return keys.every((key) => a[key] === b[key]);
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -21,11 +35,23 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{ user: User; accessToken?: string }>,
     ) => {
-      state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken ?? state.accessToken;
+      const { user, accessToken } = action.payload;
+      const nextAccessToken = accessToken ?? state.accessToken;
+
+      if (
+        state.isAuthenticated &&
+        state.accessToken === nextAccessToken &&
+        isSameUser(state.user, user)
+      ) {
+        return;
+      }
+
+      state.user = user;
+      state.accessToken = nextAccessToken;
       state.isAuthenticated = true;
     },
     updateAccessToken: (state, action: PayloadAction<string>) => {
+      if (state.accessToken === action.payload) return;
       state.accessToken = action.payload;
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {

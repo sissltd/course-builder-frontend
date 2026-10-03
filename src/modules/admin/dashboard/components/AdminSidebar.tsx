@@ -5,10 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { signOut, useSession } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { usePermissions } from "@/modules/auth/hooks/usePermissions";
 import { ADMIN_ACCESS, type AdminAccessEntry } from "@/modules/admin/access";
 import {
@@ -81,7 +79,6 @@ const SidebarGroup = ({
 
 export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const user = session?.user;
   const { canAny, roleLabel } = usePermissions();
@@ -115,10 +112,9 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
       user?.email ?? "admin",
     )}`;
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   return (

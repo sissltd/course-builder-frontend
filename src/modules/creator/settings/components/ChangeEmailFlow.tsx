@@ -47,7 +47,6 @@ export const ChangeEmailFlow = ({
     mode: "onBlur",
     defaultValues: { new_email: "", password: "" },
   });
-
   const { handleSubmit, reset, setError } = methods;
 
   const close = () => {
@@ -197,3 +196,5 @@ export const ChangeEmailFlow = ({
     </>
   );
 };
+
+export default ChangeEmailFlow;

@@ -14,8 +14,12 @@ import {
 import { KycReviewDetailsModal } from "./components/KycReviewDetailsModal";
 import { submissionName } from "./lib/format";
 
+const KYC_TABS = ["PENDING", "APPROVED", "REJECTED"] as const;
+
+type KycReviewTab = (typeof KYC_TABS)[number];
+
 export const KycReviewView = () => {
-  const [activeTab, setActiveTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const [activeTab, setActiveTab] = useState<KycReviewTab>("PENDING");
   const [selectedSubmission, setSelectedSubmission] = useState<KycSubmission | null>(null);
 
   const { data, isLoading } = useGetKycReviewListQuery({ status: activeTab });
@@ -47,11 +51,11 @@ export const KycReviewView = () => {
   return (
     <div className="w-full h-full flex flex-col gap-[24px]">
       <div className="flex items-center gap-[12px]">
-        {["PENDING", "APPROVED", "REJECTED"].map((tab) => (
+        {KYC_TABS.map((tab) => (
           <button
             key={tab}
             type="button"
-            onClick={() => setActiveTab(tab as any)}
+            onClick={() => setActiveTab(tab)}
             className={cn(
               "flex h-[40px] items-center rounded-[10px] border px-[16px] text-[16px] font-normal leading-[24px] tracking-[-0.32px] transition-colors cursor-pointer",
               activeTab === tab

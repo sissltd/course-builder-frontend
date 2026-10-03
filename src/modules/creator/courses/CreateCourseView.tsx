@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import React, { useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/shared/Button";
@@ -10,8 +9,6 @@ import {
   SearchNormal1,
   TickCircle,
   Magicpen,
-  Timer1,
-  Play,
   InfoCircle,
 } from "iconsax-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +16,7 @@ import { FormInput } from "@/components/form/FormInput";
 import { FormCheckbox } from "@/components/form/FormCheckbox";
 import { Modal } from "@/components/shared/Modal";
 import { FormTextarea } from "@/components/form/FormTextarea";
-import { VideoPlayerModal } from "./components/VideoPlayerModal";
+import { GuideVideosStep } from "./components/GuideVideosStep";
 import { RequestTopicModal } from "@/modules/creator/reservation/components/RequestTopicModal";
 import { courseCreateSchema, CourseCreateFormData } from "./utils/validation";
 import { useAppDispatch } from "@/redux";
@@ -34,6 +31,13 @@ import { TopicStatus } from "@/modules/topics/types";
 import { normalizeApiError } from "@/lib/api/errors";
 import { CreatorRoute } from "@/lib/routes";
 import { toast } from "sonner";
+import {
+  buildMethodEntryHref,
+  clampCreateCourseStep,
+  CREATE_COURSE_STEP_PARAM,
+  createCourseStepHref,
+  parseCreateCourseStep,
+} from "./utils/createCourseNavigation";
 
 const RightArrowIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -65,28 +69,40 @@ const ImportDocumentIcon = () => (
   </div>
 );
 
-const VIDEOS = [
-  { id: 1, title: "How to create with AI", desc: "This video will teach you how to create your course using ai", duration: "1hr:32min", thumb: "/assets/courses/video-thumb-1.png", isCompleted: true },
-  { id: 2, title: "How to create a course", desc: "This video will guide you on how to create your course manually.", duration: "30min", thumb: "/assets/courses/video-thumb-2.png", isCompleted: false },
-  { id: 3, title: "How to import a course", desc: "This video will guide you on how to create your course from an existing document.", duration: "30min", thumb: "/assets/courses/video-thumb-3.png", isCompleted: false },
-];
+const CreateCourseStep = {
+  VideoGuide: 0,
+  Legal: 1,
+  Method: 2,
+  Category: 3,
+  Topic: 4,
+  Details: 5,
+  Loading: 6,
+} as const;
 
 export default function CreateCourseView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
-  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoryPickerQuery();
-  // The picker returns archived categories too; only live ones may be chosen.
-  const categories = selectActivePickerOptions(categoriesResponse);
-  const [step, setStep] = useState(0); // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
+  // 0: Video Guide, 1: Legal, 2: Method, 3: Category, 4: Topic, 5: Details, 6: Loading
+  const step = parseCreateCourseStep(
+    searchParams.get(CREATE_COURSE_STEP_PARAM),
+  );
   const [searchCategory, setSearchCategory] = useState("");
   const [searchTopic, setSearchTopic] = useState("");
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
 
-  const [activeVideo, setActiveVideo] = useState<typeof VIDEOS[0] | null>(null);
-  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-  const [completedVideos, setCompletedVideos] = useState<number[]>([1]); // Video 1 is completed by default in design
+  // Categories and topics are only reachable from the last two steps. Asking
+  // for them on the opening step burned a request — and, with a not-yet-valid
+  // token, a 401 and refresh round-trip — before the user had scrolled.
+  const needsCategories = step >= CreateCourseStep.Category;
+  const needsTopics = step >= CreateCourseStep.Topic;
+
+  const { data: categoriesResponse, isLoading: isLoadingCategories } =
+    useGetCategoryPickerQuery(undefined, { skip: !needsCategories });
+  // The picker returns archived categories too; only live ones may be chosen.
+  const categories = selectActivePickerOptions(categoriesResponse);
 
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isRequestSuccessOpen, setIsRequestSuccessOpen] = useState(false);
@@ -121,12 +137,23 @@ export default function CreateCourseView() {
 
   const { data: topicsResponse, isLoading: isLoadingTopics } = useGetTopicsQuery(
     selectedCategory ? { category: selectedCategory, status: TopicStatus.ACTIVE } : { status: TopicStatus.ACTIVE },
-    { skip: !selectedCategory }
+    { skip: !needsTopics || !selectedCategory }
   );
   const topics = topicsResponse?.data?.results || [];
 
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => Math.max(0, s - 1));
+  // Every wizard step lives in the URL, so each one is deep-linkable,
+  // survives a refresh and works with browser Back/Forward.
+  const goToStep = useCallback(
+    (next: number) => {
+      router.push(createCourseStepHref(clampCreateCourseStep(next)));
+    },
+    [router],
+  );
+
+  const nextStep = () => goToStep(step + 1);
+  const prevStep = () => goToStep(step - 1);
+  // The first step has nowhere to go inside the wizard — exit to the list.
+  const handleExitWizard = () => router.push(CreatorRoute.COURSES);
 
   const filteredCategories = (categories ?? []).filter(c =>
     c.name.toLowerCase().includes(searchCategory.toLowerCase())
@@ -135,16 +162,6 @@ export default function CreateCourseView() {
   const filteredTopics = topics.filter(t => 
     t.name.toLowerCase().includes(searchTopic.toLowerCase())
   );
-
-  const handleVideoClick = (video: typeof VIDEOS[0]) => {
-    setActiveVideo(video);
-    setIsPlayerOpen(true);
-    if (!completedVideos.includes(video.id)) {
-        setCompletedVideos([...completedVideos, video.id]);
-    }
-  };
-
-  const isAllVideosCompleted = completedVideos.length === VIDEOS.length;
 
   const handleLegalNext = async () => {
     const isValid = await trigger(["legalAgreement"]);
@@ -155,9 +172,9 @@ export default function CreateCourseView() {
     const isValid = await trigger(["creationMethod"]);
     if (isValid) {
       if (method === "ai") {
-        router.push(CreatorRoute.COURSES_AI_CREATE);
+        router.push(buildMethodEntryHref(CreatorRoute.COURSES_AI_CREATE));
       } else if (method === "import") {
-        router.push(CreatorRoute.COURSES_IMPORT);
+        router.push(buildMethodEntryHref(CreatorRoute.COURSES_IMPORT));
       } else {
         nextStep();
       }
@@ -205,79 +222,6 @@ export default function CreateCourseView() {
     }
   };
 
-  // Step 0: Video Guide
-  const renderStep0 = () => (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-in fade-in duration-500">
-      <div className="text-center mb-[40px]">
-        <h1 className="text-[32px] font-bold text-[#202020] font-quicksand mb-[12px]">Complete course</h1>
-        <p className="text-[16px] text-[#636363] max-w-[440px] mx-auto leading-[24px]">
-          Begin your journey as a course creator by finishing our SoluDesks guide on building courses
-        </p>
-      </div>
-
-      <div className="w-full max-w-[600px] flex flex-col gap-[40px]">
-        <div className="flex flex-col gap-[20px]">
-          {VIDEOS.map((video) => {
-            const isDone = completedVideos.includes(video.id);
-            return (
-              <div 
-                key={video.id} 
-                onClick={() => handleVideoClick(video)}
-                className="rounded-[16px] border border-[#d9d9d9] bg-[#f8f8f8] flex items-stretch overflow-hidden hover:border-sd-blue transition-all cursor-pointer group min-h-[120px]"
-              >
-                <div className="w-[150px] relative shrink-0">
-                  <Image src={video.thumb} alt={video.title} fill className="object-cover" />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                    <div className="size-[32px] rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white">
-                        <Play size={16} variant="Bold" color="currentColor"/>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col p-[12px] gap-[8px]">
-                  <h3 className="text-[16px] font-semibold text-[#202020] line-clamp-1">{video.title}</h3>
-                  <p className="text-[14px] text-[#636363] leading-[20px] line-clamp-2 text-ellipsis overflow-hidden">{video.desc}</p>
-                  
-                  <div className="flex items-center gap-[12px] mt-auto">
-                    <div className={cn(
-                      "px-[12px] py-[4px] rounded-full text-[14px] font-normal leading-[20px] tracking-[-0.28px]",
-                      isDone ? "bg-[#E6F9EF] text-[#008500]" : "bg-[#F0F0F0] text-[#202020]"
-                    )}>
-                      {isDone ? "Completed" : "Not completed"}
-                    </div>
-                    <div className="flex items-center gap-[4px] px-[8px] py-[4px] border border-[#d9d9d9] rounded-full">
-                      <Timer1 size={18} variant="Linear" color="#636363" />
-                      <span className="text-[14px] text-[#636363] tracking-[-0.28px]">{video.duration}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center gap-[16px]">
-          <Button 
-            type="button"
-            variant="app-outline" 
-            className="flex-1 h-[44px] text-sd-blue border-sd-blue"
-            onClick={() => router.back()}
-          >
-            Back
-          </Button>
-          <Button 
-            type="button"
-            variant="app-primary" 
-            className={cn("flex-1 h-[44px]", !isAllVideosCompleted && "bg-[#CECECE] border-[#CECECE] text-[#636363] hover:bg-[#CECECE] cursor-not-allowed")}
-            disabled={!isAllVideosCompleted}
-            onClick={nextStep}
-          >
-            Continue
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-  
   const renderStep1 = () => (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-in fade-in slide-in-from-right-4 duration-500">
       <div className="w-full max-w-[485px] bg-white border border-[#F0F0F0] rounded-[24px] p-[24px] ">
@@ -684,22 +628,18 @@ export default function CreateCourseView() {
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[1200px] mx-auto px-[20px] py-[40px]">
-        {step === 0 && renderStep0()}
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-        {step === 4 && renderStep4()}
-        {step === 5 && renderStep5()}
-        {step === 6 && renderStep6()}
-
-        {activeVideo && (
-          <VideoPlayerModal 
-            isOpen={isPlayerOpen}
-            onOpenChange={setIsPlayerOpen}
-            title={activeVideo.title}
-            thumbnail={activeVideo.thumb}
+        {step === CreateCourseStep.VideoGuide && (
+          <GuideVideosStep
+            onBack={handleExitWizard}
+            onContinue={nextStep}
           />
         )}
+        {step === CreateCourseStep.Legal && renderStep1()}
+        {step === CreateCourseStep.Method && renderStep2()}
+        {step === CreateCourseStep.Category && renderStep3()}
+        {step === CreateCourseStep.Topic && renderStep4()}
+        {step === CreateCourseStep.Details && renderStep5()}
+        {step === CreateCourseStep.Loading && renderStep6()}
 
         <RequestTopicModal 
           isOpen={isRequestModalOpen}

@@ -8,10 +8,8 @@ import { Button } from "@/components/shared/Button";
 import { FormInput } from "@/components/form/FormInput";
 import { useRouter } from "next/navigation";
 import { CreatorRoute } from "@/lib/routes";
-import { useSession, signOut } from "next-auth/react";
-import { useAppDispatch } from "@/redux";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { serverLogout } from "@/modules/auth/actions/logout";
+import { useSession } from "next-auth/react";
+import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { useGetMyProfileQuery, useUpdateMyProfileMutation } from "@/modules/auth/api/profileApi";
 import { useUploadFile } from "@/modules/shared/uploads/hooks/useUploadFile";
 import { toast } from "sonner";
@@ -19,7 +17,6 @@ import { normalizeApiError } from "@/lib/api/errors";
 
 export const AccountSettingsTab = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const { data: profile, isLoading: profileLoading } = useGetMyProfileQuery();
@@ -86,10 +83,9 @@ export const AccountSettingsTab = () => {
     }
   };
 
+  const logout = useLogout();
   const handleLogout = async () => {
-    dispatch(clearAuth());
-    await serverLogout();
-    await signOut({ callbackUrl: "/auth/login" });
+    await logout();
   };
 
   if (profileLoading) {

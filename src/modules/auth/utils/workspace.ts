@@ -1,3 +1,4 @@
+import { AdminRoute, CreatorRoute, ReviewerRoute } from "@/lib/routes";
 import { UserRole, Workspace } from "@/modules/auth/types/auth";
 
 /**
@@ -47,15 +48,15 @@ export function seatsForWorkspace(workspace: Workspace): UserRole[] {
 export function getDashboardRoute(workspace?: string): string {
   switch (workspace?.toLowerCase()) {
     case Workspace.CREATOR_STUDIO:
-      return "/creator/dashboard";
+      return CreatorRoute.DASHBOARD;
     case Workspace.ADMIN_DASHBOARD:
     case "admin_studio":
-      return "/admin/dashboard";
+      return AdminRoute.OVERVIEW;
     case Workspace.REVIEWER_STUDIO:
     case Workspace.CREATOR_REVIEW_DASHBOARD:
-      return "/reviewer/dashboard";
+      return ReviewerRoute.DASHBOARD;
     default:
-      return "/creator/dashboard";
+      return CreatorRoute.DASHBOARD;
   }
 }
 

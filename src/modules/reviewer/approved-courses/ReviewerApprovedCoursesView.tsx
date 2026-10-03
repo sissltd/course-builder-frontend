@@ -899,11 +899,12 @@ const ReviewPricesModal = ({
 
   const [activeTab, setActiveTab] = useState<string>("SoluDesk");
 
-  useEffect(() => {
-    if (activeChannelNames.length > 0 && !activeChannelNames.includes(activeTab)) {
-      setActiveTab(activeChannelNames[0]);
-    }
-  }, [activeChannelNames, activeTab]);
+  // If the selected distribution channel disappears from the results, fall back
+  // to the first one that is still there. Adjusted during render so the tab bar
+  // and the panel below it never disagree for a frame.
+  if (activeChannelNames.length > 0 && !activeChannelNames.includes(activeTab)) {
+    setActiveTab(activeChannelNames[0]);
+  }
 
   const [learnerPrices, setLearnerPrices] = useState<Record<string, string>>({
     SoluDesk: "149.00",
@@ -930,8 +931,14 @@ const ReviewPricesModal = ({
       : [];
   }, [serverPricesData]);
 
-  useEffect(() => {
-    if (serverResults.length > 0) {
+  // Seed the editable price/model maps from the server's suggested values the
+  // first time they arrive (and whenever a fresh set comes back). These stay
+  // state because the inputs below let the reviewer override them, so they are
+  // merged during render rather than in an effect.
+  const [seededResults, setSeededResults] = useState(serverResults);
+  if (seededResults !== serverResults && serverResults.length > 0) {
+    setSeededResults(serverResults);
+    {
       const newPrices: Record<string, string> = { ...learnerPrices };
       const newModels: Record<string, string> = { ...channelModels };
       serverResults.forEach((item: CourseDistributionChannel) => {
@@ -955,7 +962,7 @@ const ReviewPricesModal = ({
       setLearnerPrices(newPrices);
       setChannelModels(newModels);
     }
-  }, [serverResults]);
+  }
 
   const currentServerItem = useMemo(() => {
     const chKey = activeTab.toUpperCase();

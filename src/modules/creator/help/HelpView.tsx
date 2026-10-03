@@ -1,9 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SettingsLayout } from "@/components/shared/SettingsLayout";
 import { FullscreenLayout } from "@/components/shared/FullscreenLayout";
+import {
+  ContactSupportModal,
+  CreateTicketModal,
+} from "@/modules/support/components";
 import { HelpTabNav, type HelpTab } from "./components/HelpTabNav";
 import { NewToSoludeskTab } from "./components/NewToSoludeskTab";
 import {
@@ -34,6 +38,12 @@ interface HelpViewProps {
 export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Each of the three support actions now opens a real dialog against
+  // `/support/*` rather than handing off to the public contact page, which
+  // cannot know who the caller is and answers nothing they can track.
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
   const tab = (searchParams.get("tab") as HelpTab) || "new-to-soludesk";
   const category = searchParams.get("category") as KnowledgeBaseCategory | null;
@@ -95,7 +105,13 @@ export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
           <KnowledgeBaseTab onCategorySelect={handleCategorySelect} />
         );
       case "support":
-        return <SupportTab onRequestAppeal={handleRequestAppeal} />;
+        return (
+          <SupportTab
+            onContactSupport={() => setIsContactModalOpen(true)}
+            onCreateTicket={() => setIsTicketModalOpen(true)}
+            onRequestAppeal={handleRequestAppeal}
+          />
+        );
       default:
         return null;
     }
@@ -190,6 +206,17 @@ export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
       >
         {renderMainContent()}
       </SettingsLayout>
+      {/* Mounted here only: `SupportTab` — the sole thing that opens these — is
+          rendered by the main branch alone, so a sub-page render can never
+          leave a dialog stranded open. */}
+      <ContactSupportModal
+        isOpen={isContactModalOpen}
+        onOpenChange={setIsContactModalOpen}
+      />
+      <CreateTicketModal
+        isOpen={isTicketModalOpen}
+        onOpenChange={setIsTicketModalOpen}
+      />
       <AppealSuccessModal
         isOpen={false}
         onOpenChange={() => {}}
