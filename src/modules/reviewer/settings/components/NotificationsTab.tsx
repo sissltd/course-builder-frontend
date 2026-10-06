@@ -35,6 +35,7 @@ const FALLBACK_PREFERENCES: NotificationPreferences = {
   account_deletion_detection_alert: true,
   mie_recommendation_alert: true,
   mie_pipeline_alert: true,
+  course_update: false,
   in_app_enabled: true,
   sla_amber_threshold_hours_override: 0,
   sla_red_threshold_hours_override: 0,
