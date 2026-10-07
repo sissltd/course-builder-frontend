@@ -22,7 +22,9 @@ import { setCredentials } from "@/redux/slices/authSlice";
 import {
   getDashboardRoute,
   getWorkspaceForRole,
+  isCrossWorkspaceRedirect,
 } from "@/modules/auth/utils/workspace";
+import { clearManualLogoutFlag } from "@/modules/auth/utils/logoutIntent";
 import {
   GOOGLE_AUTH_PENDING_STORAGE_KEY,
   GOOGLE_CALLBACK_URL_STORAGE_KEY,
@@ -41,6 +43,33 @@ const isSafeInternalPath = (value: string | null): value is string =>
       !value.startsWith("//") &&
       (!value.startsWith("/auth") || value.includes("accept-invitation")),
   );
+
+/**
+ * Where to send someone who just authenticated.
+ *
+ * Two rejections, in order of severity. An unsafe path is never a destination —
+ * that is the open-redirect guard. A path inside *another* workspace's dashboard
+ * is also not a destination: a saved `?callbackUrl` can outlive the session that
+ * produced it, so a creator whose tab still carries `/admin/users` from an earlier
+ * sign-in would be aimed at the admin area. `ProtectedRoute` would bounce them
+ * out again, but only after the app rendered; discarding here means the redirect
+ * is never issued. Invitation and email-change paths live outside every
+ * dashboard and pass through untouched.
+ */
+function resolveSignInTarget(
+  callbackUrl: string | null,
+  workspace: string,
+  inviteTarget: string | null,
+): string {
+  if (
+    isSafeInternalPath(callbackUrl) &&
+    !isCrossWorkspaceRedirect(callbackUrl, workspace)
+  ) {
+    return callbackUrl;
+  }
+
+  return inviteTarget ?? getDashboardRoute(workspace);
+}
 
 /**
  * An invite link that arrives while signed out has to survive the detour
@@ -189,9 +218,16 @@ function LoginContent() {
         const inviteTarget = pendingInvite
           ? `${CreatorRoute.INVITATIONS}?invite_id=${encodeURIComponent(pendingInvite.inviteId)}`
           : null;
-        const target = isSafeInternalPath(storedCallback)
-          ? storedCallback
-          : inviteTarget ?? getDashboardRoute(workspace);
+        // The tab is authenticated again, so the deliberate-logout marker has
+        // served its purpose. Clearing it here means the *next* sign-out starts
+        // from a clean slate rather than inheriting this session's flag.
+        clearManualLogoutFlag();
+
+        const target = resolveSignInTarget(
+          storedCallback,
+          workspace,
+          inviteTarget,
+        );
 
         console.log("[GoogleLogin] useEffect: redirecting to", target);
         routerRef.current.replace(target);
@@ -299,11 +335,9 @@ function LoginContent() {
         ? `${CreatorRoute.INVITATIONS}?invite_id=${encodeURIComponent(pendingInvite.inviteId)}`
         : null;
 
-      router.push(
-        isSafeInternalPath(callbackUrl)
-          ? callbackUrl
-          : inviteTarget ?? getDashboardRoute(workspace),
-      );
+      clearManualLogoutFlag();
+
+      router.push(resolveSignInTarget(callbackUrl, workspace, inviteTarget));
       router.refresh();
     },
     [dispatch, router],

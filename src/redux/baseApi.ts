@@ -13,6 +13,7 @@ import type { RootState } from "./index";
 import { deleteCookie } from "@/utils/cookies";
 import { AuthRoute } from "@/lib/routes";
 import { purgePersistedAuth } from "./persistedAuth";
+import { wasLoggedOutManually } from "@/modules/auth/utils/logoutIntent";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const AUTH_LOGIN_PATH = AuthRoute.LOGIN;
@@ -178,6 +179,15 @@ const handleAuthFailure = (api: BaseQueryApi) => {
     // preferences) with it and lost the user's place in the app.
     NEXTAUTH_COOKIE_NAMES.forEach(deleteCookie);
     purgePersistedAuth();
+
+    // A deliberate logout makes the in-flight requests it cancels come back 401,
+    // so this handler runs on the way out too. Only a session that lapsed by
+    // itself should carry the user back to where they were.
+    if (wasLoggedOutManually()) {
+      isLoggingOut = false;
+      window.location.replace(AUTH_LOGIN_PATH);
+      return;
+    }
 
     const { pathname } = window.location;
     const loginUrl = `${AUTH_LOGIN_PATH}?callbackUrl=${encodeURIComponent(

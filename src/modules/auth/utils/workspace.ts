@@ -61,6 +61,59 @@ export function getDashboardRoute(workspace?: string): string {
 }
 
 /**
+ * The URL prefix each dashboard owns, derived from its own entry route so the
+ * prefix can't drift from the route it is meant to guard.
+ */
+const WORKSPACE_PATH_PREFIX: Record<string, string> = {
+  [Workspace.ADMIN_DASHBOARD]: AdminRoute.OVERVIEW.replace(/\/dashboard$/, ""),
+  [Workspace.CREATOR_STUDIO]: CreatorRoute.DASHBOARD.replace(/\/dashboard$/, ""),
+  [Workspace.REVIEWER_STUDIO]: ReviewerRoute.DASHBOARD.replace(
+    /\/dashboard$/,
+    "",
+  ),
+};
+
+/** The workspaces that own a dashboard prefix, for reverse lookups. */
+function workspaceOwningPath(path: string): string | undefined {
+  return Object.entries(WORKSPACE_PATH_PREFIX).find(
+    ([, prefix]) => path === prefix || path.startsWith(`${prefix}/`),
+  )?.[0];
+}
+
+/**
+ * Whether a saved redirect aims at a dashboard this user's workspace does not
+ * own.
+ *
+ * `ProtectedRoute` already bounces a user out of the wrong dashboard, but only
+ * after the app has rendered, and only for routes that go through it. A saved
+ * `?callbackUrl` is resolved before anything renders, and it can outlive the
+ * session that produced it — so a creator whose tab still carries
+ * `/admin/users` from an earlier sign-in would be aimed at the admin area.
+ * Deciding here means the redirect is discarded instead of issued and then
+ * undone.
+ *
+ * Only *mismatched dashboards* are rejected. A path outside every dashboard —
+ * `/auth/accept-invitation`, `/terms`, `/change-email` — is left alone: those
+ * flows are reached deliberately and are already gated by `isSafeInternalPath`.
+ * Discarding them would break the invitation and email-change detours that
+ * depend on the destination surviving the trip through login.
+ *
+ * The query string and fragment are stripped first, so `/admin/users?tab=x` is
+ * recognised as an admin path rather than passing as an unrecognised one, and
+ * the segment boundary keeps `/creatorly` out of the creator studio.
+ */
+export function isCrossWorkspaceRedirect(
+  path: string,
+  workspace?: string,
+): boolean {
+  const pathname = path.split(/[?#]/)[0];
+  const owner = workspaceOwningPath(pathname);
+  if (!owner) return false;
+
+  return owner !== workspace?.toLowerCase();
+}
+
+/**
  * Maps a seat to its workspace. This is the one place a *role* — rather than a
  * permission — is still the right input, because the backend documents `role`
  * as deciding "review seats, MFA mandate, staff roster membership and login

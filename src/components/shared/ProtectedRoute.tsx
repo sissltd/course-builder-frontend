@@ -8,6 +8,7 @@ import {
   getDashboardRoute,
   getWorkspaceForRole,
 } from "@/modules/auth/utils/workspace";
+import { wasLoggedOutManually } from "@/modules/auth/utils/logoutIntent";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -71,6 +72,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       if (hasRedirected.current) return;
 
       hasRedirected.current = true;
+
+      // A deliberate logout clears the cookie too, so this component sees
+      // `unauthenticated` on the way out and would otherwise stash the page the
+      // user just left as their return destination. Only a session that lapsed
+      // on its own earns that.
+      if (wasLoggedOutManually()) {
+        router.replace(AuthRoute.LOGIN);
+        return;
+      }
+
       // Keep the destination so signing back in returns the user where they
       // were rather than dumping them on the dashboard.
       router.replace(

@@ -32,7 +32,7 @@ function AuthSessionSync() {
       if (session.error === "RefreshAccessTokenError") {
         hasRedirected.current = true;
         dispatch(clearAuth());
-        signOut({ callbackUrl: "/auth/login", redirect: true });
+        signOut({ callbackUrl: AuthRoute.LOGIN, redirect: true });
         return;
       }
 
@@ -65,7 +65,7 @@ function AuthSessionSync() {
         if (data?.error === "RefreshAccessTokenError") {
           hasRedirected.current = true;
           dispatch(clearAuth());
-          signOut({ callbackUrl: "/auth/login", redirect: true });
+          signOut({ callbackUrl: AuthRoute.LOGIN, redirect: true });
           return;
         }
         if (data?.accessToken && data?.user) {
