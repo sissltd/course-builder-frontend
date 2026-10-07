@@ -280,6 +280,7 @@ export interface NotificationPreferences {
   mie_recommendation_alert: boolean;
   mie_pipeline_alert: boolean;
   in_app_enabled: boolean;
+  course_update: boolean;
   sla_amber_threshold_hours_override: number;
   sla_red_threshold_hours_override: number;
 }
