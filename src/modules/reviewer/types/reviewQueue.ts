@@ -66,6 +66,7 @@ export interface ReviewQueueApiItem {
   channels?: string[] | null;
   channel_summary?: string | null;
   source_label?: string | null;
+  source_type?: string | null;
   source?: string | null;
   date_created?: string | null;
   created_datetime?: string | null;
@@ -177,7 +178,8 @@ export function mapToReviewQueueRow(item: ReviewQueueApiItem): ReviewQueueRow {
     price: formatPrice(item.price),
     channels,
     channelSummary: item.channel_summary || (channels.length ? channels.join(", ") : EMPTY_FIELD),
-    sourceLabel: item.source_label || item.source || EMPTY_FIELD,
+    sourceLabel:
+      item.source_label || item.source || item.source_type || EMPTY_FIELD,
     dateCreated: formatDisplayDate(item.date_created ?? item.created_datetime),
     raw: item,
   };

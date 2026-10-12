@@ -44,8 +44,18 @@ export const ADMIN_SETTINGS_TABS: AdminSettingsTabDef[] = [
     // Roles & Permissions is backed by /admin/roles/, which needs `roles.view`.
     permission: PERMISSION.ROLES_VIEW,
   },
-  { id: "platform", label: "Platform", Icon: Eye },
-  { id: "payments", label: "Payments", Icon: CreditCard },
+  {
+    id: "platform",
+    label: "Platform",
+    Icon: Eye,
+    permission: PERMISSION.PLATFORM_EDIT_SETTINGS,
+  },
+  {
+    id: "payments",
+    label: "Payments",
+    Icon: CreditCard,
+    permission: PERMISSION.PLATFORM_EDIT_SETTINGS,
+  },
   {
     id: "achievement-awards",
     label: "Achievement badge",

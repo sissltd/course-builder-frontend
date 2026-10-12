@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
-import { ReviewerPendingTabs } from "./components/ReviewerPendingTabs";
+import {
+  ReviewerPendingTabs,
+  type ReviewerPendingTab,
+} from "./components/ReviewerPendingTabs";
 import { ReviewerPendingFilters } from "./components/ReviewerPendingFilters";
 import { ReviewerPendingTable } from "./components/ReviewerPendingTable";
 import { ReviewerPendingPager } from "./components/ReviewerPendingPager";
@@ -10,8 +13,15 @@ import { ReviewerCourseInfoDrawer } from "./components/ReviewerCourseInfoDrawer"
 import { useGetReviewQueuePendingQuery } from "./hooks";
 import { mapToReviewQueueRows, type ReviewQueueRow } from "./types";
 
+const sourceTypeByTab: Record<ReviewerPendingTab, string> = {
+  creators: "CREATOR_UPLOADED",
+  ai: "AI_GENERATED",
+  developer: "DEVELOPER_API",
+};
+
 export const ReviewerPendingView = () => {
-  const [activeTab, setActiveTab] = useState("creators");
+  const [activeTab, setActiveTab] =
+    useState<ReviewerPendingTab>("creators");
   const [isCourseDrawerOpen, setIsCourseDrawerOpen] = useState(false);
   const [activeCourseIndex, setActiveCourseIndex] = useState<number | null>(null);
 
@@ -37,7 +47,7 @@ export const ReviewerPendingView = () => {
   }, [search]);
 
   // Tab or filter changes reset page
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: ReviewerPendingTab) => {
     setActiveTab(tab);
     setCurrentPage(1);
     setActiveCourseIndex(null);
@@ -65,7 +75,7 @@ export const ReviewerPendingView = () => {
 
   // API Call
   const { data, isLoading, isFetching } = useGetReviewQueuePendingQuery({
-    source_type: activeTab === "ai" ? "AI_GENERATED" : "CREATOR_UPLOADED",
+    source_type: sourceTypeByTab[activeTab],
     search: debouncedSearch.trim() || undefined,
     category: category || undefined,
     difficulty_level: difficulty || undefined,
@@ -75,12 +85,12 @@ export const ReviewerPendingView = () => {
     size: pageSize,
   });
 
-  const rawCourses = data?.data?.results ?? [];
   const paginator = data?.data?.paginator;
 
-  const courses: ReviewQueueRow[] = useMemo(() => {
-    return mapToReviewQueueRows(rawCourses);
-  }, [rawCourses]);
+  const courses: ReviewQueueRow[] = useMemo(
+    () => mapToReviewQueueRows(data?.data?.results),
+    [data?.data?.results],
+  );
 
   const totalEntries = paginator?.count ?? 0;
   const totalPages = paginator?.total_pages ?? Math.max(1, Math.ceil(totalEntries / pageSize));

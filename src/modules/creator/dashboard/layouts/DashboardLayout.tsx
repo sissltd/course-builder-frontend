@@ -32,8 +32,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     pathname === CreatorRoute.HELP &&
     (searchParams.has("category") ||
       searchParams.has("article") ||
-      searchParams.get("view") === "appeal" ||
-      searchParams.get("view") === "appeal-success");
+      searchParams.get("view") === "appeal");
   const hideSidebarAndHeader = isKyc || isBuilder || isCreateCourse || isHelpSubPage;
 
   return (

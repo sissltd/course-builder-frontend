@@ -18,7 +18,6 @@ import { SupportTab } from "./components/SupportTab";
 import { KnowledgeBaseCategoryPage } from "./components/KnowledgeBaseCategoryPage";
 import { ArticleDetailPage } from "./components/ArticleDetailPage";
 import { AppealFormPage } from "./components/AppealFormPage";
-import { AppealSuccessModal } from "./components/AppealSuccessModal";
 import { CreatorRoute, ReviewerRoute } from "@/lib/routes";
 
 const categoryLabels: Record<KnowledgeBaseCategory, string> = {
@@ -92,8 +91,12 @@ export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
     updateParams({ view: null, tab: "support" });
   };
 
-  const handleGoHome = () => {
-    updateParams({ tab: "new-to-soludesk", category: null, article: null, view: null });
+  const handleAppealSubmitted = () => {
+    router.replace(
+      baseRoute === ReviewerRoute.HELP
+        ? ReviewerRoute.DASHBOARD
+        : CreatorRoute.DASHBOARD,
+    );
   };
 
   const renderMainContent = () => {
@@ -120,78 +123,34 @@ export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
   if (isSubPage) {
     if (category && !articleId) {
       return (
-        <>
-          <FullscreenLayout
-            backLabel={categoryLabels[category]}
-            onBack={handleBackToKnowledgeBase}
-          >
-            <KnowledgeBaseCategoryPage
-              category={category}
-              onArticleSelect={handleArticleSelect}
-            />
-          </FullscreenLayout>
-          <AppealSuccessModal
-            isOpen={false}
-            onOpenChange={() => {}}
-            onGoHome={handleGoHome}
+        <FullscreenLayout
+          backLabel={categoryLabels[category]}
+          onBack={handleBackToKnowledgeBase}
+        >
+          <KnowledgeBaseCategoryPage
+            category={category}
+            onArticleSelect={handleArticleSelect}
           />
-        </>
+        </FullscreenLayout>
       );
     }
 
     if (articleId && category) {
       return (
-        <>
-          <FullscreenLayout
-            backLabel={categoryLabels[category]}
-            onBack={handleBackToCategory}
-          >
-            <ArticleDetailPage />
-          </FullscreenLayout>
-          <AppealSuccessModal
-            isOpen={false}
-            onOpenChange={() => {}}
-            onGoHome={handleGoHome}
-          />
-        </>
+        <FullscreenLayout
+          backLabel={categoryLabels[category]}
+          onBack={handleBackToCategory}
+        >
+          <ArticleDetailPage />
+        </FullscreenLayout>
       );
     }
 
     if (view === "appeal") {
       return (
-        <>
-          <FullscreenLayout backLabel="Support" onBack={handleBackToSupport}>
-            <AppealFormPage
-              onSubmitSuccess={() =>
-                updateParams({ view: "appeal-success" })
-              }
-            />
-          </FullscreenLayout>
-          <AppealSuccessModal
-            isOpen={false}
-            onOpenChange={() => {}}
-            onGoHome={handleGoHome}
-          />
-        </>
-      );
-    }
-
-    if (view === "appeal-success") {
-      return (
-        <>
-          <FullscreenLayout backLabel="Support" onBack={handleBackToSupport}>
-            <AppealFormPage
-              onSubmitSuccess={() =>
-                updateParams({ view: "appeal-success" })
-              }
-            />
-          </FullscreenLayout>
-          <AppealSuccessModal
-            isOpen={true}
-            onOpenChange={() => {}}
-            onGoHome={handleGoHome}
-          />
-        </>
+        <FullscreenLayout backLabel="Support" onBack={handleBackToSupport}>
+          <AppealFormPage onSubmitSuccess={handleAppealSubmitted} />
+        </FullscreenLayout>
       );
     }
   }
@@ -216,11 +175,6 @@ export const HelpView = ({ baseRoute = CreatorRoute.HELP }: HelpViewProps) => {
       <CreateTicketModal
         isOpen={isTicketModalOpen}
         onOpenChange={setIsTicketModalOpen}
-      />
-      <AppealSuccessModal
-        isOpen={false}
-        onOpenChange={() => {}}
-        onGoHome={handleGoHome}
       />
     </>
   );

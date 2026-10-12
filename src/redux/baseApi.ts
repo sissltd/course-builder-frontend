@@ -304,6 +304,7 @@ export const BaseAPI = createApi({
     "CategoryPicker",
     "GenerationJob",
     "AchievementBadge",
+    "PlatformSettings",
     "SupportRequest",
     "SupportTicket",
     "SupportAppeal",

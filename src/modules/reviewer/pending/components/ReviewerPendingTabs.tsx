@@ -1,14 +1,17 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-const tabs = [
+export type ReviewerPendingTab = "creators" | "ai" | "developer";
+
+const tabs: Array<{ key: ReviewerPendingTab; label: string }> = [
   { key: "creators", label: "Creators" },
   { key: "ai", label: "Created with AI" },
+  { key: "developer", label: "Developer API" },
 ];
 
 interface ReviewerPendingTabsProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab: ReviewerPendingTab;
+  onTabChange: (tab: ReviewerPendingTab) => void;
 }
 
 export const ReviewerPendingTabs = ({ activeTab, onTabChange }: ReviewerPendingTabsProps) => {
