@@ -9,7 +9,6 @@ import {
   Book,
   User,
   Wallet,
-  Export,
   UserAdd,
   ArrowRight2,
   Logout,
@@ -298,14 +297,6 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
               </DropdownMenuItem>
               
               <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />
-              
-              <DropdownMenuItem className="flex items-center justify-between p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <div className="flex items-center gap-[8px]">
-                  <Export size={20} color="#606060" variant="Linear" />
-                  <span>Share profile</span>
-                </div>
-                <ArrowRight2 size={16} color="#606060" variant="Linear" />
-              </DropdownMenuItem>
               
               <DropdownMenuItem asChild>
                 <Link href={CreatorRoute.INVITATIONS} className="flex items-center justify-between p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] w-full">
