@@ -88,3 +88,14 @@ export {
   useCreateModuleForImportMutation,
   useCreateLessonForImportMutation,
 } from "../api/documentImportApi";
+
+export {
+  usePresignCourseImportUploadMutation,
+  useStartCourseImportMutation,
+  useGetCourseImportQuery,
+  useLazyGetCourseImportQuery,
+  useCancelCourseImportMutation,
+  useConfirmCourseImportMutation,
+  useDownloadCourseImportTemplateQuery,
+  useLazyDownloadCourseImportTemplateQuery,
+} from "../api/courseImportApi";

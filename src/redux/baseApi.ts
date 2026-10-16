@@ -303,6 +303,7 @@ export const BaseAPI = createApi({
     "ReviewerSettings",
     "CategoryPicker",
     "GenerationJob",
+    "CourseImportJob",
     "AchievementBadge",
     "PlatformSettings",
     "SupportRequest",
