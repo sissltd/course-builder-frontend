@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface ReviewerMetricCardProps {
   iconSrc: string;
@@ -7,6 +8,11 @@ interface ReviewerMetricCardProps {
   value: string | number | null;
   label: string;
   isLoading?: boolean;
+  /**
+   * When supplied, the card becomes an interactive control (e.g. a metric that
+   * drills into the queue it counts). Without it the card stays presentational.
+   */
+  onClick?: () => void;
 }
 
 export const ReviewerMetricCard = ({
@@ -14,9 +20,28 @@ export const ReviewerMetricCard = ({
   value,
   label,
   isLoading,
+  onClick,
 }: ReviewerMetricCardProps) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <div className="relative flex min-h-[86px] w-full items-center gap-[12px] rounded-[10px] border border-sd-grey-4 bg-sd-grey-1 px-[16px] py-[12px] overflow-hidden">
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        "relative flex min-h-[86px] w-full items-center gap-[12px] rounded-[10px] border border-sd-grey-4 bg-sd-grey-1 px-[16px] py-[12px] overflow-hidden",
+        onClick &&
+          "cursor-pointer transition-colors hover:bg-sd-grey-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-blue)]",
+      )}
+    >
       <div className="relative flex size-[50px] shrink-0 items-center justify-center rounded-[8px] border border-sd-grey-4 bg-sd-grey-1 p-[10.909px] overflow-hidden">
         <Image src={iconSrc} alt="" width={28} height={28} className="size-[28px]" />
       </div>

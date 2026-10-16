@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
+import { ReviewerRoute } from "@/lib/routes";
 import { ReviewerActivityOverview } from "./components/ReviewerActivityOverview";
 import { ReviewerEmptyPanel } from "./components/ReviewerEmptyPanel";
 import { ReviewerMetricCard } from "./components/ReviewerMetricCard";
 import { useGetReviewerOverviewQuery } from "./hooks";
 
 export const ReviewerDashboardView = () => {
+  const router = useRouter();
   const { data: overview, isLoading } = useGetReviewerOverviewQuery();
 
   return (
@@ -24,6 +27,7 @@ export const ReviewerDashboardView = () => {
             value={overview?.courses_in_queue ?? null}
             label="Courses in Queue"
             isLoading={isLoading}
+            onClick={() => router.push(ReviewerRoute.PENDING)}
           />
           <ReviewerMetricCard
             iconSrc="/assets/reviewer/escalation-resolved.svg"

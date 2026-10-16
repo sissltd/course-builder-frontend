@@ -307,12 +307,14 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
                 <ArrowRight2 size={16} color="#606060" variant="Linear" />
               </DropdownMenuItem>
               
-              <DropdownMenuItem className="flex items-center justify-between p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px]">
-                <div className="flex items-center gap-[8px]">
-                  <UserAdd size={20} color="#606060" variant="Linear" />
-                  <span>Invite</span>
-                </div>
-                <ArrowRight2 size={16} color="#606060" variant="Linear" />
+              <DropdownMenuItem asChild>
+                <Link href={CreatorRoute.INVITATIONS} className="flex items-center justify-between p-[8px] rounded-[8px] text-[#606060] hover:bg-[#F0F0F0] cursor-pointer text-[14px] w-full">
+                  <div className="flex items-center gap-[8px]">
+                    <UserAdd size={20} color="#606060" variant="Linear" />
+                    <span>Invite</span>
+                  </div>
+                  <ArrowRight2 size={16} color="#606060" variant="Linear" />
+                </Link>
               </DropdownMenuItem>
               
               <DropdownMenuSeparator className="bg-[#F0F0F0] my-[6px]" />

@@ -4,8 +4,9 @@ import { useCallback } from "react";
 import { signOut } from "next-auth/react";
 
 import { AuthRoute } from "@/lib/routes";
-import { useAppDispatch } from "@/redux";
+import { persistor, useAppDispatch } from "@/redux";
 import { clearAuth } from "@/redux/slices/authSlice";
+import { resetCourseBuilder } from "@/redux/slices/courseBuilderSlice";
 import { serverLogout } from "@/modules/auth/actions/logout";
 import { markManualLogout } from "@/modules/auth/utils/logoutIntent";
 
@@ -37,6 +38,16 @@ export const useLogout = () => {
     async (callbackUrl: string = AuthRoute.LOGIN) => {
       markManualLogout();
       dispatch(clearAuth());
+      // The course builder draft is persisted to localStorage (hard refresh must
+      // not lose work in progress), so it would otherwise rehydrate for whoever
+      // signs in next. Reset the slice *and* drop it from storage.
+      dispatch(resetCourseBuilder());
+
+      try {
+        await persistor.purge();
+      } catch (error) {
+        console.warn("[logout] failed to purge persisted state", error);
+      }
 
       try {
         await serverLogout();

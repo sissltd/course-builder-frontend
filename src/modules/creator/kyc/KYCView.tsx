@@ -160,7 +160,8 @@ export default function KYCView() {
         toast.error(
           `Liveness check failed (score: ${result.score}). Please try again.`
         );
-        setStep("capture");
+        setCaptureOpen(true);
+        setStep("selfie-instructions");
       }
     } catch (err) {
       const error = err as { status?: number; data?: { message?: string } };
@@ -173,7 +174,8 @@ export default function KYCView() {
           error?.data?.message ?? "Liveness check failed. Please try again."
         );
       }
-      setStep("capture");
+      setCaptureOpen(true);
+      setStep("selfie-instructions");
     }
   };
 
